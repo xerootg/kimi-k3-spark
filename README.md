@@ -25,6 +25,20 @@ mmap, `GGML_CUDA_HOST_ZERO_COPY=1`) is built in but off: measured at ~19 s
 per token on the GB10, whose GPU reads of mapped pages go through UVM
 fault handling rather than straight ATS. Numbers in the argo-things README.
 
+## Validating a patch without the Spark
+
+Patch 0003 was checked on a workstation with an Intel iGPU (Vulkan backend)
+and a 1.3B MoE (`bartowski/granite-3.0-1b-a400m-instruct-GGUF`, Q8_0): same
+topology as production (`-ngl 99 --n-cpu-moe 99`, spine on the GPU, experts
+in host memory), `tools/repack-experts.py --verify 50` on the GGUF, then
+`llama-completion` at temperature 0 with and without
+`LLAMA_EXPERT_STORE=... --moe-cache-mib N`. Generated text is token-identical
+for a 128 MiB cache (79 slots, 10 %, hit rate 0.02 %, every expert read from
+the store) and a 1024 MiB cache (641 slots, 83.5 %, hit rate 89.5 %); the
+59-token prompt exercises the prefill staging path, the 47 decode steps the
+graph hook. `-lv 4` shows the store lines (`expert store ...`, `MoE cache
+size`, and the hit/miss summary at exit).
+
 ## Why these numbers
 
 Unsloth `UD-IQ1_S` is 594 GB. Decode touches 16 experts in each of 92 MoE
