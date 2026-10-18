@@ -44,3 +44,33 @@ Environment knobs (CPU path only):
 
 Both calls are no-ops for memory that is not file-backed, so the patch is
 harmless for models that fit in RAM.
+
+## 0002-zero-copy-host-experts
+
+Opt-in (`GGML_CUDA_HOST_ZERO_COPY=1`), CUDA backend only. The GB10 is an
+integrated GPU that reads pageable host memory through the host page tables
+(`cudaDevAttrPageableMemoryAccess` and `...UsesHostPageTables` are both 1 on
+the Spark), so its kernels can read a memory-mapped model file in place. With
+the flag set, the CUDA device accepts llama.cpp's `CPU_Mapped` buffers, and
+the scheduler keeps every `MUL_MAT_ID` on the GPU with the experts still in
+the mapping: no CPU matmul for decode and no 545 GB `cudaMemcpy` of experts
+per prefill chunk (which capped prefill at ~1.4 GB/s with patch 0001 alone).
+
+A GPU page fault is serviced one page at a time through the IOMMU, so the
+pages must be resident *and mapped* before a kernel touches them. Right before
+a zero-copy `MUL_MAT_ID` runs, the backend synchronizes its stream, reads the
+selected expert ids back, and on the host issues `MADV_WILLNEED` for every
+selected expert slice (all reads in flight at once) followed by
+`MADV_POPULATE_READ` (wait and map). CUDA graphs are disabled for such
+graphs because the prefetch is host work between kernels.
+
+Only buffers named `CPU_Mapped` are accepted, never the scheduler's own host
+buffers: graph inputs keep being copied to the device, so llama.cpp's
+`set_inputs` for the next ubatch cannot overwrite memory a kernel is still
+reading (llama.cpp only synchronizes before `set_inputs` with pipeline
+parallelism).
+
+Knobs: `GGML_CUDA_HOST_ZERO_COPY=1` enables it; `GGML_CUDA_HOST_PREFETCH`
+0 = no prefetch (GPU faults everything in, do not do this), 1 = `WILLNEED`
+only, 2 = `WILLNEED` + `POPULATE_READ` (default). Patch 0001 stays in: with
+the experts on the GPU its CPU-side hook simply finds no `MUL_MAT_ID` nodes.
