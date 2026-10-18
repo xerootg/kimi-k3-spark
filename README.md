@@ -18,9 +18,12 @@ Deployment manifests live in the `argo-things` GitOps repo (`configs/kimi-k3`).
 Tags are the pinned upstream commit (`versions.env`) plus `-g<short sha>` of
 this repo. The Spark `llama-server` and the x86 `ggml-rpc-server` workers must
 share a `LLAMA_SHA`. Both llama.cpp images apply [`patches/`](patches/README.md)
-on top of that commit; the expert prefetch patch is what makes an mmap'd,
-larger-than-RAM expert set usable at all (unpatched: 147 s per token on the
-Spark, patched: see the argo-things README).
+on top of that commit; the expert prefetch patch (0001) is what makes an
+mmap'd, larger-than-RAM expert set usable at all (unpatched: 147 s per token
+on the Spark, patched: 4.45 s). Patch 0002 (zero-copy GPU reads of the
+mmap, `GGML_CUDA_HOST_ZERO_COPY=1`) is built in but off: measured at ~19 s
+per token on the GB10, whose GPU reads of mapped pages go through UVM
+fault handling rather than straight ATS. Numbers in the argo-things README.
 
 ## Why these numbers
 
