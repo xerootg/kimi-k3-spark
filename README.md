@@ -15,8 +15,12 @@ Deployment manifests live in the `argo-things` GitOps repo (`configs/kimi-k3`).
 | `ghcr.io/xerootg/llamacpp-rpc-cpu` | amd64 | ggml-rpc-server, CPU backend, all CPU variants |
 | `ghcr.io/xerootg/pulsar-spark` | arm64 | [Pulsar](https://github.com/giannisanni/pulsar) SSD-streaming engine, sm_121 |
 
-Tags are the pinned upstream commit (`versions.env`). The Spark `llama-server`
-and the x86 `ggml-rpc-server` workers must share a `LLAMA_SHA`.
+Tags are the pinned upstream commit (`versions.env`) plus `-g<short sha>` of
+this repo. The Spark `llama-server` and the x86 `ggml-rpc-server` workers must
+share a `LLAMA_SHA`. Both llama.cpp images apply [`patches/`](patches/README.md)
+on top of that commit; the expert prefetch patch is what makes an mmap'd,
+larger-than-RAM expert set usable at all (unpatched: 147 s per token on the
+Spark, patched: see the argo-things README).
 
 ## Why these numbers
 

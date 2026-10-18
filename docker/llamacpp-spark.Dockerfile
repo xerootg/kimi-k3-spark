@@ -9,6 +9,10 @@
 # compile with Ubuntu 24.04's gcc 13 ("invalid feature modifier 'sme'") and
 # the GB10 could not use it anyway. The CPU kernels matter here: with
 # --n-cpu-moe the routed experts run on these cores.
+#
+# patches/ is applied on top of LLAMA_SHA (see patches/README.md): the
+# memory-mapped expert prefetch, without which a model whose experts do not
+# fit in RAM decodes at one page fault per 4 KiB page.
 ARG CUDA_VERSION=13.0.1
 ARG UBUNTU_VERSION=24.04
 
@@ -19,8 +23,11 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
       git build-essential cmake ninja-build libcurl4-openssl-dev ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
+COPY patches/ /patches/
 RUN git init -q . && git remote add origin https://github.com/ggml-org/llama.cpp \
-    && git fetch -q --depth 1 origin "${LLAMA_SHA}" && git checkout -q FETCH_HEAD
+    && git fetch -q --depth 1 origin "${LLAMA_SHA}" && git checkout -q FETCH_HEAD \
+    && for p in /patches/*.patch; do echo "applying $p" && git apply --verbose "$p"; done \
+    && git diff --stat
 RUN cmake -B build -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
       -DGGML_NATIVE=OFF \

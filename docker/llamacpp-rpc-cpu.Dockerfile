@@ -2,7 +2,8 @@
 # Kimi K3's routed-expert tensors in RAM and runs their FFN locally, so only
 # activations cross the (1-2.5 GbE) LAN. Must be built from the SAME llama.cpp
 # commit as the llama-server that talks to it: the RPC protocol is not
-# versioned across commits.
+# versioned across commits. The same patches/ as the Spark image are applied,
+# so both sides run identical llama.cpp sources.
 ARG UBUNTU_VERSION=24.04
 
 FROM docker.io/ubuntu:${UBUNTU_VERSION} AS build
@@ -11,8 +12,11 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
       git build-essential cmake ninja-build libcurl4-openssl-dev ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
+COPY patches/ /patches/
 RUN git init -q . && git remote add origin https://github.com/ggml-org/llama.cpp \
-    && git fetch -q --depth 1 origin "${LLAMA_SHA}" && git checkout -q FETCH_HEAD
+    && git fetch -q --depth 1 origin "${LLAMA_SHA}" && git checkout -q FETCH_HEAD \
+    && for p in /patches/*.patch; do echo "applying $p" && git apply --verbose "$p"; done \
+    && git diff --stat
 RUN cmake -B build -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
       -DGGML_NATIVE=OFF \
