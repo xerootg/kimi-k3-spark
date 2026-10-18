@@ -1,0 +1,101 @@
+name: images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docker/**"
+      - "versions.env"
+      - ".github/workflows/images.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  versions:
+    runs-on: ubuntu-24.04
+    outputs:
+      llama_sha: ${{ steps.v.outputs.llama_sha }}
+      pulsar_sha: ${{ steps.v.outputs.pulsar_sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: |
+          set -a; . ./versions.env; set +a
+          echo "llama_sha=$LLAMA_SHA" >> "$GITHUB_OUTPUT"
+          echo "pulsar_sha=$PULSAR_SHA" >> "$GITHUB_OUTPUT"
+
+  llamacpp-spark:
+    needs: versions
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: free disk
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/llamacpp-spark.Dockerfile
+          platforms: linux/arm64
+          push: true
+          build-args: |
+            LLAMA_SHA=${{ needs.versions.outputs.llama_sha }}
+          tags: |
+            ghcr.io/xerootg/llamacpp-spark:${{ needs.versions.outputs.llama_sha }}
+            ghcr.io/xerootg/llamacpp-spark:latest
+
+  pulsar-spark:
+    needs: versions
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: free disk
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/pulsar-spark.Dockerfile
+          platforms: linux/arm64
+          push: true
+          build-args: |
+            PULSAR_SHA=${{ needs.versions.outputs.pulsar_sha }}
+          tags: |
+            ghcr.io/xerootg/pulsar-spark:${{ needs.versions.outputs.pulsar_sha }}
+            ghcr.io/xerootg/pulsar-spark:latest
+
+  llamacpp-rpc-cpu:
+    needs: versions
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/llamacpp-rpc-cpu.Dockerfile
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            LLAMA_SHA=${{ needs.versions.outputs.llama_sha }}
+          tags: |
+            ghcr.io/xerootg/llamacpp-rpc-cpu:${{ needs.versions.outputs.llama_sha }}
+            ghcr.io/xerootg/llamacpp-rpc-cpu:latest
