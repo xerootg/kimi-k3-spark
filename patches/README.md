@@ -74,3 +74,47 @@ Knobs: `GGML_CUDA_HOST_ZERO_COPY=1` enables it; `GGML_CUDA_HOST_PREFETCH`
 0 = no prefetch (GPU faults everything in, do not do this), 1 = `WILLNEED`
 only, 2 = `WILLNEED` + `POPULATE_READ` (default). Patch 0001 stays in: with
 the experts on the GPU its CPU-side hook simply finds no `MUL_MAT_ID` nodes.
+
+Measured on the Spark: ~19 s per token. The GB10 services GPU reads of
+mapped pages through the UVM fault handler, not straight through ATS, so
+this stays opt-in and off.
+
+## 0003-expert-store
+
+The engine for a model whose experts do not fit in RAM: the routed experts
+are served from an **expert store** (`tools/repack-experts.py`: one 4 KiB
+aligned record per (layer, expert) holding gate | up | down back to back)
+with O_DIRECT reads into a host-RAM LRU, and the page cache is out of the
+expert path entirely. Enabled with `LLAMA_EXPERT_STORE=<store file>` plus
+`--moe-cache-mib <RAM budget>`; the experts still have to be placed in host
+memory (`--n-cpu-moe`), the mapping stays for the spine and for RPC-bound
+layers.
+
+Built on upstream's `llama_moe_cache` (slot maps, per-group LRU, bank views
+read by `MUL_MAT_ID`), with these changes:
+
+- The cache device is the CPU backend. Each group's banks are strided views
+  into one `mmap`'d, THP-advised, populated region of records: the expert
+  stride of a bank is the record size, so one 6.5 MB read fills gate, up and
+  down of an expert at once.
+- Small batches (decode): the slot-map lookup runs in the CPU graph, so no
+  scheduler copy happens and no copy callback fires. ggml-cpu gets a graph
+  hook (`ggml_cpu_set_graph_hook`, exposed through the backend registry) that
+  runs on the thread starting a CPU graph; the cache registers itself, finds
+  the `GET_ROWS(slot_map, ids)` nodes of the graph (the ids are an input of
+  the split, already copied in), plans the LRU, and reads the misses from the
+  store with a pool of `LLAMA_EXPERT_STORE_THREADS` (16) O_DIRECT `pread`s
+  before the matmuls run.
+- Large batches (prefill): upstream offloads the matmul to the GPU and asks
+  the copy callback for the used experts of each tensor. The callback now
+  reads the used records once per layer into a pinned staging area of
+  `n_expert` records and uploads each tensor's part from there; the mapping
+  is never touched. The staging is synchronized against the previous layer's
+  uploads before it is overwritten.
+- The loader excludes the host expert tensors from the mapping prefetch
+  (`lazy_read::exclude_prefetch`): no `MAP_POPULATE` of 545 GB that only
+  evicts itself, the spine and RPC-bound experts are still prefetched.
+
+Stats are logged every 4096 fills and at exit (hit rate, bytes read for
+decode and prefill). Patches 0001 and 0002 are untouched by this; 0001's
+prefetch hook sees the bank tensors (anonymous memory) and is a no-op there.
