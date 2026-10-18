@@ -23,7 +23,11 @@ mmap'd, larger-than-RAM expert set usable at all (unpatched: 147 s per token
 on the Spark, patched: 4.45 s). Patch 0002 (zero-copy GPU reads of the
 mmap, `GGML_CUDA_HOST_ZERO_COPY=1`) is built in but off: measured at ~19 s
 per token on the GB10, whose GPU reads of mapped pages go through UVM
-fault handling rather than straight ATS. Numbers in the argo-things README.
+fault handling rather than straight ATS. Patch 0003 (the expert store,
+`LLAMA_EXPERT_STORE` + `--moe-cache-mib`) is the production engine:
+0.71 tok/s decode and 102 tokens of prefill in 54 s on the Spark, with a
+52 GB host LRU hitting 55 % of the lookups. Numbers in the argo-things
+README.
 
 ## Validating a patch without the Spark
 
