@@ -14,6 +14,21 @@ index dc6453c..b484a99 100644
      //
      // CPU backend
      //
+diff --git a/ggml/include/ggml-cuda.h b/ggml/include/ggml-cuda.h
+index 1cd81ee..e91a8cc 100644
+--- a/ggml/include/ggml-cuda.h
++++ b/ggml/include/ggml-cuda.h
+@@ -40,6 +40,10 @@ GGML_BACKEND_API void ggml_backend_cuda_get_device_memory(int device, size_t * f
+ GGML_BACKEND_API bool ggml_backend_cuda_register_host_buffer(void * buffer, size_t size);
+ GGML_BACKEND_API void ggml_backend_cuda_unregister_host_buffer(void * buffer);
+ 
++// wrap caller-owned host memory as a "host bank" buffer: registered with the driver and read in place by the
++// kernels of an integrated device; NULL if the device cannot do that (also via ggml_backend_reg_get_proc_address)
++GGML_BACKEND_API ggml_backend_buffer_t ggml_backend_cuda_host_bank_buffer_from_ptr(void * ptr, size_t size);
++
+ GGML_BACKEND_API ggml_backend_reg_t ggml_backend_cuda_reg(void);
+ 
+ #ifdef  __cplusplus
 diff --git a/ggml/src/ggml-cpu/ggml-cpu.c b/ggml/src/ggml-cpu/ggml-cpu.c
 index 748552a..e62057d 100644
 --- a/ggml/src/ggml-cpu/ggml-cpu.c
@@ -56,6 +71,138 @@ index 81ff5d7..2c76c94 100644
 +    }
      if (strcmp(name, "ggml_backend_cpu_numa_init") == 0) {
          return (void *)ggml_numa_init;
+     }
+diff --git a/ggml/src/ggml-cuda/common.cuh b/ggml/src/ggml-cuda/common.cuh
+index 9ff49ea..b3a26f0 100644
+--- a/ggml/src/ggml-cuda/common.cuh
++++ b/ggml/src/ggml-cuda/common.cuh
+@@ -1178,6 +1178,7 @@ struct ggml_cuda_device_info {
+         size_t  smpbo;                          // max. shared memory per block (with opt-in)
+         bool    integrated;                     // Device is integrated as opposed to discrete
+         bool    zero_copy_host;                 // kernels may read memory-mapped host weights in place (GGML_CUDA_HOST_ZERO_COPY)
++        bool    host_bank;                      // kernels may read registered host memory in place (integrated device, host pointers usable)
+         bool    vmm;                            // virtual memory support
+         size_t  vmm_granularity;                // granularity of virtual memory
+         size_t  total_vram;
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index a0d94dc..633c983 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -468,6 +468,14 @@ static ggml_cuda_device_info ggml_cuda_init() {
+             GGML_LOG_INFO("%s: device %d: zero-copy host weights %s (integrated = %d, pageable access = %d, host page tables = %d)\n",
+                 __func__, id, info.devices[id].zero_copy_host ? "enabled" : "not available", (int) prop.integrated, pageable, host_pt);
+         }
++        info.devices[id].host_bank = false;
++        {
++            int host_ptr = 0;
++            CUDA_CHECK(cudaDeviceGetAttribute(&host_ptr, cudaDevAttrCanUseHostPointerForRegisteredMem, physical_id));
++            info.devices[id].host_bank = prop.integrated && host_ptr && !ggml_cuda_env_flag("GGML_CUDA_NO_HOST_BANK");
++            GGML_LOG_INFO("%s: device %d: host bank %s (integrated = %d, host pointer for registered memory = %d)\n",
++                __func__, id, info.devices[id].host_bank ? "enabled" : "not available", (int) prop.integrated, host_ptr);
++        }
+ #endif
+         info.devices[id].nsm        = prop.multiProcessorCount;
+         info.devices[id].smpb       = prop.sharedMemPerBlock;
+@@ -1496,6 +1504,69 @@ ggml_backend_buffer_type_t ggml_backend_cuda_host_buffer_type() {
+ //    return buffer->buft->iface.get_name == ggml_backend_cuda_host_buffer_type_name;
+ //}
+ 
++// host bank buffer type: caller-owned host memory registered with the driver, which the kernels of an integrated
++// device read in place (no copy, no page faults). Used by llama.cpp's expert store for its host-RAM expert cache,
++// so the expert matmuls of a small batch run on the GPU straight from the cache the CPU fills from the NVMe.
++
++static const char * ggml_backend_cuda_host_bank_buffer_type_name(ggml_backend_buffer_type_t buft) {
++    return GGML_CUDA_NAME "_HostBank";
++
++    GGML_UNUSED(buft);
++}
++
++static bool ggml_backend_buft_is_cuda_host_bank(ggml_backend_buffer_type_t buft) {
++    return buft->iface.get_name == ggml_backend_cuda_host_bank_buffer_type_name;
++}
++
++static void ggml_backend_cuda_host_bank_buffer_free_buffer(ggml_backend_buffer_t buffer) {
++    // the memory stays with its owner, only the registration goes
++    cudaError_t err = cudaHostUnregister(buffer->context);
++    if (err != cudaSuccess) {
++        (void)cudaGetLastError();
++    }
++}
++
++static ggml_backend_buffer_t ggml_backend_cuda_host_bank_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
++    GGML_UNUSED(buft);
++    GGML_UNUSED(size);
++    GGML_ABORT("the host bank buffer type wraps caller memory, use ggml_backend_cuda_host_bank_buffer_from_ptr");
++}
++
++static ggml_backend_buffer_type_t ggml_backend_cuda_host_bank_buffer_type() {
++    static struct ggml_backend_buffer_type ggml_backend_cuda_buffer_type_host_bank = {
++        /* .iface    = */ {
++            /* .get_name            = */ ggml_backend_cuda_host_bank_buffer_type_name,
++            /* .alloc_buffer        = */ ggml_backend_cuda_host_bank_buffer_type_alloc_buffer,
++            /* .alloc_buffer_n      = */ NULL,
++            /* .get_alignment       = */ ggml_backend_cpu_buffer_type()->iface.get_alignment,
++            /* .get_max_size        = */ NULL,
++            /* .get_alloc_size      = */ ggml_backend_cpu_buffer_type()->iface.get_alloc_size,
++            /* .get_alloc_size_n    = */ NULL,
++            /* .is_host             = */ ggml_backend_cpu_buffer_type()->iface.is_host,
++        },
++        /* .device   = */ ggml_backend_reg_dev_get(ggml_backend_cuda_reg(), 0),
++        /* .context  = */ nullptr,
++    };
++
++    return &ggml_backend_cuda_buffer_type_host_bank;
++}
++
++ggml_backend_buffer_t ggml_backend_cuda_host_bank_buffer_from_ptr(void * ptr, size_t size) {
++    if (!ggml_cuda_info().devices[0].host_bank) {
++        return nullptr;
++    }
++    cudaError_t err = cudaHostRegister(ptr, size, cudaHostRegisterPortable);
++    if (err != cudaSuccess) {
++        (void)cudaGetLastError();
++        GGML_LOG_WARN("%s: failed to register %.2f MiB of host memory: %s\n", __func__, size/1024.0/1024.0, cudaGetErrorString(err));
++        return nullptr;
++    }
++    ggml_backend_buffer_t buffer = ggml_backend_cpu_buffer_from_ptr(ptr, size);
++    buffer->buft = ggml_backend_cuda_host_bank_buffer_type();
++    buffer->iface.free_buffer = ggml_backend_cuda_host_bank_buffer_free_buffer;
++    return buffer;
++}
++
+ /// kernels
+ 
+ typedef void (*ggml_cuda_op_mul_mat_t)(
+@@ -4809,7 +4880,9 @@ static void ggml_cuda_graph_evaluate_and_capture(ggml_backend_cuda_context * cud
+                     if (node->src[j] != nullptr) {
+                         assert(node->src[j]->buffer);
+                         assert(node->src[j]->buffer->buft == ggml_backend_cuda_buffer_type(cuda_ctx->device) ||
+-                               (integrated && ggml_backend_buft_is_cuda_host(node->src[j]->buffer->buft)));
++                               (integrated && ggml_backend_buft_is_cuda_host(node->src[j]->buffer->buft)) ||
++                               ggml_backend_buft_is_cuda_host_bank(node->src[j]->buffer->buft) ||
++                               ggml_cuda_host_zero_copy_buft(cuda_ctx->device, node->src[j]->buffer->buft));
+                     }
+                 }
+ #else
+@@ -6098,6 +6171,9 @@ static bool ggml_backend_cuda_device_supports_buft(ggml_backend_dev_t dev, ggml_
+     if ((ggml_backend_buft_is_cuda(buft) && buft->device == dev) || (integrated && ggml_backend_buft_is_cuda_host(buft))) {
+         return true;
+     }
++    if (ggml_backend_buft_is_cuda_host_bank(buft) && ggml_cuda_info().devices[dev_ctx->device].host_bank) {
++        return true;
++    }
+     return ggml_cuda_host_zero_copy_buft(dev_ctx->device, buft);
+ }
+ 
+@@ -6267,6 +6343,9 @@ static void * ggml_backend_cuda_reg_get_proc_address(ggml_backend_reg_t reg, con
+     if (strcmp(name, "ggml_backend_unregister_host_buffer") == 0) {
+         return (void *)ggml_backend_cuda_unregister_host_buffer;
+     }
++    if (strcmp(name, "ggml_backend_cuda_host_bank_buffer_from_ptr") == 0) {
++        return (void *)ggml_backend_cuda_host_bank_buffer_from_ptr;
++    }
+     if (strcmp(name, "ggml_backend_get_features") == 0) {
+         return (void *)ggml_backend_cuda_get_features;
      }
 diff --git a/src/llama-context.cpp b/src/llama-context.cpp
 index 07d3ee5..65c6f4e 100644
@@ -137,7 +284,7 @@ index 803a832..f8fdb32 100644
      pimpl->mappings.reserve(ml.mappings.size());
  
 diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
-index 2ea2ac7..c835ef4 100644
+index 2ea2ac7..10d10af 100644
 --- a/src/llama-moe-cache.cpp
 +++ b/src/llama-moe-cache.cpp
 @@ -5,12 +5,31 @@
@@ -431,7 +578,7 @@ index 2ea2ac7..c835ef4 100644
      };
  
      struct layer {
-@@ -211,6 +475,31 @@ struct llama_moe_cache::impl {
+@@ -211,6 +475,32 @@ struct llama_moe_cache::impl {
      std::vector<int32_t> ids;
      std::vector<moe_cache_lru::fill> fills;
  
@@ -443,6 +590,7 @@ index 2ea2ac7..c835ef4 100644
 +    void * staging = nullptr;        // n_expert records, large batches are read here and uploaded from here
 +    size_t staging_size = 0;
 +    bool   staging_pinned = false;
++    bool   bank_on_gpu = false;      // the cache regions are registered with the GPU and the expert matmuls run there
 +    ggml_backend_reg_t gpu_reg = nullptr;
 +    struct {
 +        int32_t il = -1;
@@ -463,7 +611,7 @@ index 2ea2ac7..c835ef4 100644
      // slot maps in host memory
      ggml_context_ptr ctx_host;
      ggml_backend_buffer_ptr buf_host;
-@@ -221,12 +510,41 @@ struct llama_moe_cache::impl {
+@@ -221,12 +511,41 @@ struct llama_moe_cache::impl {
  
      impl(const llama_model & model, const std::vector<ggml_backend_t> & backends, const std::vector<ggml_backend_buffer_type_t> & bufts, size_t size) :
              n_expert_used(model.hparams.n_expert_used_max()), layers(model.layers.size()) {
@@ -511,7 +659,7 @@ index 2ea2ac7..c835ef4 100644
              }
          }
          if (devices.empty()) {
-@@ -245,11 +563,24 @@ struct llama_moe_cache::impl {
+@@ -245,11 +564,24 @@ struct llama_moe_cache::impl {
              if (experts.empty() || !std::all_of(experts.begin(), experts.end(), llama_moe_cache_is_host_weight)) {
                  continue;
              }
@@ -540,7 +688,7 @@ index 2ea2ac7..c835ef4 100644
              auto it = std::find_if(groups.begin(), groups.end(), [&](const group & g) { return g.id == id && llama_moe_cache_same_layout(g.ref, experts); });
              if (it == groups.end()) {
                  groups.emplace_back();
-@@ -268,8 +599,35 @@ struct llama_moe_cache::impl {
+@@ -268,8 +600,35 @@ struct llama_moe_cache::impl {
              return;
          }
  
@@ -576,7 +724,7 @@ index 2ea2ac7..c835ef4 100644
              const size_t alignment = ggml_backend_buft_get_alignment(devices[g.id].buft);
              size_t res = 0;
              for (const ggml_tensor * t : g.ref) {
-@@ -288,7 +646,10 @@ struct llama_moe_cache::impl {
+@@ -288,7 +647,10 @@ struct llama_moe_cache::impl {
                  continue;
              }
              ggml_backend_dev_t dev = ggml_backend_get_device(d.backend);
@@ -588,7 +736,7 @@ index 2ea2ac7..c835ef4 100644
                  size_t free;
                  size_t total;
                  ggml_backend_dev_memory(dev, &free, &total);
-@@ -361,11 +722,38 @@ struct llama_moe_cache::impl {
+@@ -361,11 +723,53 @@ struct llama_moe_cache::impl {
                  continue;
              }
              ggml_context * ctx = devices[g.id].ctx.get();
@@ -606,7 +754,22 @@ index 2ea2ac7..c835ef4 100644
 +                    if (g.region == nullptr) {
 +                        throw std::runtime_error("expert store: failed to allocate " + std::to_string(g.region_size/1024/1024) + " MiB of host cache: " + err);
 +                    }
-+                    g.region_buf.reset(ggml_backend_cpu_buffer_from_ptr(g.region, g.region_size));
++                    // on an integrated GPU that can read registered host memory in place (GB10), the bank is handed
++                    // to the GPU backend as a "host bank" buffer: the small-batch expert matmuls then run there,
++                    // straight from the cache the CPU fills from the store. LLAMA_EXPERT_STORE_GPU=0 keeps them on the CPU.
++                    ggml_backend_buffer_t region_buf = nullptr;
++                    const char * env_gpu = getenv("LLAMA_EXPERT_STORE_GPU");
++                    if (gpu_reg != nullptr && !(env_gpu != nullptr && env_gpu[0] == '0')) {
++                        auto * bank_from_ptr = (ggml_backend_buffer_t (*)(void *, size_t)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_host_bank_buffer_from_ptr");
++                        if (bank_from_ptr != nullptr) {
++                            region_buf = bank_from_ptr(g.region, g.region_size);
++                        }
++                    }
++                    bank_on_gpu = region_buf != nullptr;
++                    if (region_buf == nullptr) {
++                        region_buf = ggml_backend_cpu_buffer_from_ptr(g.region, g.region_size);
++                    }
++                    g.region_buf.reset(region_buf);
 +                    ggml_backend_buffer_set_usage(g.region_buf.get(), GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
 +                }
 +                for (size_t ip = 0; ip < g.ref.size(); ++ip) {
@@ -632,7 +795,7 @@ index 2ea2ac7..c835ef4 100644
              }
              for (int32_t il : g.layers) {
                  layer & l = layers[il];
-@@ -375,6 +763,9 @@ struct llama_moe_cache::impl {
+@@ -375,6 +779,9 @@ struct llama_moe_cache::impl {
                      ggml_tensor * bank   = g.banks[ip];
                      ggml_tensor * cached = ggml_view_3d(ctx, bank, bank->ne[0], bank->ne[1], g.n_slots, bank->nb[1], bank->nb[2], 0);
                      ggml_format_name(cached, "moe_cache.%s", l.experts[ip]->name);
@@ -642,7 +805,7 @@ index 2ea2ac7..c835ef4 100644
                      bindings[l.experts[ip]] = { il, (int32_t) ip, cached };
                  }
                  l.slot_map = ggml_new_tensor_2d(ctx_host.get(), GGML_TYPE_I32, 1, g.ref[0]->ne[2]);
-@@ -382,13 +773,15 @@ struct llama_moe_cache::impl {
+@@ -382,13 +789,15 @@ struct llama_moe_cache::impl {
                  layer_of[l.slot_map] = il;
                  buf_host_size += GGML_PAD(ggml_nbytes(l.slot_map), alignment_host);
              }
@@ -660,7 +823,7 @@ index 2ea2ac7..c835ef4 100644
                      continue;
                  }
                  d.buf.reset(ggml_backend_buft_alloc_buffer(d.buft, 0));
-@@ -402,7 +795,7 @@ struct llama_moe_cache::impl {
+@@ -402,7 +811,7 @@ struct llama_moe_cache::impl {
              }
          } else {
              for (device & d : devices) {
@@ -669,7 +832,7 @@ index 2ea2ac7..c835ef4 100644
                      continue;
                  }
                  d.buf.reset(ggml_backend_alloc_ctx_tensors_from_buft(d.ctx.get(), d.buft));
-@@ -436,6 +829,31 @@ struct llama_moe_cache::impl {
+@@ -436,6 +845,31 @@ struct llama_moe_cache::impl {
          }
          ggml_backend_buffer_set_usage(buf_host.get(), GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
  
@@ -694,14 +857,14 @@ index 2ea2ac7..c835ef4 100644
 +                auto * reg_host = (bool (*)(void *, size_t)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_register_host_buffer");
 +                staging_pinned = reg_host != nullptr && reg_host(staging, staging_size);
 +            }
-+            LLAMA_LOG_INFO("%s: expert store: %.2f MiB of prefill staging (%s), host cache below is filled from the store\n",
-+                __func__, staging_size/1024.0/1024.0, staging_pinned ? "pinned" : "pageable");
++            LLAMA_LOG_INFO("%s: expert store: %.2f MiB of prefill staging (%s), host cache below is filled from the store, expert matmuls run on the %s\n",
++                __func__, staging_size/1024.0/1024.0, staging_pinned ? "pinned" : "pageable", bank_on_gpu ? "GPU from the registered cache" : "CPU");
 +        }
 +
          for (size_t id = 0; id < devices.size(); ++id) {
              const device & d = devices[id];
              if (d.host_bytes == 0) {
-@@ -458,6 +876,172 @@ struct llama_moe_cache::impl {
+@@ -458,6 +892,172 @@ struct llama_moe_cache::impl {
  
      ~impl() {
          log_stats();
@@ -874,7 +1037,7 @@ index 2ea2ac7..c835ef4 100644
      }
  
      ggml_tensor * get_slot_map(int32_t il, int64_t n_tokens, int64_t n_expert_used) const {
-@@ -479,6 +1063,10 @@ struct llama_moe_cache::impl {
+@@ -479,6 +1079,10 @@ struct llama_moe_cache::impl {
      }
  
      int64_t copy_experts(ggml_backend_t backend, const ggml_tensor * w, ggml_tensor * dst, int64_t e, int64_t last) {
@@ -885,7 +1048,7 @@ index 2ea2ac7..c835ef4 100644
          const auto it = bindings.find(w);
          if (it == bindings.end()) {
              return 0;
-@@ -522,6 +1110,10 @@ struct llama_moe_cache::impl {
+@@ -522,6 +1126,10 @@ struct llama_moe_cache::impl {
          const layer & l = layers[il];
          group & g = groups[l.ig];
  
@@ -896,7 +1059,7 @@ index 2ea2ac7..c835ef4 100644
          GGML_ASSERT(backend == devices[g.id].backend);
  
          // the get_rows that looks up the slots of the selected experts
-@@ -614,6 +1206,11 @@ struct llama_moe_cache::impl {
+@@ -614,6 +1222,11 @@ struct llama_moe_cache::impl {
          if (stats_copy.hits > 0) {
              LLAMA_LOG_INFO("llama_moe_cache: large batches: %zu experts copied from the cache, %.2f MiB\n", stats_copy.hits, stats_copy.bytes/1024.0/1024.0);
          }
@@ -908,7 +1071,7 @@ index 2ea2ac7..c835ef4 100644
      }
  };
  
-@@ -643,6 +1240,14 @@ int64_t llama_moe_cache::copy_experts(ggml_backend_t backend, const ggml_tensor
+@@ -643,6 +1256,14 @@ int64_t llama_moe_cache::copy_experts(ggml_backend_t backend, const ggml_tensor
      return pimpl->copy_experts(backend, w, dst, e, last);
  }
  

@@ -116,6 +116,20 @@ read by `MUL_MAT_ID`), with these changes:
 - The loader excludes the host expert tensors from the mapping prefetch
   (`lazy_read::exclude_prefetch`): no `MAP_POPULATE` of 545 GB that only
   evicts itself, the spine and RPC-bound experts are still prefetched.
+- GPU-side expert matmuls from the host cache ("host bank"): on an
+  integrated device whose kernels can use host pointers for registered
+  memory (GB10: `cudaDevAttrIntegrated` and
+  `cudaDevAttrCanUseHostPointerForRegisteredMem` both 1), the cache regions
+  are `cudaHostRegister`ed and wrapped as `CUDA_HostBank` buffers that the
+  CUDA backend accepts as weights (`ggml_backend_cuda_host_bank_buffer_from_ptr`,
+  via the registry). The scheduler then runs the small-batch `MUL_MAT_ID`
+  on the GPU straight from the cache, while `GET_ROWS(slot_map)` stays on
+  the CPU so the graph hook still fills the misses first. Unlike patch
+  0002's mapped file pages, registered anonymous memory is mapped into the
+  GPU up front: no UVM faults. `LLAMA_EXPERT_STORE_GPU=0` keeps the matmuls
+  on the CPU, `GGML_CUDA_NO_HOST_BANK=1` disables the buffer type. The
+  prefill staging is only pinned when `GGML_CUDA_REGISTER_HOST=1` is set
+  (upstream gates `ggml_backend_cuda_register_host_buffer` on it).
 
 Stats are logged every 4096 fills and at exit (hit rate, bytes read for
 decode and prefill). Patches 0001 and 0002 are untouched by this; 0001's
