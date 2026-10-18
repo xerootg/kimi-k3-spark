@@ -136,6 +136,20 @@ read by `MUL_MAT_ID`), with these changes:
   of every part's block size: no padding for the 80 IQ1_S layers (50-byte
   blocks), ~30 % for the 12 layers with IQ2_XXS parts (66 bytes). Without
   it those layers read misaligned blocks and the output was `????`.
+  The bank is enabled where the fabric makes GPU reads of host memory fast:
+  an integrated device (GB10) or a discrete one whose pageable access goes
+  through the host page tables (GH200 over NVLink-C2C); a PCIe GPU with HMM
+  has the pointer but not the bandwidth (`GGML_CUDA_FORCE_HOST_BANK=1` to
+  try anyway).
+- `LLAMA_EXPERT_STORE_MAX_BATCH` (default 32): the largest batch served
+  from the cache; larger ones take upstream's copy path (every used expert
+  read from the store into the pinned staging and uploaded, per ubatch).
+  On a box whose cache holds most of the experts (GH200: ~86 %), setting it
+  to the ubatch size makes prefill run from the bank with only the misses
+  read from the NVMe. It needs the bank on the GPU and is clamped to 32
+  otherwise (with the bank on the CPU the scheduler would offload the
+  large-batch matmul by copying the strided bank views, which fails in
+  the allocator).
 
 Stats are logged every 4096 fills and at exit (hit rate, bytes read for
 decode and prefill). Patches 0001 and 0002 are untouched by this; 0001's

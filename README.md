@@ -11,7 +11,7 @@ Deployment manifests live in the `argo-things` GitOps repo (`configs/kimi-k3`).
 
 | Image | Arch | Contents |
 |---|---|---|
-| `ghcr.io/xerootg/llamacpp-spark` | arm64 | llama.cpp, CUDA 13 sm_121, `-DGGML_RPC=ON` (llama-server, llama-cli, llama-bench, ggml-rpc-server) |
+| `ghcr.io/xerootg/llamacpp-spark` | arm64 | llama.cpp, CUDA 13 sm_90 + sm_121 (DGX Spark GB10 and GH200), `-DGGML_RPC=ON` (llama-server, llama-cli, llama-bench, ggml-rpc-server) |
 | `ghcr.io/xerootg/llamacpp-rpc-cpu` | amd64 | ggml-rpc-server, CPU backend, all CPU variants |
 | `ghcr.io/xerootg/pulsar-spark` | arm64 | [Pulsar](https://github.com/giannisanni/pulsar) SSD-streaming engine, sm_121 |
 

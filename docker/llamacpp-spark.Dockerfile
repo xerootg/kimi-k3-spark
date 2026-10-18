@@ -1,14 +1,15 @@
-# llama.cpp for the NVIDIA DGX Spark (GB10, sm_121, aarch64) with the RPC
-# backend enabled, so llama-server on the Spark can push expert tensors to
-# ggml-rpc-server workers on other cluster nodes.
+# llama.cpp for the NVIDIA DGX Spark (GB10, sm_121, aarch64) and the GH200
+# (H100, sm_90, aarch64) with the RPC backend enabled, so llama-server can
+# push expert tensors to ggml-rpc-server workers on other cluster nodes.
 #
 # Mirrors upstream .devops/cuda.Dockerfile (GGML_BACKEND_DL) with a CUDA 13
-# base, sm_121 only, and -DGGML_RPC=ON. The CPU backend is built for exactly
-# the GB10's cores (Cortex-X925/A725: Armv9.2-A, SVE2, I8MM, dotprod, FP16, no
-# SME) instead of GGML_CPU_ALL_VARIANTS: the armv9.2+sme variant does not
-# compile with Ubuntu 24.04's gcc 13 ("invalid feature modifier 'sme'") and
-# the GB10 could not use it anyway. The CPU kernels matter here: with
-# --n-cpu-moe the routed experts run on these cores.
+# base, sm_90 + sm_121, and -DGGML_RPC=ON. The CPU backend is built for the
+# features both boxes have (Cortex-X925/A725 and Neoverse V2: Armv9-A, SVE2,
+# I8MM, BF16, dotprod, FP16; no SME) instead of GGML_CPU_ALL_VARIANTS: the
+# armv9.2+sme variant does not compile with Ubuntu 24.04's gcc 13 ("invalid
+# feature modifier 'sme'") and neither box needs it. The CPU kernels matter
+# less since the expert matmuls moved to the GPU (patch 0003) but still run
+# the slot lookups and anything the scheduler keeps on the host.
 #
 # patches/ is applied on top of LLAMA_SHA (see patches/README.md): the
 # memory-mapped expert prefetch, without which a model whose experts do not
@@ -18,7 +19,7 @@ ARG UBUNTU_VERSION=24.04
 
 FROM docker.io/nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION} AS build
 ARG LLAMA_SHA
-ARG CUDA_ARCH=121
+ARG CUDA_ARCH=90;121
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       git build-essential cmake ninja-build libcurl4-openssl-dev ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -36,7 +37,7 @@ RUN cmake -B build -G Ninja \
       -DGGML_RPC=ON \
       -DGGML_BACKEND_DL=ON \
       -DGGML_CPU_ALL_VARIANTS=OFF \
-      -DGGML_CPU_ARM_ARCH=armv9.2-a+dotprod+fp16+sve+i8mm \
+      -DGGML_CPU_ARM_ARCH=armv9-a+dotprod+fp16+sve+sve2+i8mm+bf16 \
       -DLLAMA_BUILD_TESTS=OFF \
       -DLLAMA_BUILD_EXAMPLES=OFF \
       -DLLAMA_BUILD_TOOLS=ON \
