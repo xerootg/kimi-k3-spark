@@ -24,18 +24,21 @@ RUN cmake -B build -G Ninja \
       -DLLAMA_BUILD_TOOLS=ON \
       -DLLAMA_CURL=ON \
     && cmake --build build -j "$(nproc)" \
-    && mkdir -p /opt/llama/bin /opt/llama/lib \
-    && find build -name '*.so*' -exec cp -a {} /opt/llama/lib/ \; \
-    && cp build/bin/ggml-rpc-server build/bin/llama-bench build/bin/llama-cli /opt/llama/bin/ \
+    && mkdir -p /opt/llama \
+    && find build -name '*.so*' -exec cp -a {} /opt/llama/ \; \
+    && cp build/bin/ggml-rpc-server build/bin/llama-bench build/bin/llama-cli /opt/llama/ \
     && echo "${LLAMA_SHA}" > /opt/llama/LLAMA_SHA \
-    && LD_LIBRARY_PATH=/opt/llama/lib ldd /opt/llama/bin/ggml-rpc-server | (! grep 'not found')
+    && LD_LIBRARY_PATH=/opt/llama ldd /opt/llama/ggml-rpc-server | (! grep 'not found') \
+    && LD_LIBRARY_PATH=/opt/llama /opt/llama/llama-cli --list-devices 2>&1 | grep 'loaded CPU backend'
 
 FROM docker.io/ubuntu:${UBUNTU_VERSION}
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       libcurl4t64 libgomp1 ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /opt/llama /opt/llama
-ENV LD_LIBRARY_PATH=/opt/llama/lib PATH=/opt/llama/bin:$PATH \
-    GGML_BACKEND_PATH=/opt/llama/lib
+# ggml finds libggml-<backend>.so next to the executable (GGML_BACKEND_PATH
+# would name ONE library file, not a directory), so binaries and libraries
+# share /opt/llama.
+ENV LD_LIBRARY_PATH=/opt/llama PATH=/opt/llama:$PATH
 WORKDIR /opt/llama
-ENTRYPOINT ["/opt/llama/bin/ggml-rpc-server"]
+ENTRYPOINT ["/opt/llama/ggml-rpc-server"]

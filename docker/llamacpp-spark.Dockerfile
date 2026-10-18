@@ -36,19 +36,22 @@ RUN cmake -B build -G Ninja \
       -DLLAMA_CURL=ON \
       -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
     && cmake --build build -j "$(nproc)" \
-    && mkdir -p /opt/llama/bin /opt/llama/lib \
-    && find build -name '*.so*' -exec cp -a {} /opt/llama/lib/ \; \
+    && mkdir -p /opt/llama \
+    && find build -name '*.so*' -exec cp -a {} /opt/llama/ \; \
     && cp build/bin/llama-server build/bin/llama-cli build/bin/llama-bench \
-          build/bin/llama-gguf-split build/bin/ggml-rpc-server /opt/llama/bin/ \
+          build/bin/llama-gguf-split build/bin/ggml-rpc-server /opt/llama/ \
     && echo "${LLAMA_SHA}" > /opt/llama/LLAMA_SHA \
-    && LD_LIBRARY_PATH=/opt/llama/lib ldd /opt/llama/bin/llama-server | (! grep 'not found')
+    && LD_LIBRARY_PATH=/opt/llama ldd /opt/llama/llama-server | (! grep 'not found') \
+    && LD_LIBRARY_PATH=/opt/llama /opt/llama/llama-cli --list-devices 2>&1 | grep 'loaded CPU backend'
 
 FROM docker.io/nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION}
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       libcurl4 libgomp1 curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /opt/llama /opt/llama
-ENV LD_LIBRARY_PATH=/opt/llama/lib PATH=/opt/llama/bin:$PATH \
-    GGML_BACKEND_PATH=/opt/llama/lib
+# ggml finds libggml-<backend>.so next to the executable (GGML_BACKEND_PATH
+# would name ONE library file, not a directory), so binaries and libraries
+# share /opt/llama.
+ENV LD_LIBRARY_PATH=/opt/llama PATH=/opt/llama:$PATH
 WORKDIR /opt/llama
-ENTRYPOINT ["/opt/llama/bin/llama-server"]
+ENTRYPOINT ["/opt/llama/llama-server"]
