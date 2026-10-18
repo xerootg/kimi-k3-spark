@@ -258,6 +258,7 @@ def main():
               f"total {done/1e9:.0f} GB, elapsed {(time.time()-t0)/60:.0f} min", flush=True)
     os.fsync(out)
     os.close(out)
+    mv.release()
     buf.close()
 
     if args.verify:
