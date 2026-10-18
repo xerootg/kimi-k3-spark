@@ -2,8 +2,13 @@
 # backend enabled, so llama-server on the Spark can push expert tensors to
 # ggml-rpc-server workers on other cluster nodes.
 #
-# Mirrors upstream .devops/cuda.Dockerfile (GGML_BACKEND_DL + all CPU variants,
-# runtime-selected) with a CUDA 13 base, sm_121 only, and -DGGML_RPC=ON.
+# Mirrors upstream .devops/cuda.Dockerfile (GGML_BACKEND_DL) with a CUDA 13
+# base, sm_121 only, and -DGGML_RPC=ON. The CPU backend is built for exactly
+# the GB10's cores (Cortex-X925/A725: Armv9.2-A, SVE2, I8MM, dotprod, FP16, no
+# SME) instead of GGML_CPU_ALL_VARIANTS: the armv9.2+sme variant does not
+# compile with Ubuntu 24.04's gcc 13 ("invalid feature modifier 'sme'") and
+# the GB10 could not use it anyway. The CPU kernels matter here: with
+# --n-cpu-moe the routed experts run on these cores.
 ARG CUDA_VERSION=13.0.1
 ARG UBUNTU_VERSION=24.04
 
@@ -23,7 +28,8 @@ RUN cmake -B build -G Ninja \
       -DCMAKE_CUDA_ARCHITECTURES="${CUDA_ARCH}" \
       -DGGML_RPC=ON \
       -DGGML_BACKEND_DL=ON \
-      -DGGML_CPU_ALL_VARIANTS=ON \
+      -DGGML_CPU_ALL_VARIANTS=OFF \
+      -DGGML_CPU_ARM_ARCH=armv9.2-a+dotprod+fp16+sve+i8mm \
       -DLLAMA_BUILD_TESTS=OFF \
       -DLLAMA_BUILD_EXAMPLES=OFF \
       -DLLAMA_BUILD_TOOLS=ON \
