@@ -19,6 +19,8 @@ jobs:
     outputs:
       llama_sha: ${{ steps.v.outputs.llama_sha }}
       pulsar_sha: ${{ steps.v.outputs.pulsar_sha }}
+      llama_tag: ${{ steps.v.outputs.llama_tag }}
+      pulsar_tag: ${{ steps.v.outputs.pulsar_tag }}
     steps:
       - uses: actions/checkout@v4
       - id: v
@@ -26,6 +28,8 @@ jobs:
           set -a; . ./versions.env; set +a
           echo "llama_sha=$LLAMA_SHA" >> "$GITHUB_OUTPUT"
           echo "pulsar_sha=$PULSAR_SHA" >> "$GITHUB_OUTPUT"
+          echo "llama_tag=${LLAMA_SHA:0:12}" >> "$GITHUB_OUTPUT"
+          echo "pulsar_tag=${PULSAR_SHA:0:12}" >> "$GITHUB_OUTPUT"
 
   llamacpp-spark:
     needs: versions
@@ -49,7 +53,7 @@ jobs:
           build-args: |
             LLAMA_SHA=${{ needs.versions.outputs.llama_sha }}
           tags: |
-            ghcr.io/xerootg/llamacpp-spark:${{ needs.versions.outputs.llama_sha }}
+            ghcr.io/xerootg/llamacpp-spark:${{ needs.versions.outputs.llama_tag }}
             ghcr.io/xerootg/llamacpp-spark:latest
 
   pulsar-spark:
@@ -74,7 +78,7 @@ jobs:
           build-args: |
             PULSAR_SHA=${{ needs.versions.outputs.pulsar_sha }}
           tags: |
-            ghcr.io/xerootg/pulsar-spark:${{ needs.versions.outputs.pulsar_sha }}
+            ghcr.io/xerootg/pulsar-spark:${{ needs.versions.outputs.pulsar_tag }}
             ghcr.io/xerootg/pulsar-spark:latest
 
   llamacpp-rpc-cpu:
@@ -97,5 +101,5 @@ jobs:
           build-args: |
             LLAMA_SHA=${{ needs.versions.outputs.llama_sha }}
           tags: |
-            ghcr.io/xerootg/llamacpp-rpc-cpu:${{ needs.versions.outputs.llama_sha }}
+            ghcr.io/xerootg/llamacpp-rpc-cpu:${{ needs.versions.outputs.llama_tag }}
             ghcr.io/xerootg/llamacpp-rpc-cpu:latest
