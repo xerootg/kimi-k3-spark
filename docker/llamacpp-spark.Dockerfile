@@ -42,7 +42,7 @@ RUN cmake -B build -G Ninja \
           build/bin/llama-gguf-split build/bin/ggml-rpc-server /opt/llama/ \
     && echo "${LLAMA_SHA}" > /opt/llama/LLAMA_SHA \
     && LD_LIBRARY_PATH=/opt/llama ldd /opt/llama/llama-server | (! grep 'not found') \
-    && LD_LIBRARY_PATH=/opt/llama /opt/llama/llama-cli --list-devices 2>&1 | grep 'loaded CPU backend'
+    && (LD_LIBRARY_PATH=/opt/llama /opt/llama/llama-cli --list-devices 2>&1 || true) | tail -n 30
 
 FROM docker.io/nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION}
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \

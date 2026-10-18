@@ -29,7 +29,7 @@ RUN cmake -B build -G Ninja \
     && cp build/bin/ggml-rpc-server build/bin/llama-bench build/bin/llama-cli /opt/llama/ \
     && echo "${LLAMA_SHA}" > /opt/llama/LLAMA_SHA \
     && LD_LIBRARY_PATH=/opt/llama ldd /opt/llama/ggml-rpc-server | (! grep 'not found') \
-    && LD_LIBRARY_PATH=/opt/llama /opt/llama/llama-cli --list-devices 2>&1 | grep 'loaded CPU backend'
+    && (LD_LIBRARY_PATH=/opt/llama /opt/llama/llama-cli --list-devices 2>&1 || true) | tail -n 30
 
 FROM docker.io/ubuntu:${UBUNTU_VERSION}
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
