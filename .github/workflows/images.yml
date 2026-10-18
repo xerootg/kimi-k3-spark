@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "docker/**"
+      - "patches/**"
       - "versions.env"
       - ".github/workflows/images.yml"
   workflow_dispatch:
