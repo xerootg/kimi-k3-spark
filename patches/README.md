@@ -96,7 +96,9 @@ read by `MUL_MAT_ID`), with these changes:
 - The cache device is the CPU backend. Each group's banks are strided views
   into one `mmap`'d, THP-advised, populated region of records: the expert
   stride of a bank is the record size, so one 6.5 MB read fills gate, up and
-  down of an expert at once.
+  down of an expert at once. The CPU is not a model device, so it takes the
+  whole `--moe-cache-mib` budget instead of a `--tensor-split` share
+  (upstream's split lookup asserted on the Spark's `--tensor-split 1,0,0,0`).
 - Small batches (decode): the slot-map lookup runs in the CPU graph, so no
   scheduler copy happens and no copy callback fires. ggml-cpu gets a graph
   hook (`ggml_cpu_set_graph_hook`, exposed through the backend registry) that
