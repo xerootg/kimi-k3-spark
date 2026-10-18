@@ -37,10 +37,11 @@ RUN cmake -B build -G Ninja \
       -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
     && cmake --build build -j "$(nproc)" \
     && mkdir -p /opt/llama/bin /opt/llama/lib \
-    && find build -name '*.so' -exec cp {} /opt/llama/lib/ \; \
+    && find build -name '*.so*' -exec cp -a {} /opt/llama/lib/ \; \
     && cp build/bin/llama-server build/bin/llama-cli build/bin/llama-bench \
           build/bin/llama-gguf-split build/bin/ggml-rpc-server /opt/llama/bin/ \
-    && echo "${LLAMA_SHA}" > /opt/llama/LLAMA_SHA
+    && echo "${LLAMA_SHA}" > /opt/llama/LLAMA_SHA \
+    && LD_LIBRARY_PATH=/opt/llama/lib ldd /opt/llama/bin/llama-server | (! grep 'not found')
 
 FROM docker.io/nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION}
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \

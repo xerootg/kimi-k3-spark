@@ -25,9 +25,10 @@ RUN cmake -B build -G Ninja \
       -DLLAMA_CURL=ON \
     && cmake --build build -j "$(nproc)" \
     && mkdir -p /opt/llama/bin /opt/llama/lib \
-    && find build -name '*.so' -exec cp {} /opt/llama/lib/ \; \
+    && find build -name '*.so*' -exec cp -a {} /opt/llama/lib/ \; \
     && cp build/bin/ggml-rpc-server build/bin/llama-bench build/bin/llama-cli /opt/llama/bin/ \
-    && echo "${LLAMA_SHA}" > /opt/llama/LLAMA_SHA
+    && echo "${LLAMA_SHA}" > /opt/llama/LLAMA_SHA \
+    && LD_LIBRARY_PATH=/opt/llama/lib ldd /opt/llama/bin/ggml-rpc-server | (! grep 'not found')
 
 FROM docker.io/ubuntu:${UBUNTU_VERSION}
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
