@@ -284,7 +284,7 @@ index 803a832..f8fdb32 100644
      pimpl->mappings.reserve(ml.mappings.size());
  
 diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
-index 2ea2ac7..10d10af 100644
+index 2ea2ac7..c35849f 100644
 --- a/src/llama-moe-cache.cpp
 +++ b/src/llama-moe-cache.cpp
 @@ -5,12 +5,31 @@
@@ -564,7 +564,7 @@ index 2ea2ac7..10d10af 100644
  // gate, up, down or gate_up, down
  static std::vector<ggml_tensor *> llama_moe_cache_layer_experts(const llama_layer & layer) {
      std::vector<ggml_tensor *> res;
-@@ -174,6 +431,13 @@ struct llama_moe_cache::impl {
+@@ -174,6 +431,14 @@ struct llama_moe_cache::impl {
          size_t host_bytes = 0;
          int32_t n_slots = 0;
          moe_cache_lru lru;
@@ -574,11 +574,12 @@ index 2ea2ac7..10d10af 100644
 +        size_t region_size = 0;
 +        ggml_backend_buffer_ptr region_buf;
 +        size_t record_size = 0;
++        size_t slot_stride = 0;       // bytes between two slots of the region: the record, padded so every part's expert stride is whole blocks
 +        std::vector<size_t> part_off; // offset of each expert tensor's bytes inside a record
      };
  
      struct layer {
-@@ -211,6 +475,32 @@ struct llama_moe_cache::impl {
+@@ -211,6 +476,33 @@ struct llama_moe_cache::impl {
      std::vector<int32_t> ids;
      std::vector<moe_cache_lru::fill> fills;
  
@@ -590,6 +591,7 @@ index 2ea2ac7..10d10af 100644
 +    void * staging = nullptr;        // n_expert records, large batches are read here and uploaded from here
 +    size_t staging_size = 0;
 +    bool   staging_pinned = false;
++    ggml_backend_buffer_ptr staging_buf; // the registration of the staging with the GPU, when it has one
 +    bool   bank_on_gpu = false;      // the cache regions are registered with the GPU and the expert matmuls run there
 +    ggml_backend_reg_t gpu_reg = nullptr;
 +    struct {
@@ -611,7 +613,7 @@ index 2ea2ac7..10d10af 100644
      // slot maps in host memory
      ggml_context_ptr ctx_host;
      ggml_backend_buffer_ptr buf_host;
-@@ -221,12 +511,41 @@ struct llama_moe_cache::impl {
+@@ -221,12 +513,41 @@ struct llama_moe_cache::impl {
  
      impl(const llama_model & model, const std::vector<ggml_backend_t> & backends, const std::vector<ggml_backend_buffer_type_t> & bufts, size_t size) :
              n_expert_used(model.hparams.n_expert_used_max()), layers(model.layers.size()) {
@@ -659,7 +661,7 @@ index 2ea2ac7..10d10af 100644
              }
          }
          if (devices.empty()) {
-@@ -245,11 +564,24 @@ struct llama_moe_cache::impl {
+@@ -245,11 +566,24 @@ struct llama_moe_cache::impl {
              if (experts.empty() || !std::all_of(experts.begin(), experts.end(), llama_moe_cache_is_host_weight)) {
                  continue;
              }
@@ -688,7 +690,7 @@ index 2ea2ac7..10d10af 100644
              auto it = std::find_if(groups.begin(), groups.end(), [&](const group & g) { return g.id == id && llama_moe_cache_same_layout(g.ref, experts); });
              if (it == groups.end()) {
                  groups.emplace_back();
-@@ -268,8 +600,35 @@ struct llama_moe_cache::impl {
+@@ -268,8 +602,42 @@ struct llama_moe_cache::impl {
              return;
          }
  
@@ -707,6 +709,13 @@ index 2ea2ac7..10d10af 100644
 +                    g.part_off.push_back(off);
 +                    off += e0->sizes[ip];
 +                }
++                // the GPU matmul kernels address an expert as (slot * nb[2] / type_size) blocks, so the slot stride has to be
++                // a multiple of every part's block size as well as of the O_DIRECT alignment; 4096 and 50 (iq1_s) need no
++                // padding, 66 (iq2_xxs) pads the mixed layers' records by up to 30 %
++                g.slot_stride = GGML_PAD(g.record_size, (size_t) 4096);
++                while (std::any_of(g.ref.begin(), g.ref.end(), [&](const ggml_tensor * t) { return g.slot_stride % ggml_type_size(t->type) != 0; })) {
++                    g.slot_stride += 4096;
++                }
 +                for (int32_t il : g.layers) {
 +                    const expert_store_entry * e = store.find(il);
 +                    if (e->record_size != g.record_size || memcmp(e->sizes, e0->sizes, sizeof(e->sizes)) != 0 || memcmp(e->types, e0->types, sizeof(e->types)) != 0) {
@@ -719,12 +728,12 @@ index 2ea2ac7..10d10af 100644
          // one extra slot at the end, CUDA MMQ can read past the last expert
          auto alloc_size = [&](const group & g, int32_t n_slots) {
 +            if (use_store) {
-+                return GGML_PAD(g.record_size*(size_t) (n_slots + 1), (size_t) 4096);
++                return GGML_PAD(g.slot_stride*(size_t) (n_slots + 1), (size_t) 4096);
 +            }
              const size_t alignment = ggml_backend_buft_get_alignment(devices[g.id].buft);
              size_t res = 0;
              for (const ggml_tensor * t : g.ref) {
-@@ -288,7 +647,10 @@ struct llama_moe_cache::impl {
+@@ -288,7 +656,10 @@ struct llama_moe_cache::impl {
                  continue;
              }
              ggml_backend_dev_t dev = ggml_backend_get_device(d.backend);
@@ -736,7 +745,7 @@ index 2ea2ac7..10d10af 100644
                  size_t free;
                  size_t total;
                  ggml_backend_dev_memory(dev, &free, &total);
-@@ -361,11 +723,53 @@ struct llama_moe_cache::impl {
+@@ -361,11 +732,53 @@ struct llama_moe_cache::impl {
                  continue;
              }
              ggml_context * ctx = devices[g.id].ctx.get();
@@ -775,8 +784,8 @@ index 2ea2ac7..10d10af 100644
 +                for (size_t ip = 0; ip < g.ref.size(); ++ip) {
 +                    const ggml_tensor * t = g.ref[ip];
 +                    ggml_tensor * bank = ggml_new_tensor_3d(ctx, t->type, t->ne[0], t->ne[1], g.n_slots + 1);
-+                    bank->nb[2] = g.record_size;
-+                    bank->nb[3] = g.record_size*(size_t) (g.n_slots + 1);
++                    bank->nb[2] = g.slot_stride;
++                    bank->nb[3] = g.slot_stride*(size_t) (g.n_slots + 1);
 +                    if (g.region != nullptr) {
 +                        bank->data   = (char *) g.region + g.part_off[ip];
 +                        bank->buffer = g.region_buf.get();
@@ -795,7 +804,7 @@ index 2ea2ac7..10d10af 100644
              }
              for (int32_t il : g.layers) {
                  layer & l = layers[il];
-@@ -375,6 +779,9 @@ struct llama_moe_cache::impl {
+@@ -375,6 +788,9 @@ struct llama_moe_cache::impl {
                      ggml_tensor * bank   = g.banks[ip];
                      ggml_tensor * cached = ggml_view_3d(ctx, bank, bank->ne[0], bank->ne[1], g.n_slots, bank->nb[1], bank->nb[2], 0);
                      ggml_format_name(cached, "moe_cache.%s", l.experts[ip]->name);
@@ -805,7 +814,7 @@ index 2ea2ac7..10d10af 100644
                      bindings[l.experts[ip]] = { il, (int32_t) ip, cached };
                  }
                  l.slot_map = ggml_new_tensor_2d(ctx_host.get(), GGML_TYPE_I32, 1, g.ref[0]->ne[2]);
-@@ -382,13 +789,15 @@ struct llama_moe_cache::impl {
+@@ -382,13 +798,15 @@ struct llama_moe_cache::impl {
                  layer_of[l.slot_map] = il;
                  buf_host_size += GGML_PAD(ggml_nbytes(l.slot_map), alignment_host);
              }
@@ -823,7 +832,7 @@ index 2ea2ac7..10d10af 100644
                      continue;
                  }
                  d.buf.reset(ggml_backend_buft_alloc_buffer(d.buft, 0));
-@@ -402,7 +811,7 @@ struct llama_moe_cache::impl {
+@@ -402,7 +820,7 @@ struct llama_moe_cache::impl {
              }
          } else {
              for (device & d : devices) {
@@ -832,7 +841,7 @@ index 2ea2ac7..10d10af 100644
                      continue;
                  }
                  d.buf.reset(ggml_backend_alloc_ctx_tensors_from_buft(d.ctx.get(), d.buft));
-@@ -436,6 +845,31 @@ struct llama_moe_cache::impl {
+@@ -436,6 +854,36 @@ struct llama_moe_cache::impl {
          }
          ggml_backend_buffer_set_usage(buf_host.get(), GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
  
@@ -854,8 +863,13 @@ index 2ea2ac7..10d10af 100644
 +                throw std::runtime_error("expert store: failed to allocate " + std::to_string(staging_size/1024/1024) + " MiB of staging: " + err);
 +            }
 +            if (gpu_reg != nullptr) {
-+                auto * reg_host = (bool (*)(void *, size_t)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_register_host_buffer");
-+                staging_pinned = reg_host != nullptr && reg_host(staging, staging_size);
++                // registered the same way as the cache regions (upstream's ggml_backend_register_host_buffer is gated
++                // on GGML_CUDA_REGISTER_HOST and registers read-only, which the GB10 refused for this region)
++                auto * bank_from_ptr = (ggml_backend_buffer_t (*)(void *, size_t)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_host_bank_buffer_from_ptr");
++                if (bank_from_ptr != nullptr) {
++                    staging_buf.reset(bank_from_ptr(staging, staging_size));
++                }
++                staging_pinned = staging_buf != nullptr;
 +            }
 +            LLAMA_LOG_INFO("%s: expert store: %.2f MiB of prefill staging (%s), host cache below is filled from the store, expert matmuls run on the %s\n",
 +                __func__, staging_size/1024.0/1024.0, staging_pinned ? "pinned" : "pageable", bank_on_gpu ? "GPU from the registered cache" : "CPU");
@@ -864,7 +878,7 @@ index 2ea2ac7..10d10af 100644
          for (size_t id = 0; id < devices.size(); ++id) {
              const device & d = devices[id];
              if (d.host_bytes == 0) {
-@@ -458,6 +892,172 @@ struct llama_moe_cache::impl {
+@@ -458,6 +906,167 @@ struct llama_moe_cache::impl {
  
      ~impl() {
          log_stats();
@@ -875,12 +889,7 @@ index 2ea2ac7..10d10af 100644
 +            if (set_hook != nullptr) {
 +                set_hook(nullptr, nullptr);
 +            }
-+            if (staging_pinned && gpu_reg != nullptr) {
-+                auto * unreg = (void (*)(void *)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_unregister_host_buffer");
-+                if (unreg != nullptr) {
-+                    unreg(staging);
-+                }
-+            }
++            staging_buf.reset();
 +            store_region_free(staging, staging_size);
 +            for (group & g : groups) {
 +                g.region_buf.reset();
@@ -944,7 +953,7 @@ index 2ea2ac7..10d10af 100644
 +        }
 +        jobs.clear();
 +        for (const auto & f : fills) {
-+            jobs.push_back({ (char *) g.region + (size_t) f.slot*g.record_size, g.record_size, (off_t) (e->base_offset + (size_t) f.expert*g.record_size) });
++            jobs.push_back({ (char *) g.region + (size_t) f.slot*g.slot_stride, g.record_size, (off_t) (e->base_offset + (size_t) f.expert*g.record_size) });
 +        }
 +        const auto t1 = std::chrono::steady_clock::now();
 +        if (!pool->run(store.fd, jobs)) {
@@ -1037,7 +1046,7 @@ index 2ea2ac7..10d10af 100644
      }
  
      ggml_tensor * get_slot_map(int32_t il, int64_t n_tokens, int64_t n_expert_used) const {
-@@ -479,6 +1079,10 @@ struct llama_moe_cache::impl {
+@@ -479,6 +1088,10 @@ struct llama_moe_cache::impl {
      }
  
      int64_t copy_experts(ggml_backend_t backend, const ggml_tensor * w, ggml_tensor * dst, int64_t e, int64_t last) {
@@ -1048,7 +1057,7 @@ index 2ea2ac7..10d10af 100644
          const auto it = bindings.find(w);
          if (it == bindings.end()) {
              return 0;
-@@ -522,6 +1126,10 @@ struct llama_moe_cache::impl {
+@@ -522,6 +1135,10 @@ struct llama_moe_cache::impl {
          const layer & l = layers[il];
          group & g = groups[l.ig];
  
@@ -1059,7 +1068,7 @@ index 2ea2ac7..10d10af 100644
          GGML_ASSERT(backend == devices[g.id].backend);
  
          // the get_rows that looks up the slots of the selected experts
-@@ -614,6 +1222,11 @@ struct llama_moe_cache::impl {
+@@ -614,6 +1231,11 @@ struct llama_moe_cache::impl {
          if (stats_copy.hits > 0) {
              LLAMA_LOG_INFO("llama_moe_cache: large batches: %zu experts copied from the cache, %.2f MiB\n", stats_copy.hits, stats_copy.bytes/1024.0/1024.0);
          }
@@ -1071,7 +1080,7 @@ index 2ea2ac7..10d10af 100644
      }
  };
  
-@@ -643,6 +1256,14 @@ int64_t llama_moe_cache::copy_experts(ggml_backend_t backend, const ggml_tensor
+@@ -643,6 +1265,14 @@ int64_t llama_moe_cache::copy_experts(ggml_backend_t backend, const ggml_tensor
      return pimpl->copy_experts(backend, w, dst, e, last);
  }
  

@@ -128,8 +128,14 @@ read by `MUL_MAT_ID`), with these changes:
   0002's mapped file pages, registered anonymous memory is mapped into the
   GPU up front: no UVM faults. `LLAMA_EXPERT_STORE_GPU=0` keeps the matmuls
   on the CPU, `GGML_CUDA_NO_HOST_BANK=1` disables the buffer type. The
-  prefill staging is only pinned when `GGML_CUDA_REGISTER_HOST=1` is set
-  (upstream gates `ggml_backend_cuda_register_host_buffer` on it).
+  prefill staging is registered the same way (upstream's
+  `ggml_backend_cuda_register_host_buffer` is gated on
+  `GGML_CUDA_REGISTER_HOST` and registers read-only, which the GB10
+  refused). The CUDA kernels address an expert as `slot * nb[2] / type_size`
+  blocks, so the slot stride of a region is the record padded to a multiple
+  of every part's block size: no padding for the 80 IQ1_S layers (50-byte
+  blocks), ~30 % for the 12 layers with IQ2_XXS parts (66 bytes). Without
+  it those layers read misaligned blocks and the output was `????`.
 
 Stats are logged every 4096 fills and at exit (hit rate, bytes read for
 decode and prefill). Patches 0001 and 0002 are untouched by this; 0001's
