@@ -24,10 +24,13 @@ on the Spark, patched: 4.45 s). Patch 0002 (zero-copy GPU reads of the
 mmap, `GGML_CUDA_HOST_ZERO_COPY=1`) is built in but off: measured at ~19 s
 per token on the GB10, whose GPU reads of mapped pages go through UVM
 fault handling rather than straight ATS. Patch 0003 (the expert store,
-`LLAMA_EXPERT_STORE` + `--moe-cache-mib`) is the production engine:
-0.71 tok/s decode and 102 tokens of prefill in 54 s on the Spark, with a
-52 GB host LRU hitting 55 % of the lookups. Numbers in the argo-things
-README.
+`LLAMA_EXPERT_STORE` + `--moe-cache-mib`) is the production engine. With
+the expert matmuls running on the GPU straight from the registered host
+cache: 1.4 tok/s decode and 102 tokens of prefill in 18 s on the Spark (52
+GB LRU, 55 % hit rate), 4-7 tok/s single / 2 × 3.0 tok/s parallel on a
+GH200 (352 GiB LRU, 69 % of the experts resident, 2 × 256k context).
+Numbers in the argo-things READMEs (`configs/kimi-k3`,
+`configs/kimi-k3-gh200`).
 
 ## Validating a patch without the Spark
 
