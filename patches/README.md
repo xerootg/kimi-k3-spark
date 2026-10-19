@@ -196,6 +196,16 @@ read by `MUL_MAT_ID`), with these changes:
   not the bottleneck, the GPU waiting on missed experts and the expert
   matmuls over C2C are; it stays on as the base for overlapping reads
   with compute.
+- Predictive prefetch (`LLAMA_EXPERT_STORE_PREFETCH=1`, off by default):
+  right after layer l's lookup the graph runs layer l+1's router on layer
+  l's input (`build_moe_cache_prefetch`, a `moe_prefetch-<il>` lookup that
+  the CUDA backend posts to a second mailbox without waiting), and the
+  poller reads the predicted misses between real requests. Lossless. On
+  the GH200: 83 % of the predicted reads were used and the real misses
+  fell from 1.0 to 0.8 per layer, but decode did not get faster (7.53 vs
+  7.75 tok/s): the GPU works ~1 ms between a prediction and the next real
+  request, a prefetch read takes about as long, and the real request
+  queues behind it. Kept for a box where layers take longer than a read.
 - `GGML_CUDA_OP_PROFILE=N`: CUDA-event timing of every node, printed per
   op kind (host-bank vs device weights) every N graphs. Turns CUDA graphs
   off and inflates tiny kernels; use it for the big ops. GH200 warm decode:
