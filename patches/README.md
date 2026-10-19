@@ -184,9 +184,29 @@ read by `MUL_MAT_ID`), with these changes:
   miss evicting one of them left a -1 in the slot map that the GPU then
   read as an expert index: an MMU fault). `LLAMA_EXPERT_STORE_PREFILL_PROMOTE=1`
   restores plain LRU.
-- The prefill staging (`n_expert` records, 6.7 GB) is allocated on its
-  first use; with the bank on the GPU and `LLAMA_EXPERT_STORE_MAX_BATCH`
-  at the ubatch size it is never used. After the load, with the store
+- The host-bank hook is asynchronous where the driver API is linked
+  (`GGML_CUDA_HOST_BANK_ASYNC`, default on): instead of synchronizing the
+  stream before each lookup, a small kernel writes the selected experts to
+  a mailbox in mapped host memory and the stream waits on a flag
+  (`cuStreamWaitValue32`); a CPU thread spinning on the mailbox runs the
+  fill and sets the flag. Nothing blocks the host, so decode graphs are
+  captured and replayed as CUDA graphs again (97 % of the graphs on the
+  GH200, `GGML_CUDA_GRAPH_STATS=1` prints the counts). Measured: same
+  speed as the synchronous hook (11 tok/s warm). The launch overhead was
+  not the bottleneck, the GPU waiting on missed experts and the expert
+  matmuls over C2C are; it stays on as the base for overlapping reads
+  with compute.
+- `GGML_CUDA_OP_PROFILE=N`: CUDA-event timing of every node, printed per
+  op kind (host-bank vs device weights) every N graphs. Turns CUDA graphs
+  off and inflates tiny kernels; use it for the big ops. GH200 warm decode:
+  29.5 ms of expert matmuls from host memory (~340 GB/s over C2C), 32 ms
+  of Q6_K dense matmuls in HBM, the rest small ops and miss waits.
+- The prefill staging (`n_expert` records, 6.7 GB) is allocated at load
+  when prompts will go through it (the default 32-token cache limit), and
+  only on first use when `LLAMA_EXPERT_STORE_MAX_BATCH` covers the ubatch
+  and it is a fallback (GH200). An image that allocated it lazily
+  everywhere pushed the memory-tight Spark into 40 minutes of reclaim
+  thrash on the first long prompt. After the load, with the store
   active, the mapping's page cache is released (`madvise(MADV_PAGEOUT)`:
   the spine was copied to the device and the experts come from the
   store), which is ~45 GB that `--moe-cache-mib` can use instead;
