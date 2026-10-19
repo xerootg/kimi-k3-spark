@@ -247,12 +247,14 @@ read by `MUL_MAT_ID`), with these changes:
   `LLAMA_EXPERT_STORE_HBM_DECAY` tokens, default 128) and exchanges up to
   `LLAMA_EXPERT_STORE_HBM_PROMOTE` (default 2) of the most used experts in
   host slots with the least used experts in HBM slots, a parallel memory
-  swap on the I/O threads while the GPU waits for the fill. Lossless (the
-  same bytes, bit-identical output). GH200, 800-token coding generations,
-  warm: 7.77 tok/s without, 8.39 / 8.87 / 9.31 with 8 / 16 / 24 GiB
-  (21 / 30 / 37 % of the lookups served from HBM). The size is bounded by
-  the HBM left after the spine, KV and compute buffers, which are
-  allocated after the cache: 24 GiB left 3.8 GB free on the GH200.
+  swap on the I/O threads (256 KiB pieces, ~0.14 ms per 6.6 MB record)
+  while the GPU waits for the fill. Lossless (the same bytes, bit-identical
+  output). GH200, 800-token coding generations, warm: 7.77 tok/s without,
+  8.39 / 8.87 / 9.31 with 8 / 16 / 24 GiB (21 / 30 / 37 % of the lookups
+  served from HBM), 9.49 with THP on the HBM pages and the finer swaps,
+  9.58 with decay 512 (deployed; decay 32: 9.19, too many swaps). The size
+  is bounded by the HBM left after the spine, KV and compute buffers,
+  which are allocated after the cache: ~6.5 GB stay free at 24 GiB.
 
 Stats are logged every 4096 fills and at exit (hit rate, bytes read for
 decode and prefill). Patches 0001 and 0002 are untouched by this; 0001's

@@ -20,6 +20,7 @@ region, read by a coalesced kernel. "cold" is the first read of new offsets, "wa
 | file_pf | `mmap`, cold, 32 CPU threads `MADV_POPULATE_READ` the chunks first (8-9 GB/s) | 242 | 346 |
 | hbm_ats | plain malloc `mbind` to NUMA node 1 (the HBM), ATS | 2093 | 2776 |
 | hbm_reg | same, registered | 2093 | 2856 |
+| hbm_thp_reg | same with `MADV_HUGEPAGE` (512 MiB THP), 24 GiB | 2608 | 2696 |
 | file_hbm | `mmap`, page cache filled by a thread bound to node 1 | 2163 | 2856 |
 | file_pf_hbm | `mmap`, cold, populated by threads bound to node 1 | 737 | 2504 |
 
@@ -40,6 +41,10 @@ region, read by a coalesced kernel. "cold" is the first read of new offsets, "wa
   the C2C rate. A hot-expert tier needs no copies and no second pointer: bind those pages to node 1.
 
 ## Consequences for the expert store
+
+Built as the HBM tier (`LLAMA_EXPERT_STORE_HBM_MIB`, see patches/README.md). With 24 GiB on the HBM node,
+coding decode on the GH200 went from 7.77 to 9.58 tok/s. All experiments are listed in docs/experiments.md.
+The original reasoning:
 
 - The store's registered LRU bank is equivalent to the "UVM with CPU prefetch" design. There is no speed
   left on the table from not using UVM.
