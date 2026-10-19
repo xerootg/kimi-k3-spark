@@ -1107,7 +1107,7 @@ index 803a832..f71ae59 100644
          for (auto & mapping : ml.mappings) {
              pimpl->mappings.emplace_back(std::move(mapping));
 diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
-index 2ea2ac7..216fee8 100644
+index 2ea2ac7..8ccc91c 100644
 --- a/src/llama-moe-cache.cpp
 +++ b/src/llama-moe-cache.cpp
 @@ -5,11 +5,35 @@
@@ -1154,15 +1154,44 @@ index 2ea2ac7..216fee8 100644
  
      // doubly linked list of the slots, head is the least recently used
      std::vector<int32_t> prev;
-@@ -44,6 +69,7 @@ struct moe_cache_lru {
+@@ -27,6 +52,11 @@ struct moe_cache_lru {
+     int32_t head = -1;
+     int32_t tail = -1;
+ 
++    // decayed use count of every (layer, expert) key, for the HBM tier: the first n_hbm slots of the group
++    // live on the GPU's HBM NUMA node and hold the most used experts
++    std::vector<uint16_t> uses;  // [n_layer*n_expert]
++    int32_t n_hbm = 0;
++
+     std::vector<uint32_t> seen; // [n_expert]
+     uint32_t seen_gen = 0;
+     std::vector<int32_t> uniq;
+@@ -44,7 +74,24 @@ struct moe_cache_lru {
          }
          head = 0;
          tail = n_slots - 1;
 +        n_filled = 0;
          seen.assign(n_expert, 0);
++        uses.assign((size_t) n_layer*n_expert, 0);
++    }
++
++    // exchange the experts of slots a and b (the caller exchanges the data); each slot keeps its place in the
++    // LRU list, so the expert moved into a takes a's recency
++    void exchange(int32_t a, int32_t b) {
++        const int32_t ka = key_of[a];
++        const int32_t kb = key_of[b];
++        key_of[a] = kb;
++        key_of[b] = ka;
++        if (kb >= 0) {
++            slot_map[kb / n_expert][kb % n_expert] = a;
++        }
++        if (ka >= 0) {
++            slot_map[ka / n_expert][ka % n_expert] = b;
++        }
      }
  
-@@ -65,6 +91,23 @@ struct moe_cache_lru {
+     // move slot s to the tail (most recently used)
+@@ -65,6 +112,23 @@ struct moe_cache_lru {
          tail = s;
      }
  
@@ -1186,7 +1215,7 @@ index 2ea2ac7..216fee8 100644
      struct fill {
          int32_t expert;
          int32_t slot;
-@@ -72,9 +115,13 @@ struct moe_cache_lru {
+@@ -72,9 +136,13 @@ struct moe_cache_lru {
  
      // give a slot to each expert selected by ids in layer il, the misses evict the least recently used experts
      // returns false if the ids select more distinct experts than there are slots
@@ -1201,7 +1230,7 @@ index 2ea2ac7..216fee8 100644
  
          if (++seen_gen == 0) {
              std::fill(seen.begin(), seen.end(), 0);
-@@ -97,7 +144,9 @@ struct moe_cache_lru {
+@@ -97,7 +165,9 @@ struct moe_cache_lru {
          // hits go to the tail first, so the head can be evicted below
          for (int32_t e : uniq) {
              if (slots[e] >= 0) {
@@ -1212,7 +1241,7 @@ index 2ea2ac7..216fee8 100644
                  n_hit++;
              }
          }
-@@ -107,19 +156,334 @@ struct moe_cache_lru {
+@@ -107,19 +177,405 @@ struct moe_cache_lru {
              if (slots[e] >= 0) {
                  continue;
              }
@@ -1343,15 +1372,16 @@ index 2ea2ac7..216fee8 100644
 +    const expert_store_entry * find(int32_t il) const {
 +        const auto it = by_layer.find(il);
 +        return it == by_layer.end() ? nullptr : &entries[it->second];
-+    }
-+};
-+
+     }
+ };
+ 
 +// a few threads issuing O_DIRECT preads, enough in flight to keep the NVMe queue full
 +struct io_pool {
 +    struct job {
 +        void * dst;
 +        size_t len;
 +        off_t  off;
++        void * swap_with = nullptr; // not a read: exchange len bytes of dst and swap_with (off unused)
 +    };
 +
 +    // chunk: a record is read as pieces of this many bytes by different threads (0 = whole records). One
@@ -1384,19 +1414,25 @@ index 2ea2ac7..216fee8 100644
 +            cur_fd = fd;
 +            jobs.clear();
 +            for (const job & j : in) {
-+                if (chunk == 0 || j.len <= chunk) {
++                // swaps are memory bound, not latency bound: finer pieces put every thread on them
++                const size_t piece = j.swap_with != nullptr ? (size_t) 256*1024 : chunk;
++                if (piece == 0 || j.len <= piece) {
 +                    jobs.push_back(j);
 +                    continue;
 +                }
 +                char * dst = (char *) j.dst;
++                char * sw  = (char *) j.swap_with;
 +                size_t len = j.len;
 +                off_t  off = j.off;
 +                while (len > 0) {
-+                    const size_t n = std::min(len, chunk);
-+                    jobs.push_back({ dst, n, off });
++                    const size_t n = std::min(len, piece);
++                    jobs.push_back({ dst, n, off, sw });
 +                    dst += n;
 +                    len -= n;
 +                    off += (off_t) n;
++                    if (sw != nullptr) {
++                        sw += n;
++                    }
 +                }
 +            }
 +            failed.store(false);
@@ -1428,7 +1464,7 @@ index 2ea2ac7..216fee8 100644
 +            }
 +            work();
 +        }
-     }
++    }
 +
 +    void work() {
 +        for (;;) {
@@ -1437,6 +1473,22 @@ index 2ea2ac7..216fee8 100644
 +                return;
 +            }
 +            const job & j = jobs[i];
++            if (j.swap_with != nullptr) {
++                alignas(64) char tmp[64*1024];
++                char * a = (char *) j.dst;
++                char * b = (char *) j.swap_with;
++                for (size_t o = 0; o < j.len; o += sizeof(tmp)) {
++                    const size_t n = std::min(sizeof(tmp), j.len - o);
++                    memcpy(tmp, a + o, n);
++                    memcpy(a + o, b + o, n);
++                    memcpy(b + o, tmp, n);
++                }
++                if (remaining.fetch_sub(1) == 1) {
++                    std::lock_guard<std::mutex> lock(mutex);
++                    done_cv.notify_all();
++                }
++                continue;
++            }
 +            char * dst = (char *) j.dst;
 +            size_t len = j.len;
 +            off_t  off = j.off;
@@ -1470,8 +1522,8 @@ index 2ea2ac7..216fee8 100644
 +    std::atomic<size_t>       next{0};
 +    std::atomic<size_t>       remaining{0};
 +    std::atomic<bool>         failed{false};
- };
- 
++};
++
 +#if defined(__linux__)
 +// the NUMA nodes that have CPUs, as a bitmask (0 if unknown). A GH200 exposes the GPU's HBM as a CPU-less NUMA node
 +// that the kernel hands out to anyone when the host node runs low (before reclaiming its page cache): a cache
@@ -1501,25 +1553,72 @@ index 2ea2ac7..216fee8 100644
 +    }();
 +    return mask;
 +}
++
++// the NUMA nodes with memory but no CPUs: on a GH200 the GPU's HBM
++static unsigned long store_gpu_node_mask() {
++    static unsigned long mask = [] {
++        unsigned long m = 0;
++        FILE * f = fopen("/sys/devices/system/node/has_memory", "r");
++        if (f == nullptr) {
++            return m;
++        }
++        char buf[256] = {0};
++        if (fgets(buf, sizeof(buf), f) != nullptr) {
++            for (char * tok = strtok(buf, ",\n"); tok != nullptr; tok = strtok(nullptr, ",\n")) {
++                int lo = -1, hi = -1;
++                if (sscanf(tok, "%d-%d", &lo, &hi) < 2) {
++                    hi = lo;
++                }
++                for (int n = lo; n >= 0 && n <= hi && n < (int) (8*sizeof(m)); ++n) {
++                    m |= 1UL << n;
++                }
++            }
++        }
++        fclose(f);
++        return m & ~store_cpu_node_mask();
++    }();
++    return mask;
++}
 +#endif
 +
-+// page-aligned, populated host memory for the banks and the staging (O_DIRECT reads land here)
-+static void * store_region_alloc(size_t size, std::string & err) {
++// page-aligned, populated host memory for the banks and the staging (O_DIRECT reads land here).
++// hbm_bytes > 0: the first hbm_bytes are bound to the GPU's HBM node (GH200), where the GPU reads them at HBM
++// speed through the same registered mapping; the allocation fails if that node cannot hold them.
++static void * store_region_alloc(size_t size, std::string & err, size_t hbm_bytes = 0) {
 +#if defined(__linux__)
 +    void * p = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 +    if (p == MAP_FAILED) {
 +        err = strerror(errno);
 +        return nullptr;
 +    }
++    const size_t page = (size_t) sysconf(_SC_PAGESIZE);
++    hbm_bytes = std::min(size, (hbm_bytes + page - 1)/page*page);
++    if (hbm_bytes > 0) {
++        const unsigned long gmask = store_gpu_node_mask();
++        if (gmask == 0) {
++            munmap(p, size);
++            err = "no CPU-less memory node for the HBM tier";
++            return nullptr;
++        }
++        madvise(p, hbm_bytes, MADV_HUGEPAGE);
++        if (syscall(SYS_mbind, p, hbm_bytes, MPOL_BIND, &gmask, 8*sizeof(gmask) + 1, 0) != 0 ||
++            madvise(p, hbm_bytes, MADV_POPULATE_WRITE) != 0) {
++            err = std::string("binding ") + std::to_string(hbm_bytes/1024/1024) + " MiB to the HBM node failed: " + strerror(errno);
++            munmap(p, size);
++            return nullptr;
++        }
++    }
 +    {
 +        const char * env = getenv("LLAMA_EXPERT_STORE_NUMA_BIND");
 +        const unsigned long mask = store_cpu_node_mask();
-+        if (mask != 0 && !(env != nullptr && env[0] == '0')) {
-+            if (syscall(SYS_mbind, p, size, MPOL_BIND, &mask, 8*sizeof(mask) + 1, 0) != 0) {
++        if (mask != 0 && size > hbm_bytes && !(env != nullptr && env[0] == '0')) {
++            if (syscall(SYS_mbind, (char *) p + hbm_bytes, size - hbm_bytes, MPOL_BIND, &mask, 8*sizeof(mask) + 1, 0) != 0) {
 +                LLAMA_LOG_WARN("%s: mbind of %zu MiB to the CPU nodes (mask 0x%lx) failed: %s\n", __func__, size/1024/1024, mask, strerror(errno));
 +            }
 +        }
 +    }
++    // transparent huge pages on both parts; on the HBM node they also speed up the GPU's first reads of an expert
++    // (fewer translations: 2.6 vs 2.1 TB/s for random 6.6 MB chunks)
 +    madvise(p, size, MADV_HUGEPAGE);
 +    if (madvise(p, size, MADV_POPULATE_WRITE) != 0) {
 +        for (size_t off = 0; off < size; off += 4096) {
@@ -1529,6 +1628,7 @@ index 2ea2ac7..216fee8 100644
 +    return p;
 +#else
 +    GGML_UNUSED(size);
++    GGML_UNUSED(hbm_bytes);
 +    err = "needs Linux";
 +    return nullptr;
 +#endif
@@ -1548,7 +1648,7 @@ index 2ea2ac7..216fee8 100644
  // gate, up, down or gate_up, down
  static std::vector<ggml_tensor *> llama_moe_cache_layer_experts(const llama_layer & layer) {
      std::vector<ggml_tensor *> res;
-@@ -174,6 +538,14 @@ struct llama_moe_cache::impl {
+@@ -174,6 +630,17 @@ struct llama_moe_cache::impl {
          size_t host_bytes = 0;
          int32_t n_slots = 0;
          moe_cache_lru lru;
@@ -1560,10 +1660,13 @@ index 2ea2ac7..216fee8 100644
 +        size_t record_size = 0;
 +        size_t slot_stride = 0;       // bytes between two slots of the region: the record, padded so every part's expert stride is whole blocks
 +        std::vector<size_t> part_off; // offset of each expert tensor's bytes inside a record
++        size_t hbm_budget = 0;        // share of LLAMA_EXPERT_STORE_HBM_MIB; the first lru.n_hbm slots are on the HBM node
++        int32_t hbm_min_slot = -1;    // the least used expert in the HBM slots, refreshed every few fills
++        uint16_t hbm_min_uses = 0;
      };
  
      struct layer {
-@@ -194,7 +566,12 @@ struct llama_moe_cache::impl {
+@@ -194,7 +661,12 @@ struct llama_moe_cache::impl {
          size_t bytes  = 0;
      };
  
@@ -1577,7 +1680,7 @@ index 2ea2ac7..216fee8 100644
  
      int32_t n_expert_used;
  
-@@ -211,6 +588,46 @@ struct llama_moe_cache::impl {
+@@ -211,6 +683,53 @@ struct llama_moe_cache::impl {
      std::vector<int32_t> ids;
      std::vector<moe_cache_lru::fill> fills;
  
@@ -1604,6 +1707,13 @@ index 2ea2ac7..216fee8 100644
 +    int32_t last_fill_il = -1;       // the layer of the last real fill: its experts may be in use by the GPU, never evict them
 +    std::vector<int32_t> last_fill_ids;
 +    uint64_t n_prefetch_calls = 0, n_prefetch_reads = 0, n_prefetch_used = 0;
++    // HBM tier (LLAMA_EXPERT_STORE_HBM_MIB): lookups served from it, promotions into it
++    size_t   hbm_size = 0;
++    int      hbm_decay = 128;      // LLAMA_EXPERT_STORE_HBM_DECAY: tokens between halvings of the use counts
++    int      hbm_max_promote = 2;  // LLAMA_EXPERT_STORE_HBM_PROMOTE: exchanges per layer fill at most
++    uint64_t n_hbm_fills = 0;
++    uint64_t n_hbm_lookups = 0, n_lookups = 0, n_promotions = 0;
++    uint64_t t_promote_us = 0;
 +    std::vector<uint8_t> prefetched; // [n_layer*n_expert] read by a prefetch and not yet used by a real fill
 +    struct {
 +        int32_t il = -1;
@@ -1624,7 +1734,7 @@ index 2ea2ac7..216fee8 100644
      // slot maps in host memory
      ggml_context_ptr ctx_host;
      ggml_backend_buffer_ptr buf_host;
-@@ -221,12 +638,51 @@ struct llama_moe_cache::impl {
+@@ -221,12 +740,59 @@ struct llama_moe_cache::impl {
  
      impl(const llama_model & model, const std::vector<ggml_backend_t> & backends, const std::vector<ggml_backend_buffer_type_t> & bufts, size_t size) :
              n_expert_used(model.hparams.n_expert_used_max()), layers(model.layers.size()) {
@@ -1665,6 +1775,14 @@ index 2ea2ac7..216fee8 100644
 +            size_t chunk = env_chunk ? (size_t) std::max(0, atoi(env_chunk))*1024 : (size_t) 1024*1024;
 +            chunk -= chunk % 4096; // O_DIRECT alignment
 +            pool = std::make_unique<io_pool>(n_io, chunk);
++            const char * env_hbm = getenv("LLAMA_EXPERT_STORE_HBM_MIB");
++            hbm_size = env_hbm != nullptr ? (size_t) std::max(0, atoi(env_hbm))*1024*1024 : 0;
++            if (getenv("LLAMA_EXPERT_STORE_HBM_DECAY") != nullptr) {
++                hbm_decay = std::max(1, atoi(getenv("LLAMA_EXPERT_STORE_HBM_DECAY")));
++            }
++            if (getenv("LLAMA_EXPERT_STORE_HBM_PROMOTE") != nullptr) {
++                hbm_max_promote = std::max(0, atoi(getenv("LLAMA_EXPERT_STORE_HBM_PROMOTE")));
++            }
 +            const char * env_batch = getenv("LLAMA_EXPERT_STORE_MAX_BATCH");
 +            if (env_batch != nullptr && atoi(env_batch) > 0) {
 +                max_batch_env = atoi(env_batch);
@@ -1682,7 +1800,7 @@ index 2ea2ac7..216fee8 100644
              }
          }
          if (devices.empty()) {
-@@ -245,11 +701,24 @@ struct llama_moe_cache::impl {
+@@ -245,11 +811,24 @@ struct llama_moe_cache::impl {
              if (experts.empty() || !std::all_of(experts.begin(), experts.end(), llama_moe_cache_is_host_weight)) {
                  continue;
              }
@@ -1711,7 +1829,7 @@ index 2ea2ac7..216fee8 100644
              auto it = std::find_if(groups.begin(), groups.end(), [&](const group & g) { return g.id == id && llama_moe_cache_same_layout(g.ref, experts); });
              if (it == groups.end()) {
                  groups.emplace_back();
-@@ -268,8 +737,42 @@ struct llama_moe_cache::impl {
+@@ -268,8 +847,42 @@ struct llama_moe_cache::impl {
              return;
          }
  
@@ -1754,7 +1872,7 @@ index 2ea2ac7..216fee8 100644
              const size_t alignment = ggml_backend_buft_get_alignment(devices[g.id].buft);
              size_t res = 0;
              for (const ggml_tensor * t : g.ref) {
-@@ -288,7 +791,10 @@ struct llama_moe_cache::impl {
+@@ -288,7 +901,10 @@ struct llama_moe_cache::impl {
                  continue;
              }
              ggml_backend_dev_t dev = ggml_backend_get_device(d.backend);
@@ -1766,7 +1884,25 @@ index 2ea2ac7..216fee8 100644
                  size_t free;
                  size_t total;
                  ggml_backend_dev_memory(dev, &free, &total);
-@@ -361,11 +867,53 @@ struct llama_moe_cache::impl {
+@@ -314,7 +930,8 @@ struct llama_moe_cache::impl {
+         for (group & g : groups) {
+             const device & d = devices[g.id];
+             const int32_t n_expert  = g.ref[0]->ne[2];
+-            const size_t  budget    = (size_t) ((double) size*d.split/split_sum*g.host_bytes/d.host_bytes);
++            g.hbm_budget = use_store ? (size_t) ((double) hbm_size*g.host_bytes/d.host_bytes) : 0;
++            const size_t  budget    = (size_t) ((double) size*d.split/split_sum*g.host_bytes/d.host_bytes) + g.hbm_budget;
+             const int32_t max_slots = g.layers.size()*n_expert;
+             while (g.n_slots < max_slots && alloc_size(g, g.n_slots + 1) <= budget) {
+                 g.n_slots++;
+@@ -325,6 +942,7 @@ struct llama_moe_cache::impl {
+                 continue;
+             }
+             g.lru.init(model.layers.size(), n_expert, g.n_slots);
++            g.lru.n_hbm = g.slot_stride > 0 ? std::min<int32_t>(g.n_slots, (int32_t) (g.hbm_budget/g.slot_stride)) : 0;
+             n_tensors[g.id] += g.ref.size()*(1 + g.layers.size());
+             n_tensors_host  += g.layers.size();
+         }
+@@ -361,11 +979,53 @@ struct llama_moe_cache::impl {
                  continue;
              }
              ggml_context * ctx = devices[g.id].ctx.get();
@@ -1780,7 +1916,7 @@ index 2ea2ac7..216fee8 100644
 +                g.region_size = alloc_size(g, g.n_slots);
 +                if (!model.hparams.no_alloc) {
 +                    std::string err;
-+                    g.region = store_region_alloc(g.region_size, err);
++                    g.region = store_region_alloc(g.region_size, err, (size_t) g.lru.n_hbm*g.slot_stride);
 +                    if (g.region == nullptr) {
 +                        throw std::runtime_error("expert store: failed to allocate " + std::to_string(g.region_size/1024/1024) + " MiB of host cache: " + err);
 +                    }
@@ -1825,7 +1961,7 @@ index 2ea2ac7..216fee8 100644
              }
              for (int32_t il : g.layers) {
                  layer & l = layers[il];
-@@ -375,6 +923,9 @@ struct llama_moe_cache::impl {
+@@ -375,6 +1035,9 @@ struct llama_moe_cache::impl {
                      ggml_tensor * bank   = g.banks[ip];
                      ggml_tensor * cached = ggml_view_3d(ctx, bank, bank->ne[0], bank->ne[1], g.n_slots, bank->nb[1], bank->nb[2], 0);
                      ggml_format_name(cached, "moe_cache.%s", l.experts[ip]->name);
@@ -1835,7 +1971,7 @@ index 2ea2ac7..216fee8 100644
                      bindings[l.experts[ip]] = { il, (int32_t) ip, cached };
                  }
                  l.slot_map = ggml_new_tensor_2d(ctx_host.get(), GGML_TYPE_I32, 1, g.ref[0]->ne[2]);
-@@ -382,13 +933,15 @@ struct llama_moe_cache::impl {
+@@ -382,13 +1045,15 @@ struct llama_moe_cache::impl {
                  layer_of[l.slot_map] = il;
                  buf_host_size += GGML_PAD(ggml_nbytes(l.slot_map), alignment_host);
              }
@@ -1853,7 +1989,7 @@ index 2ea2ac7..216fee8 100644
                      continue;
                  }
                  d.buf.reset(ggml_backend_buft_alloc_buffer(d.buft, 0));
-@@ -402,7 +955,7 @@ struct llama_moe_cache::impl {
+@@ -402,7 +1067,7 @@ struct llama_moe_cache::impl {
              }
          } else {
              for (device & d : devices) {
@@ -1862,7 +1998,7 @@ index 2ea2ac7..216fee8 100644
                      continue;
                  }
                  d.buf.reset(ggml_backend_alloc_ctx_tensors_from_buft(d.ctx.get(), d.buft));
-@@ -412,12 +965,41 @@ struct llama_moe_cache::impl {
+@@ -412,12 +1077,41 @@ struct llama_moe_cache::impl {
                  ggml_backend_buffer_clear(d.buf.get(), 0);
                  d.buf_size = ggml_backend_buffer_get_size(d.buf.get());
              }
@@ -1909,7 +2045,7 @@ index 2ea2ac7..216fee8 100644
  
              for (group & g : groups) {
                  for (int32_t il : g.layers) {
-@@ -436,6 +1018,46 @@ struct llama_moe_cache::impl {
+@@ -436,6 +1130,46 @@ struct llama_moe_cache::impl {
          }
          ggml_backend_buffer_set_usage(buf_host.get(), GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
  
@@ -1956,7 +2092,17 @@ index 2ea2ac7..216fee8 100644
          for (size_t id = 0; id < devices.size(); ++id) {
              const device & d = devices[id];
              if (d.host_bytes == 0) {
-@@ -453,11 +1075,283 @@ struct llama_moe_cache::impl {
+@@ -445,19 +1179,366 @@ struct llama_moe_cache::impl {
+                 ggml_backend_buft_name(d.buft), d.buf_size/1024.0/1024.0, d.host_bytes/1024.0/1024.0);
+             for (const group & g : groups) {
+                 if (g.id == (int32_t) id) {
+-                    LLAMA_LOG_INFO("%s: %2zu layers, %s: %5d slots (%.1f%%)\n", __func__,
+-                        g.layers.size(), ggml_type_name(g.ref.back()->type), g.n_slots, 100.0*g.n_slots/(g.layers.size()*g.ref[0]->ne[2]));
++                    LLAMA_LOG_INFO("%s: %2zu layers, %s: %5d slots (%.1f%%), %d of them on the HBM node\n", __func__,
++                        g.layers.size(), ggml_type_name(g.ref.back()->type), g.n_slots, 100.0*g.n_slots/(g.layers.size()*g.ref[0]->ne[2]), g.lru.n_hbm);
+                 }
+             }
+         }
      }
  
      ggml_backend_t backend(int32_t il) const {
@@ -2086,6 +2232,9 @@ index 2ea2ac7..216fee8 100644
 +        if (!pool->run(store.fd, jobs)) {
 +            GGML_ABORT("expert store: read failed for layer %d: %s", il, strerror(errno));
 +        }
++        if (g.lru.n_hbm > 0 && promote && !prefetch) {
++            hbm_tier(il, g);
++        }
 +        const auto t2 = std::chrono::steady_clock::now();
 +        last_fill_il = il;
 +        t_dec_plan_us += std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
@@ -2103,6 +2252,74 @@ index 2ea2ac7..216fee8 100644
 +            LLAMA_LOG_INFO("%s: expert store: %zu lookups, hit rate %.1f%%, %.1f GB read for decode, %.1f GB for prefill\n", __func__,
 +                n, n ? 100.0*stats_store_decode.hits/n : 0.0, stats_store_decode.bytes/1e9, store_prefill_bytes/1e9);
 +            log_decode_timing(__func__);
++        }
++    }
++
++    // HBM tier, after a decode fill of layer il: count the uses of its selected experts (lru.uniq, left by the plan),
++    // and move the most used ones that sit in host slots into the HBM slots, in exchange for the least used expert
++    // there. Safe here: the GPU is waiting for this fill, nothing reads the bank until the slot map is published.
++    void hbm_tier(int32_t il, group & g) {
++        moe_cache_lru & lru = g.lru;
++        const size_t base = (size_t) il*lru.n_expert;
++        for (int32_t e : lru.uniq) {
++            uint16_t & u = lru.uses[base + e];
++            if (u < UINT16_MAX) {
++                u++;
++            }
++        }
++        // halve every count every hbm_decay tokens (one fill per layer and token): the tier follows the
++        // working set of the current conversation without forgetting it in a few tokens
++        if (++n_hbm_fills % ((uint64_t) hbm_decay*layers.size()) == 0) {
++            for (group & gg : groups) {
++                for (uint16_t & u : gg.lru.uses) {
++                    u >>= 1;
++                }
++                gg.hbm_min_slot = -1;
++            }
++        }
++        if (g.hbm_min_slot < 0 || n_hbm_fills % 16 == 0) {
++            hbm_refresh_min(g);
++        }
++        const auto t0 = std::chrono::steady_clock::now();
++        int n_promoted = 0;
++        for (int32_t e : lru.uniq) {
++            const int32_t s = lru.slot_map[il][e];
++            if (s < lru.n_hbm || n_promoted >= hbm_max_promote || g.hbm_min_slot < 0) {
++                continue;
++            }
++            const uint16_t u = lru.uses[base + e];
++            if (u < g.hbm_min_uses + std::max<int>(2, g.hbm_min_uses/4)) {
++                continue;
++            }
++            const int32_t h = g.hbm_min_slot;
++            jobs.clear();
++            jobs.push_back({ (char *) g.region + (size_t) s*g.slot_stride, g.record_size, 0, (char *) g.region + (size_t) h*g.slot_stride });
++            pool->run(store.fd, jobs);
++            lru.exchange(s, h);
++            n_promoted++;
++            n_promotions++;
++            hbm_refresh_min(g);
++        }
++        if (n_promoted > 0) {
++            t_promote_us += std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - t0).count();
++        }
++        for (int32_t e : lru.uniq) {
++            n_lookups++;
++            n_hbm_lookups += lru.slot_map[il][e] < lru.n_hbm;
++        }
++    }
++
++    void hbm_refresh_min(group & g) {
++        const moe_cache_lru & lru = g.lru;
++        g.hbm_min_slot = -1;
++        g.hbm_min_uses = UINT16_MAX;
++        for (int32_t h = 0; h < lru.n_hbm; ++h) {
++            const int32_t k = lru.key_of[h];
++            // an empty HBM slot is filled by the next miss that evicts it, never by an exchange (n_filled)
++            if (k >= 0 && lru.uses[k] < g.hbm_min_uses) {
++                g.hbm_min_uses = lru.uses[k];
++                g.hbm_min_slot = h;
++            }
 +        }
 +    }
 +
@@ -2153,6 +2370,10 @@ index 2ea2ac7..216fee8 100644
 +            t_dec_plan_us/n/1e3, t_dec_io_us/n/1e3, (double) stats_store_decode.misses/n,
 +            t_dec_io_us ? stats_store_decode.bytes/(t_dec_io_us/1e6)/1e9 : 0.0,
 +            n_dec_gaps ? t_dec_gap_us/(double) n_dec_gaps/1e3 : 0.0);
++        if (n_lookups > 0) {
++            LLAMA_LOG_INFO("%s: expert store: HBM tier: %.1f%% of decode lookups served from it, %llu promotions (%.3f ms each)\n", func,
++                100.0*n_hbm_lookups/n_lookups, (unsigned long long) n_promotions, n_promotions ? t_promote_us/1e3/n_promotions : 0.0);
++        }
 +        if (prefetch) {
 +            LLAMA_LOG_INFO("%s: expert store: prefetch: %llu predicted misses read, %llu of them used by the real fill (%.1f%%)\n", func,
 +                (unsigned long long) n_prefetch_reads, (unsigned long long) n_prefetch_used,
@@ -2241,7 +2462,7 @@ index 2ea2ac7..216fee8 100644
      }
  
      ggml_tensor * get_slot_map(int32_t il, int64_t n_tokens, int64_t n_expert_used) const {
-@@ -479,6 +1373,10 @@ struct llama_moe_cache::impl {
+@@ -479,6 +1560,10 @@ struct llama_moe_cache::impl {
      }
  
      int64_t copy_experts(ggml_backend_t backend, const ggml_tensor * w, ggml_tensor * dst, int64_t e, int64_t last) {
@@ -2252,7 +2473,7 @@ index 2ea2ac7..216fee8 100644
          const auto it = bindings.find(w);
          if (it == bindings.end()) {
              return 0;
-@@ -522,6 +1420,10 @@ struct llama_moe_cache::impl {
+@@ -522,6 +1607,10 @@ struct llama_moe_cache::impl {
          const layer & l = layers[il];
          group & g = groups[l.ig];
  
@@ -2263,7 +2484,7 @@ index 2ea2ac7..216fee8 100644
          GGML_ASSERT(backend == devices[g.id].backend);
  
          // the get_rows that looks up the slots of the selected experts
-@@ -614,6 +1516,11 @@ struct llama_moe_cache::impl {
+@@ -614,6 +1703,11 @@ struct llama_moe_cache::impl {
          if (stats_copy.hits > 0) {
              LLAMA_LOG_INFO("llama_moe_cache: large batches: %zu experts copied from the cache, %.2f MiB\n", stats_copy.hits, stats_copy.bytes/1024.0/1024.0);
          }
@@ -2275,7 +2496,7 @@ index 2ea2ac7..216fee8 100644
      }
  };
  
-@@ -635,6 +1542,10 @@ ggml_tensor * llama_moe_cache::get_experts(const ggml_tensor * w) const {
+@@ -635,6 +1729,10 @@ ggml_tensor * llama_moe_cache::get_experts(const ggml_tensor * w) const {
      return pimpl->get_experts(w);
  }
  
@@ -2286,7 +2507,7 @@ index 2ea2ac7..216fee8 100644
  bool llama_moe_cache::copy(ggml_backend_t backend, const ggml_tensor * src, ggml_tensor * dst, ggml_cgraph * graph) {
      return pimpl->copy(backend, src, dst, graph);
  }
-@@ -643,6 +1554,14 @@ int64_t llama_moe_cache::copy_experts(ggml_backend_t backend, const ggml_tensor
+@@ -643,6 +1741,14 @@ int64_t llama_moe_cache::copy_experts(ggml_backend_t backend, const ggml_tensor
      return pimpl->copy_experts(backend, w, dst, e, last);
  }
  

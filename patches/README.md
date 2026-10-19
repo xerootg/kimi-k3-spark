@@ -237,6 +237,22 @@ read by `MUL_MAT_ID`), with these changes:
   otherwise (with the bank on the CPU the scheduler would offload the
   large-batch matmul by copying the strided bank views, which fails in
   the allocator).
+- HBM tier (`LLAMA_EXPERT_STORE_HBM_MIB`, off by default): on a GH200 the
+  GPU's HBM is a CPU-less NUMA node, and host pages placed there are read
+  by the GPU through the same registered mapping at 2-3 TB/s instead of
+  ~345 GB/s over C2C (docs/uvm-experiment.md). This many MiB are added to
+  the cache and the first slots of each group's region are bound to that
+  node (transparent huge pages: 2.6 vs 2.1 TB/s for first reads). Every
+  decode fill counts the uses of its experts (halved every
+  `LLAMA_EXPERT_STORE_HBM_DECAY` tokens, default 128) and exchanges up to
+  `LLAMA_EXPERT_STORE_HBM_PROMOTE` (default 2) of the most used experts in
+  host slots with the least used experts in HBM slots, a parallel memory
+  swap on the I/O threads while the GPU waits for the fill. Lossless (the
+  same bytes, bit-identical output). GH200, 800-token coding generations,
+  warm: 7.77 tok/s without, 8.39 / 8.87 / 9.31 with 8 / 16 / 24 GiB
+  (21 / 30 / 37 % of the lookups served from HBM). The size is bounded by
+  the HBM left after the spine, KV and compute buffers, which are
+  allocated after the cache: 24 GiB left 3.8 GB free on the GH200.
 
 Stats are logged every 4096 fills and at exit (hit rate, bytes read for
 decode and prefill). Patches 0001 and 0002 are untouched by this; 0001's
