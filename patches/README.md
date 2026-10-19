@@ -151,6 +151,53 @@ read by `MUL_MAT_ID`), with these changes:
   offsets to the `x` pointer in 64 bits (MMQ: strides passed in bytes,
   MMVQ: block stride times the block size) and keeps the 32-bit index for
   the rows within an expert.
+- `LLAMA_EXPERT_STORE_CHUNK_KIB` (default 1024, 0 = whole records): the
+  pool reads each record as pieces of this size on different threads. One
+  6.6 MB O_DIRECT read is latency-bound (2.9 ms on the GH200's virtio NVMe,
+  2.3 GB/s), eight pieces in flight finish in 1.2 ms, and a decode fill is
+  one or two records, so the fill time is the read latency, not the
+  bandwidth. For prefill fills (hundreds of records) it only adds queue
+  depth; `LLAMA_EXPERT_STORE_THREADS` should be 32 or so with it.
+- With the bank on the GPU the slot maps are registered with it too: the
+  `GET_ROWS(slot_map, ids)` lookup runs on the GPU and the CUDA backend
+  calls the cache (`ggml_backend_cuda_set_host_bank_hook`) right before
+  it, with the selected experts read back from the device, so the misses
+  are read into the bank before the lookup and the matmul run. The decode
+  graph is then one split instead of three per layer (`-lv 4`: `splits =
+  2`). `LLAMA_EXPERT_STORE_GPU_SLOTS=0` keeps the CPU split. Measured on
+  the GH200: a small gain (the sync per layer stays), the split overhead
+  was not where the time went.
+- The MMQ kernel's z dimension walks every expert of `src0`; a bank has
+  `n_slots + 1` of them (49k on the GH200) and a batch uses a few hundred
+  at most. For `ne02 > 1024` the ids path now compacts the experts with
+  columns into a list (`k_mmq_compact_experts`, one small sync to read
+  the count back; while a CUDA graph is captured it walks every slot as
+  before) and the kernel indexes the list. Prefill of 1024 tokens on the
+  GH200: 19.6 → 36.8 tok/s.
+- Scan resistance: a fill for a batch of more than 32 tokens (prefill)
+  into a full cache does not promote its hits and parks its misses at the
+  LRU head, so a long prompt, which touches every expert of a layer, does
+  not evict the working set of the generation that follows (it had
+  dropped the hit rate from 93 % to 68 %). While the cache is still
+  filling every fill is kept, and the victim search steps over the hits
+  of the layer being filled (they are not at the tail in this mode; a
+  miss evicting one of them left a -1 in the slot map that the GPU then
+  read as an expert index: an MMU fault). `LLAMA_EXPERT_STORE_PREFILL_PROMOTE=1`
+  restores plain LRU.
+- The prefill staging (`n_expert` records, 6.7 GB) is allocated on its
+  first use; with the bank on the GPU and `LLAMA_EXPERT_STORE_MAX_BATCH`
+  at the ubatch size it is never used. After the load, with the store
+  active, the mapping's page cache is released (`madvise(MADV_PAGEOUT)`:
+  the spine was copied to the device and the experts come from the
+  store), which is ~45 GB that `--moe-cache-mib` can use instead;
+  `LLAMA_EXPERT_STORE_KEEP_PAGE_CACHE=1` keeps it.
+- The cache regions (and the slot maps) are `mbind`-ed to the NUMA nodes
+  that have CPUs. A GH200 exposes the H100's HBM as a CPU-less NUMA node
+  that Linux hands out to anyone once the host node runs low, *before*
+  reclaiming its page cache: a 390 GiB populate spilled into the HBM and
+  the context's compute buffers then failed with `cudaMalloc ... out of
+  memory`. Bound, the populate reclaims the host node's page cache
+  instead. `LLAMA_EXPERT_STORE_NUMA_BIND=0` disables it.
 - `LLAMA_EXPERT_STORE_MAX_BATCH` (default 32): the largest batch served
   from the cache; larger ones take upstream's copy path (every used expert
   read from the store into the pinned staging and uploaded, per ubatch).
