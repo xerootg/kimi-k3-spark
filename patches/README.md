@@ -141,6 +141,16 @@ read by `MUL_MAT_ID`), with these changes:
   through the host page tables (GH200 over NVLink-C2C); a PCIe GPU with HMM
   has the pointer but not the bandwidth (`GGML_CUDA_FORCE_HOST_BANK=1` to
   try anyway).
+- The CUDA `MUL_MAT_ID` kernels (MMQ, MMVQ) index the expert of a tile as
+  `expert * nb[2] / type_size` in a 32-bit int. A normal model has at most
+  a few hundred experts; a bank is `n_slots + 1` experts of ~6.6 MB, so on
+  the GH200 (49k slots) the index overflowed past slot ~13.7k and the
+  kernel read a wild address ("an illegal memory access was encountered"
+  on the first prompt that filled that many slots; the Spark's 7.8k slots
+  sat just under the limit). The patch applies the sample and channel
+  offsets to the `x` pointer in 64 bits (MMQ: strides passed in bytes,
+  MMVQ: block stride times the block size) and keeps the 32-bit index for
+  the rows within an expert.
 - `LLAMA_EXPERT_STORE_MAX_BATCH` (default 32): the largest batch served
   from the cache; larger ones take upstream's copy path (every used expert
   read from the store into the pinned staging and uploaded, per ubatch).
