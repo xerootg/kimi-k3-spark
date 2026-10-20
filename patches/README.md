@@ -267,6 +267,23 @@ read by `MUL_MAT_ID`), with these changes:
   files bring nothing over plain reads. Spark, end to end: reads 9.6 ->
   10.5-11.1 GB/s, decode 1.37 -> 1.47 tok/s, bit-identical. The threads stay
   for the HBM swaps.
+  The io_uring path submits records as `LLAMA_EXPERT_STORE_CHUNK_KIB`
+  pieces like the threads do. On the GH200's virtio disk it still loses to
+  the 32 threads (8.4 vs 9.6 tok/s: one submitter feeds one blk-mq queue),
+  so the GH200 runs with `LLAMA_EXPERT_STORE_URING=0`.
+- `LLAMA_EXPERT_STORE_TRACE=<file>` appends every fill as int32
+  `[layer, n_ids, ids...]`, for cache studies offline.
+- Q6_K matrix-vector product for Hopper (`mmvq.cu`, `GGML_CUDA_MMVQ_Q6K_TMA=0`
+  turns it off): a persistent kernel that streams tiles of 2-4 weight rows
+  into a 2-stage shared-memory buffer with the bulk-copy engine (TMA,
+  L2 evict-first) and the q8_1 activations from shared memory, then runs the
+  unchanged `vec_dot_q6_K_q8_1` with the stock thread mapping and reduction
+  order, so the output is bitwise identical. Plain GEMVs with >= 2048 rows
+  only; the fused gate/up stays on stock (it measured slower in the server,
+  `GGML_CUDA_MMVQ_Q6K_TMA_FUSED=1` to try). In isolation 2.45 -> 2.88 TB/s
+  on the 7168x12288 attention shape, 3.39 TB/s on the output head
+  (`tools/q6k-gemv-bench.cu`); in the K3 decode server the unfused Q6_K time
+  goes 20.8 -> 19.2 ms per token.
 - Two I/O pool fixes. A worker of the previous run could still be between
   its last `fetch_sub` and the `fetch_add` that ends its loop when the next
   run reset the counters; it then ran a job of the new run twice and
