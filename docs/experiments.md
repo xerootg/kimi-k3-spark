@@ -116,6 +116,21 @@ All runs: deployed HBM config (24 GiB, decay 512), 3 x 800-token coding generati
 | Cache 412000 / 416000 MiB with the prompt cache on (8 GiB default) | 10.45 tok/s at 412000, then host memory ran out on the third run (watchdog kill at 1.5 GB available) | prompt cache off |
 | Cache 412000 / 416000 MiB, `--cache-ram 0` | 412000: 10.45 / 10.50 tok/s, hit 96.9 %; 416000: 11.53 / 12.31 tok/s, hit 97.3 %; lowest MemAvailable 2.7 GB; bit-identical | kept: 416000 (repeated-prompt benchmark, varied traffic gains less) |
 
+### Revisit when the bottleneck moves
+
+Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because
+something else dominated at the time. Re-test them after any change that shifts the per-token breakdown.
+
+| change | why it was neutral | re-test when |
+|---|---|---|
+| Predictive prefetch (`LLAMA_EXPERT_STORE_PREFETCH=1`) | GH200: the ~1 ms GPU gap was shorter than a read; Spark: the NVMe was saturated, wasted reads competed | GH200 misses are rarer now (cache 416000); Spark reads got faster |
+| Hopper Q6_K TMA GEMV (on by default) | -1.6 ms/token in the op profile, but end to end within noise while miss waits dominated | after miss waits shrink further |
+| `GGML_CUDA_GRAPH_OPT=1` | parallel attention branches hidden behind the expert waits | GPU-bound phases (fewer misses, prefill) |
+| Async host-bank hook / CUDA graphs | launch overhead was not the bottleneck | when GPU time per layer dominates |
+| Eviction policy (ARC / LFU decay, simulated) | ~8 % fewer misses at the GH200's capacity | tighter caches (the Spark's 10 %) |
+| Hugepage destinations for O_DIRECT (3.9 vs 4.5 ms per fill) | THP on host regions gave NaN on the GB10 | once that NaN is understood |
+| io_uring on the GH200 | one submitter = one virtio queue | with multiple rings across CPUs |
+
 ### Open ideas (not yet measured)
 
 - **The rest of the Spark perf-hunt list.** Shared expert and routed_down under the I/O wait (self-prefetch with
