@@ -255,6 +255,31 @@ read by `MUL_MAT_ID`), with these changes:
   9.58 with decay 512 (deployed; decay 32: 9.19, too many swaps). The size
   is bounded by the HBM left after the spine, KV and compute buffers,
   which are allocated after the cache: ~6.5 GB stay free at 24 GiB.
+- Reads through io_uring (default when the build finds liburing;
+  `LLAMA_EXPERT_STORE_URING=0` goes back to the threads): each thread that
+  fills (the poller, the prefill path) has its own ring and submits the
+  whole fill at once, one SQE per record. The size of the pieces does not
+  matter (the block layer splits everything at 128 KiB, the PM9E1's MDTS is
+  512 KiB); what matters is having the whole fill queued. Microbenchmark of
+  the decode pattern (`tools/readbench.cpp`, 7 random records into
+  preallocated memory): 4.5 ms with 16 threads preading 1 MiB pieces, 3.9 ms
+  with io_uring; single records 1.13 vs 0.80 ms. Registered buffers and
+  files bring nothing over plain reads. Spark, end to end: reads 9.6 ->
+  10.5-11.1 GB/s, decode 1.37 -> 1.47 tok/s, bit-identical. The threads stay
+  for the HBM swaps.
+- Two I/O pool fixes. A worker of the previous run could still be between
+  its last `fetch_sub` and the `fetch_add` that ends its loop when the next
+  run reset the counters; it then ran a job of the new run twice and
+  `remaining` hit zero with a read still in flight. `run()` now waits until
+  no worker is inside the previous run, and runs are serialized.
+- Transparent huge pages are on for the HBM part only. On the host part
+  they are opt-in (`LLAMA_EXPERT_STORE_THP=1`): on the Spark, with them,
+  4 of 7 server starts produced NaN from the first prefill (the model
+  answers "GGGG..."), and 0 of 4 without. The cause is not pinned down; the
+  GPU-registered staging the prefill uploads from is the suspect. Hugepage
+  destinations would make O_DIRECT faster (3.9 vs 4.5 ms per fill in the
+  microbenchmark, one IOMMU mapping per page), but the load's reclaim split
+  most of them anyway (12 of ~50 GiB stayed huge).
 
 Stats are logged every 4096 fills and at exit (hit rate, bytes read for
 decode and prefill). Patches 0001 and 0002 are untouched by this; 0001's

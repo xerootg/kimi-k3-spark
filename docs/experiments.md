@@ -17,7 +17,7 @@ Hardware:
 | | Spark | GH200 |
 |---|---|---|
 | image | g3ef5e51 | g231d482 |
-| decode, coding prompt, warm | 1.40-1.48 tok/s | 9.58 tok/s |
+| decode, coding prompt, warm | 1.47 tok/s (io_uring reads, pending deploy) | 9.58 tok/s |
 | cache | 52000 MiB host (hit rate ~60 %) | 400000 MiB host + 24 GiB HBM tier (hit rate ~96 %) |
 | where a token's time goes | ~0.71 s: per layer, 4.2 ms NVMe reads + 3.5 ms GPU, serial | ~105 ms: expert matmuls over C2C, Q6_K spine, miss waits |
 
@@ -75,11 +75,31 @@ Verdicts: **kept** = in the deployed config. **opt-in** = in the engine behind a
 | Swaps per layer fill: 1 vs 2 | 9.49 vs 9.49 | 2 (default) |
 | HBM tier above 24 GiB | ~6.5 GB of HBM left after load; the compute buffers are allocated after the cache | not tried, risk of a failed load |
 
+### Spark read path (2026-10-19)
+
+The Spark perf-hunt workflow ranked 10 lossless candidates (prefetch, poller sleep, shared expert under the I/O
+wait, CPU placement, earlier prediction, preemptible prefetch, NVMe sweep, futex handoffs, cache headroom). It was
+stopped during the first experiment to work on the reads directly; the rest are still open.
+
+| what | result | verdict |
+|---|---|---|
+| Predictive prefetch on the Spark (`LLAMA_EXPERT_STORE_PREFETCH=1`, plus reordered and capped variants) | 64 % of the predicted reads used, hit rate 59.5 -> 74 %, but decode 1.33-1.35 vs 1.39-1.43 tok/s: the wasted reads compete with the real ones on a saturated drive | dropped |
+| NVMe ceiling, fio random reads (Samsung PM9E1, Gen5 x4) | over the store's real blocks: 10.5-11.0 GB/s by any path (ext4, raw device, NVMe passthrough); 14.9 GB/s only over never-written blocks, which the drive answers without reading flash | ceiling |
+| Read shape microbenchmark (`tools/readbench.cpp`, 7-record fills) | pread pool 1 MiB: 4.52 ms; pool 4 MiB / whole records: 4.8-4.9 ms; io_uring any piece size, qd >= 32: 3.86-3.95 ms; fixed buffers = plain | io_uring kept |
+| Hugepage vs 4 KiB destination pages | 3.9 vs 4.5 ms per fill (one IOMMU mapping per page) | see THP row |
+| io_uring reads in the engine | Spark decode 1.37 -> 1.47 tok/s, reads 9.6 -> 10.5-11.1 GB/s, bit-identical | kept |
+| I/O pool reuse race (previous run's worker grabbing a job of the next) | fixed: run() waits for the workers to leave | fixed |
+| THP on the host cache regions (on since the HBM pass) | Spark: 4 of 7 starts gave NaN from the first prefill ("GGGG..."), 0 of 4 without | off by default (`LLAMA_EXPERT_STORE_THP=1`) |
+| mlock of the bank to keep its huge pages (reclaim split ~75 % of them during load) | not measured; without THP it buys nothing | dropped |
+| Lossless compression of the records (decompress on the GPU) | zstd -3/-19: 0 %; IQ1_S split into fields: 1.6 %; order-0 entropy bound: 3.4 % (the grid indices are ~8.0 bits/byte) | rejected |
+
 ### Open ideas (not yet measured)
 
-- **Overlap NVMe reads with GPU work on the Spark.** Reads (4.2 ms) and GPU work (3.5 ms) per layer are serial,
-  and prefetch was never measured there. The Spark perf-hunt workflow is testing this along with I/O, cache
-  policy, GB10 kernel and host-latency candidates.
+- **The rest of the Spark perf-hunt list.** Shared expert and routed_down under the I/O wait (self-prefetch with
+  the real ids, est. +6 %), poller falling asleep inside the GPU gap (+2 %), I/O and poller threads on the X925
+  cores (+2 %). The reads now run at the drive's ceiling, so more overlap is the remaining lever on the read side.
+- **Why THP on the host regions gives NaN on the GB10.** Fixing it would bring back hugepage destinations
+  (3.9 vs 4.5 ms per fill), but only if the pages also survive the load's reclaim.
 - **Frequency-aware eviction for the host cache.** The routing skew that makes the HBM tier work should also
   help a policy like LFU or ARC beat plain LRU, which matters most on the Spark's 10 % cache.
 - **Q6_K GEMV for Hopper.** The spine reads at 2.2 of ~3.5 TB/s, so a better kernel could save ~10 ms/token.

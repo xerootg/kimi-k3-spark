@@ -21,7 +21,7 @@ FROM docker.io/nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION} AS buil
 ARG LLAMA_SHA
 ARG CUDA_ARCH=90;121
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      git build-essential cmake ninja-build libcurl4-openssl-dev ca-certificates \
+      git build-essential cmake ninja-build libcurl4-openssl-dev liburing-dev ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY patches/ /patches/
@@ -54,7 +54,7 @@ RUN cmake -B build -G Ninja \
 
 FROM docker.io/nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION}
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      libcurl4 libgomp1 curl ca-certificates \
+      libcurl4 libgomp1 liburing2 curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /opt/llama /opt/llama
 # ggml finds libggml-<backend>.so next to the executable (GGML_BACKEND_PATH
