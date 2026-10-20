@@ -877,7 +877,7 @@ index 33449f9..ec9bca2 100644
           ntx_fd);
  }
 diff --git a/ggml/src/ggml-cuda/mmvq.cu b/ggml/src/ggml-cuda/mmvq.cu
-index 930f1ad..b8eda59 100644
+index 930f1ad..b1c2509 100644
 --- a/ggml/src/ggml-cuda/mmvq.cu
 +++ b/ggml/src/ggml-cuda/mmvq.cu
 @@ -738,7 +738,18 @@ static __global__ void mul_mat_vec_q(
@@ -1140,7 +1140,7 @@ index 930f1ad..b8eda59 100644
  
      // partial sum for each thread
      float tmp[c_rows_per_block] = {0.0f};
-@@ -1300,6 +1535,95 @@ static void mul_mat_vec_q_switch_ncols_dst(
+@@ -1300,6 +1535,108 @@ static void mul_mat_vec_q_switch_ncols_dst(
              GGML_ABORT("fatal error");
      }
  }
@@ -1148,7 +1148,17 @@ index 930f1ad..b8eda59 100644
 +static void mul_mat_vec_q6_K_tma_launch(
 +        const ggml_cuda_kernel_launch_params & launch_params, const void * vx, const void * vy,
 +        const ggml_cuda_mm_fusion_args_device & fusion, float * dst, const int ncols_x, const int nrows_x) {
-+    CUDA_SET_SHARED_MEMORY_LIMIT((mul_mat_vec_q6_K_tma<R, has_fusion>), MMVQ_Q6K_TMA_MAX_SMEM);
++    // raise the dynamic shared memory limit to what this device allows next to the kernel's static shared memory
++    // (227 KiB opt-in on Hopper, ~99 KiB on the GB10)
++    static bool limit_raised[GGML_CUDA_MAX_DEVICES] = { false };
++    const int id = ggml_cuda_get_device();
++    if (!limit_raised[id]) {
++        cudaFuncAttributes attr = {};
++        CUDA_CHECK(cudaFuncGetAttributes(&attr, mul_mat_vec_q6_K_tma<R, has_fusion>));
++        const size_t limit = std::min<size_t>(MMVQ_Q6K_TMA_MAX_SMEM, ggml_cuda_info().devices[id].smpbo - attr.sharedSizeBytes);
++        CUDA_CHECK(cudaFuncSetAttribute(mul_mat_vec_q6_K_tma<R, has_fusion>, cudaFuncAttributeMaxDynamicSharedMemorySize, (int) limit));
++        limit_raised[id] = true;
++    }
 +    ggml_cuda_kernel_launch(mul_mat_vec_q6_K_tma<R, has_fusion>, launch_params,
 +        vx, vy, fusion, dst, (uint32_t) ncols_x, (uint32_t) nrows_x);
 +}
@@ -1159,16 +1169,18 @@ index 930f1ad..b8eda59 100644
 +        const int ncols_x, const int nrows_x, const int ncols_dst, const int stride_row_x,
 +        const int nchannels_x, const int nchannels_dst, const int nsamples_x, const int nsamples_dst, cudaStream_t stream) {
 +#if !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
-+    static const bool enabled = [] {
++    // GGML_CUDA_MMVQ_Q6K_TMA: 0 off, 1 (default) on Hopper, 2 also on newer archs (bulk copies exist from sm_90 on)
++    static const int mode = [] {
 +        const char * env = getenv("GGML_CUDA_MMVQ_Q6K_TMA");
-+        return env == nullptr || atoi(env) != 0;
++        return env == nullptr ? 1 : atoi(env);
 +    }();
-+    if (!enabled) {
++    if (mode == 0) {
 +        return false;
 +    }
 +    const int device = ggml_cuda_get_device();
 +    const int cc     = ggml_cuda_info().devices[device].cc;
-+    if (!GGML_CUDA_CC_IS_NVIDIA(cc) || cc < GGML_CUDA_CC_HOPPER || cc >= GGML_CUDA_CC_HOPPER + 100 ||
++    const bool hopper = cc >= GGML_CUDA_CC_HOPPER && cc < GGML_CUDA_CC_HOPPER + 100;
++    if (!GGML_CUDA_CC_IS_NVIDIA(cc) || cc < GGML_CUDA_CC_HOPPER || (!hopper && mode < 2) ||
 +            ggml_cuda_highest_compiled_arch(cc) < GGML_CUDA_CC_HOPPER) {
 +        return false;
 +    }
@@ -1203,10 +1215,11 @@ index 930f1ad..b8eda59 100644
 +    }
 +    const size_t tile_stride = (R*row_bytes + 127) & ~(size_t) 127;
 +    const size_t smem = MMVQ_Q6K_TMA_STAGES*(two_tiles ? 2 : 1)*tile_stride + (size_t) (ncols_x/QK8_1)*sizeof(block_q8_1);
-+    if (smem > MMVQ_Q6K_TMA_MAX_SMEM) {
++    const size_t smem_budget = std::min<size_t>(MMVQ_Q6K_TMA_MAX_SMEM, ggml_cuda_info().devices[device].smpbo - 1024); // room for the static part
++    if (smem > smem_budget) {
 +        return false;
 +    }
-+    const int blocks_per_sm = std::min<int>(4, MMVQ_Q6K_TMA_MAX_SMEM / smem);
++    const int blocks_per_sm = std::max<int>(1, std::min<int>(4, smem_budget / smem));
 +    const int ntiles = nrows_x / R;
 +    const dim3 block_nums(std::min(ntiles, ggml_cuda_info().devices[device].nsm * blocks_per_sm), 1, 1);
 +    const dim3 block_dims(WARP_SIZE, MMVQ_Q6K_TMA_NWARPS, 1);
@@ -1236,7 +1249,7 @@ index 930f1ad..b8eda59 100644
  static void mul_mat_vec_q_switch_type(
          const void * vx, const ggml_type type_x, const void * vy, const int32_t * ids, const ggml_cuda_mm_fusion_args_device fusion, float * dst,
          const int ncols_x, const int nrows_x, const int ncols_dst,
-@@ -1388,6 +1712,10 @@ static void mul_mat_vec_q_switch_type(
+@@ -1388,6 +1725,10 @@ static void mul_mat_vec_q_switch_type(
                   nsamples_x, nsamples_dst, stride_sample_x, stride_sample_y, stride_sample_dst, ids_stride, stream);
              break;
          case GGML_TYPE_Q6_K:

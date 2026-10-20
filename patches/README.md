@@ -284,6 +284,10 @@ read by `MUL_MAT_ID`), with these changes:
   on the 7168x12288 attention shape, 3.39 TB/s on the output head
   (`tools/q6k-gemv-bench.cu`); in the K3 decode server the unfused Q6_K time
   goes 20.8 -> 19.2 ms per token.
+  `GGML_CUDA_MMVQ_Q6K_TMA=2` also runs it on newer GPUs (the shared memory
+  limit comes from the device). On the GB10 it is 5-10 % faster than stock
+  but not bit-identical (stock uses the GB10's own warp layout there), so it
+  stays opt-in until a variant mirrors that layout.
 - Two I/O pool fixes. A worker of the previous run could still be between
   its last `fetch_sub` and the `fetch_add` that ends its loop when the next
   run reset the counters; it then ran a job of the new run twice and
