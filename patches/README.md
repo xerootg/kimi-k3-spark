@@ -206,6 +206,13 @@ read by `MUL_MAT_ID`), with these changes:
   7.75 tok/s): the GPU works ~1 ms between a prediction and the next real
   request, a prefetch read takes about as long, and the real request
   queues behind it. Kept for a box where layers take longer than a read.
+- Self-prefetch (`LLAMA_EXPERT_STORE_SELF_PREFETCH=1`, off by default, needs
+  the slot maps on the GPU): right after the router, the layer's real ids are
+  posted as a `moe_prefetch-<il>` lookup (no wait), then the shared expert and
+  the latent down projection are queued before the real lookup, so the misses
+  are read while the GPU computes them. The real lookup still plans and waits;
+  only node order and read timing change. Spark: 1.49 -> 1.60 tok/s,
+  bit-identical.
 - `GGML_CUDA_OP_PROFILE=N`: CUDA-event timing of every node, printed per
   op kind (host-bank vs device weights) every N graphs. Turns CUDA graphs
   off and inflates tiny kernels; use it for the big ops. GH200 warm decode:
