@@ -12,14 +12,14 @@ Hardware:
 - **GH200:** 431 GiB LPDDR5X on NUMA node 0, H100 96 GB HBM3 as NUMA node 1, NVLink-C2C, virtio NVMe
   at ~9.5 GB/s.
 
-## Current state (2026-10-19)
+## Current state (2026-10-21)
 
 | | Spark | GH200 |
 |---|---|---|
 | image | g3ef5e51 | g231d482 |
-| decode, coding prompt, warm | 1.60 tok/s (io_uring reads, self-prefetch, snapshot) | 13.6 tok/s (cache 424000 MiB, slot maps on the CPU) |
+| decode, coding prompt, warm | 1.80 tok/s (io_uring reads, self-prefetch, speculative prefetch v2, snapshot) | 13.6 tok/s (cache 424000 MiB, slot maps on the CPU) |
 | cache | 52000 MiB host (hit rate ~60 %) | 400000 MiB host + 24 GiB HBM tier (hit rate ~96 %) |
-| where a token's time goes | ~0.71 s: per layer, 4.2 ms NVMe reads + 3.5 ms GPU, serial | ~105 ms: expert matmuls over C2C, Q6_K spine, miss waits |
+| where a token's time goes | ~0.55 s: per layer, 3.0 ms of reads the GPU waits on + 2.8 ms of GPU work with ~4.8 predicted records read under it | ~105 ms: expert matmuls over C2C, Q6_K spine, miss waits |
 
 ## Ledger
 
@@ -94,6 +94,64 @@ stopped during the first experiment to work on the reads directly; the rest are 
 | Lossless compression of the records (decompress on the GPU) | zstd -3/-19: 0 %; IQ1_S split into fields: 1.6 %; order-0 entropy bound: 3.4 % (the grid indices are ~8.0 bits/byte) | rejected |
 | Self-prefetch (`LLAMA_EXPERT_STORE_SELF_PREFETCH=1`): post the layer's real expert ids right after the router, run the shared expert and the latent down projection, then the real lookup | ON 1.605 / 1.606 / 1.598 and 1.599 / 1.360 (one stall) / 1.610 tok/s; OFF 1.490 / 1.495 / 1.491 and 1.485 / 1.486 / 1.489 (+7.7 % on the medians). The poller reads 6.7 records in 4.0 ms per post while the GPU computes; the real fill drops to 0.12 ms (0.2 records), the layer from ~7.7 to ~7.0 ms. md5 gold on every run, same build both legs | kept, off by default (flag) |
 
+### Spark: speculative prefetch v2, reads under the GPU's part of the layer (2026-10-21)
+
+The question was whether the ~3 ms of GPU work per layer that runs with the drive idle could carry reads.
+An nsys profile of 24 decode tokens (native build, production args, self-prefetch on, `--cuda-graph-trace=node`,
+2207 layers measured, medians) put the layer at:
+
+| segment | median | what runs |
+|---|---|---|
+| self-prefetch post -> real lookup post | 0.65 ms | shared expert, latent down projection; the poller reads the misses |
+| real lookup post -> next kernel | 3.42 ms (mean 3.91, p90 6.05) | the GPU waits for the fill (4.1 ms of reads minus the 0.65 above) |
+| after the lookup -> next self-prefetch post | 2.82 ms, kernels busy 2.88 | expert matmuls, routed_up, next layer's attention and router: **the drive is idle** |
+| layer | 6.67 ms (mean 7.40) | |
+
+Kernels are busy 47 % of the token. The drive-idle window is 2.8 ms = ~4.8 records at the 11 GB/s ceiling, against
+6.7 misses per layer; filling it with the right records would take the self-prefetch fill from 4.1 to ~1.5 ms.
+
+The first predictive prefetch had the prediction, not the overlap: `prefetch_decode` ran the speculative reads through
+the I/O pool on the poller thread at full depth, so the next real post queued behind them and they saturated the drive
+exactly when the real reads arrived. Version 2 (patches/README.md, "Predictive prefetch"): a side reader thread with
+its own io_uring ring and a bounded number of pieces in flight, posted right behind the real lookup, preempted by every
+real fill (started records are finished and adopted, unstarted ones handed back), best router scores first, LRU
+touched only on the poller thread, per-slot states keep its slots out of the victim and HBM-exchange paths.
+
+Two bugs on the way, both found by the gold md5 and the counters: the reader took an SQE before knowing whether it had
+work, and an SQE taken and not prepared goes out as a no-op whose completion (res 0, user data 0) was booked as "piece 0
+read 0 bytes" (looked like a kernel quirk until the counters showed every prediction handed back unread: the in-flight
+count had underflowed and the reader was waiting forever). Zero-length completions are now retried, bounded, with a
+warning; none seen since.
+
+All legs below: `~/spark-bench.sh`, 3 x 200-token coding runs after a 32-token warm-up, self-prefetch on, md5
+`e801484d` on every run and `b2c79009` on every warm-up (gold). Prompt speeds were noisy this day (0.4-1.3 tok/s for the
+same prompts that did 2.6 before, in the baseline legs too), decode was not.
+
+| leg | decode tok/s (runs 1/2/3) | predictions: queued per post, started, used | self-prefetch fill |
+|---|---|---|---|
+| base (self-prefetch only) | 1.577 / 1.525 / 1.606 | | 6.7 records, 4.02 ms |
+| v2, depth 8, router input (`PREFETCH=1`) | 1.689 / 1.755 / 1.756 | 6.16, 4.5, 49 % of queued (67 % of started) | 4.5 records, 3.14 ms |
+| v2, depth 8, FFN input + shared expert under the next norm (`PREFETCH_INPUT=1`) | 1.771 / 1.812 / 1.791 | 7.00, 4.76, 47.5 % of queued (70 % of started) | 4.1 records, 3.04 ms |
+| v2, depth 4 | 1.727 / 1.658 / 1.707 | 6.29, 3.6, 2.3 used per post | 4.8 records, 3.27 ms |
+| v2, depth 16 | 1.545 / 1.376 / 1.742 (a stall in run 2, prompt at 0.1 tok/s) | 6.10, 5.0, 3.3 used per post | 4.3 records, 3.26 ms |
+| v2, depth 8, unused predictions demoted (`PREFETCH_DEMOTE=1`) | 1.752 / 1.765 / 1.758 | 7.41, 5.1, 2.4 used (32.6 % of queued: demoted predictions are evicted and predicted again) | 4.4 records, 3.15 ms |
+| base again | 1.525 / 1.582 / 1.599 | | 6.7 records, 4.02 ms |
+| v2, depth 8, input 1, demoted | 1.750 / 1.804 / 1.802 | 7.66, 5.1, 2.8 used (36 %) | 4.0 records, 2.99 ms |
+| v2, depth 16, input 1 | 1.592 / 1.745 / 1.767 | 6.94, 5.4, 3.7 used (53 %) | 3.9 records, 3.07 ms |
+| base, third time | 1.235 / 1.422 / 1.611 (stalls in runs 1-2, prompt at 0.1 tok/s) | | 6.7 records, 4.17 ms |
+| v2, depth 4, input 1 | 1.756 / 1.444 / 1.764 (stall in run 2) | 7.12, 3.6, 2.6 used | 4.6 records, 3.16 ms |
+
+**Verdict: kept, deployed as `LLAMA_EXPERT_STORE_PREFETCH=1 LLAMA_EXPERT_STORE_PREFETCH_INPUT=1` (depth 8, no
+demote): 1.60 -> 1.80 tok/s on the steady-state runs (+12 %), bit-identical.** Depth 8 already runs the drive at its
+ceiling inside the 2.8 ms window (~4.8 records started per post); depth 4 starts fewer, depth 16 starts a few more but
+finishes more of them past the preemption, which the self-prefetch fill then waits on (0.56 ms per adopted wait), net
+nothing. Demoting unused predictions costs precision (they get evicted and predicted again) and gains nothing at this
+cache size. The FFN-input predictor is worth 3 % over the router-input one. What is left: the window is full and
+~30 % of the started reads are wasted; a more precise predictor (the real next input is this plus the routed output and
+the next attention) is the only lever left on this path, worth up to ~1.9 instead of ~4 records in the self-prefetch
+fill (layer ~4.0 instead of ~5.9 ms). The box stalled a few times this day (a 200-token run at 1.2-1.4 tok/s with the
+prompt at 0.1 tok/s, in baseline legs as well); those runs are listed, not used.
+
 ### GH200 third pass (2026-10-20)
 
 All runs: deployed HBM config (24 GiB, decay 512), 3 x 800-token coding generations, md5 ac78af0e5d every time.
@@ -149,7 +207,7 @@ something else dominated at the time. Re-test them after any change that shifts 
 
 | change | why it was neutral | re-test when |
 |---|---|---|
-| Predictive prefetch (`LLAMA_EXPERT_STORE_PREFETCH=1`) | GH200: the ~1 ms GPU gap was shorter than a read; Spark: the NVMe was saturated, wasted reads competed | GH200 misses are rarer now (cache 416000); Spark reads got faster |
+| Predictive prefetch (`LLAMA_EXPERT_STORE_PREFETCH=1`) | GH200: the ~1 ms GPU gap was shorter than a read (v1); Spark: v2 (side reader, bounded, preemptible) is deployed, +12 % | GH200: try v2 with `PREFETCH_INPUT=1` when miss waits are the next item; the window there is ~1 ms = 2 records |
 | Hopper Q6_K TMA GEMV (on by default) | -1.6 ms/token in the op profile, but end to end within noise while miss waits dominated | after miss waits shrink further |
 | `GGML_CUDA_GRAPH_OPT=1` | parallel attention branches hidden behind the expert waits | GPU-bound phases (fewer misses, prefill) |
 | Async host-bank hook / CUDA graphs | launch overhead was not the bottleneck | when GPU time per layer dominates |
@@ -159,6 +217,7 @@ something else dominated at the time. Re-test them after any change that shifts 
 
 ### Open ideas (not yet measured)
 
+- **A more precise predictor for the speculative prefetch.** 70 % of the started reads are used; the window is full, so precision is the whole remaining gain on the Spark read side (see the prefetch v2 section).
 - **The rest of the Spark perf-hunt list.** Shared expert and routed_down under the I/O wait (self-prefetch with
   the real ids, est. +6 %), poller falling asleep inside the GPU gap (+2 %), I/O and poller threads on the X925
   cores (+2 %). The reads now run at the drive's ceiling, so more overlap is the remaining lever on the read side.

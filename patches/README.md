@@ -196,19 +196,40 @@ read by `MUL_MAT_ID`), with these changes:
   not the bottleneck, the GPU waiting on missed experts and the expert
   matmuls over C2C are; it stays on as the base for overlapping reads
   with compute.
-- Predictive prefetch (`LLAMA_EXPERT_STORE_PREFETCH=1`, off by default):
-  right after layer l's lookup the graph runs layer l+1's router on layer
-  l's input (`build_moe_cache_prefetch`, a `moe_prefetch-<il>` lookup that
-  the CUDA backend posts to a second mailbox without waiting), and the
-  poller reads the predicted misses between real requests. Lossless. On
-  the GH200: 83 % of the predicted reads were used and the real misses
-  fell from 1.0 to 0.8 per layer, but decode did not get faster (7.53 vs
-  7.75 tok/s): the GPU works ~1 ms between a prediction and the next real
-  request, a prefetch read takes about as long, and the real request
-  queues behind it. Kept for a box where layers take longer than a read.
+- Predictive prefetch (`LLAMA_EXPERT_STORE_PREFETCH=1`, off by default, needs
+  the slot maps on the GPU and io_uring): before layer l's lookup the graph
+  builds layer l+1's router on layer l's input (`build_moe_cache_prefetch`, a
+  `moe_prefetch-<il>` lookup that the CUDA backend posts to a second mailbox
+  without waiting); `build_moe_cache_slots` expands it right behind the real
+  lookup, so the GPU posts it the moment the lookup is served, which is when
+  the drive goes idle. Lossless: the real lookup still plans the real ids.
+  The first version read the predictions through the I/O pool on the poller
+  thread, at full depth: the next real post queued behind the whole
+  speculative fill and the speculative reads saturated the drive just when
+  the real ones arrived (Spark 1.33 vs 1.41 tok/s, GH200 7.53 vs 7.75).
+  The second version (2026-10-21) reads them on a side thread with its own
+  ring and a bounded number of pieces in flight
+  (`LLAMA_EXPERT_STORE_PREFETCH_DEPTH`, default 8 of the pool's chunk), at
+  most `LLAMA_EXPERT_STORE_PREFETCH_MAX` records per post (default 16), best
+  router scores first. A real fill preempts it: no new record is started
+  until the next prediction, records already started are finished and
+  adopted if the real fill selects them (it waits instead of re-reading;
+  a half-read record is never resident), records not started are handed
+  back and their slots emptied. The LRU is only touched on the poller
+  thread; a per-slot state keeps the reader's slots from being chosen as
+  victims or HBM exchanges. `LLAMA_EXPERT_STORE_PREFETCH_DEMOTE=1` parks
+  predictions the real fill did not select at the eviction end;
+  `LLAMA_EXPERT_STORE_PREFETCH_INPUT=1` applies the next router to the
+  un-normed FFN input plus the shared expert's output under the next
+  layer's FFN norm instead of this layer's router input. Spark, with
+  self-prefetch: 1.60 -> 1.80 tok/s with depth 8 and `PREFETCH_INPUT=1`
+  (1.755 with the router input, 1.71 at depth 4, demote neutral), the
+  self-prefetch fill 6.7 -> 4.1 records, ~4.8 records started per post of
+  which 70 % are used, bit-identical. Deployed on the Spark; not measured on
+  the GH200 in this form (its window is ~1 ms).
 - Self-prefetch (`LLAMA_EXPERT_STORE_SELF_PREFETCH=1`, off by default, needs
   the slot maps on the GPU): right after the router, the layer's real ids are
-  posted as a `moe_prefetch-<il>` lookup (no wait), then the shared expert and
+  posted as a `moe_prefetch_self-<il>` lookup (no wait), then the shared expert and
   the latent down projection are queued before the real lookup, so the misses
   are read while the GPU computes them. The real lookup still plans and waits;
   only node order and read timing change. Spark: 1.49 -> 1.60 tok/s,
