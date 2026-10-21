@@ -152,6 +152,78 @@ the next attention) is the only lever left on this path, worth up to ~1.9 instea
 fill (layer ~4.0 instead of ~5.9 ms). The box stalled a few times this day (a 200-token run at 1.2-1.4 tok/s with the
 prompt at 0.1 tok/s, in baseline legs as well); those runs are listed, not used.
 
+### Spark: what the GPU does in the drive-idle window (2026-10-21, from the same nsys capture)
+
+The 2.82 ms per layer between the real lookup and the next layer's self-prefetch post, broken down by kernel over
+2207 layers (`nsys-kernels.py` on `k3prof.sqlite`): kernels 2.85 ms, gaps between kernels 0.07 ms (median 0.4 us,
+p90 8.7 us). Launch latency, the host hook and the poller handoff are not in it; it is weight streaming:
+
+| kernel | ms per layer | calls per layer | what |
+|---|---|---|---|
+| `mul_mat_vec_q` | 2.39 | 11 | expert and dense GEMVs, see below |
+| `mul_mat_vec_f` | 0.12 | 1.7 | the router (896 x 7168, f16) and small f32 ones |
+| `mul_mat_vec_q_moe` | 0.10 | 0.1 | the dense FFN of layer 0 (33792 x 7168 x 3, once per token) |
+| everything else (norms, quantize, bcast, argsort, KDA `gated_delta_net`, `ssm_conv`, flash attention) | 0.25 | ~50 | |
+
+One KDA layer's GEMVs in order: the routed experts 768x16 / 768x16 / 896x16 blocks at 188 / 208 / 210 us (16 experts
+x 7.8 MB = 125 MB from the host bank in 0.6 ms = **208 GB/s**, i.e. the 4 KiB-page bank is read at the same
+efficiency as the GPU's own buffers: no TLB cost, the hugepage hypothesis for the GPU side is dead), routed_up 113 us,
+then the next layer's attention: three 12288-row projections at ~345 us each, one more at 380 and a 7168-row one at
+335 us, together ~1.75 ms for ~370 MB of Q6_K at ~210 GB/s. An MLA layer's attention is ~1.1 ms (117 / 50 / 116 /
+41 / 18 / 31 / 396 / 343 us). The output head (163840 rows, 4.7 ms) and layer 0's dense FFN (3 x 0.93 ms) run once
+per token. The GB10's LPDDR5X peaks at ~273 GB/s, so the dense streaming runs at ~77 % of it.
+
+Conclusions: the GPU side of the layer has no structural slack; the next layer's projections cannot start before this
+layer's experts have landed, and they are the window the speculative prefetch now fills. Kernel-level gains are
+bounded by the ~23 % between 210 GB/s and the memory peak, and the one candidate measured, the Hopper TMA Q6_K
+kernel on the GB10, gives 5-10 % of that per kernel (~1.5-2 % of a token) and is not bit-identical there (see the
+GH200 second pass). The THP-on-the-bank question is therefore only about the O_DIRECT fill (3.9 vs 4.5 ms per
+7-record fill, ~0.4 ms of a ~5.9 ms layer at the current 4.1-record fill), not about the GPU. The IOMMU of the
+NVMe is in `DMA-FQ` mode (`iommu.passthrough=0` on the kernel command line); `iommu.passthrough=1` would remove
+the per-page map cost of every fill without any hugepage, at the price of a node reboot (not tried, the user's
+call).
+
+### Spark stalls: swap and the prompt cache (2026-10-21)
+
+The question was the "0.1 tok/s" stretches seen during the prefetch v2 A/B (a 4-token prompt taking 20-40 s, a
+200-token run at 1.2-1.4 instead of 1.8 tok/s, in baseline legs too). Setup: `spark-bench-stall.sh` (streaming
+completions with per-token timestamps, gaps over 1.5 s logged) plus a 1 s sampler of `/proc/vmstat`, PSI, swap,
+the server's `VmSwap`, the NVMe temperature and the D-state threads with their `wchan`. Six 300-token runs per leg,
+the deployed engine config, 300-token output prefix-identical to the gold 200-token text on every run.
+
+What the box looks like after a load: 114 of 121 GB used (bank 52 GB + staging 6.7 GB + the spine and buffers on
+the GPU ~45 GB), MemAvailable 7-8 GB, `vm.swappiness` 60, 16 GB swap file on the model NVMe, NVMe at 39-42 C with
+no throttle events (not thermal). The load itself (spine streamed through the page cache, bank populated) swaps out
+cold pages: the server had **152 MB in swap** after every load, an 86 MB anonymous region almost whole, 44 MB of the
+heap, parts of libcublasLt's code, and the lifetime counters show it (93 M swap-ins, 76 M swap-outs, 34 M allocation
+stalls, 11 G pages scanned by direct reclaim since boot). A swapped page comes back as a major fault served behind
+the expert reads that keep the NVMe queue full, ~10 ms each; a few hundred in a row are a multi-second stall.
+
+| leg | result |
+|---|---|
+| A: as deployed, 6 x 300 tokens | 1.82 tok/s every run, no gap over 1.5 s in any run; the warm-up shows a 3.8 s "gap" at its token 25 |
+| B: + `LLAMA_EXPERT_STORE_MLOCK=1` (new, default on): the engine mlocks its memory except the model file mappings at the first fill | locked 63.6 GB in 5-17 s, `VmSwap` 0 from then on; 1.81-1.82 tok/s, no gaps; the same 3.7 s warm-up gap |
+| C: 8 different prompts x 100 tokens, prompt cache at its default 8 GiB | cache grows 1335 MiB per saved prompt to 8008 MiB; **MemAvailable down to 1.4 GB, 5.4 GB swapped out** during the eight requests; no stall here because no prompt was reloaded |
+| D: same prompts, `--cache-ram 0` | MemAvailable never below 6.4 GB, 1 GB swapped out (all during the load); decode and prompt speeds the same as C (1.80-1.92 tok/s, ttft 12.8-22.7 vs 14.1-20.7 s) |
+
+Findings:
+- The warm-up "gap" is not a stall: the server's own timing shows 32 tokens at a steady 526 ms, and the client got
+  28 pieces. It is the chat parser holding the tokens around the end of the reasoning block until the tag is
+  complete. The old benches could not see it (non-streaming).
+- The stall of the earlier day did not reproduce in 28 runs over four legs, but its mechanism did: the prompt cache.
+  Every saved slot of this model costs ~1.3 GiB of host RAM (KV plus the 443 MiB recurrent-state checkpoints), the
+  default limit is 8 GiB, and the box has 7 GB to give, so a filling cache swaps out whatever is cold, including the
+  cache's own entries, and a conversation that comes back loads its entry one 4 KiB fault at a time behind the
+  expert reads. The earlier A/B restarted the server a dozen times (each load swapping more out, 559 MB of swap in
+  use by the end) and re-sent the same prompt, which is exactly the reload path.
+- The memory lock costs nothing at steady state (same tok/s) and takes the server's own pages out of that game
+  for good. The prompt cache is turned off on the Spark as it already is on the GH200 (`--cache-ram 0`): with two
+  slots the slots themselves keep their context, the cache only helps a third conversation.
+
+**Verdict: deployed, `--cache-ram 0` and the lock (the pod gets `IPC_LOCK`), bit-identical.** Not a tok/s change;
+a removal of the swap path. Still open: a reproduction under production traffic (several conversations) would show
+whether anything else stalls; the sampler and the streaming bench are on the box for that.
+
 ### GH200 third pass (2026-10-20)
 
 All runs: deployed HBM config (24 GiB, decay 512), 3 x 800-token coding generations, md5 ac78af0e5d every time.

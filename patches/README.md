@@ -331,6 +331,19 @@ read by `MUL_MAT_ID`), with these changes:
   ~1.3 tok/s, hit rate 85 % from the start instead of 48 %, bit-identical.
   The pod needs a writable mount for the file and a termination grace
   period that covers the exit write (manifests: `/snapshot`, 120 s).
+- Memory lock (`LLAMA_EXPERT_STORE_MLOCK`, default 1): at the first fill,
+  when the model, the context and the GPU buffers are in place, the engine
+  mlocks every mapping of the process except the model files (`.gguf`, the
+  store) and device mappings: the bank and the staging as resident
+  (`MLOCK_ONFAULT`), the heap, the small anonymous regions and the libraries
+  populated. On the Spark that is ~63 GB in 5-17 s, once. Why: after a load
+  the box has ~7 GB of headroom and the server has ~150 MB in swap (an 86 MB
+  anonymous region, part of the heap, libcublasLt's code); every first touch
+  of such a page is a major fault served behind the expert reads that keep
+  the NVMe queue full, ~10 ms each, and a few hundred in a row stall a
+  request for seconds. Needs `RLIMIT_MEMLOCK` to cover it or `CAP_IPC_LOCK`
+  (the pod adds the capability); otherwise it warns and runs unlocked.
+  Measured neutral on tok/s (1.82 vs 1.82), `VmSwap` 0 afterwards.
 - `LLAMA_EXPERT_STORE_SPIN_US` (default 0): the I/O threads and the thread
   waiting for a fill busy-wait this long before sleeping, to skip the wake-up
   of a parked thread (or vCPU) on the next fill. Measured neutral on the
