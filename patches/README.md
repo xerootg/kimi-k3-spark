@@ -295,6 +295,27 @@ read by `MUL_MAT_ID`), with these changes:
   limit comes from the device). On the GB10 it is 5-10 % faster than stock
   but not bit-identical (stock uses the GB10's own warp layout there), so it
   stays opt-in until a variant mirrors that layout.
+- Cache snapshot (`LLAMA_EXPERT_STORE_SNAPSHOT=<file>`, off by default): at
+  exit and every `LLAMA_EXPERT_STORE_SNAPSHOT_EVERY` seconds (default 300,
+  0 = exit only) the cache writes which experts are resident, in recency
+  order with their use counts: ~6 bytes per slot, not the bytes themselves,
+  which the store still holds. The next start reads the file back, places the
+  most used experts in the HBM slots and the rest in recency order, and
+  re-reads every record from the store before serving, so the first token
+  runs on a warm cache instead of the first minutes of misses. The file is
+  tied to the store (size), the model (layers, experts) and the group layout
+  (record sizes); a cache size change keeps the most recent entries that
+  fit, and anything that does not match starts cold. Spark: 7980 experts,
+  52.5 GB re-read in 5.5 s, the first run after a restart at 1.59 instead of
+  ~1.3 tok/s, hit rate 85 % from the start instead of 48 %, bit-identical.
+  The pod needs a writable mount for the file and a termination grace
+  period that covers the exit write (manifests: `/snapshot`, 120 s).
+- `LLAMA_EXPERT_STORE_SPIN_US` (default 0): the I/O threads and the thread
+  waiting for a fill busy-wait this long before sleeping, to skip the wake-up
+  of a parked thread (or vCPU) on the next fill. Measured neutral on the
+  GH200 (11.47 vs 11.54 tok/s): the gap between the engine's ~1 ms per missed
+  record and the microbenchmark's ~0.4 ms is not wake-up latency. Kept as an
+  opt-in for the revisit list.
 - Two I/O pool fixes. A worker of the previous run could still be between
   its last `fetch_sub` and the `fetch_add` that ends its loop when the next
   run reset the counters; it then ran a job of the new run twice and
