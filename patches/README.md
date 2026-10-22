@@ -238,8 +238,18 @@ read by `MUL_MAT_ID`), with these changes:
   self-prefetch: 1.60 -> 1.80 tok/s with depth 8 and `PREFETCH_INPUT=1`
   (1.755 with the router input, 1.71 at depth 4, demote neutral), the
   self-prefetch fill 6.7 -> 4.1 records, ~4.8 records started per post of
-  which 70 % are used, bit-identical. Deployed on the Spark; not measured on
-  the GH200 in this form (its window is ~1 ms).
+  which 70 % are used, bit-identical. Deployed on the Spark. It also works
+  with the slot maps on the CPU (`LLAMA_EXPERT_STORE_GPU_SLOTS=0`, 2026-10-22):
+  the prediction is then computed on the device before the layer's real
+  router and its lookup follows the real lookup in the same CPU graph (no
+  extra split), where the CPU graph hook hands it to the side reader right
+  after the real fill; and the side reader uses `depth` pread threads instead
+  of a ring when the pool does (`LLAMA_EXPERT_STORE_PREFETCH_URING`, default
+  as the pool, which is what the virtio disk of the GH200 needs). Measured on
+  the GH200 in that form: 13.84 -> 11.3-11.5 tok/s in every variant (at 99 %
+  residency the wrong guesses evict resident experts and the predictor's GPU
+  time exceeds what the reads could give back), so it stays off there
+  (docs/experiments.md).
 - Self-prefetch (`LLAMA_EXPERT_STORE_SELF_PREFETCH=1`, off by default, needs
   the slot maps on the GPU): right after the router, the layer's real ids are
   posted as a `moe_prefetch_self-<il>` lookup (no wait), then the shared expert and

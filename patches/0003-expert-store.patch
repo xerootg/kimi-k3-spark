@@ -1406,7 +1406,7 @@ index 07d3ee5..65c6f4e 100644
      // every selected expert before the uploads start, so their pages are read with large
      // asynchronous I/Os instead of being faulted in one page at a time by the copies
 diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
-index 2bc3a29..fc44bcd 100644
+index 2bc3a29..b051891 100644
 --- a/src/llama-graph.cpp
 +++ b/src/llama-graph.cpp
 @@ -2536,6 +2536,8 @@ ggml_tensor * llm_graph_context::build_moe_cache_slots(
@@ -1440,7 +1440,7 @@ index 2bc3a29..fc44bcd 100644
      // the slot map is a host weight, so the scheduler starts a new split here and copies it with the copy callback
      // the callback reads the selected experts, uploads the missing ones and updates the slot map
      ggml_tensor * slots = ggml_get_rows(ctx0, slot_map, ids); // [1, n_expert_used*n_tokens]
-@@ -2568,9 +2585,62 @@ ggml_tensor * llm_graph_context::build_moe_cache_slots(
+@@ -2568,9 +2585,69 @@ ggml_tensor * llm_graph_context::build_moe_cache_slots(
      // add the lookup now: the transform of a Hadamard-folded expert reads host weights and would start its split first
      ggml_build_forward_expand(gf, slots);
  
@@ -1494,6 +1494,13 @@ index 2bc3a29..fc44bcd 100644
 +    ggml_tensor * pf = ggml_get_rows(ctx0, slot_map, ids);
 +    if (!ggml_backend_supports_op(moe_cache->backend(il_next), pf)) {
 +        return;
++    }
++    if (!moe_cache->lookups_on_gpu()) {
++        // CPU split: the prediction itself is computed on the device before this layer's real router, so that the
++        // lookup of the prediction follows the real lookup in one CPU graph instead of opening a split of its own
++        // (each split costs a device sync); with the lookups on the GPU it stays behind the real lookup, where the
++        // host hook posts it once the real fill is served
++        ggml_build_forward_expand(gf, ids);
 +    }
 +    ggml_format_name(pf, "moe_prefetch-%d", il_next);
 +    ggml_backend_sched_set_tensor_backend(sched, pf, moe_cache->backend(il_next));
@@ -1629,7 +1636,7 @@ index 803a832..f71ae59 100644
          for (auto & mapping : ml.mappings) {
              pimpl->mappings.emplace_back(std::move(mapping));
 diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
-index 2ea2ac7..d720932 100644
+index 2ea2ac7..a622a26 100644
 --- a/src/llama-moe-cache.cpp
 +++ b/src/llama-moe-cache.cpp
 @@ -5,11 +5,42 @@
@@ -1790,7 +1797,7 @@ index 2ea2ac7..d720932 100644
                  n_hit++;
              }
          }
-@@ -107,19 +200,895 @@ struct moe_cache_lru {
+@@ -107,19 +200,1002 @@ struct moe_cache_lru {
              if (slots[e] >= 0) {
                  continue;
              }
@@ -1823,10 +1830,10 @@ index 2ea2ac7..d720932 100644
 +                demote(f.slot);
 +            }
 +        }
-         return true;
-     }
- };
- 
++        return true;
++    }
++};
++
 +// kimi-k3-spark patch 0003: the expert store, one record per (layer, expert) holding gate | up | down
 +// back to back, 4 KiB aligned; format in kimi-k3-spark/tools/repack-experts.py
 +struct expert_store_entry {
@@ -1912,7 +1919,7 @@ index 2ea2ac7..d720932 100644
 +            err = std::string("open(O_DIRECT): ") + strerror(errno);
 +            return false;
 +        }
-+        return true;
+         return true;
 +#else
 +        GGML_UNUSED(path);
 +        err = "the expert store needs Linux";
@@ -2231,13 +2238,14 @@ index 2ea2ac7..d720932 100644
 +    std::atomic<bool>         failed{false};
 +};
 +
-+#if defined(LLAMA_HAVE_LIBURING)
 +// kimi-k3-spark patch 0003: the speculative reader of the predictive prefetch. The predicted misses of the next layer
-+// are read here, on a thread and ring of their own with a bounded number of pieces in flight, during the part of a
-+// layer in which the drive would otherwise sit idle (the expert matmuls, the next layer's attention and router). The
-+// real fills preempt it: no new record is started until the next prediction is posted, the records already started
-+// are finished (a half-read record is never left resident) and the ones not started are handed back to the cache,
-+// which empties their slots. The reader never touches the LRU; per-slot states tell the cache what is in flight.
++// are read here, on a thread of its own with a bounded number of pieces in flight, during the part of a layer in
++// which the drive would otherwise sit idle (the expert matmuls, the next layer's attention and router). The real
++// fills preempt it: no new record is started until the next prediction is posted, the records already started are
++// finished (a half-read record is never left resident) and the ones not started are handed back to the cache, which
++// empties their slots. The reader never touches the LRU; per-slot states tell the cache what is in flight.
++// The pieces go out through one io_uring ring (Spark: the NVMe takes the whole depth from one submitter) or through
++// `depth` pread threads (GH200: the virtio disk gives one blk-mq queue per submitting CPU, so one ring is slow).
 +struct spec_reader {
 +    struct rec {
 +        int32_t ig;
@@ -2250,7 +2258,7 @@ index 2ea2ac7..d720932 100644
 +    };
 +
 +    // the ring is created by the reader thread itself (like the pool's thread-local rings), not by the caller
-+    spec_reader(int fd, size_t piece, unsigned depth) : fd(fd), piece(piece ? piece : (size_t) 1 << 20), depth(std::max(1u, depth)) {
++    spec_reader(int fd, size_t piece, unsigned depth, bool uring) : fd(fd), piece(piece ? piece : (size_t) 1 << 20), depth(std::max(1u, depth)), uring(uring) {
 +        thread = std::thread([this] { main(); });
 +        std::unique_lock<std::mutex> lock(mutex);
 +        cv.wait(lock, [&] { return started; });
@@ -2312,25 +2320,99 @@ index 2ea2ac7..d720932 100644
 +        unsigned n_out    = 0; // pieces in flight
 +        bool     used     = false;
 +    };
++    struct done_t {
++        int p;
++        int res;
++    };
++
++    // thread backend: a worker reads one piece whole (short reads continued here), so a completion is the full
++    // length, what was there before the end of the file, or an error
++    void worker() {
++        while (true) {
++            int p;
++            {
++                std::unique_lock<std::mutex> lock(wmutex);
++                wcv.wait(lock, [&] { return wstop || !work.empty(); });
++                if (work.empty()) {
++                    return;
++                }
++                p = work.front();
++                work.pop_front();
++            }
++            const piece_t & pc = pieces[p];
++            size_t got = 0;
++            int    res = 0;
++            while (got < pc.len) {
++                const ssize_t n = pread(fd, pc.dst + got, pc.len - got, pc.off + (off_t) got);
++                if (n < 0) {
++                    if (errno == EINTR) {
++                        continue;
++                    }
++                    res = -errno;
++                    break;
++                }
++                if (n == 0) {
++                    break;
++                }
++                got += (size_t) n;
++            }
++            if (res == 0) {
++                res = (int) got;
++            }
++            {
++                std::lock_guard<std::mutex> lock(wmutex);
++                done.push_back({ p, res });
++            }
++            dcv.notify_one();
++        }
++    }
 +
 +    void main() {
 +        {
 +            std::lock_guard<std::mutex> lock(mutex);
-+            ok = io_uring_queue_init(std::max(8u, depth), &ring, 0) == 0;
++            if (uring) {
++#if defined(LLAMA_HAVE_LIBURING)
++                ok = io_uring_queue_init(std::max(8u, depth), &ring, 0) == 0;
++#else
++                ok = false;
++#endif
++            } else {
++                ok = true;
++            }
 +            started = true;
 +        }
 +        cv.notify_all();
 +        if (!ok) {
 +            return;
 +        }
-+        struct ring_exit {
-+            io_uring & r;
-+            ~ring_exit() { io_uring_queue_exit(&r); }
-+        } ring_guard{ring};
++        if (!uring) {
++            for (unsigned i = 0; i < depth; ++i) {
++                workers.emplace_back([this] { worker(); });
++            }
++        }
++        run();
++        if (uring) {
++#if defined(LLAMA_HAVE_LIBURING)
++            io_uring_queue_exit(&ring);
++#endif
++        } else {
++            {
++                std::lock_guard<std::mutex> lock(wmutex);
++                wstop = true;
++            }
++            wcv.notify_all();
++            for (std::thread & w : workers) {
++                w.join();
++            }
++        }
++    }
++
++    void run() {
 +        std::vector<active_t> act(depth);
-+        std::vector<piece_t>  pieces(depth);
++        pieces.assign(depth, piece_t{});
 +        std::vector<int>      free_pieces;
 +        std::vector<int>      retry; // short or interrupted reads, resubmitted with what is left
++        std::vector<done_t>   comp;
 +        for (int i = (int) depth - 1; i >= 0; --i) {
 +            free_pieces.push_back(i);
 +        }
@@ -2379,15 +2461,25 @@ index 2ea2ac7..d720932 100644
 +                    a.next_off += len;
 +                    a.n_out++;
 +                }
-+                io_uring_sqe * sqe = io_uring_get_sqe(&ring);
-+                if (sqe == nullptr) {
-+                    // cannot happen: the ring has at least depth entries and everything is submitted below
-+                    io_uring_submit(&ring);
-+                    sqe = io_uring_get_sqe(&ring);
-+                    GGML_ASSERT(sqe != nullptr);
++                if (uring) {
++#if defined(LLAMA_HAVE_LIBURING)
++                    io_uring_sqe * sqe = io_uring_get_sqe(&ring);
++                    if (sqe == nullptr) {
++                        // cannot happen: the ring has at least depth entries and everything is submitted below
++                        io_uring_submit(&ring);
++                        sqe = io_uring_get_sqe(&ring);
++                        GGML_ASSERT(sqe != nullptr);
++                    }
++                    io_uring_prep_read(sqe, fd, pieces[p].dst, (unsigned) pieces[p].len, pieces[p].off);
++                    io_uring_sqe_set_data64(sqe, (uint64_t) p);
++#endif
++                } else {
++                    {
++                        std::lock_guard<std::mutex> lock(wmutex);
++                        work.push_back(p);
++                    }
++                    wcv.notify_one();
 +                }
-+                io_uring_prep_read(sqe, fd, pieces[p].dst, (unsigned) pieces[p].len, pieces[p].off);
-+                io_uring_sqe_set_data64(sqe, (uint64_t) p);
 +                in_flight++;
 +            }
 +            if (in_flight == 0) {
@@ -2401,17 +2493,30 @@ index 2ea2ac7..d720932 100644
 +                }
 +                continue;
 +            }
-+            if (io_uring_submit_and_wait(&ring, 1) < 0) {
-+                GGML_ABORT("expert store: speculative read submit failed: %s", strerror(errno));
++            comp.clear();
++            if (uring) {
++#if defined(LLAMA_HAVE_LIBURING)
++                if (io_uring_submit_and_wait(&ring, 1) < 0) {
++                    GGML_ABORT("expert store: speculative read submit failed: %s", strerror(errno));
++                }
++                io_uring_cqe * cqe;
++                unsigned head, seen = 0;
++                io_uring_for_each_cqe(&ring, head, cqe) {
++                    seen++;
++                    comp.push_back({ (int) io_uring_cqe_get_data64(cqe), cqe->res });
++                }
++                io_uring_cq_advance(&ring, seen);
++#endif
++            } else {
++                std::unique_lock<std::mutex> lock(wmutex);
++                dcv.wait(lock, [&] { return !done.empty(); });
++                comp.swap(done);
 +            }
-+            io_uring_cqe * cqe;
-+            unsigned head, seen = 0;
-+            io_uring_for_each_cqe(&ring, head, cqe) {
-+                seen++;
-+                const int p = (int) io_uring_cqe_get_data64(cqe);
++            for (const done_t & d : comp) {
++                const int p = d.p;
 +                piece_t  & pc = pieces[p];
 +                active_t & a  = act[pc.act];
-+                const int res = cqe->res;
++                const int res = d.res;
 +                if (res == -EAGAIN || res == -EINTR || res == 0) {
 +                    // res == 0: seen once per process on the Spark (kernel 6.17-nvidia), for the first piece of the
 +                    // first speculative read, with the same read served in full by pread right after; nothing was
@@ -2446,16 +2551,18 @@ index 2ea2ac7..d720932 100644
 +                    }
 +                }
 +            }
-+            io_uring_cq_advance(&ring, seen);
-+            in_flight -= seen;
++            in_flight -= (unsigned) comp.size();
 +        }
-+    }
+     }
 +
 +    int      fd;
 +    size_t   piece;
 +    unsigned depth;
++    bool     uring;
 +    bool     warned_zero = false;
++#if defined(LLAMA_HAVE_LIBURING)
 +    io_uring ring;
++#endif
 +    std::thread thread;
 +    std::mutex  mutex;
 +    std::condition_variable cv;
@@ -2463,9 +2570,16 @@ index 2ea2ac7..d720932 100644
 +    bool preempt = false;
 +    bool stop    = false;
 +    bool started = false;
-+};
-+#endif
-+
++    // thread backend
++    std::vector<piece_t>     pieces;
++    std::vector<std::thread> workers;
++    std::mutex               wmutex;
++    std::condition_variable  wcv, dcv;
++    std::deque<int>          work;
++    std::vector<done_t>      done;
++    bool                     wstop = false;
+ };
+ 
 +#if defined(__linux__)
 +// the NUMA nodes that have CPUs, as a bitmask (0 if unknown). A GH200 exposes the GPU's HBM as a CPU-less NUMA node
 +// that the kernel hands out to anyone when the host node runs low (before reclaiming its page cache): a cache
@@ -2687,7 +2801,7 @@ index 2ea2ac7..d720932 100644
  // gate, up, down or gate_up, down
  static std::vector<ggml_tensor *> llama_moe_cache_layer_experts(const llama_layer & layer) {
      std::vector<ggml_tensor *> res;
-@@ -174,6 +1143,18 @@ struct llama_moe_cache::impl {
+@@ -174,6 +1250,18 @@ struct llama_moe_cache::impl {
          size_t host_bytes = 0;
          int32_t n_slots = 0;
          moe_cache_lru lru;
@@ -2706,7 +2820,7 @@ index 2ea2ac7..d720932 100644
      };
  
      struct layer {
-@@ -194,7 +1175,12 @@ struct llama_moe_cache::impl {
+@@ -194,7 +1282,12 @@ struct llama_moe_cache::impl {
          size_t bytes  = 0;
      };
  
@@ -2720,7 +2834,7 @@ index 2ea2ac7..d720932 100644
  
      int32_t n_expert_used;
  
-@@ -211,6 +1197,113 @@ struct llama_moe_cache::impl {
+@@ -211,6 +1304,108 @@ struct llama_moe_cache::impl {
      std::vector<int32_t> ids;
      std::vector<moe_cache_lru::fill> fills;
  
@@ -2752,10 +2866,9 @@ index 2ea2ac7..d720932 100644
 +    uint64_t n_self_calls = 0, n_self_reads = 0, t_self_io_us = 0;
 +    // predictive prefetch v2: the predicted misses go to the speculative reader (spec_reader above) instead of the
 +    // I/O pool, so they never delay a real fill and take at most spec_depth pieces of the drive at once
-+#if defined(LLAMA_HAVE_LIBURING)
 +    std::unique_ptr<spec_reader> spec;
 +    std::vector<spec_reader::rec> spec_recs;
-+#endif
++    bool     spec_uring  = true;     // LLAMA_EXPERT_STORE_PREFETCH_URING (default: as the pool): one ring, else `depth` pread threads
 +    unsigned spec_depth  = 8;        // LLAMA_EXPERT_STORE_PREFETCH_DEPTH: pieces (of the pool's chunk) in flight at most
 +    int      spec_max    = 16;       // LLAMA_EXPERT_STORE_PREFETCH_MAX: predicted misses read per post at most
 +    bool     spec_demote = false;    // LLAMA_EXPERT_STORE_PREFETCH_DEMOTE=1: predictions the real fill did not use go to the eviction end
@@ -2766,11 +2879,7 @@ index 2ea2ac7..d720932 100644
 +    size_t   pool_chunk = 0;
 +
 +    bool spec_ok() const {
-+#if defined(LLAMA_HAVE_LIBURING)
 +        return spec != nullptr;
-+#else
-+        return false;
-+#endif
 +    }
 +    // HBM tier (LLAMA_EXPERT_STORE_HBM_MIB): lookups served from it, promotions into it
 +    size_t   hbm_size = 0;
@@ -2834,7 +2943,7 @@ index 2ea2ac7..d720932 100644
      // slot maps in host memory
      ggml_context_ptr ctx_host;
      ggml_backend_buffer_ptr buf_host;
-@@ -221,12 +1314,81 @@ struct llama_moe_cache::impl {
+@@ -221,12 +1416,81 @@ struct llama_moe_cache::impl {
  
      impl(const llama_model & model, const std::vector<ggml_backend_t> & backends, const std::vector<ggml_backend_buffer_type_t> & bufts, size_t size) :
              n_expert_used(model.hparams.n_expert_used_max()), layers(model.layers.size()) {
@@ -2922,7 +3031,7 @@ index 2ea2ac7..d720932 100644
              }
          }
          if (devices.empty()) {
-@@ -245,11 +1407,24 @@ struct llama_moe_cache::impl {
+@@ -245,11 +1509,24 @@ struct llama_moe_cache::impl {
              if (experts.empty() || !std::all_of(experts.begin(), experts.end(), llama_moe_cache_is_host_weight)) {
                  continue;
              }
@@ -2951,7 +3060,7 @@ index 2ea2ac7..d720932 100644
              auto it = std::find_if(groups.begin(), groups.end(), [&](const group & g) { return g.id == id && llama_moe_cache_same_layout(g.ref, experts); });
              if (it == groups.end()) {
                  groups.emplace_back();
-@@ -268,8 +1443,42 @@ struct llama_moe_cache::impl {
+@@ -268,8 +1545,42 @@ struct llama_moe_cache::impl {
              return;
          }
  
@@ -2994,7 +3103,7 @@ index 2ea2ac7..d720932 100644
              const size_t alignment = ggml_backend_buft_get_alignment(devices[g.id].buft);
              size_t res = 0;
              for (const ggml_tensor * t : g.ref) {
-@@ -288,7 +1497,10 @@ struct llama_moe_cache::impl {
+@@ -288,7 +1599,10 @@ struct llama_moe_cache::impl {
                  continue;
              }
              ggml_backend_dev_t dev = ggml_backend_get_device(d.backend);
@@ -3006,7 +3115,7 @@ index 2ea2ac7..d720932 100644
                  size_t free;
                  size_t total;
                  ggml_backend_dev_memory(dev, &free, &total);
-@@ -314,7 +1526,8 @@ struct llama_moe_cache::impl {
+@@ -314,7 +1628,8 @@ struct llama_moe_cache::impl {
          for (group & g : groups) {
              const device & d = devices[g.id];
              const int32_t n_expert  = g.ref[0]->ne[2];
@@ -3016,7 +3125,7 @@ index 2ea2ac7..d720932 100644
              const int32_t max_slots = g.layers.size()*n_expert;
              while (g.n_slots < max_slots && alloc_size(g, g.n_slots + 1) <= budget) {
                  g.n_slots++;
-@@ -325,6 +1538,7 @@ struct llama_moe_cache::impl {
+@@ -325,6 +1640,7 @@ struct llama_moe_cache::impl {
                  continue;
              }
              g.lru.init(model.layers.size(), n_expert, g.n_slots);
@@ -3024,7 +3133,7 @@ index 2ea2ac7..d720932 100644
              n_tensors[g.id] += g.ref.size()*(1 + g.layers.size());
              n_tensors_host  += g.layers.size();
          }
-@@ -361,11 +1575,53 @@ struct llama_moe_cache::impl {
+@@ -361,11 +1677,53 @@ struct llama_moe_cache::impl {
                  continue;
              }
              ggml_context * ctx = devices[g.id].ctx.get();
@@ -3083,7 +3192,7 @@ index 2ea2ac7..d720932 100644
              }
              for (int32_t il : g.layers) {
                  layer & l = layers[il];
-@@ -375,6 +1631,9 @@ struct llama_moe_cache::impl {
+@@ -375,6 +1733,9 @@ struct llama_moe_cache::impl {
                      ggml_tensor * bank   = g.banks[ip];
                      ggml_tensor * cached = ggml_view_3d(ctx, bank, bank->ne[0], bank->ne[1], g.n_slots, bank->nb[1], bank->nb[2], 0);
                      ggml_format_name(cached, "moe_cache.%s", l.experts[ip]->name);
@@ -3093,7 +3202,7 @@ index 2ea2ac7..d720932 100644
                      bindings[l.experts[ip]] = { il, (int32_t) ip, cached };
                  }
                  l.slot_map = ggml_new_tensor_2d(ctx_host.get(), GGML_TYPE_I32, 1, g.ref[0]->ne[2]);
-@@ -382,13 +1641,15 @@ struct llama_moe_cache::impl {
+@@ -382,13 +1743,15 @@ struct llama_moe_cache::impl {
                  layer_of[l.slot_map] = il;
                  buf_host_size += GGML_PAD(ggml_nbytes(l.slot_map), alignment_host);
              }
@@ -3111,7 +3220,7 @@ index 2ea2ac7..d720932 100644
                      continue;
                  }
                  d.buf.reset(ggml_backend_buft_alloc_buffer(d.buft, 0));
-@@ -402,7 +1663,7 @@ struct llama_moe_cache::impl {
+@@ -402,7 +1765,7 @@ struct llama_moe_cache::impl {
              }
          } else {
              for (device & d : devices) {
@@ -3120,7 +3229,7 @@ index 2ea2ac7..d720932 100644
                      continue;
                  }
                  d.buf.reset(ggml_backend_alloc_ctx_tensors_from_buft(d.ctx.get(), d.buft));
-@@ -412,12 +1673,41 @@ struct llama_moe_cache::impl {
+@@ -412,12 +1775,41 @@ struct llama_moe_cache::impl {
                  ggml_backend_buffer_clear(d.buf.get(), 0);
                  d.buf_size = ggml_backend_buffer_get_size(d.buf.get());
              }
@@ -3167,7 +3276,7 @@ index 2ea2ac7..d720932 100644
  
              for (group & g : groups) {
                  for (int32_t il : g.layers) {
-@@ -436,6 +1726,84 @@ struct llama_moe_cache::impl {
+@@ -436,6 +1828,95 @@ struct llama_moe_cache::impl {
          }
          ggml_backend_buffer_set_usage(buf_host.get(), GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
  
@@ -3183,48 +3292,59 @@ index 2ea2ac7..d720932 100644
 +            if (slots_on_gpu) {
 +                auto * set_cuda_hook2 = (void (*)(cuda_host_bank_hook_t, void *)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_set_host_bank_hook");
 +                set_cuda_hook2(&impl::cuda_hook, this);
-+                const char * env_pf = getenv("LLAMA_EXPERT_STORE_PREFETCH");
-+                prefetch = env_pf != nullptr && env_pf[0] == '1';
 +                const char * env_spf = getenv("LLAMA_EXPERT_STORE_SELF_PREFETCH");
 +                self_prefetch = env_spf != nullptr && env_spf[0] == '1';
 +                if (self_prefetch) {
 +                    LLAMA_LOG_INFO("%s: expert store: self-prefetch on (a layer's misses are read while its shared expert computes)\n", __func__);
 +                }
-+                if (prefetch) {
-+                    prefetched.assign(model.layers.size()*(size_t) store.n_expert, 0);
-+                    spec_ids.assign(model.layers.size(), {});
-+                    if (getenv("LLAMA_EXPERT_STORE_PREFETCH_DEPTH") != nullptr) {
-+                        spec_depth = (unsigned) std::max(1, atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_DEPTH")));
-+                    }
-+                    if (getenv("LLAMA_EXPERT_STORE_PREFETCH_MAX") != nullptr) {
-+                        spec_max = std::max(1, atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_MAX")));
-+                    }
-+                    spec_demote    = getenv("LLAMA_EXPERT_STORE_PREFETCH_DEMOTE") != nullptr && getenv("LLAMA_EXPERT_STORE_PREFETCH_DEMOTE")[0] == '1';
-+                    prefetch_input = getenv("LLAMA_EXPERT_STORE_PREFETCH_INPUT") != nullptr ? atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_INPUT")) : 0;
-+#if defined(LLAMA_HAVE_LIBURING)
-+                    spec = std::make_unique<spec_reader>(store.fd, pool_chunk, spec_depth);
-+                    if (!spec->ok) {
-+                        spec.reset();
-+                    }
-+#endif
-+                    if (spec_ok()) {
-+                        for (group & g : groups) {
-+                            if (g.n_slots > 0) {
-+                                g.spec_state.reset(new std::atomic<int8_t>[g.n_slots]);
-+                                for (int32_t s = 0; s < g.n_slots; ++s) {
-+                                    g.spec_state[s].store(0);
-+                                }
-+                                g.lru.busy = g.spec_state.get();
-+                            }
-+                        }
-+                        LLAMA_LOG_INFO("%s: expert store: predictive prefetch on (the next layer's predicted misses are read by a side reader, %u pieces of %zu KiB in flight at most, %d records per post at most, unused predictions %s, router input %d)\n", __func__,
-+                            spec_depth, pool_chunk/1024, spec_max, spec_demote ? "demoted" : "kept", prefetch_input);
-+                    } else {
-+                        prefetch = false;
-+                        LLAMA_LOG_WARN("%s: expert store: predictive prefetch needs io_uring (liburing at build time), off\n", __func__);
-+                    }
-+                }
 +                LLAMA_LOG_INFO("%s: expert store: slot maps registered with the GPU, the lookups run there and the fills in its host hook (LLAMA_EXPERT_STORE_GPU_SLOTS=0 for the CPU split)\n", __func__);
++            } else if (getenv("LLAMA_EXPERT_STORE_SELF_PREFETCH") != nullptr && getenv("LLAMA_EXPERT_STORE_SELF_PREFETCH")[0] == '1') {
++                LLAMA_LOG_WARN("%s: expert store: self-prefetch needs the slot maps on the GPU (the CPU split fills before it runs), off\n", __func__);
++            }
++            // predictive prefetch: with the slot maps on the GPU the prediction is posted through the host-bank hook
++            // once the real lookup is served; with the CPU split both lookups are in the same CPU graph and the hook
++            // hands the prediction to the speculative reader right after the real fill (the same drive-idle window)
++            const char * env_pf = getenv("LLAMA_EXPERT_STORE_PREFETCH");
++            prefetch = env_pf != nullptr && env_pf[0] == '1';
++            if (prefetch) {
++                prefetched.assign(model.layers.size()*(size_t) store.n_expert, 0);
++                spec_ids.assign(model.layers.size(), {});
++                if (getenv("LLAMA_EXPERT_STORE_PREFETCH_DEPTH") != nullptr) {
++                    spec_depth = (unsigned) std::max(1, atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_DEPTH")));
++                }
++                if (getenv("LLAMA_EXPERT_STORE_PREFETCH_MAX") != nullptr) {
++                    spec_max = std::max(1, atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_MAX")));
++                }
++                spec_demote    = getenv("LLAMA_EXPERT_STORE_PREFETCH_DEMOTE") != nullptr && getenv("LLAMA_EXPERT_STORE_PREFETCH_DEMOTE")[0] == '1';
++                prefetch_input = getenv("LLAMA_EXPERT_STORE_PREFETCH_INPUT") != nullptr ? atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_INPUT")) : 0;
++                spec_uring     = pool->use_uring;
++                if (getenv("LLAMA_EXPERT_STORE_PREFETCH_URING") != nullptr) {
++                    spec_uring = atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_URING")) != 0;
++                }
++#if !defined(LLAMA_HAVE_LIBURING)
++                spec_uring = false;
++#endif
++                spec = std::make_unique<spec_reader>(store.fd, pool_chunk, spec_depth, spec_uring);
++                if (!spec->ok) {
++                    spec.reset();
++                }
++                if (spec_ok()) {
++                    for (group & g : groups) {
++                        if (g.n_slots > 0) {
++                            g.spec_state.reset(new std::atomic<int8_t>[g.n_slots]);
++                            for (int32_t s = 0; s < g.n_slots; ++s) {
++                                g.spec_state[s].store(0);
++                            }
++                            g.lru.busy = g.spec_state.get();
++                        }
++                    }
++                    LLAMA_LOG_INFO("%s: expert store: predictive prefetch on (the next layer's predicted misses are read by a side reader, %u pieces of %zu KiB in flight at most through %s, %d records per post at most, unused predictions %s, router input %d, posted by the %s)\n", __func__,
++                        spec_depth, pool_chunk/1024, spec_uring ? "one io_uring ring" : "pread threads", spec_max, spec_demote ? "demoted" : "kept", prefetch_input,
++                        slots_on_gpu ? "GPU's host hook" : "CPU graph hook");
++                } else {
++                    prefetch = false;
++                    LLAMA_LOG_WARN("%s: expert store: predictive prefetch: the speculative reader could not start, off\n", __func__);
++                }
 +            }
 +
 +            // large batches over the cache limit: all the experts of a layer are read into a staging, then uploaded.
@@ -3252,7 +3372,7 @@ index 2ea2ac7..d720932 100644
          for (size_t id = 0; id < devices.size(); ++id) {
              const device & d = devices[id];
              if (d.host_bytes == 0) {
-@@ -445,19 +1813,743 @@ struct llama_moe_cache::impl {
+@@ -445,19 +1926,748 @@ struct llama_moe_cache::impl {
                  ggml_backend_buft_name(d.buft), d.buf_size/1024.0/1024.0, d.host_bytes/1024.0/1024.0);
              for (const group & g : groups) {
                  if (g.id == (int32_t) id) {
@@ -3350,6 +3470,15 @@ index 2ea2ac7..d720932 100644
 +                    LLAMA_LOG_WARN("%s: the selected experts of layer %d are not an input of the CPU graph, the expert store cannot fill them\n", __func__, it->second);
 +                    warned_ids = true;
 +                }
++                continue;
++            }
++            if (strncmp(node->name, "moe_prefetch_self-", 18) == 0) {
++                continue; // never built for the CPU split (self-prefetch needs the GPU hook)
++            }
++            if (strncmp(node->name, "moe_prefetch-", 13) == 0) {
++                // the prediction for the next layer, behind this layer's real lookup in the same CPU graph: the real
++                // fill above has run, the drive is idle until the next CPU graph, the speculative reader takes it
++                prefetch_decode(it->second, (const int32_t *) sel->data, (size_t) ggml_nelements(sel));
 +                continue;
 +            }
 +            fill_decode(it->second, (const int32_t *) sel->data, (size_t) ggml_nelements(sel));
@@ -3566,7 +3695,6 @@ index 2ea2ac7..d720932 100644
 +    // stop the speculative reader from starting records and take back the ones it has not started: their slots
 +    // are emptied and go to the eviction end, the next plan reuses them first
 +    void spec_reclaim() {
-+#if defined(LLAMA_HAVE_LIBURING)
 +        if (!spec) {
 +            return;
 +        }
@@ -3584,7 +3712,6 @@ index 2ea2ac7..d720932 100644
 +            n_spec_reclaimed++;
 +        }
 +        spec_recs.clear();
-+#endif
 +    }
 +
 +    // wait for the selected experts (lru.uniq, left by the plan) whose records the speculative reader is still writing
@@ -3656,7 +3783,6 @@ index 2ea2ac7..d720932 100644
 +            g.lru.demote(f.slot);
 +            fills.pop_back();
 +        }
-+#if defined(LLAMA_HAVE_LIBURING)
 +        spec_recs.clear();
 +        std::vector<int32_t> & sid = spec_ids[il];
 +        if (!spec_demote) {
@@ -3671,7 +3797,6 @@ index 2ea2ac7..d720932 100644
 +        }
 +        spec->enqueue(spec_recs);
 +        spec_recs.clear();
-+#endif
 +        n_spec_posts++;
 +        n_prefetch_reads += fills.size();
 +    }
@@ -3999,7 +4124,7 @@ index 2ea2ac7..d720932 100644
      }
  
      ggml_tensor * get_slot_map(int32_t il, int64_t n_tokens, int64_t n_expert_used) const {
-@@ -479,6 +2571,10 @@ struct llama_moe_cache::impl {
+@@ -479,6 +2689,10 @@ struct llama_moe_cache::impl {
      }
  
      int64_t copy_experts(ggml_backend_t backend, const ggml_tensor * w, ggml_tensor * dst, int64_t e, int64_t last) {
@@ -4010,7 +4135,7 @@ index 2ea2ac7..d720932 100644
          const auto it = bindings.find(w);
          if (it == bindings.end()) {
              return 0;
-@@ -522,6 +2618,10 @@ struct llama_moe_cache::impl {
+@@ -522,6 +2736,10 @@ struct llama_moe_cache::impl {
          const layer & l = layers[il];
          group & g = groups[l.ig];
  
@@ -4021,7 +4146,7 @@ index 2ea2ac7..d720932 100644
          GGML_ASSERT(backend == devices[g.id].backend);
  
          // the get_rows that looks up the slots of the selected experts
-@@ -614,6 +2714,11 @@ struct llama_moe_cache::impl {
+@@ -614,6 +2832,11 @@ struct llama_moe_cache::impl {
          if (stats_copy.hits > 0) {
              LLAMA_LOG_INFO("llama_moe_cache: large batches: %zu experts copied from the cache, %.2f MiB\n", stats_copy.hits, stats_copy.bytes/1024.0/1024.0);
          }
@@ -4033,7 +4158,7 @@ index 2ea2ac7..d720932 100644
      }
  };
  
-@@ -635,6 +2740,18 @@ ggml_tensor * llama_moe_cache::get_experts(const ggml_tensor * w) const {
+@@ -635,6 +2858,22 @@ ggml_tensor * llama_moe_cache::get_experts(const ggml_tensor * w) const {
      return pimpl->get_experts(w);
  }
  
@@ -4045,6 +4170,10 @@ index 2ea2ac7..d720932 100644
 +    return pimpl->self_prefetch;
 +}
 +
++bool llama_moe_cache::lookups_on_gpu() const {
++    return pimpl->slots_on_gpu;
++}
++
 +int llama_moe_cache::prefetch_input() const {
 +    return pimpl->prefetch_input;
 +}
@@ -4052,7 +4181,7 @@ index 2ea2ac7..d720932 100644
  bool llama_moe_cache::copy(ggml_backend_t backend, const ggml_tensor * src, ggml_tensor * dst, ggml_cgraph * graph) {
      return pimpl->copy(backend, src, dst, graph);
  }
-@@ -643,6 +2760,14 @@ int64_t llama_moe_cache::copy_experts(ggml_backend_t backend, const ggml_tensor
+@@ -643,6 +2882,14 @@ int64_t llama_moe_cache::copy_experts(ggml_backend_t backend, const ggml_tensor
      return pimpl->copy_experts(backend, w, dst, e, last);
  }
  
@@ -4068,10 +4197,10 @@ index 2ea2ac7..d720932 100644
      std::map<ggml_backend_buffer_type_t, size_t> res;
      for (const auto & d : pimpl->devices) {
 diff --git a/src/llama-moe-cache.h b/src/llama-moe-cache.h
-index 3b6726b..4be310e 100644
+index 3b6726b..7698278 100644
 --- a/src/llama-moe-cache.h
 +++ b/src/llama-moe-cache.h
-@@ -25,6 +25,23 @@ public:
+@@ -25,6 +25,27 @@ public:
      // the experts of w in the cache, nullptr if w is not cached
      ggml_tensor * get_experts(const ggml_tensor * w) const;
  
@@ -4087,6 +4216,10 @@ index 3b6726b..4be310e 100644
 +    // are read while the GPU computes. The real lookup still plans and waits as before: correctness never depends on it.
 +    bool self_prefetch_enabled() const;
 +
++    // kimi-k3-spark patch 0003: true when the slot-map lookups run on the GPU (LLAMA_EXPERT_STORE_GPU_SLOTS, the
++    // asynchronous host-bank hook); false when they run in the CPU split and the fills happen in the CPU graph hook
++    bool lookups_on_gpu() const;
++
 +    // kimi-k3-spark patch 0003: what the predictive prefetch applies the next layer's router to
 +    // (LLAMA_EXPERT_STORE_PREFETCH_INPUT): 0 = this layer's router input, 1 = the alternative the model passes
 +    // (Kimi K3: the un-normed FFN input plus the shared expert's output, under the next layer's FFN norm)
@@ -4095,7 +4228,7 @@ index 3b6726b..4be310e 100644
      // ggml_backend_sched copy callback, returns false if src is not a slot map
      bool copy(ggml_backend_t backend, const ggml_tensor * src, ggml_tensor * dst, ggml_cgraph * graph);
  
-@@ -34,6 +51,13 @@ public:
+@@ -34,6 +55,13 @@ public:
  
      std::map<ggml_backend_buffer_type_t, size_t> memory_breakdown() const;
  

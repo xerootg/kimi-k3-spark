@@ -17,7 +17,7 @@ Hardware:
 | | Spark | GH200 |
 |---|---|---|
 | image | g3ef5e51 | gb4c74d2 |
-| decode, coding prompt, warm | 1.80 tok/s (io_uring reads, self-prefetch, speculative prefetch v2, snapshot) | 13.65 tok/s (cache 424000 MiB, slot maps on the CPU, snapshot restored at start; run 1 10.8 tok/s) |
+| decode, coding prompt, warm | 1.80 tok/s (io_uring reads, self-prefetch, speculative prefetch v2, snapshot) | 13.65-13.84 tok/s (cache 424000 MiB, slot maps on the CPU, snapshot restored at start; run 1 13.7 tok/s with `cache_prompt: false`) |
 | cache | 52000 MiB host (hit rate ~60 %) | 424000 MiB host + 24 GiB HBM tier (hit rate ~99 % warm) |
 | where a token's time goes | ~0.55 s: per layer, 3.0 ms of reads the GPU waits on + 2.8 ms of GPU work with ~4.8 predicted records read under it | ~105 ms: expert matmuls over C2C, Q6_K spine, miss waits |
 
@@ -325,6 +325,41 @@ way. The "sync hook wrong answer" and "snapshot held back" verdicts above are wi
 | 512 KiB read pieces instead of 1 MiB | 11.65 tok/s | noise |
 | Cache 424000 MiB with `vm.min_free_kbytes` 11 GB -> 2 GB on the node (the 64 KiB-page kernel's default reserve is 11 GB) | 13.45 tok/s, hit rate 98.2 -> 98.7 %, reads per layer 0.34 -> 0.23 ms, lowest MemAvailable 8 GB, no watchdog kill | kept (pending deploy) |
 
+### GH200: speculative prefetch v2 under the CPU split (2026-10-22)
+
+The Spark's prefetch v2 needed two things the GH200 config does not have: the slot maps on the GPU (the prediction
+was posted through the host-bank hook) and io_uring (one ring, which on the virtio disk is one blk-mq queue). Both
+are now in the engine: with `LLAMA_EXPERT_STORE_GPU_SLOTS=0` the prediction is computed on the device before the
+layer's real router and its lookup sits behind the real lookup in the same CPU graph (no extra split: 186 per
+graph, as before), where the CPU graph hook hands it to the side reader right after the real fill; and the side
+reader uses `depth` pread threads instead of a ring when the pool does (`LLAMA_EXPERT_STORE_PREFETCH_URING`,
+default: as the pool). Legs: production args, cache 424000 MiB, HBM tier, snapshot restored (67647 experts, 47 s)
+before every leg, 3 x 800-token coding runs with `cache_prompt: false`, md5 ac78af0e5d on every run of every leg.
+
+| leg | tok/s runs 1 / 2 / 3 | real fill per layer | predicted records per post, used | hit rate |
+|---|---|---|---|---|
+| base (deployed config, same binary, prefetch off) | 13.74 / 13.84 / 13.84 | 0.14 ms, 0.2 records | | 99.1 % |
+| v2, CPU slot maps, pread threads, depth 8, `PREFETCH_INPUT=1` | 11.37 / 11.23 / 11.28 | 0.27 ms, 0.2 records, between fills 0.73 -> 0.78 ms | 1.27, 66 % | 98.7 % |
+| same through one io_uring ring | 11.04 / 10.93 / 10.91 | 0.25 ms | 1.27, 62 %, adopt waits 1.2 ms | 98.7 % |
+| v2 with the slot maps on the GPU (async hook) | 11.51 / 11.40 / 11.39 | | 1.27, 65 % | 98.7 % |
+| v2, `PREFETCH_MAX=1`, `PREFETCH_DEMOTE=1` | 11.57 / 11.44 / 11.44 | 0.25 ms | 1.00, 41 % | 98.7 % |
+| v2, `PREFETCH_MAX=2`, `PREFETCH_DEMOTE=1`, depth 16 | 11.52 / 11.42 / 11.46 | 0.25 ms | 1.21, 40 % | 98.7 % |
+
+Why it loses here (and wins on the Spark): at 99 % residency the real misses are the tail of the routing
+distribution, and so are the predictor's errors, so most predicted misses are wrong reads (1.0-1.3 records per
+layer against 0.2 real misses) that each evict a resident expert when planned (the LRU is full; demoting the record
+afterwards does not bring the victim back): hit rate 99.1 -> 98.7 %. The speculative reads also lengthen the real
+fills (0.14 -> 0.25 ms per layer: records adopted in flight take 0.68-0.78 ms through 8 threads, a pool read 0.58
+through 32, and the disk is busy when the real fill arrives), and the predictor itself costs ~0.05 ms of GPU time
+per layer (between fills 0.73 -> 0.78 ms, ~4.6 ms per token), which alone is more than the ceiling of the gain:
+the real reads are 0.14 ms x 92 = 13 ms of the 73 ms token, and a perfect predictor could hide at most that.
+Net: 13.84 -> 11.3-11.5 tok/s, every variant. **Verdict: dropped on the GH200**, the engine support stays behind
+the flag (it is what any box without io_uring or with the CPU split needs). Not worth revisiting unless the miss
+rate rises (a smaller cache) or the predictor's GPU cost disappears.
+
+Side result: with the snapshot restored and `cache_prompt: false`, run 1 of the deployed config is 13.74 tok/s,
+not the 10.8 of the previous ledger entry (whose run 1 went through the prompt cache).
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because
@@ -332,7 +367,7 @@ something else dominated at the time. Re-test them after any change that shifts 
 
 | change | why it was neutral | re-test when |
 |---|---|---|
-| Predictive prefetch (`LLAMA_EXPERT_STORE_PREFETCH=1`) | GH200: the ~1 ms GPU gap was shorter than a read (v1); Spark: v2 (side reader, bounded, preemptible) is deployed, +12 % | GH200: try v2 with `PREFETCH_INPUT=1` when miss waits are the next item; the window there is ~1 ms = 2 records |
+| Predictive prefetch (`LLAMA_EXPERT_STORE_PREFETCH=1`) | Spark: v2 (side reader, bounded, preemptible) is deployed, +12 %. GH200: v2 measured 2026-10-22 under the CPU split, -18 %: wrong guesses evict resident experts at 99 % residency and the predictor costs more GPU time than the reads it can hide | GH200: only if the miss rate rises (smaller cache) or the predictor becomes free |
 | Hopper Q6_K TMA GEMV (on by default) | -1.6 ms/token in the op profile, but end to end within noise while miss waits dominated | after miss waits shrink further |
 | `GGML_CUDA_GRAPH_OPT=1` | parallel attention branches hidden behind the expert waits | GPU-bound phases (fewer misses, prefill) |
 | Async host-bank hook / CUDA graphs | launch overhead was not the bottleneck | when GPU time per layer dominates |
