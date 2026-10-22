@@ -195,7 +195,20 @@ read by `MUL_MAT_ID`), with these changes:
   speed as the synchronous hook (11 tok/s warm). The launch overhead was
   not the bottleneck, the GPU waiting on missed experts and the expert
   matmuls over C2C are; it stays on as the base for overlapping reads
-  with compute.
+  with compute. What crosses the mailbox is read by the poller when the
+  GPU *reaches* the request, which with eager launches (no CUDA graph:
+  batches of more than one token) can be long after the host launched it
+  and after the host has built the next ubatch's graph in the same
+  scheduler memory. So the mailbox carries the slot map (a tensor the cache
+  owns) and the kind of lookup by value, never the lookup node: passing
+  the node made the poller read a tensor of the next graph, fill the wrong
+  layer or none, and the lookup then read -1 as an expert slot. That was
+  the "two sequences decoding together crash" on the GH200 (a second
+  client's prompt joining a running sequence makes a multi-ubatch decode;
+  the fix is in the hook's signature, `ggml_backend_cuda_host_bank_hook_t`).
+  `GGML_CUDA_HOST_BANK_CHECK=1` validates every lookup's slot indices on the
+  GPU and reports the first bad one with its node (a diagnostic: it
+  synchronizes at the end of every graph).
 - Predictive prefetch (`LLAMA_EXPERT_STORE_PREFETCH=1`, off by default, needs
   the slot maps on the GPU and io_uring): before layer l's lookup the graph
   builds layer l+1's router on layer l's input (`build_moe_cache_prefetch`, a

@@ -264,6 +264,59 @@ All runs: deployed HBM config (24 GiB, decay 512), 3 x 800-token coding generati
 | Isolation: synchronous host-bank hook (`GGML_CUDA_HOST_BANK_ASYNC=0`) / no HBM tier / graphs off + no HBM tier / `--parallel 1` / slot maps on the CPU (`LLAMA_EXPERT_STORE_GPU_SLOTS=0`) | passes / crashes / crashes / passes / passes | the race is in the asynchronous mailbox path with two sequences in a batch; root cause open |
 | Output check of the sync hook (md5 of the 800-token coding run, reference ac78af0e5d) | sync hook + HBM tier: **10860c30c1, a different answer**; sync hook without the tier, async hook with or without the tier, slot maps on the CPU with the tier: all ac78af0e5d; the Spark gives its reference with both hooks | the sync hook is NOT a valid mitigation here: the HBM tier's swaps are unsafe in it (the GPU idles with nothing queued while the CPU rewrites a slot; the async path's memop wait orders it). Candidate mitigation: slot maps on the CPU, which also measured faster (12.5 vs 11.5 tok/s in one run) |
 
+### GH200: the two-sequence crash root-caused and fixed; the "wrong md5" was the prompt cache (2026-10-22)
+
+**The crash.** The asynchronous host-bank hook passed the *lookup node* (a `ggml_tensor *` of the scheduler's
+graph) through the mailbox, and the poller dereferenced it when the GPU reached the request. With eager launches
+(no CUDA graph: any batch over one token) the host is far ahead of the GPU; when a decode has more than one ubatch
+it has already rebuilt the next ubatch's graph in the same scheduler memory, so the poller read a tensor of the
+next graph, filled the wrong layer or none, and the lookup read -1 as an expert slot. Two sequences make a
+multi-ubatch decode whenever a second client's prompt joins a running sequence (the server batches the first
+sequence's decode token with the second's prompt and `split_equal` splits that by sequence), which is why the crash
+needed `--parallel 2`, two clients, and a particular request order. Fix: the mailbox carries the slot map (a tensor
+the cache owns) and the kind of lookup by value, never the node (`ggml_backend_cuda_host_bank_hook_t` changed).
+Diagnostics added on the way: `GGML_CUDA_HOST_BANK_CHECK=1` validates every lookup's slot indices on the GPU.
+
+| what | result |
+|---|---|
+| Reproduction, old mailbox (engine db2abf1 + the check code, async hook, GPU slot maps, HBM tier, cache 416000): 1-token completion, 64-token chat, two concurrent 64-token chats | crashed 2 of 2 ("illegal memory access"); the log shows the second client's prompt joining slot 1 at a different `n_past` than slot 0 |
+| Same with `GGML_CUDA_HOST_BANK_CHECK=1` (synchronizes at the end of every graph) | passed: the end-of-graph sync keeps the host from rebuilding the graph under the GPU, exactly the race |
+| compute-sanitizer / GPU core dump (`CUDA_ENABLE_COREDUMP_ON_EXCEPTION`) | not usable: the sanitizer serializes kernels (hides the race); the dump of the 96 GB device grew at 1.6 MB/s and cuda-gdb 12.8 cannot read the 580 driver's format |
+| With the fix (slot map + kind through the mailbox), same sequence | passed 7 of 7 (every leg below, plus `gh200-native-test.sh "1"` at cache 424000 in async, snapshot, CPU-slot and sync modes) |
+
+**The md5.** Every leg of the fixed build, in every mode (async + GPU slot maps, slot maps on the CPU, sync hook,
+with and without the HBM tier, with and without the snapshot, cache 416000 and 424000, TMA off), gave 10860c30c1
+for the 800-token coding run instead of the reference ac78af0e5d, while the old engine (c9b8f74-era binary) gave
+ac78af0e5d in a shorter sequence. Both answers are legitimate: they differ at token ~80 and depend on **what the
+server's prompt cache holds**. The coding prompt restores a 67-token context checkpoint (the chat template's prefix)
+computed by an earlier request, and a prefix whose KV came from the two-client prefill (a two-sequence ubatch) is
+not bit-identical to one computed in a single-sequence prefill; the rest of the prompt is then processed on top of
+it. Which checkpoint the coding prompt lands on depends on the slot the server picks (LRU, timing-dependent with
+two concurrent clients), which is why earlier legs of the *same* configuration gave either value and why the
+"sync hook + HBM tier" and "snapshot restore" rows above looked like wrong answers.
+
+| leg (fixed build unless noted, cache 424000, full sequence incl. two clients before the coding runs) | md5 |
+|---|---|
+| async hook, GPU slot maps, HBM tier, cold / snapshot restored | 10860c30c1 / 10860c30c1 |
+| slot maps on the CPU (deployed mode), cold | 10860c30c1 (13.5 tok/s) |
+| sync hook, HBM tier; no HBM tier; `GGML_CUDA_MMVQ_Q6K_TMA=0`; cache 416000 | 10860c30c1 every time |
+| **old engine** (c9b8f74 era), slot maps on the CPU, same full sequence | **10860c30c1** |
+| old engine, async, short sequence (1-token completion, 8-token chat, no two clients) | ac78af0e5d |
+| engine db2abf1 (without the mailbox fix), slot maps on the CPU, short sequence | ac78af0e5d |
+| fixed build, async hook, GPU slot maps, HBM tier, full sequence, **`cache_prompt: false`** on the coding runs | **ac78af0e5d** (9.5 / 12.7 tok/s) |
+| fixed build, slot maps on the CPU, short sequence | ac78af0e5d |
+| fixed build, async hook, GPU slot maps, HBM tier, **snapshot restored** (68875 experts, 453 GB in 47.5 s), full sequence, `cache_prompt: false` | ac78af0e5d x 3 (10.3 / 12.8 / 12.8 tok/s) |
+| fixed build, **slot maps on the CPU + snapshot restored**, full sequence, `cache_prompt: false` | ac78af0e5d x 3 (**10.8 / 13.65 / 13.67 tok/s**, hit rate 99.0 %) |
+
+Deployed from this: slot maps on the CPU (still the faster mode on the GH200, 13.65 vs 12.8 tok/s steady) plus the
+snapshot (run 1 at 10.8 instead of ~9.9 tok/s, and the cache warm after a restart). The asynchronous path is safe
+again and stays the base for the Spark's prefetch.
+
+Protocol from here: GH200 reference runs use `cache_prompt: false` (or a fresh server), the gold stays
+ac78af0e5d. The Spark gold runs (`spark-bench.sh`) send the same fixed sequence every time (one warm-up, then the
+runs), so their md5s are reproducible by construction; a different request history there would move them the same
+way. The "sync hook wrong answer" and "snapshot held back" verdicts above are withdrawn.
+
 ### GH200 miss waits (2026-10-21, snapshot restored before every leg, 3 coding runs, runs 2-3 = steady state)
 
 | what | result | verdict |
