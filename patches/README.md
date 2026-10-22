@@ -379,6 +379,39 @@ read by `MUL_MAT_ID`), with these changes:
   request for seconds. Needs `RLIMIT_MEMLOCK` to cover it or `CAP_IPC_LOCK`
   (the pod adds the capability); otherwise it warns and runs unlocked.
   Measured neutral on tok/s (1.82 vs 1.82), `VmSwap` 0 afterwards.
+- Split expert GEMV (`LLAMA_EXPERT_STORE_SPLIT=1`, off by default, needs the
+  slot maps on the GPU and no HBM tier; single-token decode only): the
+  resident experts' matmuls run while the layer's misses are read. The graph
+  looks the selected experts up twice. The early lookup (`moe_early-<il>`,
+  on an "early map") is a request the poller answers after the plan alone: it
+  publishes the slots of the experts already complete in the bank, points the
+  rest at a zero record (one extra, zeroed slot at the end of each group's
+  region, `n_slots`), starts the misses' reads on a fill thread and returns.
+  The GPU then runs the shared expert, the expert matmuls over those
+  n_expert_used + 1 ids (the last one the zero record: a scratch row) and
+  the next layer's prefetch predictor, all under the fill. The real lookup
+  (`ffn_moe_slots`, now on a position-indexed "late map" read with a constant
+  0..n-1 id list) waits for the fill thread and yields the misses' slots
+  packed first, the zero record after; a second matmul over those
+  `LLAMA_EXPERT_STORE_SPLIT_LATE` (default 8) rows computes the misses, and
+  `ggml_set_rows` copies each miss's row into the early output at its
+  position (a "merge map", also by position; the zero record's rows land in
+  the scratch row). Every expert's row is computed once, from the same slot,
+  by the same `mul_mat_vec_q` block as in the single lookup, and the weighted
+  sum runs in the same order, so the output is bit-identical (gold md5 on
+  every run). A layer with more misses than late rows reads the excess at
+  the early lookup (the speculative reader's records are adopted first), so
+  the late matmul never overflows. The zero record's rows cost real
+  bandwidth (the GPU does not cache the host bank in L2: ~28 us per dummy
+  id for the three matmuls), which is why the late matmul is kept short.
+  `PREFETCH_INPUT=3` feeds the predictor the early output's weighted sum
+  (the resident experts' share of the routed output) through the routed norm
+  and up projection, on top of input 2.
+  Spark A/B (2026-10-22, docs/experiments.md): 1.85 -> 1.91-1.93 tok/s
+  (+3.4 %, +1 % more with `PREFETCH_INPUT=3`), 11.6 of 16 experts complete
+  at the early lookup, the GPU's wait at the real lookup 2.8 -> 1.2-1.4 ms,
+  gold md5 on all 21 runs. 16 late rows gave 1.91 (the dummies cost more
+  than the synchronous excess of 8 rows saves).
 - `LLAMA_EXPERT_STORE_SPIN_US` (default 0): the I/O threads and the thread
   waiting for a fill busy-wait this long before sleeping, to skip the wake-up
   of a parked thread (or vCPU) on the next fill. Measured neutral on the

@@ -16,10 +16,10 @@ Hardware:
 
 | | Spark | GH200 |
 |---|---|---|
-| image | g1989679 | gb4c74d2 |
-| decode, coding prompt, warm | 1.85 tok/s (io_uring reads, self-prefetch, speculative prefetch v2 with predictor input 2, snapshot, memory locked) | 13.65-13.84 tok/s (cache 424000 MiB, slot maps on the CPU, snapshot restored at start; run 1 13.7 tok/s with `cache_prompt: false`) |
+| image | g1989679 -> the split build (see the Spark split section) | gb4c74d2 |
+| decode, coding prompt, warm | 1.93 tok/s (io_uring reads, self-prefetch, speculative prefetch v2 with predictor input 3, split expert GEMV, snapshot, memory locked, NVMe IOMMU in passthrough) | 13.65-13.84 tok/s (cache 424000 MiB, slot maps on the CPU, snapshot restored at start; run 1 13.7 tok/s with `cache_prompt: false`) |
 | cache | 52000 MiB host (hit rate ~60 %) | 424000 MiB host + 24 GiB HBM tier (hit rate ~99 % warm) |
-| where a token's time goes | ~0.54 s: per layer, 2.8 ms of reads the GPU waits on + 2.8 ms of GPU work with ~4.8 predicted records read under it (52 % of them used) | ~105 ms: expert matmuls over C2C, Q6_K spine, miss waits |
+| where a token's time goes | ~0.52 s: per layer, ~2.8 ms of reads with the shared expert, the resident experts' matmuls and the predictor under them (the GPU still waits ~1.2 ms), then the misses' matmuls, the merge, routed_up and the next layer's attention (~2.3 ms) with ~4.5 predicted records read under them (48 % of them used) | ~105 ms: expert matmuls over C2C, Q6_K spine, miss waits |
 
 ## Ledger
 
@@ -276,6 +276,67 @@ Findings:
 a removal of the swap path. Still open: a reproduction under production traffic (several conversations) would show
 whether anything else stalls; the sampler and the streaming bench are on the box for that.
 
+### Spark: the NVMe behind the IOMMU in passthrough (2026-10-22)
+
+DGX OS boots the Spark with `iommu.passthrough=0` (`/etc/default/grub.d/iommu.cfg`), so the NVMe's DMA ran in the
+SMMU's `DMA-FQ` mode: every O_DIRECT piece is mapped and (lazily) unmapped per page. `iommu.passthrough=1` (a later
+drop-in, `/etc/default/grub.d/zz-kimi-iommu.cfg`, then `update-grub` and a reboot) puts the NVMe's group
+(`0004:01:00.0`, iommu group 13) in the `identity` domain; the GPU's group stayed as it was. The pod came back on
+its own with the snapshot restored (7978 experts, 4.3 s, 12.3 GB/s).
+
+| measurement (same binary and config: image g1989679, predictor input 2) | before | after |
+|---|---|---|
+| `readbench` 7-record fills, io_uring 1 MiB pieces, qd 64 (mean / p50 ms, GB/s) | 3.94 / 3.90, 11.7 | 4.10-4.13 / 4.10, 11.2-11.4 (three repeats) |
+| same with 128 KiB pieces | 3.91 / 3.90 | 4.29-4.35 / 4.18-4.33 |
+| same through the pread pool (16 threads) | 4.55 / 4.51 | 4.49 / 4.47 |
+| 4-record fills, io_uring 1 MiB | 2.32 | 2.52 |
+| decode, 3 x 200 tokens (md5 e801484d every run) | 1.854 / 1.855 / 1.844 and 1.843 / 1.838 / 1.848 tok/s | 1.866 / 1.876 / 1.853 tok/s |
+| self-prefetch fill per post | 3.8 records, 2.80 ms | 3.9 records, 2.89 ms |
+
+Verdict: **no change in the engine** (+1 % on the medians, inside the run-to-run spread; the fill costs the same
+0.74 ms per record), while the fill microbenchmark got 4-5 % slower on io_uring and stayed put on the pread pool.
+The per-page map cost the readbench hugepage comparison pointed at (3.9 vs 4.5 ms) is therefore not where the
+identity domain helps; whatever `DMA-FQ` cost is left is below the noise of a decode. Kept (one code path less on
+every fill, nothing lost), easy to revert by deleting the drop-in and rebooting.
+
+### Spark: split expert GEMV, the resident experts' matmuls under the fill wait (2026-10-22)
+
+The last item of the Spark read-side list (Open ideas, "the resident experts' matmuls under the fill wait"). Per
+layer the GPU waited ~2.8 ms for the misses and only then ran the three `mul_mat_vec_q` over the 16 selected
+experts (0.6 ms), although ~12 of the 16 were in the bank before the fill started. Built as
+`LLAMA_EXPERT_STORE_SPLIT=1` (patches/README.md "Split expert GEMV"): the graph looks the experts up twice. The
+early lookup returns after the plan with the slots of the complete experts (the misses point at a zero record,
+one extra slot per group), and the misses' reads start on a fill thread; the shared expert, the early matmuls
+over 17 ids (one scratch row) and the next layer's prefetch predictor run under the fill. The real lookup waits
+for the fill and returns the misses' slots packed into `LLAMA_EXPERT_STORE_SPLIT_LATE` (default 8) rows; a
+second matmul computes them and `ggml_set_rows` copies each miss's row into the early output at its position.
+Every row is computed once, from the same slot, by the same kernel, and the weighted sum keeps its order: the
+gold md5 held on all 21 runs of the A/B. A layer with more misses than late rows reads the excess at the early
+lookup, synchronously (12 % of the layers, 0.14 records per layer on average), so the late matmul never
+overflows. The zero record's rows are not free: the GPU reads the host bank uncached, so every dummy id costs
+~28 us over the three matmuls, which is why a 16-row late matmul (all hits as dummies) gave back a third of the
+gain and the late matmul is kept short.
+
+Same binary and config for every leg (union tree at kimi-k3-spark 3991384 plus this change, predictor input 2,
+io_uring, memory lock refused by the native shell's `RLIMIT_MEMLOCK` of 16 GB, which is why some runs stalled on
+a prompt (marked *, a swapped page served behind the reads: see "Spark stalls"); interleaved legs of 3 x 200
+tokens, warm-up md5 b2c79009 and run md5 e801484d every time:
+
+| leg | tok/s runs 1 / 2 / 3 | split GEMV stats (per layer) |
+|---|---|---|
+| split off (baseline), two legs + the post-reboot run | 1.836 / 1.643* / 1.850; 1.651* / 1.549* / 1.844; 1.866 / 1.876 / 1.853 | self-prefetch fill 3.9 records, 2.85 ms |
+| split, late matmul 8 rows, two legs | 1.937 / 1.930 / 1.905; 1.619* / 1.908 / 1.914 | 11.6 of 16 complete at the early lookup, 4.45 read under the early matmul, 0.14 read synchronously, wait at the real lookup 1.39 ms |
+| split, late matmul 16 rows (no synchronous excess) | 1.911 / 1.917 / 1.898 | 11.3 complete, 4.71 under the early matmul, wait 1.50 ms |
+| split, 8 rows, predictor input 3 (the early output's share of the routed output added), two legs | 1.935 / 1.850* / 1.949; 1.521* / 1.625* / 1.927 | precision 48.4 % of the predicted reads used vs 47.3 % with input 2; wait at the real lookup 1.22 ms |
+
+Clean runs (no stall): baseline median 1.851 tok/s, split 1.914 (**+3.4 %**), split with 16 late rows 1.911,
+split with input 3 1.935 (+1 % over input 2, the three clean runs all at or above input 2's best; precision 48-49 vs 47 %). The early lookup's plan costs 0.19 ms per layer on the poller (0.002 ms without
+the synchronous excess), the GPU posts the real lookup ~1.4 ms into the ~2.8 ms fill and waits the rest, then
+runs the late matmul (4.5 real + 3.5 dummy rows, ~0.25 ms) and the merge. What is left on this path: the misses'
+own matmuls still run after the last record lands; a per-id wait inside `mul_mat_vec_q` (each block spinning on
+its record's ready flag) would hide all but the last record's share, ~0.2 ms per layer (~3 %), at the price of a
+kernel change. Verdict: **kept, deployed** (`LLAMA_EXPERT_STORE_SPLIT=1`, 8 late rows, predictor input 3).
+
 ### GH200 third pass (2026-10-20)
 
 All runs: deployed HBM config (24 GiB, decay 512), 3 x 800-token coding generations, md5 ac78af0e5d every time.
@@ -429,13 +490,14 @@ something else dominated at the time. Re-test them after any change that shifts 
 
 ### Open ideas (not yet measured)
 
-- **The resident experts' matmuls under the fill wait.** The expert GEMV (0.6 ms per layer, three `mul_mat_vec_q`
-  calls over 16 records) runs after all misses have landed; ~60 % of the records are hits and could be computed
-  while the GPU waits for the rest if the kernel skipped ids marked "done" and the two partial outputs were added
-  (per-expert rows are independent, so bit-identity is plausible, to be proven by the gold md5). Worth ~0.35 ms per
-  layer (~6 %), and it would give the prefetch predictor the routed output of the hits (precision toward the 0.717
-  measured with the whole routed output, ~+3 % more). Needs a static-shape trick: the number of hits varies per layer,
-  so both GEMVs run over all 16 ids with a sentinel slot that writes zeros.
+- **The misses' matmuls as their records land.** The split expert GEMV (2026-10-22) hides the resident experts'
+  matmuls under the fill; the misses' still run after the last record. A per-id wait inside `mul_mat_vec_q`
+  (each block spinning on its record's ready flag, set by the reader after the DMA) would hide all but the last
+  record's share, ~0.2 ms per layer (~3 %), at the price of a kernel change and a mapped flag per slot.
+- **A zero record the GPU caches.** The dummy rows of the split's late matmul cost real bandwidth (~28 us per id)
+  because the GPU reads the host bank uncached; a zero record in device memory mapped into the same virtual range
+  (CUDA VMM: `cuMemAddressReserve` + `cuMemMap`, host-NUMA allocations for the bank) would make them free and let
+  the late matmul keep 16 rows without the synchronous excess.
 - **A more precise predictor still.** Input 2 has precision 0.675; the rest is the next layer's attention, which is
   only known after it runs. The oracle replay (2.39 records in the self-prefetch fill vs 3.9) is the ceiling.
 - **The rest of the Spark perf-hunt list.** Shared expert and routed_down under the I/O wait (self-prefetch with
