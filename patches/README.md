@@ -261,7 +261,7 @@ read by `MUL_MAT_ID`), with these changes:
   records. `tools/k3-pfdump` (an eval-callback dump of the predictor and the
   real router per token and layer) and `LLAMA_EXPERT_STORE_PREFETCH_DUMP=1`
   (more predictor variants as named tensors, measurement only) are what
-  measured it; the scratch evaluator replays the pipeline through an LRU.
+  measured it; `tools/pfeval.py` (kimi-k3-spark) replays the pipeline through an LRU.
 - Self-prefetch (`LLAMA_EXPERT_STORE_SELF_PREFETCH=1`, off by default, needs
   the slot maps on the GPU): right after the router, the layer's real ids are
   posted as a `moe_prefetch_self-<il>` lookup (no wait), then the shared expert and

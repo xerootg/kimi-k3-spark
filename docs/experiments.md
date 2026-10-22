@@ -157,7 +157,7 @@ prompt at 0.1 tok/s, in baseline legs as well); those runs are listed, not used.
 The question was how much of the drive-idle window is spent on records the real fill needs, and what a better
 predictor would buy. Measured offline first: `tools/k3-pfdump` (in patch 0003) decodes a chat prompt greedily with an
 eval callback that dumps, per decode token and layer, the predictor's 896 scores, the real router's selection scores
-and the 16 real ids; a scratch evaluator (pfeval2.py, kept with the session scratch) scores predictors by rank, layer
+and the 16 real ids; the evaluator `tools/pfeval.py` scores predictors by rank, layer
 and score gap, and replays the pipeline through an LRU of 7980 records (the snapshot's resident count) with a window
 of 5 records per layer. The replay reproduces production: 6.7-6.8 misses per layer without speculation, 4.2-4.3 in
 the self-prefetch fill with the deployed predictor (measured 4.1), 4.5 predicted records started per layer (4.8).
