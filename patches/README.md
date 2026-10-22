@@ -458,6 +458,17 @@ read by `MUL_MAT_ID`), with these changes:
   `MemAvailable` seen, the slots released and re-armed, and the PSI
   wake-ups. The prefill staging is not covered (a large batch may need it
   at any time).
+- Prefill lookahead (`LLAMA_EXPERT_STORE_PREFILL_LOOKAHEAD=1`, off by
+  default, CPU split only): after the real fill of layer il of a batch of at
+  least 8 ids per expert (`LLAMA_EXPERT_STORE_PREFILL_LOOKAHEAD_MIN`), every
+  expert of layer il+1 is planned (scan resistant; the victim search steps
+  over layer il, which the GPU computes meanwhile, `moe_cache_lru::skip_layer`)
+  and the misses are read on the fill thread. Any later fill first waits for
+  those reads (`la_finish`). A large batch touches nearly every expert of a
+  layer, so "all of them" is the prediction. The memory valve treats the
+  layer in flight as protected. GH200, 16k-token prompt: 98-106 -> 127-145
+  tok/s. A stats line per 4 ubatches (`expert store: prefill: ...`) reports
+  the records read in the fill and ahead, and the wait for the lookahead.
 - `LLAMA_EXPERT_STORE_SPIN_US` (default 0): the I/O threads and the thread
   waiting for a fill busy-wait this long before sleeping, to skip the wake-up
   of a parked thread (or vCPU) on the next fill. Measured neutral on the

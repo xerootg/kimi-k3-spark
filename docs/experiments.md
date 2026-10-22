@@ -16,9 +16,10 @@ Hardware:
 
 | | Spark | GH200 |
 |---|---|---|
-| image | g1989679 -> the split build (see the Spark split section) | gb4c74d2 |
+| image | g1989679 -> the split build (see the Spark split section) | g5fd3e3f (valve) -> the prefill lookahead build |
 | decode, coding prompt, warm | 1.93 tok/s (io_uring reads, self-prefetch, speculative prefetch v2 with predictor input 3, split expert GEMV, snapshot, memory locked, NVMe IOMMU in passthrough) | 13.65-13.84 tok/s (cache 424000 MiB, slot maps on the CPU, snapshot restored at start; run 1 13.7 tok/s with `cache_prompt: false`) |
 | cache | 52000 MiB host (hit rate ~60 %), memory valve keeps 4 GiB of MemAvailable | 424000 MiB host + 24 GiB HBM tier (hit rate ~99 % warm), memory valve keeps 4 GiB host / 6 GiB HBM free (releases ~5 GB at start) |
+| prefill, 16k-token prompt | (copy path, not measured here) | 127-145 tok/s with the prefill lookahead (98-106 without), read-bound at the drive's 9.6 GB/s |
 | where a token's time goes | ~0.52 s: per layer, ~2.8 ms of reads with the shared expert, the resident experts' matmuls and the predictor under them (the GPU still waits ~1.2 ms), then the misses' matmuls, the merge, routed_up and the next layer's attention (~2.3 ms) with ~4.5 predicted records read under them (48 % of them used) | ~105 ms: expert matmuls over C2C, Q6_K spine, miss waits |
 
 ## Ledger
@@ -495,6 +496,59 @@ rate rises (a smaller cache) or the predictor's GPU cost disappears.
 Side result: with the snapshot restored and `cache_prompt: false`, run 1 of the deployed config is 13.74 tok/s,
 not the 10.8 of the previous ledger entry (whose run 1 went through the prompt cache).
 
+### GH200: long-prompt prefill, the next layer's misses read under the current layer (2026-10-22)
+
+The RE workbench sends 15-45k-token prompts, and its history condenser re-sends the whole context after every
+condensation, so prefill speed is what the user waits on there. Production pod logs (Loki, 2026-10-22 03:00 UTC):
+~100 tok/s for 6-18k-token prompts, ~20 s per 2048-token ubatch. (The 12 tok/s seen during the valve test was that
+test: its first valve build had released half the cache and two 66k prompts ran at once.) A new per-ubatch stats
+line (`expert store: prefill: ...`, every 4 ubatches) split the time: 92 batch fills per ubatch, each reading
+133-145 records (the ~18 % of a layer's experts that are not resident; a 2048-token ubatch touches all 896 of them)
+in 93-101 ms, synchronously, while the GPU waits. So ~9.2 s of reads + ~11 s of GPU work per ubatch, in series.
+The drive reads at 9.6 GB/s, its ceiling, but only half the time.
+
+Change: `LLAMA_EXPERT_STORE_PREFILL_LOOKAHEAD=1` (CPU split only). After the real fill of layer il of a large batch
+(8 ids per expert or more, `LLAMA_EXPERT_STORE_PREFILL_LOOKAHEAD_MIN`), the engine plans every expert of layer il+1
+(scan resistant like any prefill fill; the victim search steps over layer il, which the GPU computes meanwhile) and
+reads the misses on the fill thread. The next fill waits for those reads and finds them as hits. Under the CPU split
+the lookup of il+1 cannot run before the GPU has finished il (its router input comes from il), so the slots of
+il-1 and older are free; the memory valve leaves the layer in flight alone (protected, as the split GEMV's).
+
+16k-token prompt (14257 tokens, a source file, `cache_prompt: false`), production args, cache 424000 MiB + 24 GiB
+HBM tier + valve, the same snapshot restored before every leg, two windows:
+
+| leg | prefill | per batch fill | md5 of the 48 answer tokens |
+|---|---|---|---|
+| A, lookahead off, run 1 (window 1 and window 2) | 97.8 / 98.5 tok/s (145 s) | 133-145 records read in the fill, 93-101 ms | 470f605de6, 470f605de6 |
+| A, run 2 (same server, cache state after run 1) | 105.7 tok/s | 142 records, 98 ms | 2ac21c63c8 |
+| B, lookahead on, run 1 (window 1 and window 2) | 127.2 / 126.8 tok/s (112 s) | 6-15 records in the fill (4-11 ms), ~190 read ahead, 41-45 ms waited for them | 39a978363b, 39a978363b |
+| B, run 2 | **144.8 tok/s** | 4.5 records, 3 ms | 2ac21c63c8 |
+| C, lookahead + ubatch 4096 | 185.9 tok/s (77 s) | 17 records, ~200 ahead | 8fa139d05c |
+
+800-token coding run (`cache_prompt: false`) after the 16k prompt: md5 ac78af0e5d in A, B and C (10.43 / 10.56 / 9.88
+tok/s, a first run after a restart).
+
+**Prefill output depends on the cache layout, in the deployed engine too.** The same build, prompt and snapshot
+gives the same text in two separate servers (A run 1 = 470f605de6 twice, B run 1 = 39a978363b twice), but a second
+run of the same prompt in the same server, after the first one has changed which slots hold which experts, gives
+another (A run 2 = 2ac21c63c8), and with the cache in that state the lookahead build gives the identical text (B run
+2 = 2ac21c63c8). The lookahead changes where the misses land (it cannot evict the layer the GPU is computing), so
+its run 1 differs from A's run 1 the way A's run 2 does. The texts are equivalent answers that diverge after a few
+dozen tokens. Decode is unaffected (ac78af0e5d everywhere, and it never depended on the cache state). The source of
+the layout dependence is not pinned down; the suspect is the MMQ `mul_mat_id` over the bank, which walks the
+experts in slot order (the compacted expert list), so where a stream-k CTA boundary splits a tile's K range, and
+the fixup's summation order, can depend on the layout. For prefill changes, "bit-identical" therefore means: the
+same text from the same cache state, which is what B run 2 shows.
+
+Ubatch 4096 (leg C, +46 % over B run 1) doubles the compute buffer (3.2 -> 6.3 GB of HBM): the valve released
+half of the HBM tier (1887 slots, its floor) and HBM free still went down to 1.8 GB during the 16k prompt.
+Too close for a box that must not croak; not deployed (see Open ideas).
+
+**Verdict: kept, deployed on the GH200** (`LLAMA_EXPERT_STORE_PREFILL_LOOKAHEAD=1`): prefill +29-37 % (98-106 ->
+127-145 tok/s). Prefill is now read-bound with the drive busy nearly all the time (~190 records x 92 layers =
+~118 GB per ubatch, 12.3 s at 9.6 GB/s, of ~14 s per ubatch); the GPU part (~11 s per 2048 tokens) is hidden
+under it. Off on the Spark (it needs the CPU split; the Spark's prefill goes through the copy path anyway).
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because
@@ -512,6 +566,15 @@ something else dominated at the time. Re-test them after any change that shifts 
 
 ### Open ideas (not yet measured)
 
+- **GH200 prefill past the read ceiling.** With the lookahead, a 2048-token ubatch reads ~118 GB (every
+  non-resident expert once) at the drive's 9.6 GB/s; reads per token halve with each doubling of the ubatch
+  (4096: 186 tok/s measured), but the compute buffer doubles too and the HBM has no room for it next to a 24 GiB
+  tier. A smaller HBM tier plus ubatch 4096 is a trade of decode speed (the tier's hits) for prefill speed: measure
+  both before choosing. Also unmeasured: posting layer 1 of the next ubatch at the last layer (~1 %).
+- **Prefill numerics that do not depend on the cache layout.** See the GH200 prefill section: the same prompt gives
+  a different (equivalent) text depending on which slots hold the experts. Pin down the kernel (suspect: MMQ
+  stream-k over the slot-ordered expert list) and, if cheap, make it order-independent, which would make every
+  prefill change testable bit for bit.
 - **The misses' matmuls as their records land.** The split expert GEMV (2026-10-22) hides the resident experts'
   matmuls under the fill; the misses' still run after the last record. A per-id wait inside `mul_mat_vec_q`
   (each block spinning on its record's ready flag, set by the reader after the DMA) would hide all but the last
