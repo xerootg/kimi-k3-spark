@@ -12,13 +12,13 @@ Hardware:
 - **GH200:** 431 GiB LPDDR5X on NUMA node 0, H100 96 GB HBM3 as NUMA node 1, NVLink-C2C, virtio NVMe
   at ~9.5 GB/s.
 
-## Current state (2026-10-21)
+## Current state (2026-10-22)
 
 | | Spark | GH200 |
 |---|---|---|
 | image | g1989679 -> the split build (see the Spark split section) | gb4c74d2 |
 | decode, coding prompt, warm | 1.93 tok/s (io_uring reads, self-prefetch, speculative prefetch v2 with predictor input 3, split expert GEMV, snapshot, memory locked, NVMe IOMMU in passthrough) | 13.65-13.84 tok/s (cache 424000 MiB, slot maps on the CPU, snapshot restored at start; run 1 13.7 tok/s with `cache_prompt: false`) |
-| cache | 52000 MiB host (hit rate ~60 %) | 424000 MiB host + 24 GiB HBM tier (hit rate ~99 % warm) |
+| cache | 52000 MiB host (hit rate ~60 %), memory valve keeps 4 GiB of MemAvailable | 424000 MiB host + 24 GiB HBM tier (hit rate ~99 % warm), memory valve keeps 4 GiB host / 6 GiB HBM free (releases ~5 GB at start) |
 | where a token's time goes | ~0.52 s: per layer, ~2.8 ms of reads with the shared expert, the resident experts' matmuls and the predictor under them (the GPU still waits ~1.2 ms), then the misses' matmuls, the merge, routed_up and the next layer's attention (~2.3 ms) with ~4.5 predicted records read under them (48 % of them used) | ~105 ms: expert matmuls over C2C, Q6_K spine, miss waits |
 
 ## Ledger
@@ -336,6 +336,28 @@ runs the late matmul (4.5 real + 3.5 dummy rows, ~0.25 ms) and the merge. What i
 own matmuls still run after the last record lands; a per-id wait inside `mul_mat_vec_q` (each block spinning on
 its record's ready flag) would hide all but the last record's share, ~0.2 ms per layer (~3 %), at the price of a
 kernel change. Verdict: **kept, deployed** (`LLAMA_EXPERT_STORE_SPLIT=1`, 8 late rows, predictor input 3).
+
+### Both boxes: the memory pressure valve (2026-10-22)
+
+Why: the GH200 pod was OOM-killed on 2026-10-22 04:29 UTC while prefilling a 30k-token prompt from the RE
+workbench (node 0 at its 2 GB min watermark with 441 GB anonymous; HBM node ~4.7 GB free against a compute buffer
+that grows ~10 GB on long prompts). The cache size had only ever been checked with 800-token decodes. The config
+was shrunk to 416000 MiB + 14 GiB tier as a stopgap the same morning; the valve (patches/README.md, "Memory
+pressure valve") makes the cache size itself instead. GH200 runs: production args, snapshot restored, 800-token
+coding runs with `cache_prompt: false`, gold `ac78af0e5d`. Spark runs: `spark-bench.sh` with the deployed env
+(split GEMV, prefetch input 3), gold `b2c7…` / `e801…`.
+
+| what | result | verdict |
+|---|---|---|
+| First build, GH200 (416000 + 14 GiB, 8 GiB host reserve) | every `MADV_DONTNEED` failed with EINVAL except the few runs that happened to start on a 64 KiB page boundary, and those rounded the end up into the next, still resident, slot: md5 `846b7cdb92` / `0d6163e584` (wrong) from run 1, and since no page came back the valve kept releasing (123 GB released while MemAvailable stayed at the reserve) | fixed: only whole pages inside a run are dropped; a release that gives back under half of what it took stops the valve |
+| Registered memory and `MADV_DONTNEED` on the GH200 (1 GiB test buffer: plain, `mlock2` on fault, `cudaHostRegister`ed, registered then unregistered; drop, CPU rewrite, GPU sum) | the drop succeeds in all four and the GPU sees the rewritten bytes: the host bank is read through the host page tables, registration does not pin a stale copy | no unregister needed |
+| Fixed build, GH200 (416000 + 14 GiB, 4 GiB host reserve): no pressure / 12 GiB host hog / 14 GiB HBM hog / after re-arm | md5 `ac78af0e5d` on all four; host hog: 8.7 GB released in 3 batches, lowest MemAvailable 1.7 GB, no kill, all re-armed within a minute of the hog exiting; HBM hog: 7.5 GB of the tier released (stopped at the 50 % floor, HBM node free 2.2 GB at worst), all re-armed 50 s after it exited | works |
+| Long-prompt gate, GH200: two 66k-token prompts at once | prefill ran at 13-33 tok/s (two slots of 2048-token ubatches through the bank), so the gate was stopped after 55 min at 68 % / 56 %; until then 3.7 GB of host cache released and re-armed, no kill, peak server RSS 435 GiB | partial; the long-prompt prefill speed on the GH200 is its own open item |
+| Prefill scan resistance with released slots (GH200, 424000 + 24 GiB) | 11.01 / 11.05 / 10.99 tok/s with the valve vs 13.62 / 13.72 / 13.71 without: a released slot lowered `n_filled`, the LRU then took the cache for not full and switched the prompt's scan resistance off, so every prompt churned the working set. Released slots now count as full (`n_parked`) | fixed: 11.87 (run 1, right after the start-up release) / 13.86 / 13.84, md5 `ac78` x3 |
+| GH200 at 424000 + 24 GiB with the valve (the sizes that OOM-killed the pod) | at start the valve releases 2.9 GB, then 2.2 GB more over three runs; MemAvailable stays 4.3-5.2 GB, HBM node free 6.5 GB | deployed: the cache sizes itself |
+| Spark, valve on vs off, no pressure (split build) | 1.946 / 1.944 / 1.956 vs 1.936 / 1.953 / 1.932 tok/s, gold md5 on every run, nothing released (MemAvailable 8.6 GB) | neutral |
+| Spark, 7 GiB hog during the runs | 5.6 GB released in 3 batches (MemAvailable 4.2 -> 2.6 GB at worst), 1.94 / 1.87 / 1.90 / 1.89 tok/s under it, gold md5 on all 5 answers, all re-armed 10 s after the hog exited | works |
+| PSI trigger | `/proc/pressure/memory` accepts a trigger only from root on these kernels (EINVAL for the user, any window); the pods run as root, the native tests fell back to the 500 ms timer | timer is enough so far |
 
 ### GH200 third pass (2026-10-20)
 

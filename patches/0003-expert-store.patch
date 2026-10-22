@@ -2066,10 +2066,10 @@ index 803a832..1e8fec4 100644
          for (auto & mapping : ml.mappings) {
              pimpl->mappings.emplace_back(std::move(mapping));
 diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
-index 2ea2ac7..5c6a03e 100644
+index 2ea2ac7..7921ba8 100644
 --- a/src/llama-moe-cache.cpp
 +++ b/src/llama-moe-cache.cpp
-@@ -5,11 +5,42 @@
+@@ -5,11 +5,43 @@
  #include "llama-model.h"
  
  #include "ggml-cpp.h"
@@ -2097,6 +2097,7 @@ index 2ea2ac7..5c6a03e 100644
 +
 +#if defined(__linux__)
 +#include <fcntl.h>
++#include <poll.h>
 +#include <sys/mman.h>
 +#include <sys/resource.h>
 +#include <sys/stat.h>
@@ -2112,15 +2113,16 @@ index 2ea2ac7..5c6a03e 100644
  
  namespace {
  
-@@ -20,6 +51,7 @@ struct moe_cache_lru {
+@@ -20,6 +52,8 @@ struct moe_cache_lru {
  
      std::vector<int32_t *> slot_map; // [n_layer] data of the slot maps, -1 if the expert is not cached
      std::vector<int32_t>   key_of;   // [n_slots] il*n_expert + expert, -1 if empty
 +    int32_t n_filled = 0;            // slots that have held an expert at least once (the cache is full when == n_slots)
++    int32_t n_parked = 0;            // empty slots the memory valve has released: they count as full for the scan resistance
  
      // doubly linked list of the slots, head is the least recently used
      std::vector<int32_t> prev;
-@@ -27,10 +59,19 @@ struct moe_cache_lru {
+@@ -27,10 +61,19 @@ struct moe_cache_lru {
      int32_t head = -1;
      int32_t tail = -1;
  
@@ -2140,7 +2142,7 @@ index 2ea2ac7..5c6a03e 100644
      void init(int32_t n_layer, int32_t n_expert, int32_t n_slots) {
          this->n_expert = n_expert;
          this->n_slots  = n_slots;
-@@ -44,7 +85,24 @@ struct moe_cache_lru {
+@@ -44,7 +87,24 @@ struct moe_cache_lru {
          }
          head = 0;
          tail = n_slots - 1;
@@ -2165,7 +2167,7 @@ index 2ea2ac7..5c6a03e 100644
      }
  
      // move slot s to the tail (most recently used)
-@@ -65,6 +123,35 @@ struct moe_cache_lru {
+@@ -65,6 +125,35 @@ struct moe_cache_lru {
          tail = s;
      }
  
@@ -2201,7 +2203,7 @@ index 2ea2ac7..5c6a03e 100644
      struct fill {
          int32_t expert;
          int32_t slot;
-@@ -72,9 +159,13 @@ struct moe_cache_lru {
+@@ -72,9 +161,13 @@ struct moe_cache_lru {
  
      // give a slot to each expert selected by ids in layer il, the misses evict the least recently used experts
      // returns false if the ids select more distinct experts than there are slots
@@ -2212,11 +2214,11 @@ index 2ea2ac7..5c6a03e 100644
          fills.clear();
          n_hit = 0;
 +        // scan resistance only once the cache is full: while it fills, a prefill fill is as good as any other
-+        const bool scan = !promote && n_filled == n_slots;
++        const bool scan = !promote && n_filled + n_parked >= n_slots;
  
          if (++seen_gen == 0) {
              std::fill(seen.begin(), seen.end(), 0);
-@@ -97,7 +188,9 @@ struct moe_cache_lru {
+@@ -97,7 +190,9 @@ struct moe_cache_lru {
          // hits go to the tail first, so the head can be evicted below
          for (int32_t e : uniq) {
              if (slots[e] >= 0) {
@@ -2227,7 +2229,7 @@ index 2ea2ac7..5c6a03e 100644
                  n_hit++;
              }
          }
-@@ -107,19 +200,1002 @@ struct moe_cache_lru {
+@@ -107,19 +202,1002 @@ struct moe_cache_lru {
              if (slots[e] >= 0) {
                  continue;
              }
@@ -3231,7 +3233,7 @@ index 2ea2ac7..5c6a03e 100644
  // gate, up, down or gate_up, down
  static std::vector<ggml_tensor *> llama_moe_cache_layer_experts(const llama_layer & layer) {
      std::vector<ggml_tensor *> res;
-@@ -174,11 +1250,31 @@ struct llama_moe_cache::impl {
+@@ -174,11 +1252,31 @@ struct llama_moe_cache::impl {
          size_t host_bytes = 0;
          int32_t n_slots = 0;
          moe_cache_lru lru;
@@ -3263,7 +3265,7 @@ index 2ea2ac7..5c6a03e 100644
          std::vector<ggml_tensor *> experts; // host expert tensors, in the order of the banks
      };
  
-@@ -186,6 +1282,7 @@ struct llama_moe_cache::impl {
+@@ -186,6 +1284,7 @@ struct llama_moe_cache::impl {
          int32_t il;
          int32_t ip;           // index of the bank
          ggml_tensor * cached; // view of the bank used in place of the host experts
@@ -3271,7 +3273,7 @@ index 2ea2ac7..5c6a03e 100644
      };
  
      struct stats {
-@@ -194,7 +1291,12 @@ struct llama_moe_cache::impl {
+@@ -194,7 +1293,12 @@ struct llama_moe_cache::impl {
          size_t bytes  = 0;
      };
  
@@ -3285,7 +3287,7 @@ index 2ea2ac7..5c6a03e 100644
  
      int32_t n_expert_used;
  
-@@ -211,45 +1313,310 @@ struct llama_moe_cache::impl {
+@@ -211,45 +1315,813 @@ struct llama_moe_cache::impl {
      std::vector<int32_t> ids;
      std::vector<moe_cache_lru::fill> fills;
  
@@ -3474,6 +3476,491 @@ index 2ea2ac7..5c6a03e 100644
 +            LLAMA_LOG_WARN("%s: expert store: could not lock the process memory (%s after %.0f MiB): raise RLIMIT_MEMLOCK or add CAP_IPC_LOCK; cold pages of the cache and the libraries can be paged out and every first touch then waits behind the expert reads\n",
 +                __func__, err.c_str(), locked/1024.0/1024.0);
 +        }
++        mlock_ok = ok;
++    }
++    bool mlock_ok = false;
++
++    // --- memory pressure valve (kimi-k3-spark patch 0003) ---
++    //
++    // The cache is sized by hand to what the box has left after the model, and that guess is only ever checked with
++    // short prompts: a long prompt grows the CUDA compute buffers by several GB (on the GH200 a 30k-token prompt
++    // added ~10 GB on the HBM node), the driver and the server allocate a little more over time, and when the host
++    // node reaches its min watermark the kernel's answer is SIGKILL, not reclaim (the bank is anonymous and locked).
++    // The valve keeps a reserve per memory domain instead: a thread samples the host node's MemAvailable and, with an
++    // HBM tier, the HBM node's free memory every LLAMA_EXPERT_STORE_VALVE_INTERVAL_MS (default 500) and wakes early on
++    // a PSI trigger (/proc/pressure/memory "some 150000 2000000": tasks stalled on reclaim for 150 ms within 2 s,
++    // the kernel's only warning before the OOM killer). Under the reserve it releases the least recently used
++    // resident slots of that domain in one batch sized to the deficit plus a hysteresis band: munlock and
++    // MADV_DONTNEED give their pages back to the kernel, the mapping stays, the experts become misses. Released slots
++    // are parked (never chosen by the plan) until the domain has been above the reserve plus two bands for
++    // LLAMA_EXPERT_STORE_VALVE_REGROW_S seconds, then they are re-armed a chunk at a time. Lossless: a record is only
++    // ever dropped whole, never changed. Slots the GPU may be reading (the last layers filled) and slots the
++    // speculative reader is writing are never touched. LLAMA_EXPERT_STORE_VALVE=0 turns it off.
++    bool     valve_on          = true;
++    size_t   valve_reserve     = (size_t) 4096 << 20; // LLAMA_EXPERT_STORE_RESERVE_MIB: host MemAvailable to keep
++    size_t   valve_hbm_reserve = (size_t) 6144 << 20; // LLAMA_EXPERT_STORE_HBM_RESERVE_MIB: free memory on the HBM node to keep
++    int      valve_floor_pct   = 50;                  // LLAMA_EXPERT_STORE_VALVE_FLOOR: never release more than this share of a domain's slots
++    int      valve_interval_ms = 500;                 // LLAMA_EXPERT_STORE_VALVE_INTERVAL_MS
++    int      valve_regrow_s    = 10;                  // LLAMA_EXPERT_STORE_VALVE_REGROW_S: time above reserve + 2 bands before re-arming
++    int      valve_regrow_chunk = 256;                // slots re-armed per sample at most
++    std::thread       valve_thread;
++    std::atomic<bool> valve_stop{false};
++    std::recursive_mutex lru_mutex;                   // the fill hooks hold it for a whole fill, the valve for a release
++    int      valve_psi_fd = -1;
++    std::vector<std::vector<int32_t>> valve_released_host; // [group] released slots of the host domain
++    std::vector<std::vector<int32_t>> valve_released_hbm;  // [group] released slots of the HBM domain
++    size_t   valve_released_bytes_host = 0, valve_released_bytes_hbm = 0;
++    uint64_t valve_n_releases = 0, valve_n_rearms = 0, valve_n_psi = 0;
++    bool     valve_broken = false;                    // a release did not give its pages back: no more releases
++    size_t   valve_lowest_host = SIZE_MAX, valve_lowest_hbm = SIZE_MAX;
++    size_t   valve_last_host = 0, valve_last_hbm = 0;
++    std::chrono::steady_clock::time_point valve_calm_host{}, valve_calm_hbm{};
++    int32_t  protected_il[4] = { -1, -1, -1, -1 };    // layers whose slots the GPU may be reading right now
++    int      protected_pos = 0;
++    uint64_t cg_oom_kill = 0, cg_high = 0;            // cgroup memory.events seen so far
++    unsigned long valve_hbm_mask = 0;
++
++    void protect_layer(int32_t il) {
++        for (int32_t p : protected_il) {
++            if (p == il) {
++                return;
++            }
++        }
++        protected_il[protected_pos] = il;
++        protected_pos = (protected_pos + 1) % 4;
++    }
++    bool is_protected(int32_t il) const {
++        for (int32_t p : protected_il) {
++            if (p == il) {
++                return true;
++            }
++        }
++        return false;
++    }
++
++    static size_t meminfo_field(const char * path, const char * field) {
++        FILE * f = fopen(path, "r");
++        if (f == nullptr) {
++            return SIZE_MAX;
++        }
++        char line[256];
++        size_t res = SIZE_MAX;
++        const size_t n = strlen(field);
++        while (fgets(line, sizeof(line), f) != nullptr) {
++            const char * p = line;
++            if (strncmp(p, "Node ", 5) == 0) { // "Node 1 MemFree:   123 kB"
++                p += 5;
++                while (*p >= '0' && *p <= '9') {
++                    p++;
++                }
++                while (*p == ' ') {
++                    p++;
++                }
++            }
++            if (strncmp(p, field, n) == 0 && p[n] == ':') {
++                unsigned long kb = 0;
++                if (sscanf(p + n + 1, " %lu", &kb) == 1) {
++                    res = (size_t) kb*1024;
++                }
++                break;
++            }
++        }
++        fclose(f);
++        return res;
++    }
++
++    // free memory on NUMA node n as the kernel sees it (what its allocations on that node can still take)
++    static size_t node_free(int n) {
++        char path[128];
++        snprintf(path, sizeof(path), "/sys/devices/system/node/node%d/meminfo", n);
++        return meminfo_field(path, "MemFree");
++    }
++
++    int hbm_node() const {
++        for (int n = 0; n < (int) (8*sizeof(valve_hbm_mask)); ++n) {
++            if (valve_hbm_mask & (1UL << n)) {
++                return n;
++            }
++        }
++        return -1;
++    }
++
++    // MemAvailable of the CPU nodes: the system figure minus the HBM node's free memory, which host allocations are
++    // never given (the HBM node is CPU-less and the bank's host part is bound away from it)
++    size_t host_available() const {
++        size_t avail = meminfo_field("/proc/meminfo", "MemAvailable");
++        if (avail == SIZE_MAX) {
++            return SIZE_MAX;
++        }
++        const int h = hbm_node();
++        if (h >= 0) {
++            const size_t hf = node_free(h);
++            if (hf != SIZE_MAX) {
++                avail = avail > hf ? avail - hf : 0;
++            }
++        }
++        return avail;
++    }
++
++    void valve_start() {
++        if (!valve_on || !use_store) {
++            return;
++        }
++        bool any = false;
++        for (group & g : groups) {
++            if (g.region != nullptr && g.n_slots > 0) {
++                any = true;
++                if (!g.spec_state) {
++                    g.spec_state.reset(new std::atomic<int8_t>[g.n_slots]);
++                    for (int32_t s = 0; s < g.n_slots; ++s) {
++                        g.spec_state[s].store(0);
++                    }
++                    g.lru.busy = g.spec_state.get();
++                }
++            }
++        }
++        if (!any) {
++            return;
++        }
++        valve_released_host.assign(groups.size(), {});
++        valve_released_hbm.assign(groups.size(), {});
++        bool hbm = false;
++        for (const group & g : groups) {
++            hbm = hbm || g.lru.n_hbm > 0;
++        }
++        valve_hbm_mask = hbm ? store_gpu_node_mask() : 0;
++        if (host_available() == SIZE_MAX) {
++            LLAMA_LOG_WARN("%s: expert store: memory valve: /proc/meminfo unreadable, off\n", __func__);
++            return;
++        }
++        // PSI trigger: wakes the sampler when tasks have stalled on memory for 150 ms within 2 s
++        valve_psi_fd = open("/proc/pressure/memory", O_RDWR | O_NONBLOCK | O_CLOEXEC);
++        if (valve_psi_fd >= 0) {
++            const char * trig = "some 150000 2000000"; // a 2 s window: unprivileged triggers need a multiple of 2 s
++            if (write(valve_psi_fd, trig, strlen(trig)) < 0) {
++                close(valve_psi_fd);
++                valve_psi_fd = -1;
++            }
++        }
++        valve_stop.store(false);
++        valve_thread = std::thread([this] { valve_loop(); });
++        LLAMA_LOG_INFO("%s: expert store: memory valve on: host reserve %zu MiB%s, floor %d%% of the slots, sampled every %d ms%s, released slots re-armed after %d s of calm\n", __func__,
++            valve_reserve >> 20, hbm_node() >= 0 ? (", HBM node reserve " + std::to_string(valve_hbm_reserve >> 20) + " MiB").c_str() : "",
++            valve_floor_pct, valve_interval_ms, valve_psi_fd >= 0 ? " and on a PSI memory trigger" : " (no PSI trigger: /proc/pressure/memory not writable)", valve_regrow_s);
++    }
++
++    void valve_stop_thread() {
++        if (valve_thread.joinable()) {
++            valve_stop.store(true);
++            valve_thread.join();
++        }
++        if (valve_psi_fd >= 0) {
++            close(valve_psi_fd);
++            valve_psi_fd = -1;
++        }
++    }
++
++    void valve_loop() {
++        while (!valve_stop.load()) {
++            bool psi = false;
++            if (valve_psi_fd >= 0) {
++                struct pollfd pfd = { valve_psi_fd, POLLPRI, 0 };
++                const int rc = poll(&pfd, 1, valve_interval_ms);
++                if (rc > 0 && (pfd.revents & POLLERR)) {
++                    close(valve_psi_fd); // the trigger is gone (the fs went away), fall back to the timer
++                    valve_psi_fd = -1;
++                } else if (rc > 0 && (pfd.revents & POLLPRI)) {
++                    psi = true;
++                    valve_n_psi++;
++                }
++            } else {
++                std::this_thread::sleep_for(std::chrono::milliseconds(valve_interval_ms));
++            }
++            if (valve_stop.load()) {
++                break;
++            }
++            valve_sample(psi);
++        }
++    }
++
++    void valve_sample(bool psi) {
++        const auto now = std::chrono::steady_clock::now();
++        const size_t host = host_available();
++        if (host == SIZE_MAX) {
++            return;
++        }
++        valve_last_host = host;
++        valve_lowest_host = std::min(valve_lowest_host, host);
++        const int hn = hbm_node();
++        size_t hbm = SIZE_MAX;
++        if (hn >= 0) {
++            hbm = node_free(hn);
++            if (hbm != SIZE_MAX) {
++                valve_last_hbm = hbm;
++                valve_lowest_hbm = std::min(valve_lowest_hbm, hbm);
++            }
++        }
++        // cgroup v2 memory events of the container, if any: a kill or a memory.high breach is worth a log line
++        {
++            FILE * f = fopen("/sys/fs/cgroup/memory.events", "r");
++            if (f != nullptr) {
++                char line[128];
++                while (fgets(line, sizeof(line), f) != nullptr) {
++                    unsigned long long v = 0;
++                    if (sscanf(line, "oom_kill %llu", &v) == 1 && v != cg_oom_kill) {
++                        LLAMA_LOG_WARN("%s: expert store: memory valve: the cgroup reports %llu OOM kills\n", __func__, v);
++                        cg_oom_kill = v;
++                    } else if (sscanf(line, "high %llu", &v) == 1 && v != cg_high) {
++                        LLAMA_LOG_WARN("%s: expert store: memory valve: the cgroup crossed memory.high %llu times\n", __func__, v);
++                        cg_high = v;
++                    }
++                }
++                fclose(f);
++            }
++        }
++        const size_t band = valve_reserve/4;
++        if (host < valve_reserve || (psi && host < valve_reserve + band)) {
++            valve_calm_host = {};
++            valve_release(false, valve_reserve + band - host, host, psi ? "PSI trigger" : "sample");
++        } else if (host >= valve_reserve + 2*band) {
++            if (valve_calm_host.time_since_epoch().count() == 0) {
++                valve_calm_host = now;
++            } else if (std::chrono::duration_cast<std::chrono::seconds>(now - valve_calm_host).count() >= valve_regrow_s) {
++                valve_rearm(false, host - (valve_reserve + 2*band));
++            }
++        } else {
++            valve_calm_host = {};
++        }
++        if (hbm != SIZE_MAX) {
++            const size_t hband = valve_hbm_reserve/4;
++            if (hbm < valve_hbm_reserve) {
++                valve_calm_hbm = {};
++                valve_release(true, valve_hbm_reserve + hband - hbm, hbm, psi ? "PSI trigger" : "sample");
++            } else if (hbm >= valve_hbm_reserve + 2*hband) {
++                if (valve_calm_hbm.time_since_epoch().count() == 0) {
++                    valve_calm_hbm = now;
++                } else if (std::chrono::duration_cast<std::chrono::seconds>(now - valve_calm_hbm).count() >= valve_regrow_s) {
++                    valve_rearm(true, hbm - (valve_hbm_reserve + 2*hband));
++                }
++            } else {
++                valve_calm_hbm = {};
++            }
++        }
++        // released slots drift from the tail as fills touch other slots past them: keep them behind everything
++        std::lock_guard<std::recursive_mutex> lock(lru_mutex);
++        for (size_t ig = 0; ig < groups.size(); ++ig) {
++            for (int32_t s : valve_released_host[ig]) {
++                groups[ig].lru.touch(s);
++            }
++            for (int32_t s : valve_released_hbm[ig]) {
++                groups[ig].lru.touch(s);
++            }
++        }
++    }
++
++    // the whole pages inside a run of slots: madvise needs a page-aligned start, and rounding outwards would drop
++    // the first or last bytes of a neighbouring slot that is still resident (on the GH200's 64 KiB pages a slot
++    // boundary is almost never page aligned). The partial pages at the two ends stay resident.
++    bool slots_page_range(const group & g, int32_t first, int32_t last, char *& p, size_t & len) const {
++        const uintptr_t page = (uintptr_t) sysconf(_SC_PAGESIZE);
++        const uintptr_t lo = (uintptr_t) g.region + (size_t) first*g.slot_stride;
++        const uintptr_t hi = (uintptr_t) g.region + (size_t) (last + 1)*g.slot_stride;
++        const uintptr_t a = (lo + page - 1)/page*page;
++        const uintptr_t b = hi/page*page;
++        if (b <= a) {
++            return false;
++        }
++        p = (char *) a;
++        len = b - a;
++        return true;
++    }
++
++    // give the pages of a run of slots back to the kernel; returns the bytes given back
++    size_t slots_drop_pages(group & g, int32_t first, int32_t last) {
++        char * p = nullptr;
++        size_t len = 0;
++        if (!slots_page_range(g, first, last, p, len)) {
++            return 0;
++        }
++        if (mlock_ok && munlock(p, len) != 0) { // MADV_DONTNEED is refused on a locked range
++            LLAMA_LOG_WARN("%s: expert store: memory valve: munlock of slots %d-%d failed: %s\n", __func__, first, last, strerror(errno));
++            return 0;
++        }
++        if (madvise(p, len, MADV_DONTNEED) != 0) {
++            LLAMA_LOG_WARN("%s: expert store: memory valve: MADV_DONTNEED of slots %d-%d failed: %s\n", __func__, first, last, strerror(errno));
++            return 0;
++        }
++        return len;
++    }
++
++    void slots_take_pages(group & g, int32_t first, int32_t last) {
++        char * p = nullptr;
++        size_t len = 0;
++        if (!mlock_ok || !slots_page_range(g, first, last, p, len)) {
++            return;
++        }
++#ifdef MLOCK_ONFAULT
++        mlock2(p, len, MLOCK_ONFAULT);
++#endif
++    }
++
++    // release the least recently used slots of a domain until `bytes` are freed (one batch, under the LRU lock)
++    void valve_release(bool hbm, size_t bytes, size_t avail, const char * why) {
++        std::lock_guard<std::recursive_mutex> lock(lru_mutex);
++        if (valve_broken) {
++            return;
++        }
++        size_t freed = 0;   // slot bytes taken out of the cache
++        size_t dropped = 0; // bytes actually given back to the kernel (whole pages only)
++        int n_slots_released = 0;
++        std::vector<int32_t> victims;
++        for (size_t ig = 0; ig < groups.size() && freed < bytes; ++ig) {
++            group & g = groups[ig];
++            if (g.region == nullptr || g.n_slots == 0) {
++                continue;
++            }
++            moe_cache_lru & lru = g.lru;
++            // slots 0..n_slots-1 only: the split GEMV's zero record (slot n_slots) is never released, and the page
++            // range of the last slot is rounded down, so its pages are never touched either
++            const int32_t lo = hbm ? 0 : lru.n_hbm;
++            const int32_t hi = hbm ? lru.n_hbm : g.n_slots;
++            if (hi <= lo) {
++                continue;
++            }
++            std::vector<int32_t> & released = hbm ? valve_released_hbm[ig] : valve_released_host[ig];
++            const size_t keep_min = (size_t) (hi - lo)*valve_floor_pct/100;
++            victims.clear();
++            for (int32_t s = lru.head; s >= 0 && freed < bytes; s = lru.next[s]) {
++                if (s < lo || s >= hi) {
++                    continue;
++                }
++                if ((size_t) (hi - lo) - released.size() - victims.size() <= keep_min) {
++                    break;
++                }
++                if (g.spec_state[s].load(std::memory_order_acquire) != 0) {
++                    continue; // the speculative reader's, or already released
++                }
++                const int32_t k = lru.key_of[s];
++                if (k >= 0 && is_protected(k / lru.n_expert)) {
++                    continue;
++                }
++                victims.push_back(s);
++                freed += g.slot_stride;
++            }
++            for (int32_t s : victims) {
++                const int32_t k = lru.key_of[s];
++                if (k >= 0) {
++                    lru.slot_map[k / lru.n_expert][k % lru.n_expert] = -1;
++                    lru.key_of[s] = -1;
++                    lru.n_filled--;
++                    if (prefetch) {
++                        prefetched[k] = 0;
++                    }
++                }
++                g.spec_state[s].store(3, std::memory_order_release); // parked: never a victim of the plan
++                lru.n_parked++;
++                lru.touch(s);
++                released.push_back(s);
++            }
++            // drop the pages run by run
++            std::sort(victims.begin(), victims.end());
++            for (size_t i = 0; i < victims.size();) {
++                size_t j = i;
++                while (j + 1 < victims.size() && victims[j + 1] == victims[j] + 1) {
++                    j++;
++                }
++                dropped += slots_drop_pages(g, victims[i], victims[j]);
++                i = j + 1;
++            }
++            n_slots_released += (int) victims.size();
++            if (g.hbm_min_slot >= 0 && hbm) {
++                hbm_refresh_min(g);
++            }
++        }
++        if (hbm) {
++            valve_released_bytes_hbm += freed;
++        } else {
++            valve_released_bytes_host += freed;
++        }
++        if (n_slots_released > 0 && dropped < freed/2) {
++            // the pages did not go back: releasing more would only empty the cache. Stop, keep serving.
++            valve_broken = true;
++            LLAMA_LOG_ERROR("%s: expert store: memory valve: %d slots (%.2f GB) released but only %.2f GB given back to the kernel, the valve stops releasing\n", __func__,
++                n_slots_released, freed/1e9, dropped/1e9);
++        }
++        if (n_slots_released > 0) {
++            valve_n_releases++;
++            LLAMA_LOG_WARN("%s: expert store: memory valve: %s %.2f GB under the %.2f GB reserve (%s): released %d slots (%.2f GB), %.2f GB of the %s cache released in all\n", __func__,
++                hbm ? "HBM node free" : "host MemAvailable", avail/1e9, (hbm ? valve_hbm_reserve : valve_reserve)/1e9, why,
++                n_slots_released, freed/1e9, (hbm ? valve_released_bytes_hbm : valve_released_bytes_host)/1e9, hbm ? "HBM" : "host");
++        } else if (bytes > 0) {
++            static uint64_t warned = 0;
++            if (warned++ % 64 == 0) {
++                LLAMA_LOG_WARN("%s: expert store: memory valve: %s %.2f GB under the reserve but nothing left to release (floor %d%%, protected or busy slots)\n", __func__,
++                    hbm ? "HBM node free" : "host MemAvailable", avail/1e9, valve_floor_pct);
++            }
++        }
++    }
++
++    // re-arm released slots of a domain, at most a chunk and at most `room` bytes worth, so a regrowth never
++    // takes the domain back under the reserve
++    void valve_rearm(bool hbm, size_t room) {
++        std::lock_guard<std::recursive_mutex> lock(lru_mutex);
++        int n = 0;
++        size_t bytes = 0;
++        for (size_t ig = 0; ig < groups.size(); ++ig) {
++            group & g = groups[ig];
++            std::vector<int32_t> & released = hbm ? valve_released_hbm[ig] : valve_released_host[ig];
++            std::vector<int32_t> back;
++            while (!released.empty() && n < valve_regrow_chunk && bytes + g.slot_stride <= room) {
++                const int32_t s = released.back();
++                released.pop_back();
++                back.push_back(s);
++                g.spec_state[s].store(0, std::memory_order_release);
++                g.lru.n_parked--;
++                g.lru.demote(s); // empty and usable: next to be taken
++                n++;
++                bytes += g.slot_stride;
++            }
++            std::sort(back.begin(), back.end());
++            for (size_t i = 0; i < back.size();) {
++                size_t j = i;
++                while (j + 1 < back.size() && back[j + 1] == back[j] + 1) {
++                    j++;
++                }
++                slots_take_pages(g, back[i], back[j]);
++                i = j + 1;
++            }
++        }
++        if (n > 0) {
++            valve_n_rearms++;
++            if (hbm) {
++                valve_released_bytes_hbm -= std::min(valve_released_bytes_hbm, bytes);
++            } else {
++                valve_released_bytes_host -= std::min(valve_released_bytes_host, bytes);
++            }
++            size_t left = 0;
++            for (size_t ig = 0; ig < groups.size(); ++ig) {
++                left += (hbm ? valve_released_hbm[ig] : valve_released_host[ig]).size();
++            }
++            LLAMA_LOG_INFO("%s: expert store: memory valve: %s calm for %d s: %d slots (%.2f GB) re-armed, %zu still released\n", __func__,
++                hbm ? "HBM node" : "host", valve_regrow_s, n, bytes/1e9, left);
++        }
++    }
++
++    void valve_log(const char * func) const {
++        if (!valve_thread.joinable()) {
++            return;
++        }
++        size_t rel_host = 0, rel_hbm = 0;
++        for (size_t ig = 0; ig < groups.size(); ++ig) {
++            rel_host += valve_released_host[ig].size();
++            rel_hbm  += valve_released_hbm[ig].size();
++        }
++        LLAMA_LOG_INFO("%s: expert store: memory valve: host MemAvailable %.2f GB (lowest %.2f, reserve %.2f), %zu host slots released (%.2f GB)%s; %llu releases, %llu re-arms, %llu PSI wake-ups\n", func,
++            valve_last_host/1e9, valve_lowest_host == SIZE_MAX ? 0.0 : valve_lowest_host/1e9, valve_reserve/1e9, rel_host, valve_released_bytes_host/1e9,
++            hbm_node() >= 0 ? (", HBM node free " + std::to_string(valve_last_hbm/1000000) + " MB (lowest " + std::to_string(valve_lowest_hbm == SIZE_MAX ? 0 : valve_lowest_hbm/1000000) + "), " + std::to_string(rel_hbm) + " HBM slots released").c_str() : "",
++            (unsigned long long) valve_n_releases, (unsigned long long) valve_n_rearms, (unsigned long long) valve_n_psi);
 +    }
 +    uint64_t n_hbm_fills = 0;
 +    uint64_t n_hbm_lookups = 0, n_lookups = 0, n_promotions = 0;
@@ -3561,6 +4048,24 @@ index 2ea2ac7..5c6a03e 100644
 +            if (getenv("LLAMA_EXPERT_STORE_MLOCK") != nullptr) {
 +                mlock_process = atoi(getenv("LLAMA_EXPERT_STORE_MLOCK")) != 0;
 +            }
++            if (getenv("LLAMA_EXPERT_STORE_VALVE") != nullptr) {
++                valve_on = atoi(getenv("LLAMA_EXPERT_STORE_VALVE")) != 0;
++            }
++            if (getenv("LLAMA_EXPERT_STORE_RESERVE_MIB") != nullptr) {
++                valve_reserve = (size_t) std::max(0, atoi(getenv("LLAMA_EXPERT_STORE_RESERVE_MIB"))) << 20;
++            }
++            if (getenv("LLAMA_EXPERT_STORE_HBM_RESERVE_MIB") != nullptr) {
++                valve_hbm_reserve = (size_t) std::max(0, atoi(getenv("LLAMA_EXPERT_STORE_HBM_RESERVE_MIB"))) << 20;
++            }
++            if (getenv("LLAMA_EXPERT_STORE_VALVE_FLOOR") != nullptr) {
++                valve_floor_pct = std::min(100, std::max(0, atoi(getenv("LLAMA_EXPERT_STORE_VALVE_FLOOR"))));
++            }
++            if (getenv("LLAMA_EXPERT_STORE_VALVE_INTERVAL_MS") != nullptr) {
++                valve_interval_ms = std::max(50, atoi(getenv("LLAMA_EXPERT_STORE_VALVE_INTERVAL_MS")));
++            }
++            if (getenv("LLAMA_EXPERT_STORE_VALVE_REGROW_S") != nullptr) {
++                valve_regrow_s = std::max(1, atoi(getenv("LLAMA_EXPERT_STORE_VALVE_REGROW_S")));
++            }
 +            const char * env_batch = getenv("LLAMA_EXPERT_STORE_MAX_BATCH");
 +            if (env_batch != nullptr && atoi(env_batch) > 0) {
 +                max_batch_env = atoi(env_batch);
@@ -3623,7 +4128,7 @@ index 2ea2ac7..5c6a03e 100644
              auto it = std::find_if(groups.begin(), groups.end(), [&](const group & g) { return g.id == id && llama_moe_cache_same_layout(g.ref, experts); });
              if (it == groups.end()) {
                  groups.emplace_back();
-@@ -263,201 +1630,1403 @@ struct llama_moe_cache::impl {
+@@ -263,201 +2135,1413 @@ struct llama_moe_cache::impl {
                  devices[id].host_bytes += ggml_nbytes(t);
              }
          }
@@ -4085,6 +4590,7 @@ index 2ea2ac7..5c6a03e 100644
 +            if (!snapshot_path.empty()) {
 +                snapshot_restore();
 +            }
++            valve_start();
 +            LLAMA_LOG_INFO("%s: expert store: host cache below is filled from the store, expert matmuls run on the %s, batches up to %" PRId64 " tokens from the cache (larger ones through a %.2f MiB staging, allocated when one comes)\n",
 +                __func__, bank_on_gpu ? "GPU from the registered cache" : "CPU", max_batch, staging_size/1024.0/1024.0);
 +        }
@@ -4112,6 +4618,7 @@ index 2ea2ac7..5c6a03e 100644
 +
 +    ~impl() {
 +        log_stats();
++        valve_stop_thread(); // no release runs from here on
 +        if (use_store && !devices.empty()) {
 +            ggml_backend_dev_t cpu_dev = ggml_backend_get_device(devices[0].backend);
 +            auto * reg = ggml_backend_dev_backend_reg(cpu_dev);
@@ -4159,6 +4666,10 @@ index 2ea2ac7..5c6a03e 100644
 +            }
 +            return;
 +        }
++        // the memory valve releases slots under the same lock, and never those of the last layers looked up: the
++        // split GEMV's early lookup leaves its misses' reads in flight on the fill thread until the late lookup
++        std::lock_guard<std::recursive_mutex> lock(self->lru_mutex);
++        self->protect_layer(it->second);
 +        if (!self->map_kind.empty()) {
 +            // the split GEMV: the early lookup (early map) plans and starts the reads, the real one (late map) waits
 +            const auto mk = self->map_kind.find(slot_map);
@@ -4181,6 +4692,7 @@ index 2ea2ac7..5c6a03e 100644
 +    // before the CPU graph runs: every slot-map lookup in it gets its layer's selected experts fetched into the bank
 +    void on_cpu_graph(ggml_cgraph * cgraph) {
 +        const int n_nodes = ggml_graph_n_nodes(cgraph);
++        std::lock_guard<std::recursive_mutex> lock(lru_mutex);
 +        for (int i = 0; i < n_nodes; ++i) {
 +            const ggml_tensor * node = ggml_graph_node(cgraph, i);
 +            if (node->op != GGML_OP_GET_ROWS) {
@@ -4190,6 +4702,7 @@ index 2ea2ac7..5c6a03e 100644
 +            if (it == layer_of.end()) {
 +                continue;
 +            }
++            protect_layer(it->second);
 +            const ggml_tensor * sel  = node->src[1];
 +            const ggml_tensor * base = sel;
 +            while (base->view_src != nullptr) {
@@ -5056,6 +5569,7 @@ index 2ea2ac7..5c6a03e 100644
 +            t_dec_plan_us/n/1e3, t_dec_io_us/n/1e3, (double) stats_store_decode.misses/n,
 +            t_dec_io_us ? stats_store_decode.bytes/(t_dec_io_us/1e6)/1e9 : 0.0,
 +            n_dec_gaps ? t_dec_gap_us/(double) n_dec_gaps/1e3 : 0.0);
++        valve_log(func);
 +        if (n_lookups > 0) {
 +            LLAMA_LOG_INFO("%s: expert store: HBM tier: %.1f%% of decode lookups served from it, %llu promotions (%.3f ms each)\n", func,
 +                100.0*n_hbm_lookups/n_lookups, (unsigned long long) n_promotions, n_promotions ? t_promote_us/1e3/n_promotions : 0.0);
@@ -5121,6 +5635,7 @@ index 2ea2ac7..5c6a03e 100644
 +            return false;
 +        }
 +        lock_memory_once();
++        std::lock_guard<std::recursive_mutex> lock(lru_mutex);
 +        const auto it = bindings.find(w);
 +        if (it == bindings.end()) {
 +            return false;
@@ -5177,7 +5692,7 @@ index 2ea2ac7..5c6a03e 100644
      }
  
      ggml_tensor * get_slot_map(int32_t il, int64_t n_tokens, int64_t n_expert_used) const {
-@@ -478,7 +3047,33 @@ struct llama_moe_cache::impl {
+@@ -478,7 +3562,33 @@ struct llama_moe_cache::impl {
          return it != bindings.end() ? it->second.cached : nullptr;
      }
  
@@ -5211,7 +5726,12 @@ index 2ea2ac7..5c6a03e 100644
          const auto it = bindings.find(w);
          if (it == bindings.end()) {
              return 0;
-@@ -522,6 +3117,10 @@ struct llama_moe_cache::impl {
+@@ -518,10 +3628,15 @@ struct llama_moe_cache::impl {
+         if (it == layer_of.end()) {
+             return false;
+         }
++        std::lock_guard<std::recursive_mutex> lock(lru_mutex);
+         const int32_t il = it->second;
          const layer & l = layers[il];
          group & g = groups[l.ig];
  
@@ -5222,7 +5742,7 @@ index 2ea2ac7..5c6a03e 100644
          GGML_ASSERT(backend == devices[g.id].backend);
  
          // the get_rows that looks up the slots of the selected experts
-@@ -614,6 +3213,11 @@ struct llama_moe_cache::impl {
+@@ -614,6 +3729,11 @@ struct llama_moe_cache::impl {
          if (stats_copy.hits > 0) {
              LLAMA_LOG_INFO("llama_moe_cache: large batches: %zu experts copied from the cache, %.2f MiB\n", stats_copy.hits, stats_copy.bytes/1024.0/1024.0);
          }
@@ -5234,7 +5754,7 @@ index 2ea2ac7..5c6a03e 100644
      }
  };
  
-@@ -635,6 +3239,38 @@ ggml_tensor * llama_moe_cache::get_experts(const ggml_tensor * w) const {
+@@ -635,6 +3755,38 @@ ggml_tensor * llama_moe_cache::get_experts(const ggml_tensor * w) const {
      return pimpl->get_experts(w);
  }
  
@@ -5273,7 +5793,7 @@ index 2ea2ac7..5c6a03e 100644
  bool llama_moe_cache::copy(ggml_backend_t backend, const ggml_tensor * src, ggml_tensor * dst, ggml_cgraph * graph) {
      return pimpl->copy(backend, src, dst, graph);
  }
-@@ -643,6 +3279,14 @@ int64_t llama_moe_cache::copy_experts(ggml_backend_t backend, const ggml_tensor
+@@ -643,6 +3795,14 @@ int64_t llama_moe_cache::copy_experts(ggml_backend_t backend, const ggml_tensor
      return pimpl->copy_experts(backend, w, dst, e, last);
  }
  

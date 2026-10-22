@@ -412,6 +412,52 @@ read by `MUL_MAT_ID`), with these changes:
   at the early lookup, the GPU's wait at the real lookup 2.8 -> 1.2-1.4 ms,
   gold md5 on all 21 runs. 16 late rows gave 1.91 (the dummies cost more
   than the synchronous excess of 8 rows saves).
+- Memory pressure valve (`LLAMA_EXPERT_STORE_VALVE`, default 1): the cache
+  sizes itself to what the box has left instead of trusting the hand-picked
+  `--moe-cache-mib`. Why: that number is only ever checked with short
+  prompts; a long prompt grows the CUDA compute buffers by several GB (a
+  30k-token prompt on the GH200 added ~10 GB on the HBM node), the driver
+  and the server allocate a little more over time, and when the host node
+  reaches its min watermark the kernel's answer is SIGKILL (the bank is
+  anonymous, locked, and there is no swap): the GH200 pod was killed that
+  way on 2026-10-22 with 441 GB of anonymous memory on a 449 GB node. A
+  thread samples the CPU nodes' `MemAvailable` (the system figure minus the
+  HBM node's free memory, which host allocations never get) and, with an HBM
+  tier, the HBM node's `MemFree`, every `LLAMA_EXPERT_STORE_VALVE_INTERVAL_MS`
+  (500) and whenever a PSI trigger fires (`/proc/pressure/memory`,
+  `some 150000 2000000`: tasks stalled on reclaim for 150 ms within 2 s,
+  the kernel's only early warning; it needs root on these kernels, the
+  timer is the fallback). Under the reserve
+  (`LLAMA_EXPERT_STORE_RESERVE_MIB` 4096 for the host,
+  `LLAMA_EXPERT_STORE_HBM_RESERVE_MIB` 6144 for the HBM node) it releases
+  the least recently used slots of that domain in one batch sized to the
+  deficit plus a quarter-reserve band: `munlock` + `MADV_DONTNEED` give the
+  pages back, the mapping stays, the experts become misses. Only the whole
+  pages inside a run of released slots are dropped: on the GH200's 64 KiB
+  pages a slot boundary is almost never page aligned, and the first build
+  rounded outwards, zeroing the edge of a resident neighbour (wrong md5) or
+  failing with EINVAL; a release that gives back less than half of what it
+  took now stops the valve instead of emptying the cache. The GPU reads the
+  bank through the host page tables on both boxes (registered, but
+  coherent), so a dropped page is never read stale: measured with a
+  registered 1 GiB buffer, `MADV_DONTNEED`, a CPU rewrite and a GPU sum. Released slots
+  are parked (the plan never takes them, they sit at the tail of the LRU,
+  and they count as full for the prefill scan resistance: counting them as
+  empty switched it off and cost the GH200 20 %)
+  until the domain has been above the reserve plus two bands for
+  `LLAMA_EXPERT_STORE_VALVE_REGROW_S` (10) seconds, then they are re-armed
+  256 at a time (`MLOCK_ONFAULT` again, the pages return on the next fill).
+  Never released: the slots of the last layers filled (the GPU may be
+  reading them), slots the speculative reader is writing, and the last
+  `LLAMA_EXPERT_STORE_VALVE_FLOOR` (50) percent of a domain's slots, and
+  the split GEMV's zero record (slot `n_slots`, outside the LRU). The
+  fill hooks and the valve share a lock around the LRU, so a release only
+  runs between fills. Lossless: a record is dropped whole or not at all.
+  The cgroup's `memory.events` are read too and a kill or a `memory.high`
+  breach is logged. The periodic stats line reports the lowest
+  `MemAvailable` seen, the slots released and re-armed, and the PSI
+  wake-ups. The prefill staging is not covered (a large batch may need it
+  at any time).
 - `LLAMA_EXPERT_STORE_SPIN_US` (default 0): the I/O threads and the thread
   waiting for a fill busy-wait this long before sleeping, to skip the wake-up
   of a parked thread (or vCPU) on the next fill. Measured neutral on the
