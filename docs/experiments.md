@@ -16,9 +16,9 @@ Hardware:
 
 | | Spark | GH200 |
 |---|---|---|
-| image | g3ef5e51 | g231d482 |
-| decode, coding prompt, warm | 1.80 tok/s (io_uring reads, self-prefetch, speculative prefetch v2, snapshot) | 13.6 tok/s (cache 424000 MiB, slot maps on the CPU) |
-| cache | 52000 MiB host (hit rate ~60 %) | 400000 MiB host + 24 GiB HBM tier (hit rate ~96 %) |
+| image | g3ef5e51 | gb4c74d2 |
+| decode, coding prompt, warm | 1.80 tok/s (io_uring reads, self-prefetch, speculative prefetch v2, snapshot) | 13.65 tok/s (cache 424000 MiB, slot maps on the CPU, snapshot restored at start; run 1 10.8 tok/s) |
+| cache | 52000 MiB host (hit rate ~60 %) | 424000 MiB host + 24 GiB HBM tier (hit rate ~99 % warm) |
 | where a token's time goes | ~0.55 s: per layer, 3.0 ms of reads the GPU waits on + 2.8 ms of GPU work with ~4.8 predicted records read under it | ~105 ms: expert matmuls over C2C, Q6_K spine, miss waits |
 
 ## Ledger
