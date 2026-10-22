@@ -16,10 +16,10 @@ Hardware:
 
 | | Spark | GH200 |
 |---|---|---|
-| image | g3ef5e51 | gb4c74d2 |
-| decode, coding prompt, warm | 1.80 tok/s (io_uring reads, self-prefetch, speculative prefetch v2, snapshot) | 13.65-13.84 tok/s (cache 424000 MiB, slot maps on the CPU, snapshot restored at start; run 1 13.7 tok/s with `cache_prompt: false`) |
+| image | g1989679 | gb4c74d2 |
+| decode, coding prompt, warm | 1.85 tok/s (io_uring reads, self-prefetch, speculative prefetch v2 with predictor input 2, snapshot, memory locked) | 13.65-13.84 tok/s (cache 424000 MiB, slot maps on the CPU, snapshot restored at start; run 1 13.7 tok/s with `cache_prompt: false`) |
 | cache | 52000 MiB host (hit rate ~60 %) | 424000 MiB host + 24 GiB HBM tier (hit rate ~99 % warm) |
-| where a token's time goes | ~0.55 s: per layer, 3.0 ms of reads the GPU waits on + 2.8 ms of GPU work with ~4.8 predicted records read under it | ~105 ms: expert matmuls over C2C, Q6_K spine, miss waits |
+| where a token's time goes | ~0.54 s: per layer, 2.8 ms of reads the GPU waits on + 2.8 ms of GPU work with ~4.8 predicted records read under it (52 % of them used) | ~105 ms: expert matmuls over C2C, Q6_K spine, miss waits |
 
 ## Ledger
 
@@ -151,6 +151,58 @@ cache size. The FFN-input predictor is worth 3 % over the router-input one. What
 the next attention) is the only lever left on this path, worth up to ~1.9 instead of ~4 records in the self-prefetch
 fill (layer ~4.0 instead of ~5.9 ms). The box stalled a few times this day (a 200-token run at 1.2-1.4 tok/s with the
 prompt at 0.1 tok/s, in baseline legs as well); those runs are listed, not used.
+
+### Spark: precision of the speculative prefetch predictor (2026-10-21)
+
+The question was how much of the drive-idle window is spent on records the real fill needs, and what a better
+predictor would buy. Measured offline first: `tools/k3-pfdump` (in patch 0003) decodes a chat prompt greedily with an
+eval callback that dumps, per decode token and layer, the predictor's 896 scores, the real router's selection scores
+and the 16 real ids; a scratch evaluator (pfeval2.py, kept with the session scratch) scores predictors by rank, layer
+and score gap, and replays the pipeline through an LRU of 7980 records (the snapshot's resident count) with a window
+of 5 records per layer. The replay reproduces production: 6.7-6.8 misses per layer without speculation, 4.2-4.3 in
+the self-prefetch fill with the deployed predictor (measured 4.1), 4.5 predicted records started per layer (4.8).
+
+Findings, 400 tokens of the coding prompt and 300 of a prose prompt (same picture on both):
+
+- The deployed predictor (`PREFETCH_INPUT=1`, the next router on the un-normed FFN input plus the shared expert) has
+  top-16 precision 0.61-0.64, falling from 0.95 at rank 1 to 0.29 at rank 16; top-32 recall 0.76-0.79. Of the started
+  speculative reads 58-59 % are used.
+- The window is not the limit: on average 4.5 predicted misses fit in a window of 5, so ordering the predictions by
+  score gap, absolute score or anything else changes nothing (all gating policies replay identically). The previous
+  token's ids are no signal either: 32 % of them are in the real set, and of those not already predicted only 13 %.
+  The limit is recall: the window can only be filled with better predictions, not more of the same ones.
+- The model's cross-layer residual attention explains the worst layers. Every 12th layer banks the stream and restarts
+  it from the attention output, and every layer's FFN input is a learned mix of the banked checkpoints and the stream
+  (`res_mix`). The deployed predictor ignores the mixing, so on the checkpoint layers it scores 0.34 and on layer 13
+  0.01 (its input is the restarted stream of layer 12, which looks nothing like the mix layer 13 applies).
+- Variants built in the graph behind `LLAMA_EXPERT_STORE_PREFETCH_DUMP=1` (named tensors, same generation,
+  measured in one run): the stream before this layer's FFN plus the shared expert, put through the *next* layer's
+  own residual mix (on a checkpoint target: the stack plus this stream as the new checkpoint, the unknown attention
+  output as zero) raises the precision to 0.675 (checkpoint layers 0.48, the layer after them 0.58, layer 13 0.46);
+  adding this layer's whole routed output (an upper bound for computing the resident experts early) gives 0.717; the
+  same two layers ahead 0.55 / 0.57.
+- Replay with those: real fill 4.26 -> 3.94 records with the mixed input; 3.69 with the routed output but only if it
+  had the whole window, 4.10 with the 3.5-record window left after the expert matmuls; two layers ahead in the spare
+  window 3.88; skipping the checkpoint layers 4.08 (even their poor predictions help). Oracle 2.39.
+
+So the mixed input (`LLAMA_EXPERT_STORE_PREFETCH_INPUT=2`, patches/README.md) was built for real: `res_mix_pred`
+mixes the stream plus the shared expert with the next layer's `ffn_res_score` (plus the stream as an extra checkpoint
+on checkpoint targets), the next FFN norm, the next router; a few small ops per layer, decode only (n_tokens <= 4).
+
+A/B, `~/spark-bench.sh`, 3 x 200-token coding runs per leg after a 32-token warm-up, legs interleaved, md5 `e801484d`
+on every run and `b2c79009` on every warm-up:
+
+| leg | decode tok/s (runs 1/2/3) | predictions used of queued | self-prefetch fill |
+|---|---|---|---|
+| input 2 | 1.854 / 1.855 / 1.844 | 52.5 % | 3.8 records, 2.80 ms |
+| input 1 (deployed) | 1.812 / 1.810 / 1.817 | 48.2 % | 4.1 records, 2.94 ms |
+| input 2 again | 1.843 / 1.838 / 1.848 | 52.3 % | 3.8 records, 2.80 ms |
+| input 1 again | 1.826 / 1.809 / 1.794 | 48.1 % | 4.1 records, 2.96 ms |
+
+**Verdict: kept, deployed as `LLAMA_EXPERT_STORE_PREFETCH_INPUT=2` (image g1989679): 1.81 -> 1.85 tok/s (+2 %),
+bit-identical**, the replay's +4 % minus the ops the mix adds to the window. What is left on this path is the next
+layer's attention, which no input available before it runs can supply; the oracle replay (2.39 records) is the
+ceiling and the resident experts' routed output (0.717) the last measurable step toward it, see "Open ideas".
 
 ### Spark: what the GPU does in the drive-idle window (2026-10-21, from the same nsys capture)
 
@@ -377,7 +429,15 @@ something else dominated at the time. Re-test them after any change that shifts 
 
 ### Open ideas (not yet measured)
 
-- **A more precise predictor for the speculative prefetch.** 70 % of the started reads are used; the window is full, so precision is the whole remaining gain on the Spark read side (see the prefetch v2 section).
+- **The resident experts' matmuls under the fill wait.** The expert GEMV (0.6 ms per layer, three `mul_mat_vec_q`
+  calls over 16 records) runs after all misses have landed; ~60 % of the records are hits and could be computed
+  while the GPU waits for the rest if the kernel skipped ids marked "done" and the two partial outputs were added
+  (per-expert rows are independent, so bit-identity is plausible, to be proven by the gold md5). Worth ~0.35 ms per
+  layer (~6 %), and it would give the prefetch predictor the routed output of the hits (precision toward the 0.717
+  measured with the whole routed output, ~+3 % more). Needs a static-shape trick: the number of hits varies per layer,
+  so both GEMVs run over all 16 ids with a sentinel slot that writes zeros.
+- **A more precise predictor still.** Input 2 has precision 0.675; the rest is the next layer's attention, which is
+  only known after it runs. The oracle replay (2.39 records in the self-prefetch fill vs 3.9) is the ceiling.
 - **The rest of the Spark perf-hunt list.** Shared expert and routed_down under the I/O wait (self-prefetch with
   the real ids, est. +6 %), poller falling asleep inside the GPU gap (+2 %), I/O and poller threads on the X925
   cores (+2 %). The reads now run at the drive's ceiling, so more overlap is the remaining lever on the read side.
