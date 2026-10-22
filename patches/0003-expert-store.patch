@@ -1406,7 +1406,7 @@ index 07d3ee5..65c6f4e 100644
      // every selected expert before the uploads start, so their pages are read with large
      // asynchronous I/Os instead of being faulted in one page at a time by the copies
 diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
-index 2bc3a29..b051891 100644
+index 2bc3a29..a585882 100644
 --- a/src/llama-graph.cpp
 +++ b/src/llama-graph.cpp
 @@ -2536,6 +2536,8 @@ ggml_tensor * llm_graph_context::build_moe_cache_slots(
@@ -1440,7 +1440,7 @@ index 2bc3a29..b051891 100644
      // the slot map is a host weight, so the scheduler starts a new split here and copies it with the copy callback
      // the callback reads the selected experts, uploads the missing ones and updates the slot map
      ggml_tensor * slots = ggml_get_rows(ctx0, slot_map, ids); // [1, n_expert_used*n_tokens]
-@@ -2568,9 +2585,69 @@ ggml_tensor * llm_graph_context::build_moe_cache_slots(
+@@ -2568,9 +2585,70 @@ ggml_tensor * llm_graph_context::build_moe_cache_slots(
      // add the lookup now: the transform of a Hadamard-folded expert reads host weights and would start its split first
      ggml_build_forward_expand(gf, slots);
  
@@ -1465,7 +1465,7 @@ index 2bc3a29..b051891 100644
 +    if (moe_cache == nullptr || !moe_cache->prefetch_enabled() || gate_inp == nullptr) {
 +        return;
 +    }
-+    if (moe_cache->prefetch_input() == 1 && router_in_alt != nullptr) {
++    if (moe_cache->prefetch_input() >= 1 && router_in_alt != nullptr) {
 +        router_in = router_in_alt;
 +    }
 +    const int64_t n_tok = router_in->ne[1];
@@ -1488,6 +1488,7 @@ index 2bc3a29..b051891 100644
 +    if (exp_probs_b != nullptr) {
 +        probs = ggml_add(ctx0, probs, exp_probs_b);
 +    }
++    ggml_format_name(probs, "moe_prefetch_probs-%d", il_next); // named for eval callbacks (tools/k3-pfdump)
 +    ggml_tensor * ids = ggml_argsort_top_k(ctx0, probs, n_expert_used); // [n_expert_used, n_tokens]
 +    ids = ggml_cont(ctx0, ids);
 +    ids = ggml_reshape_1d(ctx0, ids, ggml_nelements(ids));
@@ -4243,7 +4244,7 @@ index 3b6726b..7698278 100644
      struct impl;
      std::unique_ptr<impl> pimpl;
 diff --git a/src/models/kimi-k3.cpp b/src/models/kimi-k3.cpp
-index 27ceffe..e951b11 100644
+index 27ceffe..2a428a6 100644
 --- a/src/models/kimi-k3.cpp
 +++ b/src/models/kimi-k3.cpp
 @@ -2,6 +2,7 @@
@@ -4254,15 +4255,75 @@ index 27ceffe..e951b11 100644
  
  //
  // Kimi-K3 text model: hybrid KDA (linear) + MLA (full) attention, as in kimi-linear.
-@@ -309,6 +310,7 @@ llama_model_kimi_k3::graph::graph(const llama_model & model, const llm_graph_par
+@@ -233,6 +234,57 @@ ggml_tensor * llama_model_kimi_k3::graph::res_mix(ggml_tensor * cur, ggml_tensor
+     return out;
+ }
+ 
++// res_mix for the prefetch predictor: the stack plus an optional checkpoint the target layer will have pushed
++ggml_tensor * llama_model_kimi_k3::graph::res_mix_pred(ggml_tensor * cur, ggml_tensor * score_w,
++                                                       ggml_tensor * extra_ckpt, int64_t n_tokens) {
++    const int64_t n_embd = cur->ne[0];
++    ggml_tensor * src = resi_stack;
++    if (extra_ckpt != nullptr) {
++        ggml_tensor * ckpt = ggml_reshape_3d(ctx0, extra_ckpt, n_embd, 1, n_tokens);
++        src = src ? ggml_concat(ctx0, src, ckpt, 1) : ckpt;
++    }
++    if (src == nullptr) {
++        return cur;
++    }
++    const int   n_ckpt = (int) src->ne[1];
++    const float eps    = hparams.f_norm_rms_eps;
++    ggml_tensor * sc_src = ggml_rms_norm(ctx0, src, eps);
++    sc_src = ggml_mul(ctx0, sc_src, score_w);
++    sc_src = ggml_sum_rows(ctx0, sc_src);
++    sc_src = ggml_reshape_2d(ctx0, sc_src, n_ckpt, n_tokens);
++    ggml_tensor * sc_cur = ggml_rms_norm(ctx0, cur, eps);
++    sc_cur = ggml_mul(ctx0, sc_cur, score_w);
++    sc_cur = ggml_sum_rows(ctx0, sc_cur);
++    ggml_tensor * scores = ggml_concat(ctx0, sc_src, sc_cur, 0);
++    ggml_tensor * probs  = ggml_soft_max(ctx0, scores);
++    ggml_tensor * p_src = ggml_cont(ctx0, ggml_view_2d(ctx0, probs, n_ckpt, n_tokens, probs->nb[1], 0));
++    ggml_tensor * p_cur = ggml_cont(ctx0, ggml_view_2d(ctx0, probs, 1, n_tokens, probs->nb[1], probs->nb[0] * n_ckpt));
++    ggml_tensor * out = ggml_dsv4_hc_pre(ctx0, src, p_src);
++    out = ggml_add(ctx0, out, ggml_mul(ctx0, cur, p_cur));
++    return out;
++}
++
++// LLAMA_EXPERT_STORE_PREFETCH_INPUT=2: the next layer's router input less its attention and this layer's routed
++// output: the residual stream before this layer's FFN plus the shared expert, mixed the way the next layer's FFN
++// mixes it (its own residual scores; on a checkpoint layer the stream restarts from the attention output, which is
++// unknown, so the stack plus the stream as the new checkpoint stand in). Measured on 400 decode tokens: top-16
++// precision 0.675 vs 0.614 for input 1, the checkpoint layer and the one after it 0.48 / 0.58 vs 0.34 / 0.46.
++ggml_tensor * llama_model_kimi_k3::graph::build_prefetch_input2(ggml_tensor * sh, int il_next, int64_t n_tokens) {
++    const uint32_t res_bs = hparams.attn_res_block_size;
++    if (res_bs == 0 || pred_ps_attn == nullptr || n_tokens > 4 || il_next >= (int) model.layers.size()) {
++        return nullptr;
++    }
++    const auto & next = model.layers[il_next];
++    if (next.ffn_res_score == nullptr || next.ffn_norm == nullptr) {
++        return nullptr;
++    }
++    ggml_tensor * base = ggml_add(ctx0, pred_ps_attn, sh);
++    ggml_tensor * x = (uint32_t) il_next % res_bs == 0
++        ? res_mix_pred(ggml_scale(ctx0, base, 0.0f), next.ffn_res_score, base, n_tokens)
++        : res_mix_pred(base, next.ffn_res_score, nullptr, n_tokens);
++    return build_norm(x, next.ffn_norm, NULL, LLM_NORM_RMS, il_next);
++}
++
+ llama_model_kimi_k3::graph::graph(const llama_model & model, const llm_graph_params & params) :
+     llm_build_delta_net_base(params), model(model) {
+ 
+@@ -309,6 +361,9 @@ llama_model_kimi_k3::graph::graph(const llama_model & model, const llm_graph_par
          cur = use_attn_res ? res_mix(prefix_sum, layer.ffn_res_score, n_tokens, il)
                             : prefix_sum;
  
++        ggml_tensor * ps_attn = prefix_sum; // the residual stream before this layer's FFN (prefetch predictor)
++        pred_ps_attn = ps_attn;
 +        ggml_tensor * ffn_inp = cur; // un-normed, for the prefetch predictor
          cur = build_norm(cur, layer.ffn_norm, NULL, LLM_NORM_RMS, il);
          cb(cur, "ffn_norm", il);
  
-@@ -319,7 +321,7 @@ llama_model_kimi_k3::graph::graph(const llama_model & model, const llm_graph_par
+@@ -319,13 +374,47 @@ llama_model_kimi_k3::graph::graph(const llama_model & model, const llm_graph_par
              cur = ggml_mul_mat(ctx0, layer.ffn_down, cur);
              cb(cur, "ffn_out", il);
          } else {
@@ -4271,7 +4332,47 @@ index 27ceffe..e951b11 100644
          }
  
          prefix_sum = ggml_add(ctx0, prefix_sum, cur);
-@@ -566,7 +568,7 @@ ggml_tensor * llama_model_kimi_k3::graph::build_mla_layer(
+         prefix_sum = build_cvec(prefix_sum, il);
+         cb(prefix_sum, "l_out", il);
+ 
++        // measurement only (LLAMA_EXPERT_STORE_PREFETCH_DUMP=1, tools/k3-pfdump): alternative inputs of the next
++        // layers' routers, through the residual mixing the target layer applies. pfv2/pfv3: one layer ahead from the
++        // stream plus the shared expert (pfv2) or plus the whole FFN output (pfv3); pfv4/pfv5: the same two layers ahead.
++        static const bool pf_dump = getenv("LLAMA_EXPERT_STORE_PREFETCH_DUMP") != nullptr;
++        if (pf_dump && use_attn_res && (uint32_t) il >= hparams.n_layer_dense_lead && last_sh != nullptr && n_tokens <= 4) {
++            ggml_tensor * A = ggml_add(ctx0, ps_attn, last_sh);
++            ggml_tensor * B = prefix_sum;
++            for (int ahead = 1; ahead <= 2; ahead++) {
++                const int iln = il + ahead;
++                if (iln >= n_layer || model.layers[iln].ffn_gate_inp == nullptr || model.layers[iln].ffn_res_score == nullptr) {
++                    continue;
++                }
++                const bool ckpt = ((uint32_t) iln % res_bs == 0) || (ahead == 2 && (uint32_t) (il + 1) % res_bs == 0);
++                for (int v = 0; v < 2; v++) {
++                    ggml_tensor * base = v == 0 ? A : B;
++                    ggml_tensor * x = ckpt ? res_mix_pred(ggml_scale(ctx0, base, 0.0f), model.layers[iln].ffn_res_score, base, n_tokens)
++                                           : res_mix_pred(base, model.layers[iln].ffn_res_score, nullptr, n_tokens);
++                    x = build_norm(x, model.layers[iln].ffn_norm, NULL, LLM_NORM_RMS, iln);
++                    ggml_tensor * pr = ggml_mul_mat(ctx0, model.layers[iln].ffn_gate_inp, x);
++                    switch ((llama_expert_gating_func_type) hparams.expert_gating_func) {
++                        case LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX:       pr = ggml_soft_max(ctx0, pr); break;
++                        case LLAMA_EXPERT_GATING_FUNC_TYPE_SIGMOID:       pr = ggml_sigmoid(ctx0, pr); break;
++                        case LLAMA_EXPERT_GATING_FUNC_TYPE_SQRT_SOFTPLUS: pr = ggml_sqrt(ctx0, ggml_softplus(ctx0, pr)); break;
++                        default: break;
++                    }
++                    if (model.layers[iln].ffn_exp_probs_b != nullptr) {
++                        pr = ggml_add(ctx0, pr, model.layers[iln].ffn_exp_probs_b);
++                    }
++                    ggml_format_name(pr, "pfv%d_probs-%d", 2 + v + 2*(ahead - 1), iln);
++                    ggml_build_forward_expand(gf, pr);
++                }
++            }
++        }
++
+         inpL = prefix_sum;
+     }
+ 
+@@ -566,7 +655,7 @@ ggml_tensor * llama_model_kimi_k3::graph::build_mla_layer(
  //
  
  ggml_tensor * llama_model_kimi_k3::graph::build_latent_moe(
@@ -4280,7 +4381,7 @@ index 27ceffe..e951b11 100644
  
      ggml_tensor * identity = cur;
  
-@@ -579,6 +581,39 @@ ggml_tensor * llama_model_kimi_k3::graph::build_latent_moe(
+@@ -579,6 +668,45 @@ ggml_tensor * llama_model_kimi_k3::graph::build_latent_moe(
      ggml_tensor * logits = ggml_mul_mat(ctx0, layer.ffn_gate_inp, identity);
      cb(logits, "ffn_moe_logits", il);
  
@@ -4294,6 +4395,7 @@ index 27ceffe..e951b11 100644
 +        sh = ggml_mul_mat(ctx0, layer.ffn_down_shexp, sh);
 +        cb(sh, "ffn_shexp", il);
 +    }
++    last_sh = sh;
 +    moe_overlap.clear();
 +    if (sh != nullptr) {
 +        moe_overlap.push_back(sh);
@@ -4309,9 +4411,14 @@ index 27ceffe..e951b11 100644
 +    // under the next layer's FFN norm, which is the next router's input less this layer's routed output and attention.
 +    if (il + 1 < (int) model.layers.size() && model.layers[il + 1].ffn_gate_inp != nullptr) {
 +        ggml_tensor * alt = nullptr;
-+        if (moe_cache != nullptr && moe_cache->prefetch_enabled() && moe_cache->prefetch_input() == 1 && sh != nullptr && inp_raw != nullptr) {
-+            alt = ggml_add(ctx0, inp_raw, sh);
-+            alt = build_norm(alt, model.layers[il + 1].ffn_norm, NULL, LLM_NORM_RMS, il + 1);
++        if (moe_cache != nullptr && moe_cache->prefetch_enabled() && sh != nullptr && inp_raw != nullptr) {
++            if (moe_cache->prefetch_input() == 2) {
++                alt = build_prefetch_input2(sh, il + 1, cur->ne[1]);
++            }
++            if (alt == nullptr && moe_cache->prefetch_input() >= 1) {
++                alt = ggml_add(ctx0, inp_raw, sh);
++                alt = build_norm(alt, model.layers[il + 1].ffn_norm, NULL, LLM_NORM_RMS, il + 1);
++            }
 +        }
 +        build_moe_cache_prefetch(identity, alt, model.layers[il + 1].ffn_gate_inp, model.layers[il + 1].ffn_exp_probs_b,
 +            hparams.n_expert_used(), (llama_expert_gating_func_type) hparams.expert_gating_func, il + 1);
@@ -4320,7 +4427,7 @@ index 27ceffe..e951b11 100644
      ggml_tensor * moe_out = build_moe_ffn(routed_in,
          nullptr, // gate_inp unused: the logits above are passed instead
          layer.ffn_up_exps,
-@@ -592,6 +627,7 @@ ggml_tensor * llama_model_kimi_k3::graph::build_latent_moe(
+@@ -592,6 +720,7 @@ ggml_tensor * llama_model_kimi_k3::graph::build_latent_moe(
          (llama_expert_gating_func_type) hparams.expert_gating_func,
          il,
          logits);
@@ -4328,7 +4435,7 @@ index 27ceffe..e951b11 100644
      cb(moe_out, "ffn_moe_out", il);
  
      if (layer.ffn_routed_norm) {
-@@ -602,12 +638,7 @@ ggml_tensor * llama_model_kimi_k3::graph::build_latent_moe(
+@@ -602,12 +731,7 @@ ggml_tensor * llama_model_kimi_k3::graph::build_latent_moe(
      }
      GGML_UNUSED(n_embd_latent);
  
@@ -4343,10 +4450,21 @@ index 27ceffe..e951b11 100644
      }
  
 diff --git a/src/models/models.h b/src/models/models.h
-index e6cf9d2..6c2e8f9 100644
+index e6cf9d2..6f51313 100644
 --- a/src/models/models.h
 +++ b/src/models/models.h
-@@ -2818,7 +2818,7 @@ struct llama_model_kimi_k3 : public llama_model_base {
+@@ -2801,6 +2801,10 @@ struct llama_model_kimi_k3 : public llama_model_base {
+ 
+         // Cross-layer residual attention (K3's `_apply_attn_res`).
+         ggml_tensor * resi_stack = nullptr;
++        ggml_tensor * last_sh    = nullptr; // the shared expert output of the layer just built (prefetch predictor)
++        ggml_tensor * pred_ps_attn = nullptr; // the residual stream before the current layer's FFN (prefetch predictor)
++        ggml_tensor * build_prefetch_input2(ggml_tensor * sh, int il_next, int64_t n_tokens);
++        ggml_tensor * res_mix_pred(ggml_tensor * cur, ggml_tensor * score_w, ggml_tensor * extra_ckpt, int64_t n_tokens);
+ 
+         void          res_push(ggml_tensor * cur, int64_t n_embd, int64_t n_tokens);
+         ggml_tensor * res_mix(ggml_tensor * cur, ggml_tensor * score_w,
+@@ -2818,7 +2822,7 @@ struct llama_model_kimi_k3 : public llama_model_base {
                                        int64_t kv_lora_rank, int64_t n_embd_head_qk_rope,
                                        int64_t n_embd_head_qk_nope, float kq_scale, int il);
  
@@ -4355,3 +4473,196 @@ index e6cf9d2..6c2e8f9 100644
                                         int64_t n_embd_latent, int il);
      };
  
+diff --git a/tools/CMakeLists.txt b/tools/CMakeLists.txt
+index c8ad1db..46c9be4 100644
+--- a/tools/CMakeLists.txt
++++ b/tools/CMakeLists.txt
+@@ -43,3 +43,4 @@ else()
+     endif()
+     add_subdirectory(results)
+ endif()
++add_subdirectory(k3-pfdump)
+diff --git a/tools/k3-pfdump/CMakeLists.txt b/tools/k3-pfdump/CMakeLists.txt
+new file mode 100644
+index 0000000..26c1419
+--- /dev/null
++++ b/tools/k3-pfdump/CMakeLists.txt
+@@ -0,0 +1,4 @@
++set(TARGET llama-k3-pfdump)
++add_executable(${TARGET} k3-pfdump.cpp)
++target_link_libraries(${TARGET} PRIVATE llama-common llama ${CMAKE_THREAD_LIBS_INIT})
++target_compile_features(${TARGET} PRIVATE cxx_std_17)
+diff --git a/tools/k3-pfdump/k3-pfdump.cpp b/tools/k3-pfdump/k3-pfdump.cpp
+new file mode 100644
+index 0000000..cb6fb3f
+--- /dev/null
++++ b/tools/k3-pfdump/k3-pfdump.cpp
+@@ -0,0 +1,168 @@
++// k3-pfdump: decode a chat prompt greedily and dump, per decode step and layer, the speculative prefetch
++// predictor's scores, the real router's selection scores and the real selected expert ids, for an offline
++// evaluation of prediction precision (kimi-k3-spark expert store).
++//
++// Output file records: int32 step, int32 layer, int32 kind, int32 n, then n elements
++//   kind 1: moe_prefetch_probs (f32)   kind 2: ffn_moe_probs_biased (f32)   kind 3: ffn_moe_topk (i32)
++//   kind 4: ffn_moe_probs (f32)        kind 5: generated token id (i32, n = 1, layer = -1)
++// Usage: llama-k3-pfdump <common args> -p "<user prompt>" -n <decode tokens> --out <file>
++
++#include "arg.h"
++#include "common.h"
++#include "chat.h"
++#include "log.h"
++#include "llama.h"
++#include "ggml-backend.h"
++
++#include <cstdio>
++#include <cstring>
++#include <string>
++#include <vector>
++
++struct dump_state {
++    FILE * f = nullptr;
++    int step = -1; // -1 during the prefill: nothing is recorded
++    std::vector<uint8_t> buf;
++};
++
++static int kind_of(const char * name, int & il) {
++    static const struct { const char * prefix; int kind; } kinds[] = {
++        { "moe_prefetch_probs-",   1 },
++        { "ffn_moe_probs_biased-", 2 },
++        { "ffn_moe_topk-",         3 },
++        { "ffn_moe_probs-",        4 },
++        { "pfv2_probs-",           6 },
++        { "pfv3_probs-",           7 },
++        { "pfv4_probs-",           8 },
++        { "pfv5_probs-",           9 },
++    };
++    for (const auto & k : kinds) {
++        const size_t n = strlen(k.prefix);
++        if (strncmp(name, k.prefix, n) == 0) {
++            il = atoi(name + n);
++            return k.kind;
++        }
++    }
++    return 0;
++}
++
++static bool cb_eval(struct ggml_tensor * t, bool ask, void * ud) {
++    auto * st = (dump_state *) ud;
++    int il = -1;
++    const int kind = kind_of(t->name, il);
++    if (ask) {
++        return st->step >= 0 && kind != 0;
++    }
++    if (st->step < 0 || kind == 0) {
++        return true;
++    }
++    const int64_t n = ggml_nelements(t);
++    if (!(t->type == GGML_TYPE_F32 || t->type == GGML_TYPE_I32) || !ggml_is_contiguous(t)) {
++        LOG_ERR("%s: unexpected tensor %s type %s\n", __func__, t->name, ggml_type_name(t->type));
++        return true;
++    }
++    st->buf.resize((size_t) n * 4);
++    ggml_backend_tensor_get(t, st->buf.data(), 0, st->buf.size());
++    const int32_t hdr[4] = { st->step, il, kind, (int32_t) n };
++    fwrite(hdr, sizeof(hdr), 1, st->f);
++    fwrite(st->buf.data(), 4, (size_t) n, st->f);
++    return true;
++}
++
++int main(int argc, char ** argv) {
++    std::string out_path = "pfdump.bin";
++    std::vector<char *> args;
++    for (int i = 0; i < argc; i++) {
++        if (strcmp(argv[i], "--out") == 0 && i + 1 < argc) {
++            out_path = argv[++i];
++            continue;
++        }
++        args.push_back(argv[i]);
++    }
++    common_params params;
++    common_init();
++    if (!common_params_parse((int) args.size(), args.data(), params, LLAMA_EXAMPLE_COMMON)) {
++        return 1;
++    }
++    llama_backend_init();
++    llama_numa_init(params.numa);
++
++    dump_state st;
++    st.f = fopen(out_path.c_str(), "wb");
++    if (st.f == nullptr) {
++        LOG_ERR("cannot open %s\n", out_path.c_str());
++        return 1;
++    }
++    params.cb_eval = cb_eval;
++    params.cb_eval_user_data = &st;
++    params.warmup = false;
++
++    auto llama_init = common_init_from_params(params);
++    auto * model = llama_init->model();
++    auto * ctx   = llama_init->context();
++    if (model == nullptr || ctx == nullptr) {
++        LOG_ERR("%s : failed to init\n", __func__);
++        return 1;
++    }
++    const llama_vocab * vocab = llama_model_get_vocab(model);
++
++    // the chat template, like the server with --jinja
++    auto tmpls = common_chat_templates_init(model, "");
++    common_chat_templates_inputs in;
++    common_chat_msg msg;
++    msg.role = "user";
++    msg.content = params.prompt;
++    in.messages.push_back(msg);
++    in.add_generation_prompt = true;
++    in.use_jinja = true;
++    std::string text;
++    for (const auto & part : common_chat_templates_apply(tmpls.get(), in).prompt.parts) {
++        text += part.text;
++    }
++
++    std::vector<llama_token> tokens = common_tokenize(ctx, text, true, true);
++    LOG_INF("prompt: %zu tokens, decoding %d\n", tokens.size(), params.n_predict);
++
++    st.step = -1;
++    {
++        common_batch batch = common_batch_get_one(ctx, tokens);
++        if (llama_process(ctx, LLAMA_PROCESS_TYPE_DECODE, batch.get())) {
++            LOG_ERR("prefill failed\n");
++            return 1;
++        }
++    }
++    llama_sampler * smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
++    llama_sampler_chain_add(smpl, llama_sampler_init_greedy());
++
++    std::string out_text;
++    const int64_t t0 = ggml_time_us();
++    for (int i = 0; i < params.n_predict; i++) {
++        llama_token tok = llama_sampler_sample(smpl, ctx, -1);
++        if (llama_vocab_is_eog(vocab, tok)) {
++            LOG_INF("eog after %d tokens\n", i);
++            break;
++        }
++        out_text += common_token_to_piece(ctx, tok);
++        st.step = i;
++        const int32_t hdr[4] = { i, -1, 5, 1 };
++        fwrite(hdr, sizeof(hdr), 1, st.f);
++        fwrite(&tok, 4, 1, st.f);
++        std::vector<llama_token> one = { tok };
++        common_batch batch = common_batch_get_one(ctx, one);
++        if (llama_process(ctx, LLAMA_PROCESS_TYPE_DECODE, batch.get())) {
++            LOG_ERR("decode failed at step %d\n", i);
++            return 1;
++        }
++    }
++    const double dt = (ggml_time_us() - t0) / 1e6;
++    LOG_INF("decode: %d steps in %.1f s (%.2f tok/s, with the dump callback)\n", st.step + 1, dt, (st.step + 1) / dt);
++    fclose(st.f);
++    FILE * ft = fopen((out_path + ".txt").c_str(), "wb");
++    if (ft != nullptr) {
++        fwrite(out_text.data(), 1, out_text.size(), ft);
++        fclose(ft);
++    }
++    llama_sampler_free(smpl);
++    llama_backend_free();
++    return 0;
++}

@@ -250,6 +250,18 @@ read by `MUL_MAT_ID`), with these changes:
   residency the wrong guesses evict resident experts and the predictor's GPU
   time exceeds what the reads could give back), so it stays off there
   (docs/experiments.md).
+  `LLAMA_EXPERT_STORE_PREFETCH_INPUT=2` (Kimi K3 only) feeds the next router
+  the stream before this layer's FFN plus the shared expert, mixed the way
+  the next layer's FFN mixes its residual checkpoints (`res_mix_pred`: the
+  next layer's `ffn_res_score`; on a checkpoint layer the stream stands in
+  as the new checkpoint and the unknown attention output is zero), under the
+  next FFN norm. Offline on 400 decode tokens: top-16 precision 0.675 vs
+  0.614 for input 1, the checkpoint layers (every 12th) 0.48 vs 0.34 and the
+  layer after them 0.58 vs 0.46; Spark A/B +2 %, self-prefetch fill 4.1 -> 3.8
+  records. `tools/k3-pfdump` (an eval-callback dump of the predictor and the
+  real router per token and layer) and `LLAMA_EXPERT_STORE_PREFETCH_DUMP=1`
+  (more predictor variants as named tensors, measurement only) are what
+  measured it; the scratch evaluator replays the pipeline through an LRU.
 - Self-prefetch (`LLAMA_EXPERT_STORE_SELF_PREFETCH=1`, off by default, needs
   the slot maps on the GPU): right after the router, the layer's real ids are
   posted as a `moe_prefetch_self-<il>` lookup (no wait), then the shared expert and
