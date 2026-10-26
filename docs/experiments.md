@@ -695,6 +695,46 @@ Spark's 2.5 GbE port and the 2.5 ms window per layer, not the NUCs' compute or t
 because no design was worth building. What would change the picture: a 10 GbE (or faster) link to the Spark, for
 shape A at a bit-identical +3-5 %; more memory on the Spark itself; or the GH200 path (13.8 tok/s).
 
+### Spark: eviction policy on the 10 % cache, and CPU pinning (2026-10-26, built, Spark A/B pending)
+
+The question was how much of the remaining per-layer wait (~1.2 ms of a ~5.6 ms layer, the fill of ~3.9 missed
+records at the drive's ceiling) a better eviction policy could remove on the Spark, where the cache holds 9.7 % of
+the experts and LRU hits ~58-60 %. The GH200 answer (2026-10-20: ~8 % fewer misses at 99 % residency) does not
+transfer; the replay was redone at the Spark's capacity on the real top-16 selections of the two `k3-pfdump` traces
+(400 decode tokens of the coding prompt, 300 of the prose prompt), one global cache of 7980 slots as `pfeval.py`,
+scored after 150 tokens (`tools/cachepolicy.py`). The per-layer partition (86 slots
+each) gives the same ordering within 0.5 points.
+
+| policy | hits, code / prose (%) | with the deployed speculation, window 5 |
+|---|---|---|
+| LRU (deployed) | 57.50 / 61.66 | 73.36 / 76.41 |
+| ARC | 58.51 / 61.75 | 73.03 / 76.14 |
+| LFU, counts halved every 32k lookups | 58.89 / 64.33 | 70.36 / 74.79 |
+| S3-FIFO (10 % small queue, ghost, 2-bit frequency) | 59.53 / 64.66 | 74.68 / 77.96 |
+| CLOCK, 1 bit, hits do not move | 58.52 / 62.08 | 73.32 / 76.77 |
+| **LRU + second chance, count <= 3** | **59.64 / 64.11** | **74.43 / 77.78** |
+| Belady (needs the future) | 76.62 / 79.24 | |
+
+Cache size on the same replay, LRU: 6000 slots 52.1 / 56.6, 9600 61.4 / 65.4, 12000 66.0 / 69.6, 16000 72.1 / 75.6
+(code / prose): +20 % slots buys about as much as the best policy, and there is nothing left to free on the Spark
+(`--cache-ram 0` already). LFU loses under speculation (wrong guesses never earn a count but a decaying LFU still
+ranks old hot experts above them); S3-FIFO and the second chance both demote unused predictions by construction.
+The second chance is one byte per slot in the existing list (patches/README.md), so it went in, as
+`LLAMA_EXPERT_STORE_SECOND_CHANCE=3`. Expected on the Spark: ~5 % fewer misses per layer (4.26 -> ~4.05 records in
+the self-prefetch fill), ~0.15 ms per layer, **~+2-3 % decode**; the 19-point gap to Belady is the same locality the
+predictor already mines, no policy without the future closes it.
+
+Functional check, granite-3.0-1b-a400m Q8_0 on the Framework's Intel iGPU (Vulkan, `-ngl 99 --n-cpu-moe 99`,
+greedy, 160 tokens, same prompt): the text is identical to the no-store baseline in every run (md5 `33f95cd21f`);
+at 128 MiB (79 slots, 10 %) LRU and second chance both read every expert (hit rate 0.00 %, no working set fits);
+at 1024 MiB (641 slots, 83.5 %) LRU 96.60 % (1044 misses), second chance 97.04 % (909 misses, -13 %).
+
+In the same build: `LLAMA_EXPERT_STORE_CPUS=<list>` pins the I/O workers, the speculative reader, the fill thread
+and the CUDA host-bank poller. Untested on the Spark; the X925 core ids come from
+`/sys/devices/system/cpu/cpu*/cpu_capacity`. A/B plan for both, once the Spark is reachable: production args and
+image, snapshot copied fresh per leg, legs A B A B, 3 x 200-token coding runs each with `cache_prompt: false`, md5
+must stay `ac78af0e5d`-class identical across legs, compare steady runs 2-3 and the self-prefetch fill size.
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because

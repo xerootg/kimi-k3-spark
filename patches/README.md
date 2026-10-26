@@ -477,6 +477,34 @@ read by `MUL_MAT_ID`), with these changes:
   GH200 (11.47 vs 11.54 tok/s): the gap between the engine's ~1 ms per missed
   record and the microbenchmark's ~0.4 ms is not wake-up latency. Kept as an
   opt-in for the revisit list.
+- Second chance (`LLAMA_EXPERT_STORE_SECOND_CHANCE=N`, default 0 = plain
+  LRU): one byte per slot. Every hit on a resident expert raises its slot's
+  count (at most N); the victim search at the head of the recency list
+  spends a count instead of evicting (count--, slot to the tail) and takes
+  the first slot with none. New occupants, demoted slots (unused predictions,
+  prefill scans, valve releases) and the HBM exchange start at 0, and a
+  prefill scan takes the head as LRU does. Frequency on top of recency, the
+  classic CLOCK second chance. Chosen on the replay of the real top-16
+  selections of the two `k3-pfdump` traces (400 coding and 300 prose decode
+  tokens) at the Spark's 7980 slots, scored after 150 tokens: LRU 57.5 / 61.7
+  % hits, N=3 59.6 / 64.1, S3-FIFO 59.5 / 64.7, ARC 58.5 / 61.8, LFU with
+  decay 58.9 / 64.3, Belady 76.6 / 79.2; with the deployed speculative
+  prefetch (window 5) LRU 73.4 / 76.4 and N=3 74.4 / 77.8. About 5 % fewer
+  misses per layer for one byte per slot, so the simplest of the winners
+  went in. Decode output does not depend on which slot holds an expert
+  (checked with granite-3.0-1b-a400m on Vulkan: the text of 0 and 3 at
+  128 and 1024 MiB equals the no-store baseline; at 1024 MiB, 83.5 % of the
+  experts, misses 1044 -> 909). Spark A/B: pending.
+- `LLAMA_EXPERT_STORE_CPUS=<cpu list>` (e.g. `0-9`, unset = no pinning): the
+  I/O pool workers, the speculative reader (its thread and pread workers), the
+  split's fill thread and the CUDA host-bank poller pin themselves to these
+  CPUs on entry (`sched_setaffinity`; the poller has its own copy of the
+  parser in ggml-cuda.cu, the backend cannot call into llama). For the GB10's
+  10 X925 + 10 A725: the poller and the readers are on every layer's critical
+  path and the scheduler is free to put them on a little core, which is what
+  `--threads 8 > 16` already showed for the matmul threads. Which CPU numbers
+  are the X925s is read from `/sys/devices/system/cpu/cpu*/cpu_capacity`
+  on the box. Spark A/B: pending.
 - Two I/O pool fixes. A worker of the previous run could still be between
   its last `fetch_sub` and the `fetch_add` that ends its loop when the next
   run reset the counters; it then ran a job of the new run twice and
