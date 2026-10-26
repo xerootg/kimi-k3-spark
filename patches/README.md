@@ -494,7 +494,7 @@ read by `MUL_MAT_ID`), with these changes:
   went in. Decode output does not depend on which slot holds an expert
   (checked with granite-3.0-1b-a400m on Vulkan: the text of 0 and 3 at
   128 and 1024 MiB equals the no-store baseline; at 1024 MiB, 83.5 % of the
-  experts, misses 1044 -> 909). Spark A/B: pending.
+  experts, misses 1044 -> 909).
 - `LLAMA_EXPERT_STORE_CPUS=<cpu list>` (e.g. `0-9`, unset = no pinning): the
   I/O pool workers, the speculative reader (its thread and pread workers), the
   split's fill thread and the CUDA host-bank poller pin themselves to these
@@ -504,7 +504,7 @@ read by `MUL_MAT_ID`), with these changes:
   path and the scheduler is free to put them on a little core, which is what
   `--threads 8 > 16` already showed for the matmul threads. Which CPU numbers
   are the X925s is read from `/sys/devices/system/cpu/cpu*/cpu_capacity`
-  on the box. Spark A/B: pending.
+  on the box.
 - Two I/O pool fixes. A worker of the previous run could still be between
   its last `fetch_sub` and the `fetch_add` that ends its loop when the next
   run reset the counters; it then ran a job of the new run twice and

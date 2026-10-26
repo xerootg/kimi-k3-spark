@@ -695,7 +695,7 @@ Spark's 2.5 GbE port and the 2.5 ms window per layer, not the NUCs' compute or t
 because no design was worth building. What would change the picture: a 10 GbE (or faster) link to the Spark, for
 shape A at a bit-identical +3-5 %; more memory on the Spark itself; or the GH200 path (13.8 tok/s).
 
-### Spark: eviction policy on the 10 % cache, and CPU pinning (2026-10-26, built, Spark A/B pending)
+### Spark: eviction policy on the 10 % cache, and CPU pinning (2026-10-26, measured)
 
 The question was how much of the remaining per-layer wait (~1.2 ms of a ~5.6 ms layer, the fill of ~3.9 missed
 records at the drive's ceiling) a better eviction policy could remove on the Spark, where the cache holds 9.7 % of
@@ -730,10 +730,35 @@ at 128 MiB (79 slots, 10 %) LRU and second chance both read every expert (hit ra
 at 1024 MiB (641 slots, 83.5 %) LRU 96.60 % (1044 misses), second chance 97.04 % (909 misses, -13 %).
 
 In the same build: `LLAMA_EXPERT_STORE_CPUS=<list>` pins the I/O workers, the speculative reader, the fill thread
-and the CUDA host-bank poller. Untested on the Spark; the X925 core ids come from
-`/sys/devices/system/cpu/cpu*/cpu_capacity`. A/B plan for both, once the Spark is reachable: production args and
-image, snapshot copied fresh per leg, legs A B A B, 3 x 200-token coding runs each with `cache_prompt: false`, md5
-must stay `ac78af0e5d`-class identical across legs, compare steady runs 2-3 and the self-prefetch fill size.
+and the CUDA host-bank poller. The GB10's X925 core ids from `/sys/devices/system/cpu/cpu*/cpu_capacity` are
+5-9,15-19 (capacity 997-1024; the A725s are 0-4,10-14 at 718-731).
+
+Spark A/B, measured 2026-10-26 (native build of this patch set off the pinned SHA, production args and env, snapshot
+restored and copied fresh per leg, 3 x 200-token coding runs with request-level `temperature 0`). All 30 runs across
+every leg gave decode md5 `e801484d` and warm-up `b2c79009`, bit-identical to the deployed build.
+
+| leg | decode tok/s, runs 2-3 | hit rate |
+|---|---|---|
+| A baseline (knobs off), interleave A1/A2 | 1.920 / 1.929 ; 1.939 / 1.934 | 76.3 / 76.4 % |
+| B `SECOND_CHANCE=3`, interleave B1/B2 | 1.957 / 1.970 ; 1.964 / 1.956 | 77.1 / 77.1 % |
+| C B + `CPUS=5-9,15-19` (single leg) | 1.930 / 1.938 / 1.931 | 76.8 % |
+
+Second chance: **+1.8 % decode (1.93 -> 1.96), +0.8 point hit rate (76.3 -> 77.1)**, reproducible across both
+interleaved pairs, the self-prefetch fill 3.9 -> 3.8 records. Kept and worth deploying. CPU pinning (leg C, all
+threads on the ten X925s) gave nothing over B and if anything a touch slower: the poller and the readers then
+contend with the eight `--threads 8` matmul threads, which also want the big cores. Not deployed; a disjoint split
+(readers on a couple of cores, matmul on the rest) is the only version worth another look, and only if it is free.
+
+Long-context stability (the user's standing worry: >30k-token prompts OOM-crashing). One ~31k-token synthetic
+prompt, single sequence, `--ctx-size 40960 --parallel 1`, valve on, `max_tokens 64`, baseline and with second
+chance. Both completed, prompt 30947 tokens; no OOM, no crash, dmesg and server log clean; decode md5 `94ff1bf0`
+identical between the two. MemAvailable low-water 7.18 GB (baseline) / 8.33 GB (second chance), both well above the
+4.29 GB reserve, and the valve released zero slots in either: at this ctx the KV and compute buffers still fit
+without evicting cache. Prefill ran at ~9.5 tok/s (56 min wall for the 31k prompt; `PREFILL_LOOKAHEAD` auto-off
+here, it needs the CPU split and no split GEMV) and decode at 0.67 (baseline) vs 0.34 (second chance) tok/s over the
+64-token tail -- a single short noisy sample at 31k context, not a real second-chance regression (the short-prompt
+A/B and the bit-identical md5 rule that out), but long-context decode speed is unmeasured and worth a clean run if
+it matters. The 2-sequence 2x66k case that OOM'd before (seventh pass) was deliberately not repeated.
 
 ### Revisit when the bottleneck moves
 
