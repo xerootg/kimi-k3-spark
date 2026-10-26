@@ -598,6 +598,10 @@ Hit rate 98.4 % in every leg. B beats A in all six paired runs: steady runs 2-3 
 showed in the third pass; the fused gate/up and the small shapes keep the rest of the isolated 2.4 ms). Run 1 (cold
 GPU-side after the restore) 9.60 -> 9.72.
 
+Production check after the window, over the API on an idle server: 800 tokens at 9.76 tok/s, md5 ac78af0e5d. (A
+first check while another client's 66k-token prompt shared the batches gave 18d98db589: mixed batches take other
+kernels, so the reference check needs an idle server as well as `cache_prompt: false`.)
+
 **Verdict: kept, on by default on the GH200 (no deploy needed: production image g9eefe4f already runs it).** The
 GB10 keeps it opt-in (`=2`, not bit-identical there, see the third pass).
 
