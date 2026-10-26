@@ -24,13 +24,19 @@ on the Spark, patched: 4.45 s). Patch 0002 (zero-copy GPU reads of the
 mmap, `GGML_CUDA_HOST_ZERO_COPY=1`) is built in but off: measured at ~19 s
 per token on the GB10, whose GPU reads of mapped pages go through UVM
 fault handling rather than straight ATS. Patch 0003 (the expert store,
-`LLAMA_EXPERT_STORE` + `--moe-cache-mib`) is the production engine. With
-the expert matmuls running on the GPU straight from the registered host
-cache: 1.4 tok/s decode and 102 tokens of prefill in 18 s on the Spark (52
-GB LRU, 55 % hit rate), 4-7 tok/s single / 2 × 3.0 tok/s parallel on a
-GH200 (352 GiB LRU, 69 % of the experts resident, 2 × 256k context).
-Numbers in the argo-things READMEs (`configs/kimi-k3`,
-`configs/kimi-k3-gh200`).
+`LLAMA_EXPERT_STORE` + `--moe-cache-mib`) is the production engine: 1.93
+tok/s decode on the Spark as deployed (1.96 with second-chance eviction),
+and about 13-13.8 tok/s on a GH200 with 2 × 256k context. All of it is
+bit-identical to unpatched llama.cpp at temperature 0.
+
+- [`docs/improvements.md`](docs/improvements.md): what each change does,
+  why it helps on the Spark and what it bought, from 147 s per token to
+  1.96 tok/s, plus the dead ends, the limits and how to build and run it.
+- [`docs/experiments.md`](docs/experiments.md): the experiment ledger,
+  every measurement and verdict.
+- The patch set as a llama.cpp fork, one commit per patch on the pinned
+  upstream commit: [`xerootg/llama.cpp`, branch
+  `kimi-k3`](https://github.com/xerootg/llama.cpp/tree/kimi-k3).
 
 ## Validating a patch without the Spark
 
