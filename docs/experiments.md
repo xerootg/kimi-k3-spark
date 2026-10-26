@@ -375,7 +375,7 @@ All runs: deployed HBM config (24 GiB, decay 512), 3 x 800-token coding generati
 | `GGML_CUDA_GRAPH_OPT=1` | 9.52 tok/s | dropped |
 | Cache policy, simulated on a real decode trace (`LLAMA_EXPERT_STORE_TRACE`, scratch cachesim.py), decode after warm-up | LRU 98.21 % hits, ARC 98.27 %, LFU with decay 98.36 %, Belady (needs the future) 99.58 % | rejected: a better policy cuts misses ~8 %, under 2 % of tok/s |
 | Op profile, warm decode (profiler on) | Q6_K spine ~26 ms, IQ1_S expert matmuls ~82 us per call for ~34 MB (close to C2C + HBM speed, ~3 ms to gain at most), misses the largest item | guide |
-| Q6_K GEMV for Hopper: TMA-staged weight tiles, stock math (tools/q6k-gemv-bench.cu) | isolated: 2.45 -> 2.88 TB/s (output head 3.39), bitwise identical on 45 shape x seed cases; in the server unfused Q6_K 20.8 -> 19.2 ms/token, fused gate/up 5.4 -> 5.7 ms; end to end within noise (9.48-9.74 tok/s) | kept for unfused GEMVs |
+| Q6_K GEMV for Hopper: TMA-staged weight tiles, stock math (tools/q6k-gemv-bench.cu) | isolated: 2.45 -> 2.88 TB/s (output head 3.39), bitwise identical on 45 shape x seed cases; in the server unfused Q6_K 20.8 -> 19.2 ms/token, fused gate/up 5.4 -> 5.7 ms; end to end within noise (9.48-9.74 tok/s); re-tested 2026-10-26 at 13.5 tok/s: +2 % (see that section) | kept for unfused GEMVs |
 | The Hopper Q6_K TMA GEMV on the GB10 (`GGML_CUDA_MMVQ_Q6K_TMA=2`, shared memory limit from the device) | test-backend-ops 4096x14336: 210-221 us stock vs 197-210 us (5-10 %, ~1.5-2 % of a Spark token by estimate); NOT bit-identical there (24 of 45 bitcheck outputs differ, same error vs CPU): the GB10's stock MMVQ uses its own warp layout, the TMA kernel mirrors Hopper's | opt-in only; a GB10-layout variant would be needed |
 | Q6_K variants that failed (all bit-identical): deeper register pipelining, L1-bypass / evict-first hints on stock loads, 2-4 rows per block, 3-8 copy stages, 8 blocks per SM, split-row warps, mbarrier instead of syncthreads, fewer instructions | 25-48 us vs 25.1 us for the kept variant (stock 29.5) | dropped |
 | PDL coverage of the decode kernels | already on for nearly all hot ops; argsort and softmax (~280 launches/token) still raw | not worth it |
@@ -549,6 +549,58 @@ Too close for a box that must not croak; not deployed (see Open ideas).
 ~118 GB per ubatch, 12.3 s at 9.6 GB/s, of ~14 s per ubatch); the GPU part (~11 s per 2048 tokens) is hidden
 under it. Off on the Spark (it needs the CPU split; the Spark's prefill goes through the copy path anyway).
 
+### GH200: the Hopper Q6_K TMA GEMV end to end, re-tested at 13.5 tok/s (2026-10-26)
+
+The kernel has been in patch 0003 and on by default on the GH200 since the third pass (342e88c, image g342e88c);
+it measured "within noise" end to end then, at 9.5 tok/s with miss waits dominating, so it sat in the revisit
+list. Now that the cache holds ~98 % of the decode lookups, it was A/B'd again.
+
+What it is (details in `patches/README.md`): `mul_mat_vec_q6_K_tma<R, has_fusion>` in `mmvq.cu`, a persistent
+kernel that streams tiles of 2 or 4 weight rows into a 2-stage shared-memory buffer with TMA bulk copies, keeps
+the q8_1 vector in shared memory, and runs the unchanged `vec_dot_q6_K_q8_1` with the stock thread mapping and
+reduction order. Taken from the Q6_K case of `mul_mat_vec_q_switch_type` only for compute capability 9.x, one
+column, no expert ids, one channel and sample, contiguous rows, >= 2048 rows, 16-byte aligned; the fused gate/up
+stays on stock. `GGML_CUDA_MMVQ_Q6K_TMA=0` turns it off.
+
+Isolated (H100, `tools/q6k-gemv-bench.cu`, K3 decode shapes, two runs): 7168x12288 29.5 -> 25.1 us (2.45 -> 2.88
+TB/s), attn_output 30.0 -> 25.7 us, dense ffn_down 80.4 -> 67.4 us, output head 376 -> 285 us (3.39 TB/s); the
+small shapes (attn_q_a, kv_a_mqa, ssm_f_a) are unchanged. Summed over one token's Q6_K GEMVs: 19.3-19.5 -> 16.9-17.0
+ms if every shape took it (~2.4 ms). Bit-identical: 0/45 differing outputs in the ggml bitcheck (shapes x seeds);
+test-backend-ops MUL_MAT and MUL_MAT_VEC_FUSION pass. Floor estimate: memory-only and compute-only versions of the
+kernel each take ~22 us on the 7168x12288 shape, so what is left is their overlap plus ~2 us of launch start and
+drain.
+
+Variants that failed (all bit-identical, 7168x12288, stock 29.5 us, kept variant 25.1 us):
+
+| variant | result |
+|---|---|
+| register lookahead of 2 / 4 blocks on the stock kernel | 37.6 / 48.5 us |
+| L1-bypass and evict-first hints on the stock loads | 47-48 us |
+| 2 / 4 rows per block on the stock kernel | 28.5-29.0 us |
+| 3, 4 or 8 TMA stages | up to 34.9 us |
+| 8 blocks per SM; tile rows split across warp groups | 26.8-36.6 us |
+| mbarrier instead of `__syncthreads` | 25.2 us |
+| aligned 32-bit loads + funnel shifts, hoisting the -32 term | no gain |
+
+End to end (same native build of the 9eefe4f patch union in `~/llama-k3-la`, production args and env, the
+production snapshot frozen at the pod's shutdown and copied fresh before each leg, 3 x 800-token coding runs with
+`cache_prompt: false`, legs A1 B1 A2 B2; `~/q6k-ab.sh`, log `~/q6k-ab.log`):
+
+| leg | run 1 | run 2 | run 3 | md5 (all runs) |
+|---|---|---|---|---|
+| A1 `GGML_CUDA_MMVQ_Q6K_TMA=0` | 9.59 | 12.39 | 13.45 | ac78af0e5d |
+| B1 default (TMA on) | 9.67 | 12.57 | 13.63 | ac78af0e5d |
+| A2 `GGML_CUDA_MMVQ_Q6K_TMA=0` | 9.60 | 12.61 | 13.51 | ac78af0e5d |
+| B2 default (TMA on) | 9.77 | 12.99 | 13.79 | ac78af0e5d |
+
+Hit rate 98.4 % in every leg. B beats A in all six paired runs: steady runs 2-3 average 12.99 -> 13.25 tok/s
+(+2.0 %), run 3 13.48 -> 13.71 tok/s (74.2 -> 72.9 ms/token, ~1.3 ms saved, close to the 1.6 ms the op profile
+showed in the third pass; the fused gate/up and the small shapes keep the rest of the isolated 2.4 ms). Run 1 (cold
+GPU-side after the restore) 9.60 -> 9.72.
+
+**Verdict: kept, on by default on the GH200 (no deploy needed: production image g9eefe4f already runs it).** The
+GB10 keeps it opt-in (`=2`, not bit-identical there, see the third pass).
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because
@@ -557,7 +609,6 @@ something else dominated at the time. Re-test them after any change that shifts 
 | change | why it was neutral | re-test when |
 |---|---|---|
 | Predictive prefetch (`LLAMA_EXPERT_STORE_PREFETCH=1`) | Spark: v2 (side reader, bounded, preemptible) is deployed, +12 %. GH200: v2 measured 2026-10-22 under the CPU split, -18 %: wrong guesses evict resident experts at 99 % residency and the predictor costs more GPU time than the reads it can hide | GH200: only if the miss rate rises (smaller cache) or the predictor becomes free |
-| Hopper Q6_K TMA GEMV (on by default) | -1.6 ms/token in the op profile, but end to end within noise while miss waits dominated | after miss waits shrink further |
 | `GGML_CUDA_GRAPH_OPT=1` | parallel attention branches hidden behind the expert waits | GPU-bound phases (fewer misses, prefill) |
 | Async host-bank hook / CUDA graphs | launch overhead was not the bottleneck | when GPU time per layer dominates |
 | Eviction policy (ARC / LFU decay, simulated) | ~8 % fewer misses at the GH200's capacity | tighter caches (the Spark's 10 %) |
@@ -592,6 +643,9 @@ something else dominated at the time. Re-test them after any change that shifts 
   (3.9 vs 4.5 ms per fill), but only if the pages also survive the load's reclaim.
 - **Frequency-aware eviction for the host cache.** The routing skew that makes the HBM tier work should also
   help a policy like LFU or ARC beat plain LRU, which matters most on the Spark's 10 % cache.
-- **Q6_K GEMV for Hopper.** The spine reads at 2.2 of ~3.5 TB/s, so a better kernel could save ~10 ms/token.
+- **Q6_K GEMV for Hopper.** The TMA kernel (kept, +2 % end to end) brought the big shapes to 2.8-3.4 TB/s; what
+  is left is the fused shared-expert gate/up (still stock, the TMA version measured slower in the server) and the
+  small shapes (attn_q_a, kv_a_mqa, ssm_f_a at 0.2-1.5 TB/s, launch-bound). Each variant listed in the 2026-10-26
+  section is already measured; don't repeat them.
 - **15+ tok/s on the GH200.** Only path found so far: all experts resident in memory, for example a second
   GH200 with expert parallelism.

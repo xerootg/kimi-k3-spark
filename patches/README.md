@@ -346,7 +346,9 @@ read by `MUL_MAT_ID`), with these changes:
   `GGML_CUDA_MMVQ_Q6K_TMA_FUSED=1` to try). In isolation 2.45 -> 2.88 TB/s
   on the 7168x12288 attention shape, 3.39 TB/s on the output head
   (`tools/q6k-gemv-bench.cu`); in the K3 decode server the unfused Q6_K time
-  goes 20.8 -> 19.2 ms per token.
+  goes 20.8 -> 19.2 ms per token. End to end on the GH200 (2026-10-26, A/B
+  with `=0` on the same build, md5 ac78af0e5d in every run): steady decode
+  12.99 -> 13.25 tok/s (+2 %, ~1.3 ms per token).
   `GGML_CUDA_MMVQ_Q6K_TMA=2` also runs it on newer GPUs (the shared memory
   limit comes from the device). On the GB10 it is 5-10 % faster than stock
   but not bit-identical (stock uses the GB10's own warp layout there), so it
