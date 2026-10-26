@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.16)
+project(moebench CXX C)
+set(CMAKE_CXX_STANDARD 17)
+add_subdirectory(${GGML_SRC} ggml)
+add_executable(moebench moebench.cpp)
+target_link_libraries(moebench PRIVATE ggml ggml-base)

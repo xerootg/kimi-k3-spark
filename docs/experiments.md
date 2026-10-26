@@ -36,6 +36,7 @@ Verdicts: **kept** = in the deployed config. **opt-in** = in the engine behind a
 | Patch 0002: GPU computes on the mmap'd experts in place (GB10) | 19 s/token: GPU reads of file pages go through UVM faults | opt-in, dead end |
 | Pulsar (io_uring O_DIRECT expert streaming), Spark | 0.73-0.75 tok/s | speed reference only |
 | RPC: experts of some layers computed on LAN nodes | 0.30 tok/s with 0001; with 0003, 0.68-0.70 vs 0.71 without RPC | dropped: LAN is 40-90x slower than the NVMe |
+| Spark + nuc2/nuc3 (RAM tier, CPU / Arc SYCL / NPU expert compute) after the Thunderbolt mesh, 2026-10-26 | mesh does not reach the Spark (2.5 GbE); predicted 0-1 % bit-identical, 3-6 % with other kernels; Arc = CPU speed (~23 GB/s IQ1_S); NPU needs Q4 requant | rejected (study section below) |
 | Patch 0003 expert store: repacked records, host LRU bank, O_DIRECT pread pool | Spark 0.71 tok/s, hit rate 55 % | kept |
 | Expert matmuls on the GPU straight from the registered host bank | Spark 1.43-1.47 tok/s (gap 12 -> 4 ms/layer) | kept |
 | `--threads 8` vs 16 on the GB10 | 0.84 vs 0.71 tok/s (little cores off the critical path) | kept (8) |
@@ -604,6 +605,95 @@ kernels, so the reference check needs an idle server as well as `cache_prompt: f
 
 **Verdict: kept, on by default on the GH200 (no deploy needed: production image g9eefe4f already runs it).** The
 GB10 keeps it opt-in (`=2`, not bit-identical there, see the third pass).
+
+### Spark + the Intel NUCs over the new Thunderbolt mesh: study and micro-benchmarks (2026-10-26)
+
+The question: with the new Thunderbolt mesh between nuc2, nuc3 and nas-large (argo-things `configs/tbnet`), does
+spreading the Spark's work onto the NUCs' RAM, CPUs, Arc iGPUs or NPUs get anywhere near reasonable? Scope set
+by the user during the study: nas-large is storage only (no compute, no RAM tier); compute candidates are nuc2 and
+nuc3. Quality ranking: (1) bit-identical first, (2) same weights with other kernels (measure KL), (3) requantized
+weights last. Nothing deployed; the Spark pod was not touched.
+
+**Inventory (measured).**
+
+| | nuc2 | nuc3 | nas-large | Spark |
+|---|---|---|---|---|
+| CPU | Core Ultra 5 225H (4P + 8E + 2LPE) | same | i5-1235U | GB10 (10 X925 + 10 A725) |
+| RAM | 62 GB DDR5-5600, 2 channels; ~33 GB available, the Qwen3-Coder `llama-cpp` pod requests 60Gi | 30 GB, **one DIMM** (single channel); ~11 GB available (GitLab, Prometheus, Jellyfin, ...) | 62 GB DDR5-4800 (excluded) | 121 GB, ~8 GB available with the pod up |
+| iGPU | Arc 130T (8086:7d51, 7 Xe cores), i915 | same silicon, reports as "Intel Graphics" (8086:7dd1: no Arc branding on one channel) | Iris Xe (excluded) | |
+| NPU | NPU 3720 class (8086:7d1d), `intel_vpu` loaded, `/dev/accel0`, no user-space driver installed | same | | |
+| Network | 2.5 GbE + Thunderbolt to nuc3 (20 Gb/s link) and nas-large (40 Gb/s link) | 2.5 GbE + TB to nuc2 and nas-large | 2.5 GbE (VLAN 3) + 10 GbE (VLAN 1) + TB | **2.5 GbE only** (Realtek RTL8127, a 10GBASE-T chip negotiating 2.5G; no ConnectX, no USB4/Thunderbolt) |
+
+Network (Python TCP bench `tools/distributed/netbench.py`): Thunderbolt pairs 14-18 Gbit/s (1.75-2.2 GB/s) with one
+or four streams, but small-message latency is not better than the LAN (14 KB request/response p50 0.16-0.31 ms,
+ping 0.18-0.27 ms). The Spark reaches every box only over its 2.5 GbE port: 2.25-2.35 Gbit/s (~290 MB/s); 14 KB
+each way p50 0.50 ms / p90 0.65 ms, 28 KB p50 0.60 / p90 1.0 ms. **The Thunderbolt mesh does not touch the Spark**, so
+every per-token exchange with it crosses 2.5 GbE.
+
+**Routing replay (`tools/distributed/remotesim.py`).** Real top-16 ids from the 2026-10-21 predictor dumps
+(`pfdump-prose.bin` 300 tokens, `pfdump-code*.bin` 400 + 400), replayed through the Spark's 7980-slot LRU plus a
+static remote set of the most frequent (layer, expert) pairs that is never cached locally. Trained on prose,
+evaluated on code (an honest out-of-domain split); "mixed" trains on prose plus the other code prompt.
+
+| remote set | GB (6.45 MB records) | NVMe misses per layer | remote experts per layer (mean / p90 / max) |
+|---|---|---|---|
+| none (production) | 0 | 6.80 | |
+| 600 (what nuc3 could spare) | 4 | 6.73 (-1 %) | 0.21 / 1 / 6 |
+| 3700 (nuc2 with Qwen3-Coder kept) | 24 | 6.14 (-10 %); mixed 5.82 (-14 %) | 1.27 / 3 / 14 |
+| 7000 (nuc2 with Qwen3-Coder off) | 46 | 5.54 (-18.5 %); mixed 5.08 (-25 %) | 2.24 / 5 / 15 |
+| 20000 (not available anywhere) | 132 | 3.52 (-48 %) | 5.38 / 9 / 16 |
+
+Skipping the hottest 4000-7980 experts (the ones the LRU keeps anyway) changes almost nothing (within 0.1 miss).
+
+**Remote expert compute, real records (`tools/distributed/moebench.cpp`).** One token, one layer's routed FFN
+(gate/up `MUL_MAT_ID`, SwiGLU, down) on k experts drawn from 64 real store records (layer 1 IQ1_S, 413 MB; layer 11
+IQ2_XXS gate/up), so the weights stream from DRAM. Upstream llama.cpp at LLAMA_SHA; CPU build in ubuntu:24.04 (the
+`alderlake` variant loads), SYCL build with oneAPI 2026.1.1 (`intel/deep-learning-essentials`, upstream's pinned
+image; 2025.0 is too old for this tree), compute-runtime 26.18 + IGC 2.34.4 user-mode driver extracted next to the
+binary, run as the user with the render group (nothing installed on the hosts).
+
+| backend (nuc2 unless noted) | k=1 | k=2 | k=4 | k=8 | k=16 | weight stream at k=16 |
+|---|---|---|---|---|---|---|
+| CPU, 4 threads | 0.57 ms | 0.89 | 1.68 | 3.19 | 6.31 | 16 GB/s |
+| CPU, 8 threads (best) | 0.48 | 0.76 | 1.41 | 2.03 | 3.89 | 27 GB/s |
+| CPU, 14 threads (LP-E cores on the critical path) | 0.84 | 1.10 | 1.75 | 4.35 | 8.31 | 12 GB/s |
+| nuc3 CPU, 8 threads (one channel, busy box) | 0.90 | 1.29 | 2.14 | 4.27 | | 12 GB/s |
+| Arc 130T, SYCL (any of ENABLE_OPT=0, PRIORITIZE_DMMV, MMVQ_WIDE=0, ESIMD=0: same or worse) | 0.62 | 0.77 | 1.29 | 2.34 | 4.49 | 23 GB/s |
+| CPU, IQ2_XXS layer, 8 threads | 0.67 | 1.26 | 1.74 | | | 18 GB/s |
+| Arc 130T, IQ2_XXS layer | 0.63 | 0.94 | 1.61 | | | 20 GB/s |
+
+The iGPU is no faster than the CPU: the IQ1_S grid-decode kernels cap it at ~23 GB/s, a third of the
+DDR5's bandwidth. It has tighter tails (p90 0.83 vs 1.08 ms at k=2).
+
+Full round trip from the Spark (`tools/distributed/rrclient.c`, C, TCP_NODELAY; server = moebench `serve:` mode on
+nuc2's CPU, 8 threads; request = k ids + 3584 f32, reply = k unweighted rows of 3584 f32): k=1 p50 1.34 / p90 1.77
+ms, k=2 2.05 / 2.48, k=4 2.67 / 3.33, k=8 3.90 / 4.80; **k drawn from the 7000-set histogram (mean 2.7 when
+non-zero): p50 1.88, p90 3.33, p99 5.76 ms**. That is ~0.5 ms over compute plus wire time (thread wake-up between
+requests). A rerun with `OMP_WAIT_POLICY=active` was spoiled: nas-large went down for maintenance in the middle
+(cordoned with kubectl at 04:45Z, NotReady 05:06Z, not caused by this study) and Longhorn started rebuilding
+replicas on nuc2, so measurements stopped there. The SYCL round trip was never measured for the same reason.
+
+**Model against the deployed Spark (1.93 tok/s = 5.6 ms per MoE layer).** The only part of the layer that fewer
+NVMe misses can remove is the GPU's wait at the real lookup, ~1.2-1.4 ms per layer (split GEMV section): the
+self-prefetch fill of ~3.9 records (0.72 ms each) minus the ~1.4 ms of GPU work under it. Removing every miss would
+give ~2.46 tok/s; that is the ceiling for any shape that only removes reads.
+
+| shape | quality | predicted tok/s | why |
+|---|---|---|---|
+| **A. NUC RAM as an expert tier, the Spark computes (bit-identical)** | identical | **~1.93-1.95 (0-1 %)** | 290 MB/s is 2.6 % of the NVMe's 11 GB/s; one record takes 22 ms over the wire, about 4 layers, so it can only carry predictions 4+ layers ahead (precision below 0.55). With a 10 GbE link to the Spark (its RTL8127 can do 10GBASE-T; needs a 10G switch port) it would be ~11 % extra bandwidth and ~5.5 ms per record: realistically +3-5 %, still bit-identical. |
+| **B. NUCs compute the experts they hold (same weights, other kernels)** | KL not measured (not built) | **ideal 2.12-2.2 (+10-14 %); with the measured round trip ~2.0-2.05 (+3-6 %)** | A 7000-expert set on nuc2 (needs the Qwen3-Coder pod off nuc2) cuts misses 18.5-25 %: fill 3.9 -> 2.9-3.2 records, wait -0.5 to -0.7 ms per layer. But the rows must be back before the merge, ~2.5 ms after the router, and the measured round trip is p50 1.9 / p90 3.3 / p99 5.8 ms: ~30 % of the layers stall 0.5-3 ms, ~0.3 ms per layer on average, which eats half or more of the gain. No head start is possible: the experts need the real FFN input, which exists only right before the router. With nuc2 keeping Qwen3-Coder (3700 set): +2-4 %. |
+| B', bit-identical remote compute | identical | not viable | The integer dot products and even the accumulation order of CUDA's MMVQ could be emulated on the CPU, but the fused SwiGLU uses the GPU's own `expf`; splitting it out means two round trips per layer (~3-4 ms), more than the window. |
+| C. Whole layers on the NUCs (the 2026-10-18 RPC shape) | other kernels | ≤ 1.95 | nuc2 holds ~7 layers; all 16 experts of a layer remote = 3.9-4.5 ms compute + RTT in series with the Spark, which then idles. Same conclusion as the old RPC row. |
+| D. NPU | requantized | not a fit | The upstream OpenVINO backend (the only llama.cpp path to the NPU) supports Q4_0 as its main NPU format and requantizes everything else. It has no IQ1_S/IQ2_XXS path, uses static graphs, runs one sequence and is stateless only. IQ1_S -> Q4_x is 2.9x the bytes (nuc2 would hold ~2400 experts instead of 7000; Q4_1 with 32-groups can hold IQ1_S's three levels per block almost exactly, Q4_0 cannot). It shares the same DDR5 and adds dispatch latency. Not measured beyond the backend's documented constraints. |
+| nas-large as storage | n/a | no tok/s effect | Loading a 46 GB shard into nuc2 over Thunderbolt (~2 GB/s link) instead of the Spark's 2.5 GbE (~160 s): a load-time convenience only. The repacked store is not on nas-large; Garage there holds the GGUF on the HDD array. |
+
+**Verdict: not worth pursuing.** Nothing bit-identical can win at 2.5 GbE. The best same-weights design is a
+sizeable engine project: an asynchronous network expert path inside patch 0003, with the activation out of the GPU
+mid-layer and rows merged through the split GEMV's `set_rows`. Even with nuc2 given up entirely it lands around
+2.0-2.05 tok/s, maybe 2.1 with a tuned server. That is still under the user's bar. The binding constraints are the
+Spark's 2.5 GbE port and the 2.5 ms window per layer, not the NUCs' compute or the mesh. KL/top-1 was not measured
+because no design was worth building. What would change the picture: a 10 GbE (or faster) link to the Spark, for
+shape A at a bit-identical +3-5 %; more memory on the Spark itself; or the GH200 path (13.8 tok/s).
 
 ### Revisit when the bottleneck moves
 
