@@ -505,6 +505,51 @@ read by `MUL_MAT_ID`), with these changes:
   `--threads 8 > 16` already showed for the matmul threads. Which CPU numbers
   are the X925s is read from `/sys/devices/system/cpu/cpu*/cpu_capacity`
   on the box.
+- Remote experts (`LLAMA_EXPERT_STORE_REMOTE=host:port[,host:port...]` plus
+  `LLAMA_EXPERT_STORE_REMOTE_SET=<one file of "layer expert" lines per box,
+  same order>`, off by default, needs the split GEMV): other boxes hold
+  static sets of records (`tools/distributed/remoteset.py --boxes` places
+  them, `remoteexport.py` / `remotecompose.py` build the files) and compute
+  those experts' rows for a single token with a bit-exact kernel
+  (`tools/bitexact/sycl`). At the early lookup, the selected experts of a
+  usable box's set that are not in the bank are left out of the plan (no
+  slot, no NVMe read, the zero record in the early matmul), as many as the
+  late matmul could still take (`LLAMA_EXPERT_STORE_REMOTE_ROWS`, default 8,
+  and SPLIT_LATE minus the local misses), grouped by box. After the early
+  post the graph copies the experts' input (`routed_in`, f32) into a
+  per-layer registered vector and posts `moe_rpost-<il>` (a waiting lookup,
+  served in microseconds): the poller hands input + global ids
+  (`layer * n_expert + expert`) to each box involved. One client per box: a
+  persistent TCP connection (`TCP_NODELAY`), its own busy-polling network
+  thread, requests pipelined (wire format of `tools/distributed/rrclient.c`),
+  its own deadline (`LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US`, one value or one
+  per box, default 3000, from the post) and stats. The real lookup, after the
+  local reads, waits for each box until its deadline and places the rows
+  that arrived (a partial reply's complete rows too; rows with a NaN, which a
+  server answers for ids it does not hold, are refused) in the layer's remote
+  rows; a second `ggml_set_rows` after the late merge puts them in the early
+  output. Every row that did not arrive is read from the store into the late
+  matmul's free rows instead, so the output never depends on the network,
+  only on the servers computing the same rows as the GPU. Reliability: a
+  broken link, a send that stalls (200 ms) or a request unanswered for
+  `LLAMA_EXPERT_STORE_REMOTE_STALE_MS` (1000) drops the connection and frees
+  its requests; reconnects use a non-blocking connect (500 ms) with
+  exponential backoff (50 ms .. 2 s), so a box that comes back is used again
+  without a restart; `LLAMA_EXPERT_STORE_REMOTE_TRIP` (8) deadline misses in a
+  row skip a box for `LLAMA_EXPERT_STORE_REMOTE_TRIP_MS` (2000), then one
+  request probes it. A box that is down only costs its experts' reads. The
+  speculative reader skips the experts of usable boxes.
+  While the remote experts are on, the server holds `/dev/cpu_dma_latency`
+  (`LLAMA_EXPERT_STORE_REMOTE_DMA_LATENCY`, default 0 us, -1 = leave it): on
+  the GB10 the cores that take the NIC's interrupts otherwise sleep in a
+  deep idle state (~430 us exit) between requests. It needs write access to
+  the device (root, a udev rule, or in a container the device mapped in);
+  without it a warning is logged and the round trips are just slower.
+  `LLAMA_EXPERT_STORE_REMOTE_SHADOW=1` sends and times the requests but reads
+  every expert locally (gold md5 with any server). The periodic stats print
+  one line per box: posts, rows per post, rows placed, short requests and
+  rows read locally, partial replies, NaN rows, breaker trips, round-trip
+  percentiles, connects and drops.
 - Two I/O pool fixes. A worker of the previous run could still be between
   its last `fetch_sub` and the `fetch_add` that ends its loop when the next
   run reset the counters; it then ran a job of the new run twice and

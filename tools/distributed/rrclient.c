@@ -1,5 +1,7 @@
 // rrclient HOST PORT ITERS k1,k2,... | dist  -- remote expert round trip from the Spark: 17 int32 header (k, ids)
 // + 3584 f32 activation out, k x 3584 f32 rows back. "dist" draws k from the replay's per-layer remote counts.
+// RR_IDX=<server index file> sends real global ids (k distinct experts of one random layer the server holds, as the
+// engine does) instead of random ones, and counts replies with NaN rows (ids the server refused).
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -20,6 +22,9 @@ int main(int argc, char **argv) {
     if (connect(fd, (struct sockaddr *) &a, sizeof a)) { perror("connect"); return 1; }
     setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
     int iters = atoi(argv[3]);
+    static int gid[1 << 16]; int ng = 0;
+    if (getenv("RR_IDX")) { FILE *f = fopen(getenv("RR_IDX"), "r"); long g, o; int a, b; while (f && ng < (1 << 16) && fscanf(f, "%ld %d %d %ld", &g, &a, &b, &o) == 4) gid[ng++] = (int) g; if (f) fclose(f); fprintf(stderr, "%d ids from %s\n", ng, getenv("RR_IDX")); }
+    long nan_replies = 0;
     static float x[D], rows[16 * D];
     for (int i = 0; i < D; i++) x[i] = (float) (rand() % 2001 - 1000) / 1000.f;
     // per-layer remote count distribution from the replay (7000-record set, prose-trained, code eval): filled below
@@ -35,15 +40,24 @@ int main(int argc, char **argv) {
                 double c = 0; k = 0; char buf[256]; strcpy(buf, argv[5]); for (char *s = strtok(buf, ","); s; s = strtok(NULL, ","), k++) { c += atof(s); if (u <= c) break; } if (k > 16) k = 16; }
             if (k == 0) continue;
             int hdr[17]; hdr[0] = k; for (int i = 0; i < k; i++) hdr[1 + i] = rand();
+            if (ng > 0) { // k distinct experts of one layer (the index is sorted by gid, 896 per layer)
+                int s0 = rand() % ng, L = gid[s0] / 896, lo = s0, hi = s0;
+                while (lo > 0 && gid[lo - 1] / 896 == L) lo--;
+                while (hi + 1 < ng && gid[hi + 1] / 896 == L) hi++;
+                if (k > hi - lo + 1) k = hi - lo + 1;
+                hdr[0] = k; for (int i = 0; i < k; i++) hdr[1 + i] = gid[lo + (s0 - lo + i) % (hi - lo + 1)];
+            }
             double t0 = now();
             if (!wr(fd, hdr, sizeof hdr) || !wr(fd, x, sizeof x) || !rd(fd, rows, (size_t) k * D * 4)) { fprintf(stderr, "io error\n"); return 1; }
             double dt = now() - t0;
             if (it >= 10) { t[n++] = dt; sumk += k; }
+            if (rows[0] != rows[0]) nan_replies++;
         }
         qsort(t, n, sizeof(double), cmp);
         printf("%s k=%s n=%d mean_k=%.2f: p50 %.3f ms  p90 %.3f ms  p99 %.3f ms  min %.3f ms\n", argv[1], dist ? "dist" : (char[8]){0}, n, sumk / n,
                t[n / 2], t[(int) (n * .9)], t[(int) (n * .99)], t[0]);
         if (!dist) printf("   (k=%d)\n", ks[ki]);
+        if (ng > 0) printf("   replies with NaN rows: %ld\n", nan_replies);
         free(t);
     }
     return 0;
