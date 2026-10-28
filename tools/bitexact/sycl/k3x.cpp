@@ -510,6 +510,12 @@ static inline float row_v6(sycl::sub_group sg, const uint32_t * mat, int rg, int
     return s[0];
 }
 
+// v7 layout without padding blocks: per group of 4 rows, i = 0..2 hold 16 lanes (kb0 0..3 x 4 rows) x NDW dwords, and for
+// 14 blocks i = 3 holds only kb 12, 13 (8 lanes). Dword u of lane L for i<3 at ((i*NDW + u)*16 + L), for i=3 at 48*NDW + u*8 + L.
+static inline size_t v7_off(int nblk, int ndw, int rg4, int i, int u, int lane) {
+    const size_t g = (size_t) rg4 * (nblk * 4) * ndw;
+    return i < 3 ? g + ((size_t) i * ndw + u) * 16 + lane : g + (size_t) 48 * ndw + (size_t) u * 8 + lane;
+}
 template <int T, int NBLK>
 static inline float row_v7(sycl::sub_group sg, const uint32_t * mat, int rg4, int lane, const int * QT, const sycl::float2 * DT, const uint32_t * g1, const uint64_t * g2) {
     constexpr int NDW = T == T_IQ1_S ? 13 : 17, NW = (T == T_IQ1_S ? 50 : 66) / 2;
@@ -518,11 +524,12 @@ static inline float row_v7(sycl::sub_group sg, const uint32_t * mat, int rg4, in
 #pragma unroll
     for (int i = 0; i < 4; i++) {
         const int kb = q + 4 * i;
-        const uint32_t * bp = mat + (((size_t) rg4 * 4 + i) * NDW) * 16 + lane;
-        uint32_t d[NDW];
-#pragma unroll
-        for (int u = 0; u < NDW; u++) d[u] = bp[u * 16];
         if (kb < NBLK) {
+            uint32_t d[NDW];
+            const uint32_t * bp = mat + v7_off(NBLK, NDW, rg4, i, 0, lane);
+            const int st = i < 3 ? 16 : 8;
+#pragma unroll
+            for (int u = 0; u < NDW; u++) d[u] = bp[u * st];
             uint16_t w[NW];
 #pragma unroll
             for (int u = 0; u < NW; u++) w[u] = (uint16_t) (d[u / 2] >> (16 * (u & 1)));
@@ -620,7 +627,7 @@ static void v5_repack_matrix(const uint8_t * src, uint8_t * dst, int t, int nrow
 // ---- v7 layout: 4 lanes per row (lane q = kb0 handles blocks kb0, kb0+4, kb0+8, kb0+12), 4 rows per sub-group.
 // Per group of 4 rows, per i (0..3), per dword u: 16 dwords ordered (kb0, row) so one load is one 64-byte line.
 // Blocks kb >= nblk (i = 3, kb0 >= 2) are zero padding and never used. Pure data movement.
-static inline size_t v7_mat_bytes(int t, int nrows) { return (size_t) (nrows / 4) * 4 * v5_ndw(t) * 64; }
+static inline size_t v7_mat_bytes(int t, int nrows, int ncols) { return (size_t) nrows * (ncols / K3_QK) * v5_ndw(t) * 4; }
 static void v7_repack_matrix(const uint8_t * src, uint8_t * dst, int t, int nrows, int ncols) {
     const int bb = k3_blk_bytes(t), ndw = v5_ndw(t), nblk = ncols / K3_QK;
     const size_t rb = (size_t) nblk * bb;
@@ -631,10 +638,11 @@ static void v7_repack_matrix(const uint8_t * src, uint8_t * dst, int t, int nrow
                 for (int q = 0; q < 4; q++)
                     for (int j = 0; j < 4; j++) {
                         const int kb = q + 4 * i;
+                        if (kb >= nblk) continue;
                         uint8_t b4[4] = {0, 0, 0, 0};
-                        if (kb < nblk) for (int c = 0; c < 4; c++) if (u * 4 + c < bb) b4[c] = src[(size_t) (rg * 4 + j) * rb + (size_t) kb * bb + u * 4 + c];
+                        for (int c = 0; c < 4; c++) if (u * 4 + c < bb) b4[c] = src[(size_t) (rg * 4 + j) * rb + (size_t) kb * bb + u * 4 + c];
                         uint32_t v; memcpy(&v, b4, 4);
-                        o[(((size_t) rg * 4 + i) * ndw + u) * 16 + q * 4 + j] = v;
+                        o[v7_off(nblk, ndw, rg, i, u, q * 4 + j)] = v;
                     }
 }
 struct RecPtrs { const uint8_t * p[16]; };
@@ -664,7 +672,7 @@ struct Engine {
         prof = getenv("K3X_PROF") != nullptr;
         rbg = (size_t) D / K3_QK * k3_blk_bytes(tg); rbd = (size_t) F / K3_QK * k3_blk_bytes(td);
         gsz = rbg * F; dsz = rbd * D; rec = 2 * gsz + dsz;
-        pg = V7 ? v7_mat_bytes(tg, F) : v5_mat_bytes(tg, F, D); pd = V7 ? v7_mat_bytes(td, D) : v5_mat_bytes(td, D, F); prec = V5 ? 2 * pg + pd : rec;
+        pg = V7 ? v7_mat_bytes(tg, F, D) : v5_mat_bytes(tg, F, D); pd = V7 ? v7_mat_bytes(td, D, F) : v5_mat_bytes(td, D, F); prec = V5 ? 2 * pg + pd : rec;
         if (E > 0) W = sycl::malloc_device<uint8_t>(prec * E, q);
         g1 = sycl::malloc_device<uint32_t>(2048, q); g2 = sycl::malloc_device<uint64_t>(256, q);
         q.memcpy(g1, iq1s_grid_gpu, 2048 * 4); q.memcpy(g2, iq2xxs_grid, 256 * 8);
@@ -1117,48 +1125,64 @@ static std::vector<char> slurp(const std::string & p) {
     std::vector<char> v(n); if (fread(v.data(), 1, n, f) != (size_t) n) exit(1); fclose(f); return v;
 }
 static k3_mufu_tabs host_mt{};
-static std::vector<char> tab_host[4];
-// loads ref/mufu/{rcp,ex2p,ex2n,tanh}.bin (K3X_MUFU=dir) into host memory once and into this engine's device memory
+struct HostPacked { std::vector<uint32_t> hdr; std::vector<int8_t> res; std::vector<uint32_t> esc; uint32_t n = 0; };
+static HostPacked tab_host[4];
 static k3_mufu_tabs dev_mt_cache{}; static bool dev_mt_loaded = false;
-static bool g_host_tables = true;   // serve modes need no host copies (only the host reference uses them)
+static bool g_host_tables = true;   // keep the (packed) host copies for the host reference
+// pack one raw MUFU table (u32 per entry) into blocks of 64: {a, d} + int8 residuals + escapes; verified exhaustively
+static void pack_table(const uint32_t * t, uint32_t n, HostPacked & P) {
+    const uint32_t nb = (n + 63) / 64;
+    P.n = n; P.hdr.assign(2 * (size_t) nb, 0); P.res.assign(n, 0); P.esc.clear();
+    for (uint32_t b = 0; b < nb; b++) {
+        const uint32_t i0 = b * 64, len = std::min(64u, n - i0);
+        const uint32_t a = t[i0];
+        int64_t dd = len == 64 ? (int64_t) t[i0 + 63] - (int64_t) a : 0;
+        if (dd > (1 << 24) || dd < -(1 << 24)) dd = 0;   // keeps d*o in int32; such blocks escape where needed
+        const int32_t d = (int32_t) dd;
+        P.hdr[2 * b] = a; P.hdr[2 * b + 1] = (uint32_t) d;
+        for (uint32_t o = 0; o < len; o++) {
+            const uint32_t ap = a + (uint32_t) ((d * (int32_t) o) / 63);
+            const int64_t r = (int64_t) (int32_t) (t[i0 + o] - ap);
+            if (r >= -127 && r <= 127) P.res[i0 + o] = (int8_t) r;
+            else { P.res[i0 + o] = -128; P.esc.push_back(i0 + o); P.esc.push_back(t[i0 + o]); }
+        }
+    }
+    k3_ptab v{P.hdr.data(), P.res.data(), P.esc.data(), (uint32_t) (P.esc.size() / 2), n};
+    for (uint32_t i = 0; i < n; i++) if (k3_ptab_get(v, i) != t[i]) { fprintf(stderr, "pack verify FAILED at %u\n", i); exit(5); }
+}
+// loads ref/mufu/{rcp,ex2p,ex2n,tanh}.bin (K3X_MUFU=dir), packs them (~1.1 B/entry) and uploads the packed form
 static void load_mufu(Engine & en) {
     if (dev_mt_loaded) { en.mt = dev_mt_cache; return; }
     const char * dir = getenv("K3X_MUFU") ? getenv("K3X_MUFU") : "../ref/mufu";
     const char * names[4] = {"rcp", "ex2p", "ex2n", "tanh"};
-    const uint32_t * dev[4] = {nullptr, nullptr, nullptr, nullptr}; uint32_t n[4] = {0, 0, 0, 0};
+    k3_ptab dev[4] = {}; size_t devbytes = 0;
     for (int t = 0; t < 4; t++) {
         std::string p = std::string(dir) + "/" + names[t] + ".bin";
         FILE * f = fopen(p.c_str(), "rb");
         if (!f) { fprintf(stderr, "WARNING: no %s, IEEE placeholder\n", p.c_str()); continue; }
-        fseek(f, 0, SEEK_END); const size_t bytes = (size_t) ftell(f); fseek(f, 0, SEEK_SET);
-        n[t] = (uint32_t) (bytes / 4);
-        uint32_t * d = sycl::malloc_device<uint32_t>(n[t], en.q);
-        if (g_host_tables) {
-            fclose(f);
-            if (tab_host[t].empty()) tab_host[t] = slurp(p);
-            en.q.memcpy(d, tab_host[t].data(), bytes).wait();
-        } else {   // stream through a 64 MiB buffer: no 2.5 GB host copy at startup
-            const size_t CB = (size_t) 64 << 20;
-            char * buf = sycl::malloc_host<char>(CB, en.q);   // pinned staging (see serve_index)
-            for (size_t off = 0; off < bytes;) {
-                const size_t c = std::min(CB, bytes - off);
-                if (fread(buf, 1, c, f) != c) { fprintf(stderr, "short read %s\n", p.c_str()); exit(1); }
-                en.q.memcpy((char *) d + off, buf, c).wait();
-                char back[256]; en.q.memcpy(back, (char *) d + off, 256).wait();
-                if (memcmp(back, buf, 256)) { fprintf(stderr, "table upload verify FAILED %s\n", p.c_str()); exit(4); }
-                off += c;
-            }
-            sycl::free(buf, en.q);
-            fclose(f);
-        }
-        dev[t] = d;
-        fprintf(stderr, "MUFU %s table: %u entries\n", names[t], n[t]);
+        fclose(f);
+        HostPacked & P = tab_host[t];
+        { auto raw = slurp(p); pack_table((const uint32_t *) raw.data(), (uint32_t) (raw.size() / 4), P); }
+        uint32_t * h = sycl::malloc_device<uint32_t>(P.hdr.size(), en.q);
+        int8_t * r = sycl::malloc_device<int8_t>(P.res.size(), en.q);
+        uint32_t * e = sycl::malloc_device<uint32_t>(std::max<size_t>(P.esc.size(), 2), en.q);
+        en.q.memcpy(h, P.hdr.data(), P.hdr.size() * 4); en.q.memcpy(r, P.res.data(), P.res.size());
+        if (!P.esc.empty()) en.q.memcpy(e, P.esc.data(), P.esc.size() * 4);
+        en.q.wait();
+        { std::vector<int8_t> back(P.res.size()); en.q.memcpy(back.data(), r, back.size()).wait();
+          if (memcmp(back.data(), P.res.data(), back.size())) { fprintf(stderr, "table upload verify FAILED %s\n", names[t]); exit(4); } }
+        dev[t] = k3_ptab{h, r, e, (uint32_t) (P.esc.size() / 2), P.n};
+        devbytes += P.hdr.size() * 4 + P.res.size() + P.esc.size() * 4;
+        fprintf(stderr, "MUFU %s table: %u entries, packed %.0f MB, %zu escapes\n", names[t], P.n, (P.hdr.size() * 4 + P.res.size()) / 1e6, P.esc.size() / 2);
+        if (!g_host_tables) { HostPacked().hdr.swap(P.hdr); std::vector<int8_t>().swap(P.res); std::vector<uint32_t>().swap(P.esc); }
     }
-    en.mt = k3_mufu_tabs{dev[0], dev[1], dev[2], dev[3], n[1], n[2], n[3]};
+    en.mt = k3_mufu_tabs{dev[0], dev[1], dev[2], dev[3], dev[1].n, dev[2].n, dev[3].n};
     dev_mt_cache = en.mt; dev_mt_loaded = true;
-    host_mt = k3_mufu_tabs{(const uint32_t *) tab_host[0].data(), (const uint32_t *) tab_host[1].data(), (const uint32_t *) tab_host[2].data(),
-                           (const uint32_t *) tab_host[3].data(), n[1], n[2], n[3]};
-    for (int t = 0; t < 4; t++) if (tab_host[t].empty()) { if (t == 0) host_mt.rcp = nullptr; if (t == 1) host_mt.ex2p = nullptr; if (t == 2) host_mt.ex2n = nullptr; if (t == 3) host_mt.tanh = nullptr; }
+    k3_ptab hp[4] = {};
+    for (int t = 0; t < 4; t++) if (!tab_host[t].res.empty())
+        hp[t] = k3_ptab{tab_host[t].hdr.data(), tab_host[t].res.data(), tab_host[t].esc.data(), (uint32_t) (tab_host[t].esc.size() / 2), tab_host[t].n};
+    host_mt = k3_mufu_tabs{hp[0], hp[1], hp[2], hp[3], hp[1].n, hp[2].n, hp[3].n};
+    fprintf(stderr, "MUFU tables on the GPU: %.2f GB\n", devbytes / 1e9);
 }
 static double now_ms() { return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now().time_since_epoch()).count(); }
 
@@ -1205,7 +1229,7 @@ static int serve_index(const char * idxp, const char * binp, int port) {
         map[r.gid] = {e, chunk + used}; used += e->prec; tot += e->prec;
     }
     fclose(f);
-    for (auto & v : tab_host) std::vector<char>().swap(v);   // host copies only serve the host reference
+    for (auto & v : tab_host) v = HostPacked();   // host copies only serve the host reference
     fprintf(stderr, "loaded %zu of %zu records (%.1f GB on the GPU) in %.1f s, %zu engine kinds\n", map.size(), idx.size(), tot / 1e9, (now_ms() - t0) / 1e3, eng.size());
     if (const char * so = getenv("K3X_SETOUT")) {   // "layer expert" of the served records, for LLAMA_EXPERT_STORE_REMOTE_SET
         FILE * f = fopen(so, "w");
@@ -1316,6 +1340,25 @@ int main(int argc, char ** argv) {
         }
         printf("check: %ld / %ld rows bit-identical device vs host (max rel diff otherwise %.3g)\n", same, tot, maxrel);
         return same == tot ? 0 : 2;
+    }
+    if (mode == "mufustat") {   // residuals of block-linear interpolation of the MUFU tables (bit space), per block size
+        const char * dir = getenv("K3X_MUFU") ? getenv("K3X_MUFU") : "../ref/mufu";
+        for (const char * nm : {"rcp", "ex2p", "ex2n", "tanh"}) {
+            auto v = slurp(std::string(dir) + "/" + nm + ".bin"); const uint32_t * t = (const uint32_t *) v.data(); const size_t n = v.size() / 4;
+            for (int B : {16, 32, 64}) {
+                long over8 = 0, over16 = 0; long maxr = 0;
+                for (size_t b0 = 0; b0 < n; b0 += B) {
+                    const size_t len = std::min((size_t) B, n - b0); const int64_t a = t[b0], z = t[b0 + len - 1];
+                    for (size_t i = 0; i < len; i++) {
+                        const int64_t ap = len > 1 ? a + (z - a) * (int64_t) i / (int64_t) (len - 1) : a;
+                        const int64_t r = (int64_t) t[b0 + i] - ap; const long ar = r < 0 ? -r : r;
+                        if (ar > maxr) maxr = ar; if (r < -128 || r > 127) over8++; if (r < -32768 || r > 32767) over16++;
+                    }
+                }
+                printf("%s B=%d: n=%zu max|r|=%ld  >int8: %ld  >int16: %ld\n", nm, B, n, maxr, over8, over16); fflush(stdout);
+            }
+        }
+        return 0;
     }
     if (mode == "info") {
         auto d = en.q.get_device();

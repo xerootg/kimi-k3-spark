@@ -69,7 +69,21 @@ static inline float fmul_z(float a, float b) { return k3_ftz(k3_ftz(a) * k3_ftz(
 static inline float ffma_z(float a, float b, float c) { return k3_ftz(K3_FMA(k3_ftz(a), k3_ftz(b), k3_ftz(c))); }
 
 // ---- NVIDIA MUFU (raw special-function unit results); implemented in k3x_mufu.h from agent A's tables
-struct k3_mufu_tabs { const uint32_t * rcp; const uint32_t * ex2p; const uint32_t * ex2n; const uint32_t * tanh; uint32_t n_ex2p, n_ex2n, n_tanh; };
+// Packed MUFU table (exact): blocks of 64 entries, value_i = a + (d * o) / 63 + r_i (integer, bit space), o = i % 64,
+// hdr = {a, d} per block, r_i int8; r_i == -128 marks an escape: the exact value is in esc (sorted {index, value} pairs).
+struct k3_ptab { const uint32_t * hdr; const int8_t * res; const uint32_t * esc; uint32_t nesc; uint32_t n; };
+static inline uint32_t k3_ptab_get(const k3_ptab & P, uint32_t i) {
+    const int8_t r = P.res[i];
+    if (r == -128) {
+        uint32_t lo = 0, hi = P.nesc;   // binary search over the escape list
+        while (lo + 1 < hi) { const uint32_t mid = (lo + hi) / 2; if (P.esc[2 * mid] <= i) lo = mid; else hi = mid; }
+        return P.esc[2 * lo + 1];
+    }
+    const uint32_t b = i >> 6; const int o = (int) (i & 63);
+    const uint32_t a = P.hdr[2 * b]; const int32_t d = (int32_t) P.hdr[2 * b + 1];
+    return a + (uint32_t) ((d * o) / 63) + (uint32_t) (int32_t) r;
+}
+struct k3_mufu_tabs { k3_ptab rcp, ex2p, ex2n, tanh; uint32_t n_ex2p, n_ex2n, n_tanh; };
 #include "k3x_mufu.h"
 
 // q8_1 quantization of 32 floats (SPEC section 2)
