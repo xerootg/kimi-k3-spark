@@ -13,6 +13,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <functional>
 #include <utility>
 #include <algorithm>
 #include <unordered_map>
@@ -472,6 +473,43 @@ static inline float row_v6(sycl::sub_group sg, const uint32_t * mat, int rg, int
         for (int x = 0; x < off; x++) s[x] = s[x] + s[x + off];
     return s[0];
 }
+
+template <int T, int NBLK>
+static inline float row_v7(sycl::sub_group sg, const uint32_t * mat, int rg4, int lane, const int * QT, const sycl::float2 * DT, const uint32_t * g1, const uint64_t * g2) {
+    constexpr int NDW = T == T_IQ1_S ? 13 : 17, NW = (T == T_IQ1_S ? 50 : 66) / 2;
+    const int q = lane / 4;   // kb0
+    float s[8];
+#pragma unroll
+    for (int i = 0; i < 4; i++) {
+        const int kb = q + 4 * i;
+        const uint32_t * bp = mat + (((size_t) rg4 * 4 + i) * NDW) * 16 + lane;
+        uint32_t d[NDW];
+#pragma unroll
+        for (int u = 0; u < NDW; u++) d[u] = bp[u * 16];
+        if (kb < NBLK) {
+            uint16_t w[NW];
+#pragma unroll
+            for (int u = 0; u < NW; u++) w[u] = (uint16_t) (d[u / 2] >> (16 * (u & 1)));
+#pragma unroll
+            for (int l = 0; l < 8; l++) {
+                const float p = T == T_IQ1_S ? p_iq1_s(w, l, QT, DT, kb, g1) : p_iq2_xxs(w, l, QT, DT, kb, g2);
+                s[l] = i == 0 ? p : s[l] + p;
+            }
+        } else {
+#pragma unroll
+            for (int l = 0; l < 8; l++) s[l] = s[l] + 0.0f;
+        }
+    }
+    // xor tree over x = 8*kb0 + l: off 16 = lane + 8 (kb0 + 2), off 8 = lane + 4 (kb0 + 1), then inside the lane
+#pragma unroll
+    for (int l = 0; l < 8; l++) s[l] = s[l] + sycl::select_from_group(sg, s[l], (lane + 8) & 15);
+#pragma unroll
+    for (int l = 0; l < 8; l++) s[l] = s[l] + sycl::select_from_group(sg, s[l], (lane + 4) & 15);
+#pragma unroll
+    for (int l = 0; l < 4; l++) s[l] = s[l] + s[l + 4];
+    s[0] = s[0] + s[2]; s[1] = s[1] + s[3];
+    return s[0] + s[1];
+}
 static inline void blk_any(int t, const uint8_t * blk, const k3_q8_1 * y8, const sycl::float2 * dsf, const uint32_t * g1, const uint64_t * g2, float * out) {
     if (t == T_IQ1_S) blk_iq1_s(blk, y8, dsf, g1, out); else blk_iq2_xxs(blk, y8, dsf, g2, out);
 }
@@ -479,6 +517,9 @@ static inline void blk_any(int t, const uint8_t * blk, const k3_q8_1 * y8, const
 static constexpr int D = K3_D, F = K3_F;
 #ifndef MV5_WG
 #define MV5_WG 256
+#endif
+#ifndef V7
+#define V7 1
 #endif
 #ifndef V6
 #define V6 0   // v6 (constant-lane shuffles) gave wrong rows on this IGC and no speed-up: off
@@ -539,6 +580,27 @@ static void v5_repack_matrix(const uint8_t * src, uint8_t * dst, int t, int nrow
                     o[(((size_t) rg * nblk + kb) * ndw + u) * 16 + ln] = v;
                 }
 }
+
+// ---- v7 layout: 4 lanes per row (lane q = kb0 handles blocks kb0, kb0+4, kb0+8, kb0+12), 4 rows per sub-group.
+// Per group of 4 rows, per i (0..3), per dword u: 16 dwords ordered (kb0, row) so one load is one 64-byte line.
+// Blocks kb >= nblk (i = 3, kb0 >= 2) are zero padding and never used. Pure data movement.
+static inline size_t v7_mat_bytes(int t, int nrows) { return (size_t) (nrows / 4) * 4 * v5_ndw(t) * 64; }
+static void v7_repack_matrix(const uint8_t * src, uint8_t * dst, int t, int nrows, int ncols) {
+    const int bb = k3_blk_bytes(t), ndw = v5_ndw(t), nblk = ncols / K3_QK;
+    const size_t rb = (size_t) nblk * bb;
+    uint32_t * o = (uint32_t *) dst;
+    for (int rg = 0; rg < nrows / 4; rg++)
+        for (int i = 0; i < 4; i++)
+            for (int u = 0; u < ndw; u++)
+                for (int q = 0; q < 4; q++)
+                    for (int j = 0; j < 4; j++) {
+                        const int kb = q + 4 * i;
+                        uint8_t b4[4] = {0, 0, 0, 0};
+                        if (kb < nblk) for (int c = 0; c < 4; c++) if (u * 4 + c < bb) b4[c] = src[(size_t) (rg * 4 + j) * rb + (size_t) kb * bb + u * 4 + c];
+                        uint32_t v; memcpy(&v, b4, 4);
+                        o[(((size_t) rg * 4 + i) * ndw + u) * 16 + q * 4 + j] = v;
+                    }
+}
 struct RecPtrs { const uint8_t * p[16]; };
 struct Engine {
     sycl::queue q;
@@ -566,7 +628,7 @@ struct Engine {
         prof = getenv("K3X_PROF") != nullptr;
         rbg = (size_t) D / K3_QK * k3_blk_bytes(tg); rbd = (size_t) F / K3_QK * k3_blk_bytes(td);
         gsz = rbg * F; dsz = rbd * D; rec = 2 * gsz + dsz;
-        pg = v5_mat_bytes(tg, F, D); pd = v5_mat_bytes(td, D, F); prec = V5 ? 2 * pg + pd : rec;
+        pg = V7 ? v7_mat_bytes(tg, F) : v5_mat_bytes(tg, F, D); pd = V7 ? v7_mat_bytes(td, D) : v5_mat_bytes(td, D, F); prec = V5 ? 2 * pg + pd : rec;
         if (E > 0) W = sycl::malloc_device<uint8_t>(prec * E, q);
         g1 = sycl::malloc_device<uint32_t>(2048, q); g2 = sycl::malloc_device<uint64_t>(256, q);
         q.memcpy(g1, iq1s_grid_gpu, 2048 * 4); q.memcpy(g2, iq2xxs_grid, 256 * 8);
@@ -586,6 +648,7 @@ struct Engine {
 
     void repack(const uint8_t * src, uint8_t * dst) const {   // one record, original -> device layout
         if (!V5) { memcpy(dst, src, rec); return; }
+        if (V7) { v7_repack_matrix(src, dst, tg, F, D); v7_repack_matrix(src + gsz, dst + pg, tg, F, D); v7_repack_matrix(src + 2 * gsz, dst + 2 * pg, td, D, F); return; }
         v5_repack_matrix(src, dst, tg, F, D); v5_repack_matrix(src + gsz, dst + pg, tg, F, D); v5_repack_matrix(src + 2 * gsz, dst + 2 * pg, td, D, F);
     }
     void upload(const uint8_t * host, size_t e0, size_t n) {
@@ -596,17 +659,17 @@ struct Engine {
     template <int T, int NBLK>
     sycl::event matvec5_t(int k, int nmat, int nrows, size_t moff, size_t mstride,
                           const int * qt, const sycl::float2 * dt, int estride, float * out0, float * out1,
-                          const int * qv = nullptr, const float * dv = nullptr) {
+                          const int * qv = nullptr, const float * dv = nullptr, int ebase = 0) {
         const uint32_t * g1_ = g1; const uint64_t * g2_ = g2;
         RecPtrs recs_; for (int i = 0; i < 16; i++) recs_.p[i] = recs[i];
-        const long nitems = (long) k * nmat * nrows;
+        const long nitems = (long) k * nmat * nrows * (V7 ? 4 : 1);
         const int wg = MV5_WG;   // divides 3072 and 3584, so a work-group never spans two (expert, matrix) pairs
         return q.submit([&](sycl::handler & h) {
             sycl::local_accessor<int, 1> QS(sycl::range<1>(1024), h);
             sycl::local_accessor<sycl::float2, 1> DS(sycl::range<1>(128), h);
             h.parallel_for(sycl::nd_range<1>((nitems + wg - 1) / wg * wg, wg), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
                 const long g0 = (long) it.get_group(0) * wg;
-                const int e0 = (int) (g0 / ((long) nrows * nmat));
+                const int e0 = ebase + (int) (g0 / ((long) nrows * nmat * (V7 ? 4 : 1)));
                 const int lid = it.get_local_id(0);
                 const int * qsrc = qt + (size_t) e0 * estride * 1024; const sycl::float2 * dsrc = dt + (size_t) e0 * estride * 128;
 #if !V6
@@ -616,7 +679,16 @@ struct Engine {
 #endif
                 const long gi = it.get_global_id(0);
                 if (gi >= nitems) return;
-                const int r = (int) (gi % nrows), m = (int) ((gi / nrows) % nmat), e = (int) (gi / ((long) nrows * nmat));
+#if V7
+                // nitems here counts lanes: 4 per row
+                const long sgi = gi / 16; const int lane = (int) (gi % 16);
+                const int rg4 = (int) (sgi % (nrows / 4)), m = (int) ((sgi / (nrows / 4)) % nmat), e = ebase + (int) (sgi / ((long) (nrows / 4) * nmat));
+                const uint32_t * mat = (const uint32_t *) (recs_.p[e] + moff + m * mstride);
+                const float v7 = row_v7<T, NBLK>(it.get_sub_group(), mat, rg4, lane, QS.get_multi_ptr<sycl::access::decorated::no>().get(),
+                                                 DS.get_multi_ptr<sycl::access::decorated::no>().get(), g1_, g2_);
+                if (lane < 4) (m ? out1 : out0)[e * nrows + rg4 * 4 + lane] = v7;
+#else
+                const int r = (int) (gi % nrows), m = (int) ((gi / nrows) % nmat), e = ebase + (int) (gi / ((long) nrows * nmat));
                 const uint32_t * mat = (const uint32_t *) (recs_.p[e] + moff + m * mstride);
 #if V6
                 const float v = row_v6<T, NBLK>(it.get_sub_group(), mat, r / 16, r % 16, qv + (size_t) e * estride * 896, dv + (size_t) e * estride * 224, g1_, g2_);
@@ -625,15 +697,16 @@ struct Engine {
                                                  DS.get_multi_ptr<sycl::access::decorated::no>().get(), g1_, g2_);
 #endif
                 (m ? out1 : out0)[e * nrows + r] = v;
+#endif
             });
         });
     }
     sycl::event matvec5(int k, int nmat, int nrows, int nblk, int t, size_t moff, size_t mstride,
-                        const int * qt, const sycl::float2 * dt, int estride, float * out0, float * out1, const int * qv = nullptr, const float * dv = nullptr) {
-        if (t == T_IQ1_S && nblk == 14) return matvec5_t<T_IQ1_S, 14>(k, nmat, nrows, moff, mstride, qt, dt, estride, out0, out1, qv, dv);
-        if (t == T_IQ1_S && nblk == 12) return matvec5_t<T_IQ1_S, 12>(k, nmat, nrows, moff, mstride, qt, dt, estride, out0, out1, qv, dv);
-        if (t == T_IQ2_XXS && nblk == 14) return matvec5_t<T_IQ2_XXS, 14>(k, nmat, nrows, moff, mstride, qt, dt, estride, out0, out1, qv, dv);
-        return matvec5_t<T_IQ2_XXS, 12>(k, nmat, nrows, moff, mstride, qt, dt, estride, out0, out1, qv, dv);
+                        const int * qt, const sycl::float2 * dt, int estride, float * out0, float * out1, const int * qv = nullptr, const float * dv = nullptr, int ebase = 0) {
+        if (t == T_IQ1_S && nblk == 14) return matvec5_t<T_IQ1_S, 14>(k, nmat, nrows, moff, mstride, qt, dt, estride, out0, out1, qv, dv, ebase);
+        if (t == T_IQ1_S && nblk == 12) return matvec5_t<T_IQ1_S, 12>(k, nmat, nrows, moff, mstride, qt, dt, estride, out0, out1, qv, dv, ebase);
+        if (t == T_IQ2_XXS && nblk == 14) return matvec5_t<T_IQ2_XXS, 14>(k, nmat, nrows, moff, mstride, qt, dt, estride, out0, out1, qv, dv, ebase);
+        return matvec5_t<T_IQ2_XXS, 12>(k, nmat, nrows, moff, mstride, qt, dt, estride, out0, out1, qv, dv, ebase);
     }
 
     template <int T, int NBLK>
@@ -872,39 +945,56 @@ struct Engine {
     }
 
     // one token: ids[0..k), x[D] -> rows[k][D]
-    void run(int k) {
-        const int tg_ = tg, td_ = td; const size_t rbg_ = rbg, rbd_ = rbd, gsz_ = gsz, rec_ = rec;
-        const uint8_t * W_ = W; const uint32_t * g1_ = g1; const uint64_t * g2_ = g2;
+    // one token: ids[0..k), x[D] -> rows[k][D]. With a sink, the down matmul runs per expert and sink(e) is called as
+    // soon as row e is in host memory (in order), so the server can stream rows (C's engine takes partial replies).
+    void run(int k, const std::function<void(int)> * sink = nullptr) {
         q.memcpy(xd, x, D * 4);
         const float * x_ = xd; float * rows_ = rowsd;
         if (!ext_recs) for (int i = 0; i < k; i++) recs[i] = W + (size_t) ids[i] * prec;
-        k3_q8_1 * yq_ = yq, * yq2_ = yq2; sycl::float2 * dsf_ = dsf, * dsf2_ = dsf2;
-        int * QT_ = QT, * QT2_ = QT2; sycl::float2 * DT_ = DT, * DT2_ = DT2; int * QV_ = QV, * QV2_ = QV2; float * DV_ = DV, * DV2_ = DV2;
+        k3_q8_1 * yq_ = yq, * yq2_ = yq2;
+        int * QT_ = QT, * QT2_ = QT2; sycl::float2 * DT_ = DT, * DT2_ = DT2;
         float * gb = gbuf, * ub = ubuf, * hb = hbuf; const k3_mufu_tabs mt_ = mt;
         ev.clear();
         ev.push_back(q.parallel_for(sycl::range<1>(D / 32), [=](sycl::id<1> i) {
             k3_quantize_block(x_ + i[0] * 32, yq_ + i[0], mt_);
-            dsf_[i[0]] = sycl::float2(k3_h2f(yq_[i[0]].d), k3_h2f(yq_[i[0]].s));
             store_T(yq_[i[0]], (int) i[0], QT_, DT_);
-            store_V(yq_[i[0]], (int) i[0], QV_, DV_);
         }));
-        // gate and up: separate work-groups (m = 0 gate, 1 up), each RPW contiguous rows staged in SLM
-        ev.push_back(V5 ? matvec5(k, 2, F, D / K3_QK, tg_, 0, pg, QT_, DT_, 0, gb, ub, QV_, DV_) : MV4 ? matvec4(k, 2, F, D / K3_QK, tg_, rbg_, 0, gsz_, QV_, DV_, 0, gb, ub) : MV3 ? matvec3(k, 2, F, D / K3_QK, tg_, rbg_, 0, gsz_, QT_, DT_, 0, gb, ub) : MV2 ? matvec2(k, 2, F, D / K3_QK, tg_, rbg_, 0, gsz_, QT_, DT_, 0, gb, ub)
-                         : matvec(k, 2, F, D / K3_QK, tg_, rbg_, 0, gsz_, F / 32 * 0, yq_, dsf_, 0, gb, ub));
-        // SiTU, one work-item per element (the MUFU table lookups are latency bound: maximize parallelism)
-        q.parallel_for(sycl::range<1>((size_t) k * F), [=](sycl::id<1> i) { hb[i[0]] = k3_act(gb[i[0]], ub[i[0]], mt_); });
-        ev.push_back(q.parallel_for(sycl::range<1>((size_t) k * F / 32), [=](sycl::id<1> i) {
-            k3_quantize_block(hb + i[0] * 32, yq2_ + i[0], mt_);
-            dsf2_[i[0]] = sycl::float2(k3_h2f(yq2_[i[0]].d), k3_h2f(yq2_[i[0]].s));
-            store_T(yq2_[i[0]], (int) (i[0] % (F / 32)), QT2_ + (i[0] / (F / 32)) * 1024, DT2_ + (i[0] / (F / 32)) * 128);
-            store_V(yq2_[i[0]], (int) (i[0] % (F / 32)), QV2_ + (i[0] / (F / 32)) * 896, DV2_ + (i[0] / (F / 32)) * 224);
+        ev.push_back(matvec5(k, 2, F, D / K3_QK, tg, 0, pg, QT_, DT_, 0, gb, ub));
+        // SiTU + q8_1 of h: 32 work-items per q8 block (one element each, latency-bound table lookups in parallel),
+        // then one work-item quantizes the block from SLM exactly as k3_quantize_block does.
+        ev.push_back(q.submit([&](sycl::handler & h) {
+            sycl::local_accessor<float, 1> HS(sycl::range<1>(32), h);
+            h.parallel_for(sycl::nd_range<1>((size_t) k * F, 32), [=](sycl::nd_item<1> it) {
+                const size_t i = it.get_global_id(0); const int lid = it.get_local_id(0);
+                const float hv = k3_act(gb[i], ub[i], mt_);
+                hb[i] = hv; HS[lid] = hv;
+                sycl::group_barrier(it.get_group());
+                if (lid == 0) {
+                    const size_t blk = i / 32; float a[32];
+                    for (int j = 0; j < 32; j++) a[j] = HS[j];
+                    k3_quantize_block(a, yq2_ + blk, mt_);
+                    store_T(yq2_[blk], (int) (blk % (F / 32)), QT2_ + (blk / (F / 32)) * 1024, DT2_ + (blk / (F / 32)) * 128);
+                }
+            });
         }));
-        ev.push_back(V5 ? matvec5(k, 1, D, F / K3_QK, td_, 2 * pg, 0, QT2_, DT2_, 1, rows_, nullptr, QV2_, DV2_) : MV4 ? matvec4(k, 1, D, F / K3_QK, td_, rbd_, 2 * gsz_, 0, QV2_, DV2_, 1, rows_, nullptr) : MV3 ? matvec3(k, 1, D, F / K3_QK, td_, rbd_, 2 * gsz_, 0, QT2_, DT2_, 1, rows_, nullptr) : MV2 ? matvec2(k, 1, D, F / K3_QK, td_, rbd_, 2 * gsz_, 0, QT2_, DT2_, 1, rows_, nullptr)
-                         : matvec(k, 1, D, F / K3_QK, td_, rbd_, 2 * gsz_, 0, 0, yq2_, dsf2_, F / 32, rows_, nullptr));
-        ev.push_back(q.memcpy(rows, rowsd, (size_t) k * D * 4));
-        if (spin) { auto & last = ev.back(); while (last.get_info<sycl::info::event::command_execution_status>() != sycl::info::event_command_status::complete) {} }
-        q.wait_and_throw();
-        if (prof) {
+        if (!sink) {
+            ev.push_back(matvec5(k, 1, D, F / K3_QK, td, 2 * pg, 0, QT2_, DT2_, 1, rows_, nullptr));
+            ev.push_back(q.memcpy(rows, rowsd, (size_t) k * D * 4));
+            if (spin) { auto & last = ev.back(); while (last.get_info<sycl::info::event::command_execution_status>() != sycl::info::event_command_status::complete) {} }
+            q.wait_and_throw();
+        } else {
+            sycl::event cp[16];
+            for (int e = 0; e < k; e++) {
+                matvec5(1, 1, D, F / K3_QK, td, 2 * pg, 0, QT2_, DT2_, 1, rows_, nullptr, nullptr, nullptr, e);
+                cp[e] = q.memcpy(rows + (size_t) e * D, rowsd + (size_t) e * D, D * 4);
+            }
+            for (int e = 0; e < k; e++) {
+                while (cp[e].get_info<sycl::info::event::command_execution_status>() != sycl::info::event_command_status::complete) {}
+                (*sink)(e);
+            }
+            q.wait_and_throw();
+        }
+        if (prof && ev.size() >= 4) {
             for (int i = 0; i < 4; i++)
                 kt[i] += (ev[i].get_profiling_info<sycl::info::event_profiling::command_end>() -
                           ev[i].get_profiling_info<sycl::info::event_profiling::command_start>()) * 1e-6;
@@ -1018,6 +1108,7 @@ static bool wr_all(int fd, const void * p, size_t n) { const char * c = (const c
 // Weights go to device USM in chunks of <= 1 GiB (no >4 GiB buffers needed); one Engine (scratch + kernels) per (tg, td).
 static int serve_index(const char * idxp, const char * binp, int port) {
     g_host_tables = false;
+    const bool stream = !getenv("K3X_NOSTREAM");
     struct R { long gid; int tg, td; size_t off; };
     std::vector<R> idx; { FILE * f = fopen(idxp, "r"); if (!f) { perror(idxp); return 1; } R r; while (fscanf(f, "%ld %d %d %zu", &r.gid, &r.tg, &r.td, &r.off) == 4) idx.push_back(r); fclose(f); }
     std::vector<Engine *> eng; auto get = [&](int tg, int td) -> Engine * { for (auto * e : eng) if (e->tg == tg && e->td == td) return e; eng.push_back(new Engine(tg, td, 0)); eng.back()->spin = true; load_mufu(*eng.back()); return eng.back(); };
@@ -1041,14 +1132,33 @@ static int serve_index(const char * idxp, const char * binp, int port) {
     }
     fclose(f);
     for (auto & v : tab_host) std::vector<char>().swap(v);   // host copies only serve the host reference
-    fprintf(stderr, "loaded %zu records (%.1f GB) in %.1f s, %zu engine kinds\n", idx.size(), tot / 1e9, (now_ms() - t0) / 1e3, eng.size());
-    for (auto * e : eng) { e->ext_recs = true; for (int i = 0; i < D; i++) e->x[i] = 0.1f; for (auto & kv : map) if (kv.second.first == e) { e->recs[0] = kv.second.second; break; } e->run(1); }
+    fprintf(stderr, "loaded %zu of %zu records (%.1f GB on the GPU) in %.1f s, %zu engine kinds\n", map.size(), idx.size(), tot / 1e9, (now_ms() - t0) / 1e3, eng.size());
+    if (const char * so = getenv("K3X_SETOUT")) {   // "layer expert" of the served records, for LLAMA_EXPERT_STORE_REMOTE_SET
+        FILE * f = fopen(so, "w");
+        for (auto & r : idx) if (map.count(r.gid)) fprintf(f, "%ld %ld\n", r.gid / 896, r.gid % 896);
+        fclose(f);
+    }
+    // warm-up + self-check: a real record cannot give an all-zero row. All-zero rows were seen when a big server was
+    // started right after killing another one (the i915 driver frees the old process's pinned pages lazily, so the
+    // new pages could not all be made resident and the kernels silently did nothing): refuse to serve then.
+    for (auto * e : eng) {
+        e->ext_recs = true; for (int i = 0; i < D; i++) e->x[i] = 0.05f * (float) ((i * 37) % 41 - 20);
+        const uint8_t * last = nullptr; for (auto & kv : map) if (kv.second.first == e) { if (!last || kv.second.second > last) last = kv.second.second; }
+        for (const uint8_t * probe : {map.begin()->second.second, last}) {
+            if (!probe) continue;
+            if (map.begin()->second.first != e && probe == map.begin()->second.second) continue;
+            e->recs[0] = probe; e->run(1);
+            int nz = 0; for (int i = 0; i < D; i++) nz += e->rows[i] != 0.0f;
+            if (nz == 0) { fprintf(stderr, "SELF-CHECK FAILED: all-zero row (GPU memory not resident?); check MemAvailable / dmesg, retry later\n"); exit(3); }
+        }
+    }
+    fprintf(stderr, "self-check ok\n");
     int ls = socket(AF_INET, SOCK_STREAM, 0), one = 1;
     setsockopt(ls, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
     sockaddr_in a = {}; a.sin_family = AF_INET; a.sin_port = htons(port); a.sin_addr.s_addr = INADDR_ANY;
     if (bind(ls, (sockaddr *) &a, sizeof a) || listen(ls, 4)) { perror("bind"); return 1; }
     fprintf(stderr, "serving on %d (busy-poll)\n", port);
-    std::vector<float> nanrows(16 * D, NAN), xin(D);
+    std::vector<float> nanrows(16 * D, NAN), xin(D); long zero_rows = 0;
     for (;;) {
         int c = accept(ls, nullptr, nullptr);
         setsockopt(c, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
@@ -1062,8 +1172,14 @@ static int serve_index(const char * idxp, const char * binp, int port) {
             for (int i = 0; ok && i < k; i++) { auto it = map.find(hdr[1 + i]); if (it == map.end() || it->second.first != e) ok = false; else e->recs[i] = it->second.second; }
             if (!ok) { if (!wr_all(c, nanrows.data(), (size_t) k * D * 4)) break; continue; }
             memcpy(e->x, xin.data(), D * 4);
-            e->run(k);
-            if (!wr_all(c, e->rows, (size_t) k * D * 4)) break;
+            bool okw = true;
+            // A dropped GPU submission (i915 EXECBUFFER2 EFAULT under a very large residency set) leaves an all-zero
+            // row; a real expert row is never all zero, so such a row is sent as NaN and the client reads it locally.
+            auto guard = [&](int j) { const float * r = e->rows + (size_t) j * D; for (int i = 0; i < D; i++) if (r[i] != 0.0f) return r;
+                                      zero_rows++; return (const float *) nanrows.data(); };
+            if (stream) { std::function<void(int)> snk = [&](int j) { if (okw) okw = wr_all(c, guard(j), D * 4); }; e->run(k, &snk); }
+            else { e->run(k); for (int j = 0; j < k && okw; j++) okw = wr_all(c, guard(j), D * 4); }
+            if (!okw) break;
         }
         close(c);
     }
@@ -1113,6 +1229,31 @@ int main(int argc, char ** argv) {
         }
         printf("check: %ld / %ld rows bit-identical device vs host (max rel diff otherwise %.3g)\n", same, tot, maxrel);
         return same == tot ? 0 : 2;
+    }
+    if (mode == "info") {
+        auto d = en.q.get_device();
+        printf("global_mem_size %.2f GB, max_mem_alloc_size %.2f GB, address_bits %u\n", d.get_info<sycl::info::device::global_mem_size>() / 1e9,
+               d.get_info<sycl::info::device::max_mem_alloc_size>() / 1e9, d.get_info<sycl::info::device::address_bits>());
+        if (d.has(sycl::aspect::ext_intel_free_memory)) printf("free_memory %.2f GB\n", d.get_info<sycl::ext::intel::info::device::free_memory>() / 1e9);
+        return 0;
+    }
+    if (mode == "ballast") {   // allocate N GB of USM (argv[6], device|host argv[7]), touch it, then validate argv[8]
+        const double gb = atof(argv[6]); const bool hostusm = std::string(argv[7]) == "host";
+        std::vector<void *> v; size_t tot = 0;
+        while (tot + ((size_t) 1 << 30) <= (size_t) (gb * 1e9)) {
+            void * p = hostusm ? (void *) sycl::malloc_host<uint8_t>((size_t) 1 << 30, en.q) : (void *) sycl::malloc_device<uint8_t>((size_t) 1 << 30, en.q);
+            if (!p) { printf("alloc failed at %.1f GB\n", tot / 1e9); break; }
+            en.q.memset(p, 1, (size_t) 1 << 30).wait(); v.push_back(p); tot += (size_t) 1 << 30;
+        }
+        printf("ballast %.1f GB %s\n", tot / 1e9, hostusm ? "host" : "device");
+        // quick correctness probe: one token on record 0 vs host reference
+        for (int i = 0; i < D; i++) en.x[i] = nd(rng) * 0.5f;
+        en.ids[0] = 0; en.run(1);
+        std::vector<float> ref(D);
+        host_ref(host.data(), en.rec, tg, td, en.ids, 1, en.x, ref.data(), host_mt);
+        int same = 0, zero = 0; for (int i = 0; i < D; i++) { same += k3_f2u(ref[i]) == k3_f2u(en.rows[i]); zero += en.rows[i] == 0.0f; }
+        printf("probe: %d/%d identical, %d zeros\n", same, D, zero);
+        return 0;
     }
     if (mode == "membw") {   // ceiling: stream the record buffer with uint4 loads; and an empty kernel's cost
         sycl::queue & q = en.q; const size_t n16 = en.rec * E / 16; const sycl::uint4 * src = (const sycl::uint4 *) en.W;
@@ -1198,21 +1339,26 @@ int main(int argc, char ** argv) {
         int iters = atoi(argv[7]);
         for (int i = 0; i < D; i++) en.x[i] = nd(rng);
         for (int k : ks) {
-            std::vector<double> t;
+            std::vector<double> t, tfirst;
             for (int it = 0; it < iters + 5; it++) {
                 for (int i = 0; i < k; i++) en.ids[i] = rng() % E;
-                double t0 = now_ms(); en.run(k); double dt = now_ms() - t0;
-                if (it >= 5) t.push_back(dt);
+                double t0 = now_ms(), tf = 0;
+                if (getenv("K3X_STREAM")) { std::function<void(int)> snk = [&](int j) { if (j == 0) tf = now_ms() - t0; }; en.run(k, &snk); }
+                else en.run(k);
+                double dt = now_ms() - t0;
+                if (it >= 5) { t.push_back(dt); tfirst.push_back(tf); }
             }
             std::sort(t.begin(), t.end());
             double p50 = t[t.size() / 2], p90 = t[(size_t) (t.size() * 0.9)];
-            if (en.prof) { printf("  kernels (ms avg): quant %.3f gate/up %.3f act+quant %.3f down %.3f\n", en.kt[0] / en.nrun, en.kt[1] / en.nrun, en.kt[2] / en.nrun, en.kt[3] / en.nrun); for (double & v : en.kt) v = 0; en.nrun = 0; }
+            if (en.prof) { printf("  kernels (ms avg): quant %.3f gate/up %.3f situ+quant %.3f down %.3f\n", en.kt[0] / en.nrun, en.kt[1] / en.nrun, en.kt[2] / en.nrun, en.kt[3] / en.nrun); for (double & v : en.kt) v = 0; en.nrun = 0; }
+            if (getenv("K3X_STREAM")) { std::sort(tfirst.begin(), tfirst.end()); printf("  first row p50 %.3f ms\n", tfirst[tfirst.size() / 2]); }
             printf("k=%2d: p50 %.3f ms  p90 %.3f ms  min %.3f ms  -> %.1f GB/s (p50)\n", k, p50, p90, t[0], k * en.rec / p50 / 1e6);
             fflush(stdout);
         }
         return 0;
     }
     if (mode == "serve") {
+        const bool stream = !getenv("K3X_NOSTREAM");
         int port = atoi(argv[6]);
         int ls = socket(AF_INET, SOCK_STREAM, 0), one = 1;
         setsockopt(ls, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
@@ -1230,8 +1376,10 @@ int main(int argc, char ** argv) {
                 int k = hdr[0];
                 if (k < 1 || k > 16) break;
                 for (int i = 0; i < k; i++) en.ids[i] = ((hdr[1 + i] % E) + E) % E;
-                en.run(k);
-                if (!wr(c, en.rows, (size_t) k * D * 4)) break;
+                bool okw = true;
+                if (stream) { std::function<void(int)> snk = [&](int j) { if (okw) okw = wr(c, en.rows + (size_t) j * D, D * 4); }; en.run(k, &snk); }
+                else { en.run(k); okw = wr(c, en.rows, (size_t) k * D * 4); }
+                if (!okw) break;
             }
             close(c);
         }
