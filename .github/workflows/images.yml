@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "docker/**"
+      - "!docker/k3x-serve.Dockerfile"   # built by k3x-serve.yml
       - "patches/**"
       - "versions.env"
       - ".github/workflows/images.yml"
