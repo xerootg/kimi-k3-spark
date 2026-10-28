@@ -392,8 +392,13 @@ static int serve_index(const char * idxp, const char * binp, int port) {
     FILE * f = fopen(binp, "rb"); if (!f) { perror(binp); return 1; }
     const size_t CH = (size_t) 1 << 30; uint8_t * chunk = nullptr; size_t used = CH; std::vector<uint8_t> buf;
     double t0 = now_ms(); size_t tot = 0;
+    // The Arc iGPU silently reads ZEROS from USM beyond roughly 25-35 GB mapped per process (measured 2026-10-28: 3500
+    // records = 23 GB fine, 5000 = 33 GB and 6967 = 46 GB all-zero rows, device and host USM alike). Stop loading at
+    // K3X_MAX_GB (default 24): ids past it are unknown and get NaN rows instead of silently wrong ones.
+    const double max_gb = getenv("K3X_MAX_GB") ? atof(getenv("K3X_MAX_GB")) : 24.0;
     for (auto & r : idx) {
         Engine * e = get(r.tg, r.td);
+        if ((tot + e->rec) / 1e9 > max_gb) { fprintf(stderr, "K3X_MAX_GB %.1f reached: serving %zu of %zu records\n", max_gb, map.size(), idx.size()); break; }
         if (used + e->rec > CH) { chunk = getenv("K3X_HOSTW") ? sycl::malloc_host<uint8_t>(CH, e->q) : sycl::malloc_device<uint8_t>(CH, e->q); if (!chunk) { fprintf(stderr, "device alloc failed after %.1f GB\n", tot / 1e9); return 1; } used = 0; }
         buf.resize(e->rec);
         if (fseeko(f, (off_t) r.off, SEEK_SET) || fread(buf.data(), 1, e->rec, f) != e->rec) { fprintf(stderr, "short read gid %ld\n", r.gid); return 1; }
