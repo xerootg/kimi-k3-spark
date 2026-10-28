@@ -124,4 +124,4 @@ op: 0 mismatches for RCP, TANH and EX2 (2026-10-28).
   correctly rounded exp2 is within [-2, +1] ulp everywhere.
 
 Verified end to end: `cpu/k3ref` (scalar C++, this spec + tables) reproduces every g, u, h and dn value of the
-reference dumps (416 cases, layer 1 and layer 11) bit for bit.
+reference dumps (512 cases: layers 1, 11 and 83, i.e. all three layer type combinations) bit for bit.

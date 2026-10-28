@@ -13,9 +13,11 @@ Every output was also recomputed once per 50 cases: bit-identical (deterministic
 - `rec_L11.bin`: 16 records of layer 11 (gate IQ2_XXS, up IQ2_XXS, down IQ1_S), 7827456 bytes each =
   gate 2838528 | up 2838528 | down 2150400. Store expert ids 5 + 55*i (i = 0..15).
 - Inside a record each matrix is the GGUF row layout: gate/up = 3072 rows x 3584 cols (14 blocks of 256 per row),
-  down = 3584 rows x 3072 cols (12 blocks per row). Block structs = ggml's block_iq1_s (50 B) / block_iq2_xxs (66 B).
+  down = 3584 rows x 3072 cols (12 blocks per row).
+- `rec_L83.bin`: 16 records of layer 83 (gate IQ1_S, up IQ1_S, down IQ2_XXS), 7139328 bytes each =
+  gate 2150400 | up 2150400 | down 2838528. Store expert ids 7 + 55*i (i = 0..15). Block structs = ggml's block_iq1_s (50 B) / block_iq2_xxs (66 B).
 
-## Dumps: dumps/L1 (256 cases) and dumps/L11 (160 cases)
+## Dumps: dumps/L1 (256 cases), dumps/L11 (160 cases), dumps/L83 (96 cases)
 All little-endian, raw arrays, case-major:
 - `x.bin`   f32 [ncase][3584]          the routed-expert input (latent activation)
 - `ids.bin` i32 [ncase][16]            slots into the record file (L1: 16 of 32, random order; L11: a permutation of 16)

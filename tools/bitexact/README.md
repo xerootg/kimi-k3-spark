@@ -24,8 +24,8 @@ the NUC's Arc iGPU is in `sycl/`.
   `k3ref validate MUFU_DIR RECORDS N TG TU TD DUMP_DIR [threads]`, `k3ref bench MUFU_DIR RECORDS N TG TU TD threads iters`.
 
 Results: MUFU emulation 0 mismatches over 2^32 inputs for each of the three ops; k3ref bit-identical on every
-value of every stage of 416 dumped cases (256 of layer 1, all IQ1_S; 160 of layer 11, IQ2_XXS gate/up and IQ1_S
-down; 16 experts each, edge cases included), in both its scalar oracle path and its `K3REF_FAST=1` path (AVX2
+value of every stage of 512 dumped cases (256 of layer 1, all IQ1_S; 160 of layer 11, IQ2_XXS gate/up and IQ1_S
+down; 96 of layer 83, IQ1_S gate/up and IQ2_XXS down; 16 experts each, edge cases included), in both its scalar oracle path and its `K3REF_FAST=1` path (AVX2
 integer dots, native float ops under MXCSR DAZ|FTZ, hardware fmaf). Speed on nuc2, 8 threads, one token: scalar
 8.7 / 16.7 / 25.8 / 33.1 ms for k = 1..4 experts, fast 6.8 / 13.5 / 19.3 / 26.5 ms, so it is an oracle and not a
 serving path (ggml's own CPU kernels: 0.48 ms at k=1).
