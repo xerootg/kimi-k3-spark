@@ -8,8 +8,10 @@ the exhaustive tables in `../mufu/`). Not built on ggml-sycl.
 - `k3x_math.h`: shared host/device arithmetic (q8_1, IQ1_S / IQ2_XXS vec_dot tails, row reduction, FTZ helpers).
 - `k3x_mufu.h`: MUFU emulation from the tables (same layout and edge rules as `../mufu/mufu_emu.h`).
 - `k3x_act.h`: the SiTU chain (SPEC section 4).
-- `k3x.cpp`: device kernels (SLM-staged weight tiles, dp4a integer dots, sub-group shuffle reduction in the CUDA
-  order), host reference, and the modes below.
+- `k3x.cpp`: device kernels, host reference, and the modes below. Current matvec ("v7"): records are repacked at
+  load so 4 lanes share each output row (lane = kb0 group, CUDA's first two xor-tree levels as lane shuffles),
+  IGC's native DP4A (`__builtin_IB_dp4a_ss`; `dot_acc` compiles to 32-bit multiply emulation on this iGPU), grid
+  tables and activation in SLM, 512-item work-groups. Older variants stay behind macros (MV2..MV4, V5, V6).
 - `build.sh`: build recipe (oneAPI 2026.1.1 container, `-ffp-model=precise -ffp-contract=off -fno-fast-math`).
 
 Run on nuc2 from a directory holding `k3x` and the runtime `lib/` (see `build.sh`), with the tables in
@@ -22,5 +24,10 @@ k3x RECORDS N TG TD bench k1,k2,.. ITERS        # p50/p90 per token (K3X_PROF=1:
 k3x RECORDS N TG TD serve PORT                  # tools/distributed/rrclient.c protocol, ids = record slots
 k3x IDX BIN - - serveidx PORT                   # remote-set server: IDX "<gid> <tg> <td> <offset>", BIN records
 ```
+
+Serving: `serve`/`serveidx` busy-poll the socket and stream each expert's row as soon as its down matmul is done
+(`K3X_NOSTREAM=1`: one write). `serveidx` caps the GPU-resident records at `K3X_MAX_GB` (default 24), writes the served
+(layer, expert) list to `K3X_SETOUT`, self-checks one token at startup and sends NaN for any all-zero row: above
+roughly 34-42 GB resident on the Arc 130T, kernel submissions sometimes fail with no error and leave rows zero.
 
 Types: IQ1_S = 19, IQ2_XXS = 16. Results 2026-10-28 are in `docs/experiments.md`.
