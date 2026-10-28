@@ -28,6 +28,8 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <thread>
+#include <atomic>
 #include <functional>
 #include <utility>
 #include <algorithm>
@@ -1197,7 +1199,7 @@ static bool wr_all(int fd, const void * p, size_t n) { const char * c = (const c
 // serve agent C's remote set: IDX lines "<global_id> <tg> <td> <byte_offset>", BIN = records back to back.
 // Weights go to device USM in chunks of <= 1 GiB (no >4 GiB buffers needed); one Engine (scratch + kernels) per (tg, td).
 static int serve_index(const char * idxp, const char * binp, int port) {
-    g_host_tables = false;
+    g_host_tables = getenv("K3X_FULLCHECK") != nullptr;
     const bool stream = !getenv("K3X_NOSTREAM");
     struct R { long gid; int tg, td; size_t off; };
     std::vector<R> idx; { FILE * f = fopen(idxp, "r"); if (!f) { perror(idxp); return 1; } R r; while (fscanf(f, "%ld %d %d %zu", &r.gid, &r.tg, &r.td, &r.off) == 4) idx.push_back(r); fclose(f); }
@@ -1229,12 +1231,71 @@ static int serve_index(const char * idxp, const char * binp, int port) {
         map[r.gid] = {e, chunk + used}; used += e->prec; tot += e->prec;
     }
     fclose(f);
-    for (auto & v : tab_host) v = HostPacked();   // host copies only serve the host reference
+    if (!getenv("K3X_FULLCHECK")) for (auto & v : tab_host) v = HostPacked();   // host copies only serve the host reference
     fprintf(stderr, "loaded %zu of %zu records (%.1f GB on the GPU) in %.1f s, %zu engine kinds\n", map.size(), idx.size(), tot / 1e9, (now_ms() - t0) / 1e3, eng.size());
     if (const char * so = getenv("K3X_SETOUT")) {   // "layer expert" of the served records, for LLAMA_EXPERT_STORE_REMOTE_SET
         FILE * f = fopen(so, "w");
         for (auto & r : idx) if (map.count(r.gid)) fprintf(f, "%ld %ld\n", r.gid / 896, r.gid % 896);
         fclose(f);
+    }
+    if (getenv("K3X_ROWSOUT") || getenv("K3X_ROWSREF")) {
+        // K3X_ROWSOUT: append (gid, row of one fixed token) for every served record; K3X_ROWSREF: compare every served
+        // record with such a file (built from small known-good subsets) bit for bit. Fixed token: same x as FULLCHECK.
+        std::vector<float> xin(D); for (int i = 0; i < D; i++) xin[i] = 0.03f * (float) ((i * 53) % 67 - 33);
+        std::unordered_map<long, std::vector<float>> ref;
+        if (const char * rp = getenv("K3X_ROWSREF")) {
+            FILE * f = fopen(rp, "rb"); if (!f) { perror(rp); exit(1); }
+            int64_t g; std::vector<float> row(D);
+            while (fread(&g, 8, 1, f) == 1 && fread(row.data(), 4, D, f) == (size_t) D) ref[(long) g] = row;
+            fclose(f);
+        }
+        FILE * fo = getenv("K3X_ROWSOUT") ? fopen(getenv("K3X_ROWSOUT"), "ab") : nullptr;
+        long n = 0, nref = 0, badrec = 0, badval = 0, zero = 0; double t1 = now_ms();
+        for (auto & r : idx) {
+            auto it = map.find(r.gid); if (it == map.end()) continue;
+            Engine * e = it->second.first; e->ext_recs = true;
+            memcpy(e->x, xin.data(), D * 4); e->recs[0] = it->second.second; e->run(1);
+            int nz = 0; for (int i = 0; i < D; i++) nz += e->rows[i] != 0.0f; zero += nz == 0;
+            if (fo) { int64_t g = r.gid; fwrite(&g, 8, 1, fo); fwrite(e->rows, 4, D, fo); }
+            auto rf = ref.find(r.gid);
+            if (rf != ref.end()) { nref++; long bv = 0; for (int i = 0; i < D; i++) bv += k3_f2u(rf->second[i]) != k3_f2u(e->rows[i]); if (bv) { badrec++; badval += bv; } }
+            n++;
+        }
+        if (fo) fclose(fo);
+        fprintf(stderr, "ROWCHECK: %ld records run in %.1f s, %ld all-zero; vs reference: %ld compared, %ld differ (%ld values)\n",
+                n, (now_ms() - t1) / 1e3, zero, nref, badrec, badval);
+        if (zero || badrec) { fprintf(stderr, "ROWCHECK FAILED\n"); exit(6); }
+    }
+    if (getenv("K3X_FULLCHECK")) {   // every served record: one token on the GPU vs the host reference, bit for bit
+        std::vector<const R *> served; for (auto & r : idx) if (map.count(r.gid)) served.push_back(&r);
+        const size_t ns = served.size();
+        std::vector<float> xin(D); for (int i = 0; i < D; i++) xin[i] = 0.03f * (float) ((i * 53) % 67 - 33);
+        std::vector<float> devrows(ns * D);
+        double t1 = now_ms();
+        for (size_t s2 = 0; s2 < ns; s2++) {
+            auto it = map.find(served[s2]->gid); Engine * e = it->second.first; e->ext_recs = true;
+            memcpy(e->x, xin.data(), D * 4); e->recs[0] = it->second.second; e->run(1);
+            memcpy(&devrows[s2 * D], e->rows, D * 4);
+        }
+        fprintf(stderr, "FULLCHECK: GPU pass %.1f s, host reference on %u threads...\n", (now_ms() - t1) / 1e3, std::thread::hardware_concurrency());
+        std::atomic<size_t> next{0}, badrec{0}; std::atomic<long> badval{0};
+        auto worker = [&]() {
+            FILE * f = fopen(binp, "rb"); std::vector<uint8_t> rb; std::vector<float> ref(D); int zero = 0;
+            for (size_t s2; (s2 = next++) < ns;) {
+                const R & r = *served[s2]; const size_t rec = map.find(r.gid)->second.first->rec;
+                rb.resize(rec); fseeko(f, (off_t) r.off, SEEK_SET); if (fread(rb.data(), 1, rec, f) != rec) { badrec++; continue; }
+                host_ref(rb.data(), rec, r.tg, r.td, &zero, 1, xin.data(), ref.data(), host_mt);
+                long bv = 0; for (int i = 0; i < D; i++) bv += k3_f2u(ref[i]) != k3_f2u(devrows[s2 * D + i]);
+                if (bv) { badrec++; badval += bv; }
+            }
+            fclose(f);
+        };
+        std::vector<std::thread> th; for (unsigned i = 0; i < std::max(1u, std::thread::hardware_concurrency() - 2); i++) th.emplace_back(worker);
+        for (auto & t : th) t.join();
+        fprintf(stderr, "FULLCHECK: %zu of %zu records bit-identical to the host reference (%ld values differ), %.1f s\n",
+                ns - badrec.load(), ns, badval.load(), (now_ms() - t1) / 1e3);
+        if (badrec) exit(6);
+        for (auto & v : tab_host) v = HostPacked();
     }
     if (getenv("K3X_PROBEALL")) {   // diagnostic: one token through every served record, report all-zero rows by load order
         long bad = 0, first = -1, lastb = -1, n = 0; std::vector<int> badpos;
