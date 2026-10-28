@@ -174,6 +174,79 @@ static float mmvq_row(int type, const uint8_t * row, int nb, const Q8 * y) {
     return s[0];
 }
 
+
+// ---------------------------------------------------------------- fast path (K3REF_FAST=1): AVX2 integer dots, native
+// float ops under MXCSR DAZ|FTZ (denormal inputs read as signed zero, denormal results flushed), hardware fmaf.
+// Same operation order as the scalar oracle above; validated against the dumps like it.
+#include <immintrin.h>
+static bool g_fast = false;
+static uint64_t g_sign8[256];   // sign bit b of the byte -> 0xFF (negate) else 0x01, per output byte
+static void init_fast() {
+    for (int v = 0; v < 256; v++) { uint64_t m = 0; for (int b = 0; b < 8; b++) m |= (uint64_t) ((v >> b) & 1 ? 0xFF : 0x01) << (8 * b); g_sign8[v] = m; }
+}
+static inline void set_daz_ftz() { _mm_setcsr(_mm_getcsr() | 0x8040); }
+static inline int hsum8(__m256i v) {
+    __m128i a = _mm_add_epi32(_mm256_castsi256_si128(v), _mm256_extracti128_si256(v, 1));
+    a = _mm_add_epi32(a, _mm_shuffle_epi32(a, 0x4E));
+    a = _mm_add_epi32(a, _mm_shuffle_epi32(a, 0xB1));
+    return _mm_cvtsi128_si32(a);
+}
+static inline int dot32(__m256i u8vals, __m256i s8q) {   // u8vals unsigned (<=255 fits since products pairwise < 2^15 here)
+    const __m256i p = _mm256_maddubs_epi16(u8vals, s8q);
+    return hsum8(_mm256_madd_epi16(p, _mm256_set1_epi16(1)));
+}
+static float vd_iq1_s_fast(const block_iq1_s * blk, const Q8 & y, int j) {
+    const uint32_t qsp = ld32(blk->qs + 4 * j);
+    const uint8_t * qs = (const uint8_t *) &qsp;
+    const int qh = blk->qh[j];
+    uint64_t w[4];
+    for (int gi = 0; gi < 4; gi++) {
+        const uint32_t grid = iq1s_grid_gpu[qs[gi] | (((qh >> 3 * gi) & 0x07) << 8)];
+        w[gi] = (uint64_t) (grid & 0x0F0F0F0Fu) | ((uint64_t) ((grid >> 4) & 0x0F0F0F0Fu) << 32);
+    }
+    const __m256i gv = _mm256_set_epi64x((long long) w[3], (long long) w[2], (long long) w[1], (long long) w[0]);
+    const int sumi = dot32(gv, _mm256_loadu_si256((const __m256i *) y.qs));
+    const float d1q = h2f(blk->d) * (float) (((qh >> 11) & 0x0E) + 1);
+    const float delta = (qh & 0x8000) ? -1.125f : -0.875f;
+    const float inner = fmaf(h2f(y.d), (float) sumi, h2f(y.s) * delta);
+    return fmaf(d1q, inner, 0.0f);
+}
+static float vd_iq2_xxs_fast(const block_iq2_xxs * blk, const Q8 & y, int j) {
+    const uint8_t * qb = (const uint8_t *) blk->qs + 8 * j;
+    const uint32_t q2v = ld32(qb), aux32 = ld32(qb + 4);
+    const uint8_t * aux8 = (const uint8_t *) &q2v;
+    uint64_t g[4], m[4];
+    for (int k = 0; k < 4; k++) {
+        g[k] = iq2xxs_grid[aux8[k]];
+        const uint8_t v = (uint8_t) (aux32 >> (7 * k));
+        m[k] = g_sign8[(uint8_t) (v ^ ((__builtin_popcount(v) & 1) << 7))];
+    }
+    const __m256i gv = _mm256_set_epi64x((long long) g[3], (long long) g[2], (long long) g[1], (long long) g[0]);
+    const __m256i mv = _mm256_set_epi64x((long long) m[3], (long long) m[2], (long long) m[1], (long long) m[0]);
+    const __m256i q = _mm256_sign_epi8(_mm256_loadu_si256((const __m256i *) y.qs), mv);
+    int sumi = dot32(gv, q);
+    const int ls = (int) (aux32 >> 27 | 1);
+    sumi = sumi * ls / 8;
+    return fmaf(h2f(blk->d) * h2f(y.d), (float) sumi, 0.0f);
+}
+static float mmvq_row_fast(int type, const uint8_t * row, int nb, const Q8 * y) {
+    float p[128];
+    for (int t = 0; t < 128; t++) {
+        const int kb = t / 8, j = t % 8;
+        if (kb >= nb) { p[t] = 0.0f; continue; }
+        p[t] = type == 19 ? vd_iq1_s_fast((const block_iq1_s *) row + kb, y[kb * 8 + j], j)
+                          : vd_iq2_xxs_fast((const block_iq2_xxs *) row + kb, y[kb * 8 + j], j);
+    }
+    float s[32];
+    for (int l = 0; l < 32; l++) s[l] = ((p[32 + l] + p[l]) + p[64 + l]) + p[96 + l];
+    for (int off = 16; off > 0; off >>= 1) {
+        float n[32];
+        for (int l = 0; l < 32; l++) n[l] = s[l] + s[l ^ off];
+        memcpy(s, n, sizeof s);
+    }
+    return s[0];
+}
+
 static size_t row_bytes(int type, int k) { return (size_t) (k / 256) * (type == 19 ? sizeof(block_iq1_s) : sizeof(block_iq2_xxs)); }
 
 struct Layer { int tg, tu, td; size_t gsz, usz, dsz, rec; const uint8_t * base; };
@@ -183,8 +256,9 @@ static void expert(const Layer & L, int slot, const Q8 * qx, float * g, float * 
     const uint8_t * r = L.base + (size_t) slot * L.rec;
     const size_t rbg = row_bytes(L.tg, D), rbu = row_bytes(L.tu, D), rbd = row_bytes(L.td, F);
     pfor(F, par, [&](int i) {
-        g[i] = mmvq_row(L.tg, r + i * rbg, D / 256, qx);
-        u[i] = mmvq_row(L.tu, r + L.gsz + i * rbu, D / 256, qx);
+        if (g_fast) set_daz_ftz();
+        g[i] = g_fast ? mmvq_row_fast(L.tg, r + i * rbg, D / 256, qx) : mmvq_row(L.tg, r + i * rbg, D / 256, qx);
+        u[i] = g_fast ? mmvq_row_fast(L.tu, r + L.gsz + i * rbu, D / 256, qx) : mmvq_row(L.tu, r + L.gsz + i * rbu, D / 256, qx);
         const float a = fmul(mufu_tanh(fmul(g[i], 0.25f)), 4.0f);
         const float e = mufu_ex2(fmul(g[i], bf(0xBFB8AA3Bu)));
         const float s = mufu_rcp(fadd(e, 1.0f));
@@ -194,7 +268,10 @@ static void expert(const Layer & L, int slot, const Q8 * qx, float * g, float * 
     });
     std::vector<Q8> qh(F / 32);
     quantize_q8_1(h, F, qh.data());
-    pfor(D, par, [&](int i) { dn[i] = mmvq_row(L.td, r + L.gsz + L.usz + i * rbd, F / 256, qh.data()); });
+    pfor(D, par, [&](int i) {
+        if (g_fast) set_daz_ftz();
+        dn[i] = g_fast ? mmvq_row_fast(L.td, r + L.gsz + L.usz + i * rbd, F / 256, qh.data()) : mmvq_row(L.td, r + L.gsz + L.usz + i * rbd, F / 256, qh.data());
+    });
 }
 
 static const void * map(const std::string & p, size_t * n = nullptr) {
@@ -210,6 +287,9 @@ static const void * map(const std::string & p, size_t * n = nullptr) {
 int main(int argc, char ** argv) {
     if (argc < 9) { fprintf(stderr, "usage: see source\n"); return 1; }
     std::string mode = argv[1], md = argv[2];
+    g_fast = getenv("K3REF_FAST") && atoi(getenv("K3REF_FAST"));
+    init_fast();
+    fprintf(stderr, "path: %s\n", g_fast ? "fast (AVX2 + DAZ/FTZ)" : "scalar oracle");
     MT.rcp = (const uint32_t *) map(md + "/rcp.bin");
     MT.tanh_ = (const uint32_t *) map(md + "/tanh.bin");
     MT.ex2p = (const uint32_t *) map(md + "/ex2p.bin");

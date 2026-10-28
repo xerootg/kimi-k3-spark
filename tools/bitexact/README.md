@@ -25,5 +25,11 @@ the NUC's Arc iGPU is in `sycl/`.
 
 Results: MUFU emulation 0 mismatches over 2^32 inputs for each of the three ops; k3ref bit-identical on every
 value of every stage of 416 dumped cases (256 of layer 1, all IQ1_S; 160 of layer 11, IQ2_XXS gate/up and IQ1_S
-down; 16 experts each, edge cases included). The CPU reference is scalar emulation, 8.7 ms per expert on nuc2 with
-8 threads, so it is an oracle and not a serving path.
+down; 16 experts each, edge cases included), in both its scalar oracle path and its `K3REF_FAST=1` path (AVX2
+integer dots, native float ops under MXCSR DAZ|FTZ, hardware fmaf). Speed on nuc2, 8 threads, one token: scalar
+8.7 / 16.7 / 25.8 / 33.1 ms for k = 1..4 experts, fast 6.8 / 13.5 / 19.3 / 26.5 ms, so it is an oracle and not a
+serving path (ggml's own CPU kernels: 0.48 ms at k=1).
+
+The production image (`llamacpp-spark:547208dca250-gcdba886`, multi-arch sm_90 + sm_121a) has the same sm_121a
+SASS as the native build used for the dumps for mul_mat_vec_q<IQ1_S|IQ2_XXS,1,0,1,0>, quantize_q8_1, softcap_f32
+and unary_gated_op_kernel<op_sigmoid> (normalized diff: 0 lines).
