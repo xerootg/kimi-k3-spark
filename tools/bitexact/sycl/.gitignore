@@ -1,0 +1,5 @@
+k3x
+k3x_*
+!k3x_*.h
+k3x_tables.h
+ggml-common.h
