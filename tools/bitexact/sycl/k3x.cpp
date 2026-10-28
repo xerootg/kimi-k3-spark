@@ -394,7 +394,7 @@ static int serve_index(const char * idxp, const char * binp, int port) {
     double t0 = now_ms(); size_t tot = 0;
     for (auto & r : idx) {
         Engine * e = get(r.tg, r.td);
-        if (used + e->rec > CH) { chunk = sycl::malloc_device<uint8_t>(CH, e->q); if (!chunk) { fprintf(stderr, "device alloc failed after %.1f GB\n", tot / 1e9); return 1; } used = 0; }
+        if (used + e->rec > CH) { chunk = getenv("K3X_HOSTW") ? sycl::malloc_host<uint8_t>(CH, e->q) : sycl::malloc_device<uint8_t>(CH, e->q); if (!chunk) { fprintf(stderr, "device alloc failed after %.1f GB\n", tot / 1e9); return 1; } used = 0; }
         buf.resize(e->rec);
         if (fseeko(f, (off_t) r.off, SEEK_SET) || fread(buf.data(), 1, e->rec, f) != e->rec) { fprintf(stderr, "short read gid %ld\n", r.gid); return 1; }
         e->q.memcpy(chunk + used, buf.data(), e->rec).wait();
