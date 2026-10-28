@@ -31,3 +31,7 @@ Serving: `serve`/`serveidx` busy-poll the socket and stream each expert's row as
 roughly 34-42 GB resident on the Arc 130T, kernel submissions sometimes fail with no error and leave rows zero.
 
 Types: IQ1_S = 19, IQ2_XXS = 16. Results 2026-10-28 are in `docs/experiments.md`.
+
+Image: `ghcr.io/xerootg/k3x-serve:g<sha>` (`docker/k3x-serve.Dockerfile`, workflow `k3x-serve.yml`) holds `k3x` built
+by `build.sh` plus the pinned runtime above (the CI build of f3bcb80 is byte-identical to nuc2's `k3x-v8`). The cluster
+runs it on nuc2 from argo-things `configs/kimi-k3/k3x-nuc2.yaml`.
