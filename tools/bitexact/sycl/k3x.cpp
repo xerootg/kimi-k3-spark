@@ -5,6 +5,18 @@
 //   k3x RECORDS N_RECORDS GATE_TYPE DOWN_TYPE serve PORT            rrclient/moebench wire protocol, busy-polling
 //   RECORDS = "synthetic" makes random IQ records in memory.
 #include <sycl/sycl.hpp>
+#ifndef K3X_IB_DP4A
+#define K3X_IB_DP4A 1
+#endif
+#ifndef K3X_DP16
+#define K3X_DP16 0
+#endif
+#ifndef K3X_GRID_SLM
+#define K3X_GRID_SLM 1
+#endif
+#ifndef K3X_DPF
+#define K3X_DPF 0
+#endif
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
@@ -43,8 +55,29 @@ static inline float h2f_dev(uint16_t h) {
     return k3_h2f(h);
 #endif
 }
+#if defined(__SYCL_DEVICE_ONLY__) && K3X_IB_DP4A
+// IGC's native DP4A (Xe-LP and later): c + sum of the four signed byte products, exact, no saturation.
+extern "C" SYCL_EXTERNAL int __builtin_IB_dp4a_ss(int c, int a, int b, bool sat);
+#endif
 static inline int dp4a_dev(int a, int b, int c) {
-#if defined(__SYCL_DEVICE_ONLY__) && EXP == 5
+#if defined(__SYCL_DEVICE_ONLY__) && K3X_DPF
+    // byte products and partial sums are integers below 2^24 in magnitude, so fp32 FMAs are exact here
+    float f = (float) c;
+    f = sycl::fma((float) (int8_t) a, (float) (int8_t) b, f);
+    f = sycl::fma((float) (int8_t) (a >> 8), (float) (int8_t) (b >> 8), f);
+    f = sycl::fma((float) (int8_t) (a >> 16), (float) (int8_t) (b >> 16), f);
+    f = sycl::fma((float) (int8_t) (a >> 24), (float) (int8_t) (b >> 24), f);
+    return (int) f;
+#elif defined(__SYCL_DEVICE_ONLY__) && K3X_DP16
+    // this iGPU has no DP4A in IGC (the builtin lowers to 32x32 mul+mach pairs); byte products fit in 16 bits,
+    // so do them as word multiplies (exact: |int8 * int8| <= 16384)
+    const int16_t a0 = (int8_t) a, a1 = (int8_t) (a >> 8), a2 = (int8_t) (a >> 16), a3 = (int8_t) (a >> 24);
+    const int16_t b0 = (int8_t) b, b1 = (int8_t) (b >> 8), b2 = (int8_t) (b >> 16), b3 = (int8_t) (b >> 24);
+    const int16_t p0 = (int16_t) (a0 * b0), p1 = (int16_t) (a1 * b1), p2 = (int16_t) (a2 * b2), p3 = (int16_t) (a3 * b3);
+    return c + ((int) p0 + (int) p1) + ((int) p2 + (int) p3);
+#elif defined(__SYCL_DEVICE_ONLY__) && K3X_IB_DP4A
+    return __builtin_IB_dp4a_ss(c, a, b, false);
+#elif defined(__SYCL_DEVICE_ONLY__) && EXP == 5
     return (a ^ b) + c;
 #elif defined(__SYCL_DEVICE_ONLY__)
     return sycl::ext::oneapi::dot_acc(a, b, c);
@@ -667,6 +700,8 @@ struct Engine {
         return q.submit([&](sycl::handler & h) {
             sycl::local_accessor<int, 1> QS(sycl::range<1>(1024), h);
             sycl::local_accessor<sycl::float2, 1> DS(sycl::range<1>(128), h);
+            constexpr int GN = T == T_IQ1_S ? 2048 : 512;
+            sycl::local_accessor<uint32_t, 1> GS(sycl::range<1>(K3X_GRID_SLM ? GN : 1), h);
             h.parallel_for(sycl::nd_range<1>((nitems + wg - 1) / wg * wg, wg), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
                 const long g0 = (long) it.get_group(0) * wg;
                 const int e0 = ebase + (int) (g0 / ((long) nrows * nmat * (V7 ? 4 : 1)));
@@ -675,6 +710,9 @@ struct Engine {
 #if !V6
                 for (int i = lid; i < 1024; i += wg) QS[i] = qsrc[i];
                 for (int i = lid; i < 128; i += wg) DS[i] = dsrc[i];
+#if K3X_GRID_SLM
+                { const uint32_t * gsrc = T == T_IQ1_S ? g1_ : (const uint32_t *) g2_; for (int i = lid; i < GN; i += wg) GS[i] = gsrc[i]; }
+#endif
                 sycl::group_barrier(it.get_group());
 #endif
                 const long gi = it.get_global_id(0);
@@ -684,8 +722,13 @@ struct Engine {
                 const long sgi = gi / 16; const int lane = (int) (gi % 16);
                 const int rg4 = (int) (sgi % (nrows / 4)), m = (int) ((sgi / (nrows / 4)) % nmat), e = ebase + (int) (sgi / ((long) (nrows / 4) * nmat));
                 const uint32_t * mat = (const uint32_t *) (recs_.p[e] + moff + m * mstride);
+#if K3X_GRID_SLM
+                const uint32_t * gl = GS.get_multi_ptr<sycl::access::decorated::no>().get();
+#else
+                const uint32_t * gl = T == T_IQ1_S ? g1_ : (const uint32_t *) g2_;
+#endif
                 const float v7 = row_v7<T, NBLK>(it.get_sub_group(), mat, rg4, lane, QS.get_multi_ptr<sycl::access::decorated::no>().get(),
-                                                 DS.get_multi_ptr<sycl::access::decorated::no>().get(), g1_, g2_);
+                                                 DS.get_multi_ptr<sycl::access::decorated::no>().get(), gl, (const uint64_t *) gl);
                 if (lane < 4) (m ? out1 : out0)[e * nrows + rg4 * 4 + lane] = v7;
 #else
                 const int r = (int) (gi % nrows), m = (int) ((gi / nrows) % nmat), e = ebase + (int) (gi / ((long) nrows * nmat));
