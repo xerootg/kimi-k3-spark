@@ -15,9 +15,11 @@ k3cpu_expert e[k] = {{rec, tg, tu, td, out_row, nullptr, nullptr, nullptr}, ...}
 k3cpu_submit(P, x, e, k);   k3cpu_wait(P, 0); ...   // or k3cpu_run(P, x, e, k)
 ```
 
-- `rec` points at a record in any arena (gate | up | down in the GGUF row layout of `../FORMAT.md`, the layout of the
-  remote-set `.bin` files); nothing is copied. Types: 19 = IQ1_S, 16 = IQ2_XXS. `out` gets the 3584-float unweighted
-  down row; `g`/`u`/`h` (optional) the intermediate stages.
+- `rec` points at a record in any arena; nothing is copied. `layout` says which: `K3CPU_GGUF` (gate | up | down in the
+  GGUF row layout of `../FORMAT.md`, the remote-set `.bin` files) or `K3CPU_V7` (each matrix repacked as k3x's v7 GPU
+  layout, `../sycl/k3x.cpp` `v7_off`; the layout of S1's shared host-USM arena), so the CPU and the iGPU can work on one
+  copy. Types: 19 = IQ1_S, 16 = IQ2_XXS. `out` gets the 3584-float unweighted down row; `g`/`u`/`h` (optional) the
+  intermediate stages.
 - No allocation per call. A token is 8 + 208 k tasks (q8_1 of x in 8 pieces, gate/up in chunks of 32 rows, down in
   chunks of 32 rows) claimed dynamically by the workers, so P- and E-cores share the work at their own speed. The down
   tasks of an expert wait for its gate/up tasks. `k3cpu_submit` returns after ~0.1 us; the caller polls `k3cpu_done`/`k3cpu_wait`
@@ -62,24 +64,50 @@ Other things that mattered (each measured):
   0.1 us instead of 9 us.
 - software prefetch of weight rows: no gain (hardware prefetch suffices), left off (`K3CPU_PF_ROWS`).
 
+## v7 records
+
+In v7 a 16-byte load is the same dword of 4 consecutive rows (blocks padded to 13 / 17 dwords, dword stride 64 bytes),
+so the v7 kernels do 4 rows per pass with ymm lanes = (sub-block 2sp or 2sp+1, row). The CUDA reduction tree then needs
+no shuffles: with S[m][sp] = ((p(m) + p(m+4)) + p(m+8)) + p(m+12) per lane, the xor levels 16, 8, 4, 2 are lane-wise adds
+of whole registers (m with m+2, m 0 with 1, sp with sp+2, sp 0 with 1) and level 1 adds the two 128-bit halves, giving
+the 4 rows' results. The 2-byte offset of the block payload (after the half d) costs a 16-bit shift per dword. The x
+side uses a third copy of the activations (`qv`, each dword repeated for the 4 rows); the E-core kernel broadcasts its
+8 bytes per row from `q64` instead. Bit-exact like the GGUF path (all dumps, both lookup kernels, repacked in memory
+by k3x's own `v7_repack_matrix`, `K3B_V7=1`). It is slower per core than GGUF: P-core 1.24 vs 1.00 ms per expert,
+E-core 1.95 vs 1.42 (more index work per lane, the shifts, and more L1 pressure on the 32 KB E-core L1).
+
 ## Results (2026-10-29, nuc3: Core Ultra 5 225H, one DDR5-5600 channel)
 
 Validation (`k3cpu_test validate`, A's dumps): L1 (IQ1_S x3), L11 (IQ2_XXS gate/up, IQ1_S down), L83 (IQ1_S gate/up,
-IQ2_XXS down): g, u, h and dn of every case (256 / 160 / 96 cases x 16 experts) bit-identical, 0 mismatches, with
-the gather kernel, the scalar-load kernel and the automatic mix, on P-cores only, E-cores only and all cores.
+IQ2_XXS down): g, u, h and dn of every case (256 / 160 / 96 cases x 16 experts) bit-identical, 0 mismatches, for both
+record layouts (GGUF, v7) x the gather kernel, the scalar-load kernel and the automatic mix (18 runs on cpus 0-11, binary
+md5 c6f629b3..., plus earlier runs on P-cores only and E-cores only).
 `k3cpu_test check` (random and edge-case tokens incl. denormals, 1e-38 and 1e4 spikes, vs k3x_math.h): 0 differences.
 
-Speed, one token, back to back, records cold (round robin over 32 / 16 records), x from the dumps, median ms:
+Speed, one token, back to back, records cold (round robin over 32 / 16 records), x from the dumps, caller pinned to
+cpu 12 (an LP-E core with no worker), median ms per token and per expert:
 
-| cores | layer | k=1 | k=2 | k=3 | k=4 | per expert | weights |
-|---|---|---|---|---|---|---|---|
-| 8 E (4-11) | L1 IQ1_S | 0.253 | 0.490 | 0.733 | 0.978 | 0.245 | 26 GB/s |
-| 8 E (4-11) | L11 IQ2_XXS gate/up | 0.282 | 0.545 | 0.821 | 1.083 | 0.271 | 29 GB/s |
-| 8 E (4-11) | L83 IQ2_XXS down | 0.269 | 0.537 | 0.783 | 1.053 | 0.263 | 27 GB/s |
-| 4 P (0-3) | L1 | 0.327 | 0.642 | 0.958 | 1.286 | 0.321 | 20 GB/s |
-| 12 (0-11) | L1 | 0.257 | 0.460 | 0.669 | 0.878 | 0.219 | 29 GB/s |
-| 12 (0-11) | L11 | 0.300 | 0.513 | 0.750 | 0.986 | 0.247 | 32 GB/s |
-| 12 (0-11) | L83 | 0.274 | 0.488 | 0.718 | 0.942 | 0.235 | 30 GB/s |
+| layout | cores | layer | k=1 | k=2 | k=3 | k=4 | per expert (k=4) | weights |
+|---|---|---|---|---|---|---|---|---|
+| GGUF | 8 E (4-11) | L1 IQ1_S | 0.253 | 0.497 | 0.738 | 0.978 | 0.244 | 26 GB/s |
+| GGUF | 8 E (4-11) | L11 IQ2_XXS gate/up | 0.282 | 0.549 | 0.823 | 1.098 | 0.275 | 29 GB/s |
+| GGUF | 8 E (4-11) | L83 IQ2_XXS down | 0.268 | 0.521 | 0.782 | 1.044 | 0.261 | 27 GB/s |
+| GGUF | 12 (0-11) | L1 | 0.223 | 0.426 | 0.639 | 0.847 | 0.212 | 31 GB/s |
+| GGUF | 12 (0-11) | L11 | 0.247 | 0.472 | 0.705 | 0.964 | 0.241 | 33 GB/s |
+| GGUF | 12 (0-11) | L83 | 0.238 | 0.453 | 0.681 | 0.909 | 0.227 | 31 GB/s |
+| GGUF | 4 P (0-3) | L1 | 0.317 | 0.624 | 0.934 | 1.269 | 0.317 | 20 GB/s |
+| v7 | 8 E (4-11) | L1 | 0.340 | 0.659 | 0.990 | 1.320 | 0.330 | 20 GB/s |
+| v7 | 8 E (4-11) | L11 | 0.396 | 0.772 | 1.154 | 1.549 | 0.387 | 21 GB/s |
+| v7 | 8 E (4-11) | L83 | 0.363 | 0.711 | 1.064 | 1.416 | 0.354 | 21 GB/s |
+| v7 | 12 (0-11) | L1 | 0.271 | 0.506 | 0.758 | 1.036 | 0.259 | 26 GB/s |
+| v7 | 12 (0-11) | L11 | 0.324 | 0.611 | 0.925 | 1.264 | 0.316 | 26 GB/s |
+| v7 | 12 (0-11) | L83 | 0.291 | 0.545 | 0.813 | 1.117 | 0.279 | 27 GB/s |
+| v7 | 4 P (0-3) | L1 | 0.401 | 0.786 | (1.82) | (2.44) | | |
+
+(The v7 P-core k=3/4 values in brackets were disturbed, probably by S1's iGPU runs on cpus 0-3 of nuc3 at the time.)
+Not measured on nuc2: its k3x server was serving the Spark (8-20 MB/s) whenever I checked, and the task allowed a nuc2
+run only while it is idle. nuc2 has two memory channels, so its E-cores should be compute-bound near the per-core
+numbers above (8 x 1.42 ms -> ~0.18-0.2 ms per expert for GGUF).
 
 For comparison, the nuc2 iGPU (k3x, M's trace): 0.78 ms warm for the engine's k mix (1.69 experts), 1.04 ms after an
 idle gap; ggml's own CPU kernels 0.48 ms at k=1 on nuc2; k3ref fast path 6.8 ms.
@@ -110,7 +138,8 @@ Idle gaps (engine pacing, one token per layer every 3-8 ms):
 k3cpu_test validate MUFU_DIR RECORDS N TG TU TD DUMP_DIR CPUS [ncases]
 k3cpu_test check    MUFU_DIR RECORDS N TG TU TD CPUS [ntokens]
 k3cpu_test bench    MUFU_DIR RECORDS N TG TU TD CPUS ITERS [DUMP_DIR]
-#   e.g. R=~/k3-bitexact/ref; taskset -c 0 ./k3cpu_test bench $R/mufu $R/rec_L1.bin 32 19 19 19 4-11 300 $R/dumps/L1
+# any mode: K3B_V7=1 repacks the records to v7 in memory and runs the v7 kernels
+#   e.g. R=~/k3-bitexact/ref; taskset -c 12 ./k3cpu_test bench $R/mufu $R/rec_L1.bin 32 19 19 19 4-11 300 $R/dumps/L1
 # bench knobs: K3B_KS=1,2 (k values), K3B_GAP_US (sleep between tokens), K3B_GAP_SPIN=1, K3B_SPIN_US (worker spin),
 #   K3B_LOOKUP=1|2 (gather | scalar everywhere), K3B_INTERLEAVE=1, K3B_TRACE=file (per token: k it x ms gu dn posted)
 # library knobs: K3CPU_PF_ROWS (weight prefetch distance), K3CPU_SPIN_MODE (0 pause, 1 no pause, 2 pause + memory touch)

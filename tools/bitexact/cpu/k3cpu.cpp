@@ -38,8 +38,8 @@ static constexpr int NQX = 8, QX_BLK = D / 32 / NQX;         // q8_1(x): 8 tasks
 static inline uint64_t now_ns() { timespec t; clock_gettime(CLOCK_MONOTONIC_RAW, &t); return (uint64_t) t.tv_sec * 1000000000ull + t.tv_nsec; }
 static inline void set_daz_ftz() { _mm_setcsr(_mm_getcsr() | 0x8040); }
 
-size_t k3cpu_rec_bytes(int tg, int tu, int td) {
-    auto rb = [](int t, int k) { return (size_t) (k / 256) * (t == K3CPU_T_IQ1_S ? 50 : 66); };
+size_t k3cpu_rec_bytes(int tg, int tu, int td, int layout) {
+    auto rb = [layout](int t, int k) { return (size_t) (k / 256) * (layout == K3CPU_V7 ? (t == K3CPU_T_IQ1_S ? 52 : 68) : (t == K3CPU_T_IQ1_S ? 50 : 66)); };
     return rb(tg, D) * F + rb(tu, D) * F + rb(td, F) * D;
 }
 
@@ -50,25 +50,43 @@ size_t k3cpu_rec_bytes(int tg, int tu, int td) {
 // -1.125 (the two IQ1_S delta products, exact).
 // q64 is the same bytes for the scalar-lookup kernel: per kb, group i, half h: q8_1 blocks 8kb+4h..8kb+4h+3, values
 // 8i..8i+7 of each (32 bytes), matching one register of four 64-bit grid entries (lanes = j, low/high nibbles).
+// For v7 records (4 rows per pass, lanes = (sub-block j = 2sp + h, row)): qv[kb][sp][r] = dword r of q8_1 block
+// 8kb+2sp (lanes 0-3) and 8kb+2sp+1 (lanes 4-7), each repeated for the 4 rows; ds*4 likewise per lane. (The scalar-load
+// kernel broadcasts its 8 bytes per row straight from q64.)
 struct alignas(64) QX {
-    int8_t qt[NB_X * 256];
-    int8_t q64[NB_X * 256];
-    float dsx[NB_X * 8], dym[NB_X * 8], dyp[NB_X * 8];
+    alignas(64) int8_t qt[NB_X * 256];
+    alignas(64) int8_t q64[NB_X * 256];
+    alignas(64) float dsx[NB_X * 8];
+    alignas(64) float dym[NB_X * 8];
+    alignas(64) float dyp[NB_X * 8];
+    alignas(64) int8_t qv[NB_X * 4 * 8 * 32];
+    alignas(64) float dsx4[NB_X * 32];
+    alignas(64) float dym4[NB_X * 32];
+    alignas(64) float dyp4[NB_X * 32];
+    bool v7 = false;   // also fill the v7 layouts
 };
-static inline void q64_store(QX & q, int b, const int8_t * qs) {
-    int8_t * o = q.q64 + (b >> 3) * 256 + ((b >> 2) & 1) * 32 + (b & 3) * 8;
+// all layouts of q8_1 block b from its 32 values and float scales
+static inline void q8_put(QX & q, int b, const int8_t * qs, float dx, float ym, float yp) {
+    const int kb = b >> 3, j = b & 7;
+    int8_t * qt = q.qt + kb * 256 + 4 * j;
+    for (int r = 0; r < 8; r++) memcpy(qt + 32 * r, qs + 4 * r, 4);
+    int8_t * o = q.q64 + kb * 256 + ((j >> 2) & 1) * 32 + (j & 3) * 8;
     for (int i = 0; i < 4; i++) memcpy(o + 64 * i, qs + 8 * i, 8);
+    q.dsx[b] = dx; q.dym[b] = ym; q.dyp[b] = yp;
+    if (!q.v7) return;
+    const int sp = j >> 1, h = j & 1;
+    int8_t * v = q.qv + (size_t) (kb * 4 + sp) * 8 * 32 + h * 16;
+    for (int r = 0; r < 8; r++) for (int row = 0; row < 4; row++) memcpy(v + r * 32 + row * 4, qs + 4 * r, 4);
+    for (int row = 0; row < 4; row++) {
+        const int l = (kb * 4 + sp) * 8 + h * 4 + row;
+        q.dsx4[l] = dx; q.dym4[l] = ym; q.dyp4[l] = yp;
+    }
+}
+static inline void q8_store(QX & q, int b, const int8_t * qs, float d, float sum) {
+    const float dx = k3_h2f(k3_f2h(d)), dy = k3_h2f(k3_f2h(sum));
+    q8_put(q, b, qs, dx, fmul_z(dy, -0.875f), fmul_z(dy, -1.125f));
 }
 
-static inline void q8_store(QX & q, int b, const int8_t * qs, float d, float sum) {
-    int8_t * qt = q.qt + (b >> 3) * 256 + 4 * (b & 7);
-    for (int r = 0; r < 8; r++) memcpy(qt + 32 * r, qs + 4 * r, 4);
-    q64_store(q, b, qs);
-    const float dx = k3_h2f(k3_f2h(d)), dy = k3_h2f(k3_f2h(sum));
-    q.dsx[b] = dx;
-    q.dym[b] = fmul_z(dy, -0.875f);
-    q.dyp[b] = fmul_z(dy, -1.125f);
-}
 // SPEC 2 literally (k3ref's oracle: NaN-ignoring FMNMX, FADD.RZ, saturating F2I, low byte), for the blocks the vector
 // path does not cover: a NaN or inf anywhere, or d = amax/127 flushed to zero.
 static float fmax_nv(float a, float b) { a = k3_ftz(a); b = k3_ftz(b); if (a != a) return b; if (b != b) return a; return a > b ? a : b; }
@@ -121,8 +139,7 @@ static inline void q8_block(const float * xb, QX & q, int b, const k3_mufu_tabs 
     const float d = amax * k3_u2f(0x3C010204u);
     // vector path: everything finite and d normal (or all zero); anything else takes the literal path
     if (!(std::fabs(sum) <= 3.4e38f) || !(amax <= 3.4e38f) || (amax != 0.0f && d == 0.0f)) { q8_block_ref(xb, q, b, M); return; }
-    const int kb = b >> 3, j = b & 7;
-    int8_t * qt = q.qt + kb * 256 + 4 * j;
+    alignas(32) int8_t qs[32];
     if (amax != 0.0f) {
         const __m256 R = _mm256_set1_ps(nv_rcp(d, M));
         const __m256 half = _mm256_set1_ps(0.5f), one = _mm256_set1_ps(1.0f), sgn = _mm256_set1_ps(-0.0f);
@@ -137,20 +154,11 @@ static inline void q8_block(const float * xb, QX & q, int b, const k3_mufu_tabs 
             Q[i] = _mm256_cvttps_epi32(_mm256_add_ps(t, inc));
         }
         const __m256i p = _mm256_packs_epi16(_mm256_packs_epi32(Q[0], Q[1]), _mm256_packs_epi32(Q[2], Q[3]));
-        const __m256i o = _mm256_permutevar8x32_epi32(p, _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7));
-        alignas(32) int32_t w[8];
-        _mm256_store_si256((__m256i *) w, o);
-        for (int r = 0; r < 8; r++) memcpy(qt + 32 * r, &w[r], 4);
-        q64_store(q, b, (const int8_t *) w);
+        _mm256_store_si256((__m256i *) qs, _mm256_permutevar8x32_epi32(p, _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7)));
     } else {
-        for (int r = 0; r < 8; r++) memset(qt + 32 * r, 0, 4);
-        const int8_t z[32] = {0};
-        q64_store(q, b, z);
+        memset(qs, 0, sizeof qs);
     }
-    const float dx = k3_h2f(k3_f2h(d)), dy = k3_h2f(k3_f2h(sum));
-    q.dsx[b] = dx;
-    q.dym[b] = fmul_z(dy, -0.875f);
-    q.dyp[b] = fmul_z(dy, -1.125f);
+    q8_store(q, b, qs, d, sum);
 }
 
 // ------------------------------------------------------------------------------------------------ row kernels
@@ -359,6 +367,185 @@ template <int NB> static inline void rows2_any(int ta, int tb, const uint8_t * r
     if (t_sc) rows2_t<NB, 1>(ta, tb, ra, rb, q, oa, ob); else rows2_t<NB, 0>(ta, tb, ra, rb, q, oa, ob);
 }
 
+// ------------------------------------------------------------------------------------------------ v7 records
+// k3x's GPU layout (../sycl/k3x.cpp v7_off): per group of 4 rows, block kb = 4i + q of row j has its dword u (block
+// padded to 13 / 17 dwords) at  g + (i*ndw + u)*16 + 4q + j  for i < 3 and  g + 48*ndw + u*8 + 4q + j  for i = 3 (only
+// kb 12, 13 of 14-block rows), g = rg4 * nblk*4*ndw. So one 16-byte load is dword u of the 4 rows: these kernels do
+// 4 rows per pass with lanes (sub-block j = 2sp + h, row), and the CUDA reduction tree becomes lane-wise adds
+// (rows4_v7). Bytes 2.. of a block (after the half d) straddle dwords, hence the 16-bit shifts.
+template <int NDW> static inline const uint32_t * v7_blk(const uint32_t * grp, int kb, int & st) {
+    const int i = kb >> 2, q = kb & 3;
+    if (i < 3) { st = 16; return grp + (size_t) i * NDW * 16 + 4 * q; }
+    st = 8; return grp + (size_t) 48 * NDW + 4 * q;
+}
+static inline __m256i ld2(const uint32_t * a, const uint32_t * b) {
+    return _mm256_inserti128_si256(_mm256_castsi128_si256(_mm_loadu_si128((const __m128i *) a)), _mm_loadu_si128((const __m128i *) b), 1);
+}
+// d of the 4 rows (low half of dword 0), as [r0 r1 r2 r3 | r0 r1 r2 r3]
+static inline __m256 v7_d4(const uint32_t * B) {
+    const __m128i h = _mm_shuffle_epi8(_mm_loadu_si128((const __m128i *) B), _mm_setr_epi8(0, 1, 4, 5, 8, 9, 12, 13, -1, -1, -1, -1, -1, -1, -1, -1));
+    const __m128 f = _mm_cvtph_ps(h);
+    return _mm256_insertf128_ps(_mm256_castps128_ps256(f), f, 1);
+}
+// IQ1_S, block kb, sub-blocks 2sp and 2sp+1 of the 4 rows (B = dword 0 of row 0, st = dword stride)
+template <int SC> __attribute__((always_inline)) static inline __m256 blk_iq1_s_v7(const uint32_t * B, int st, const QX & q, int kb, int sp, __m256 D4) {
+    // qs dword j of a row = bytes 2+4j..5+4j = (D[j] >> 16) | (D[j+1] << 16); qh[j] = 16 bits at byte 34+2j
+    const __m256i QS = _mm256_or_si256(_mm256_srli_epi32(ld2(B + 2 * sp * st, B + (2 * sp + 1) * st), 16),
+                                       _mm256_slli_epi32(ld2(B + (2 * sp + 1) * st, B + (2 * sp + 2) * st), 16));
+    const __m256i QH = _mm256_and_si256(_mm256_srlv_epi32(ld2(B + (8 + sp) * st, B + (9 + sp) * st), _mm256_setr_epi32(16, 16, 16, 16, 0, 0, 0, 0)), _mm256_set1_epi32(0xFFFF));
+    __m256i si;
+    const int l = kb * 4 + sp;
+    if (!SC) {
+        const __m256i m7 = _mm256_set1_epi32(0x700), mlo = _mm256_set1_epi32(0x0F0F0F0F), mhi = _mm256_set1_epi32((int) 0xF0F0F0F0u);
+        const int * G = (const int *) iq1s_grid_gpu;
+#define K3_SEL(i) _mm256_setr_epi8(i, -1, -1, -1, 4 + i, -1, -1, -1, 8 + i, -1, -1, -1, 12 + i, -1, -1, -1, i, -1, -1, -1, 4 + i, -1, -1, -1, 8 + i, -1, -1, -1, 12 + i, -1, -1, -1)
+        const __m256i g0 = _mm256_i32gather_epi32(G, _mm256_or_si256(_mm256_shuffle_epi8(QS, K3_SEL(0)), _mm256_and_si256(_mm256_slli_epi32(QH, 8), m7)), 4);
+        const __m256i g1 = _mm256_i32gather_epi32(G, _mm256_or_si256(_mm256_shuffle_epi8(QS, K3_SEL(1)), _mm256_and_si256(_mm256_slli_epi32(QH, 5), m7)), 4);
+        const __m256i g2 = _mm256_i32gather_epi32(G, _mm256_or_si256(_mm256_shuffle_epi8(QS, K3_SEL(2)), _mm256_and_si256(_mm256_slli_epi32(QH, 2), m7)), 4);
+        const __m256i g3 = _mm256_i32gather_epi32(G, _mm256_or_si256(_mm256_shuffle_epi8(QS, K3_SEL(3)), _mm256_and_si256(_mm256_srli_epi32(QH, 1), m7)), 4);
+#undef K3_SEL
+        const __m256i * Q = (const __m256i *) (q.qv + (size_t) l * 8 * 32);
+        __m256i a0 = _mm256_dpbusd_avx_epi32(_mm256_setzero_si256(), _mm256_and_si256(g0, mlo), Q[0]);
+        __m256i a1 = _mm256_dpbusd_avx_epi32(_mm256_setzero_si256(), _mm256_and_si256(g0, mhi), Q[1]);
+        a0 = _mm256_dpbusd_avx_epi32(a0, _mm256_and_si256(g1, mlo), Q[2]);
+        a1 = _mm256_dpbusd_avx_epi32(a1, _mm256_and_si256(g1, mhi), Q[3]);
+        a0 = _mm256_dpbusd_avx_epi32(a0, _mm256_and_si256(g2, mlo), Q[4]);
+        a1 = _mm256_dpbusd_avx_epi32(a1, _mm256_and_si256(g2, mhi), Q[5]);
+        a0 = _mm256_dpbusd_avx_epi32(a0, _mm256_and_si256(g3, mlo), Q[6]);
+        a1 = _mm256_dpbusd_avx_epi32(a1, _mm256_and_si256(g3, mhi), Q[7]);
+        si = _mm256_add_epi32(a0, _mm256_srai_epi32(a1, 4));
+    } else {
+        // scalar lookups: lane (h, row) -> four 64-bit entries per register = the 4 rows of one sub-block. The 16-bit
+        // fields are loaded straight from the v7 dwords (vector -> scalar through memory is slow on the E-cores).
+        __m256i acc[2] = {_mm256_setzero_si256(), _mm256_setzero_si256()};
+#pragma GCC unroll 2
+        for (int h = 0; h < 2; h++) {
+            const int j = 2 * sp + h;
+            // activations: values 8i..8i+7 of q8_1 block 8kb+j, broadcast to the 4 rows (vpbroadcastq from q64)
+            const int8_t * qj = q.q64 + kb * 256 + (j >> 2) * 32 + (j & 3) * 8;
+            const uint16_t * w0 = (const uint16_t *) (B + j * st), * w1 = (const uint16_t *) (B + (j + 1) * st);
+            const uint16_t * wh = (const uint16_t *) (B + ((34 + 2 * j) >> 2) * st) + (((34 + 2 * j) >> 1) & 1);
+            uint64_t W[4];
+#pragma GCC unroll 4
+            for (int r = 0; r < 4; r++) {
+                const uint32_t q4 = (uint32_t) w0[2 * r + 1] | (uint32_t) w1[2 * r] << 16;   // bytes 2+4j..5+4j of row r
+                W[r] = _pdep_u64(q4, 0x00FF00FF00FF00FFull) | _pdep_u64(wh[2 * r], 0x0700070007000700ull);
+            }
+#pragma GCC unroll 4
+            for (int i = 0; i < 4; i++) {
+                const __m128i lo = _mm_set_epi64x((long long) g64[(W[1] >> 16 * i) & 0xFFFF], (long long) g64[(W[0] >> 16 * i) & 0xFFFF]);
+                const __m128i hi = _mm_set_epi64x((long long) g64[(W[3] >> 16 * i) & 0xFFFF], (long long) g64[(W[2] >> 16 * i) & 0xFFFF]);
+                int64_t qv8; memcpy(&qv8, qj + 64 * i, 8);
+                acc[h] = _mm256_dpbusd_avx_epi32(acc[h], _mm256_inserti128_si256(_mm256_castsi128_si256(lo), hi, 1), _mm256_set1_epi64x(qv8));
+            }
+        }
+        // hadd: [h0 r0, h0 r1, h1 r0, h1 r1 | h0 r2, h0 r3, h1 r2, h1 r3] -> [h0 r0..r3 | h1 r0..r3]
+        si = _mm256_permutevar8x32_epi32(_mm256_hadd_epi32(acc[0], acc[1]), _mm256_setr_epi32(0, 1, 4, 5, 2, 3, 6, 7));
+    }
+    const __m256 sumi = _mm256_cvtepi32_ps(si);
+    const __m256 sc = _mm256_cvtepi32_ps(_mm256_or_si256(_mm256_and_si256(_mm256_srli_epi32(QH, 11), _mm256_set1_epi32(0x0E)), _mm256_set1_epi32(1)));
+    const __m256 dW = _mm256_mul_ps(D4, sc);                                                       // FMUL.FTZ
+    const __m256 yd = _mm256_blendv_ps(_mm256_load_ps(q.dym4 + 8 * l), _mm256_load_ps(q.dyp4 + 8 * l), _mm256_castsi256_ps(_mm256_slli_epi32(QH, 16)));
+    const __m256 inner = _mm256_fmadd_ps(_mm256_load_ps(q.dsx4 + 8 * l), sumi, yd);               // FFMA.FTZ
+    return _mm256_fmadd_ps(dW, inner, _mm256_setzero_ps());                                        // FFMA.FTZ dW*inner + 0
+}
+// IQ2_XXS, block kb, sub-blocks 2sp and 2sp+1 of the 4 rows: q2 = bytes 2+8j..5+8j, aux = bytes 6+8j..9+8j
+template <int SC> __attribute__((always_inline)) static inline __m256 blk_iq2_xxs_v7(const uint32_t * B, int st, const QX & q, int kb, int sp, __m256 D4) {
+    const uint32_t * b0 = B + 4 * sp * st;   // dword 2j of j = 2sp; j = 2sp+1 starts 2 dwords later
+    const __m256i Y0 = ld2(b0, b0 + 2 * st), Y1 = ld2(b0 + st, b0 + 3 * st), Y2 = ld2(b0 + 2 * st, b0 + 4 * st);
+    const __m256i Q2 = _mm256_or_si256(_mm256_srli_epi32(Y0, 16), _mm256_slli_epi32(Y1, 16));
+    const __m256i AX = _mm256_or_si256(_mm256_srli_epi32(Y1, 16), _mm256_slli_epi32(Y2, 16));
+    const int l = kb * 4 + sp;
+    __m256i a0 = _mm256_setzero_si256(), a1 = _mm256_setzero_si256();
+    if (!SC) {
+        __m256i Bs = _mm256_or_si256(_mm256_or_si256(_mm256_and_si256(AX, _mm256_set1_epi32(0x7F)), _mm256_and_si256(_mm256_slli_epi32(AX, 1), _mm256_set1_epi32(0x7F00))),
+                                     _mm256_or_si256(_mm256_and_si256(_mm256_slli_epi32(AX, 2), _mm256_set1_epi32(0x7F0000)), _mm256_and_si256(_mm256_slli_epi32(AX, 3), _mm256_set1_epi32(0x7F000000))));
+        const __m256i PT = _mm256_setr_epi8(0, -128, -128, 0, -128, 0, 0, -128, -128, 0, 0, -128, 0, -128, -128, 0,
+                                            0, -128, -128, 0, -128, 0, 0, -128, -128, 0, 0, -128, 0, -128, -128, 0);
+        const __m256i n4 = _mm256_set1_epi8(0x0F);
+        Bs = _mm256_or_si256(Bs, _mm256_xor_si256(_mm256_shuffle_epi8(PT, _mm256_and_si256(Bs, n4)), _mm256_shuffle_epi8(PT, _mm256_and_si256(_mm256_srli_epi16(Bs, 4), n4))));
+        const __m256i M1 = _mm256_set1_epi32(0x08040201), M2 = _mm256_set1_epi32((int) 0x80402010u), one = _mm256_set1_epi8(1);
+        const int * G = (const int *) iq2xxs_grid;
+        const __m256i * Q = (const __m256i *) (q.qv + (size_t) l * 8 * 32);
+#define K3_IQ2_GROUP(k)                                                                                                  \
+        {                                                                                                                \
+            const __m256i gi = (k) == 3 ? _mm256_srli_epi32(Q2, 24) : _mm256_and_si256(_mm256_srli_epi32(Q2, 8 * (k)), _mm256_set1_epi32(0xFF)); \
+            const __m256i lo = _mm256_i32gather_epi32(G, gi, 8), hi = _mm256_i32gather_epi32(G + 1, gi, 8);              \
+            const __m256i S = _mm256_shuffle_epi8(Bs, _mm256_setr_epi32((k) * 0x01010101, (4 + (k)) * 0x01010101, (8 + (k)) * 0x01010101, (12 + (k)) * 0x01010101, \
+                                                                        (k) * 0x01010101, (4 + (k)) * 0x01010101, (8 + (k)) * 0x01010101, (12 + (k)) * 0x01010101)); \
+            const __m256i sl = _mm256_or_si256(_mm256_cmpeq_epi8(_mm256_and_si256(S, M1), M1), one);                     \
+            const __m256i sh = _mm256_or_si256(_mm256_cmpeq_epi8(_mm256_and_si256(S, M2), M2), one);                     \
+            a0 = _mm256_dpbusd_avx_epi32(a0, lo, _mm256_sign_epi8(Q[2 * (k)], sl));                                      \
+            a1 = _mm256_dpbusd_avx_epi32(a1, hi, _mm256_sign_epi8(Q[2 * (k) + 1], sh));                                  \
+        }
+        K3_IQ2_GROUP(0) K3_IQ2_GROUP(1) K3_IQ2_GROUP(2) K3_IQ2_GROUP(3)
+#undef K3_IQ2_GROUP
+        a0 = _mm256_add_epi32(a0, a1);
+    } else {
+        __m256i acc[2] = {_mm256_setzero_si256(), _mm256_setzero_si256()};
+#pragma GCC unroll 2
+        for (int h = 0; h < 2; h++) {
+            const int j = 2 * sp + h;
+            const int8_t * qj = q.q64 + kb * 256 + (j >> 2) * 32 + (j & 3) * 8;
+            // q2 = bytes 2+8j..5+8j = dwords 2j (high half), 2j+1 (low); aux = 2j+1 (high), 2j+2 (low)
+            const uint16_t * w0 = (const uint16_t *) (B + 2 * j * st), * w1 = (const uint16_t *) (B + (2 * j + 1) * st), * w2 = (const uint16_t *) (B + (2 * j + 2) * st);
+            uint32_t x2[4], xa[4];
+#pragma GCC unroll 4
+            for (int r = 0; r < 4; r++) { x2[r] = (uint32_t) w0[2 * r + 1] | (uint32_t) w1[2 * r] << 16; xa[r] = (uint32_t) w1[2 * r + 1] | (uint32_t) w2[2 * r] << 16; }
+#pragma GCC unroll 4
+            for (int k = 0; k < 4; k++) {
+                const __m128i g01 = _mm_set_epi64x((long long) iq2xxs_grid[(x2[1] >> 8 * k) & 0xFF], (long long) iq2xxs_grid[(x2[0] >> 8 * k) & 0xFF]);
+                const __m128i g23 = _mm_set_epi64x((long long) iq2xxs_grid[(x2[3] >> 8 * k) & 0xFF], (long long) iq2xxs_grid[(x2[2] >> 8 * k) & 0xFF]);
+                const __m128i s01 = _mm_set_epi64x((long long) ksg64[(xa[1] >> 7 * k) & 0x7F], (long long) ksg64[(xa[0] >> 7 * k) & 0x7F]);
+                const __m128i s23 = _mm_set_epi64x((long long) ksg64[(xa[3] >> 7 * k) & 0x7F], (long long) ksg64[(xa[2] >> 7 * k) & 0x7F]);
+                int64_t qv8; memcpy(&qv8, qj + 64 * k, 8);
+                acc[h] = _mm256_dpbusd_avx_epi32(acc[h], _mm256_inserti128_si256(_mm256_castsi128_si256(g01), g23, 1),
+                                                 _mm256_sign_epi8(_mm256_set1_epi64x(qv8), _mm256_inserti128_si256(_mm256_castsi128_si256(s01), s23, 1)));
+            }
+        }
+        a0 = _mm256_permutevar8x32_epi32(_mm256_hadd_epi32(acc[0], acc[1]), _mm256_setr_epi32(0, 1, 4, 5, 2, 3, 6, 7));
+    }
+    __m256i s = _mm256_mullo_epi32(a0, _mm256_or_si256(_mm256_srli_epi32(AX, 27), _mm256_set1_epi32(1)));
+    s = _mm256_srai_epi32(_mm256_add_epi32(s, _mm256_and_si256(_mm256_srai_epi32(s, 31), _mm256_set1_epi32(7))), 3);  // C int / 8
+    const __m256 dW = _mm256_mul_ps(D4, _mm256_load_ps(q.dsx4 + 8 * l));                         // FMUL.FTZ
+    return _mm256_fmadd_ps(dW, _mm256_cvtepi32_ps(s), _mm256_setzero_ps());
+}
+// rows 4*rg4 .. 4*rg4+3 of a v7 matrix (NB blocks per row) -> out[0..3]
+template <int T, int NB, int SC> __attribute__((noinline, optimize("no-tree-slp-vectorize")))
+static void rows4_v7(const uint32_t * mat, int rg4, const QX & q, float * out) {
+    constexpr int NDW = T == K3CPU_T_IQ1_S ? 13 : 17;
+    const uint32_t * grp = mat + (size_t) rg4 * NB * 4 * NDW;
+    __m256 D4[NB];
+    for (int kb = 0; kb < NB; kb++) { int st; D4[kb] = v7_d4(v7_blk<NDW>(grp, kb, st)); }
+    // block kb = m + 4w: w (= v7's i) is a compile-time constant, so the dword stride is too
+#define K3_P(W, m, sp) (T == K3CPU_T_IQ1_S                                                                                     \
+        ? blk_iq1_s_v7<SC>(grp + ((W) < 3 ? (W) * NDW * 16 : 48 * NDW) + 4 * (m), (W) < 3 ? 16 : 8, q, (m) + 4 * (W), sp, D4[(m) + 4 * (W)]) \
+        : blk_iq2_xxs_v7<SC>(grp + ((W) < 3 ? (W) * NDW * 16 : 48 * NDW) + 4 * (m), (W) < 3 ? 16 : 8, q, (m) + 4 * (W), sp, D4[(m) + 4 * (W)]))
+    const __m256 z = _mm256_setzero_ps();
+    __m256 Tq[4];
+#pragma GCC unroll 1
+    for (int sp = 0; sp < 4; sp++) {
+        __m256 S[4];
+#pragma GCC unroll 1
+        for (int m = 0; m < 4; m++) {   // lane l = 8m + j: ((w0 + w1) + w2) + w3 over kb = m, m+4, m+8, m+12
+            __m256 a = K3_P(0, m, sp);
+            a = _mm256_add_ps(a, K3_P(1, m, sp));
+            a = _mm256_add_ps(a, K3_P(2, m, sp));
+            a = _mm256_add_ps(a, m + 12 < NB ? K3_P(3, m, sp) : z);
+            S[m] = a;
+        }
+        Tq[sp] = _mm256_add_ps(_mm256_add_ps(S[0], S[2]), _mm256_add_ps(S[1], S[3]));   // [l]+[l+16], then +[l+8]
+    }
+#undef K3_P
+    const __m256 W = _mm256_add_ps(_mm256_add_ps(Tq[0], Tq[2]), _mm256_add_ps(Tq[1], Tq[3]));      // +[l+4], then +[l+2]
+    _mm_storeu_ps(out, _mm_add_ps(_mm256_castps256_ps128(W), _mm256_extractf128_ps(W, 1)));       // +[l+1]
+}
+template <int NB> static void rows4_v7_any(int t, const uint32_t * mat, int rg4, const QX & q, float * out) {
+    if (t == K3CPU_T_IQ1_S) { if (t_sc) rows4_v7<K3CPU_T_IQ1_S, NB, 1>(mat, rg4, q, out); else rows4_v7<K3CPU_T_IQ1_S, NB, 0>(mat, rg4, q, out); }
+    else                    { if (t_sc) rows4_v7<K3CPU_T_IQ2_XXS, NB, 1>(mat, rg4, q, out); else rows4_v7<K3CPU_T_IQ2_XXS, NB, 0>(mat, rg4, q, out); }
+}
+static inline size_t v7_mat_bytes(int t, int nrows, int ncols) { return (size_t) nrows * (ncols / 256) * (t == K3CPU_T_IQ1_S ? 13 : 17) * 4; }
+
 // ------------------------------------------------------------------------------------------------ table prefetch
 // The packed MUFU tables (0.75 GB) miss in cache on almost every lookup; the SiTU chain is ex2 -> rcp (dependent), so
 // the misses are prefetched a row ahead (tanh(g), tanh(u), ex2(g)) and the rcp one row later (once ex2 is cached).
@@ -515,16 +702,26 @@ static void do_gu(k3cpu_pool * P, int ei, int c) {
     float g[CH_GU], u[CH_GU];
     const int i0 = c * CH_GU;
     const int pfd = g_pf_rows;
+    const bool v7 = J.e.layout == K3CPU_V7;
+    const int U = v7 ? 4 : 1;
     for (int i = 0; i < CH_GU; i++) {
-        if (pfd && i + pfd < CH_GU) { pf_bytes(J.gate + (size_t) (i0 + i + pfd) * J.rbg, J.rbg); pf_bytes(J.up + (size_t) (i0 + i + pfd) * J.rbu, J.rbu); }
-        rows2_any<NB_X>(J.e.tg, J.e.tu, J.gate + (size_t) (i0 + i) * J.rbg, J.up + (size_t) (i0 + i) * J.rbu, P->qx, &g[i], &u[i]);
-        pf_act1(g[i], u[i], M);                                       // tanh(g), tanh(u), ex2(g) lines
-        if (i >= 1) pf_act2(g[i - 1], M);                             // rcp(ex2 + 1), ex2 now cached
-        if (i >= 2) J.h[i0 + i - 2] = k3_act(g[i - 2], u[i - 2], M);  // everything cached, before the weights evict it
+        if (v7) {
+            if (!(i & 3)) {
+                rows4_v7_any<NB_X>(J.e.tg, (const uint32_t *) J.gate, (i0 + i) / 4, P->qx, &g[i]);
+                rows4_v7_any<NB_X>(J.e.tu, (const uint32_t *) J.up, (i0 + i) / 4, P->qx, &u[i]);
+            }
+        } else {
+            if (pfd && i + pfd < CH_GU) { pf_bytes(J.gate + (size_t) (i0 + i + pfd) * J.rbg, J.rbg); pf_bytes(J.up + (size_t) (i0 + i + pfd) * J.rbu, J.rbu); }
+            rows2_any<NB_X>(J.e.tg, J.e.tu, J.gate + (size_t) (i0 + i) * J.rbg, J.up + (size_t) (i0 + i) * J.rbu, P->qx, &g[i], &u[i]);
+        }
+        // SiTU pipeline, U = rows produced per step (1, or 4 for v7): first-level table lines for row i now, the
+        // dependent rcp line U rows later (once ex2 is cached), the activation itself 2U rows later
+        pf_act1(g[i], u[i], M);
+        if (i >= U) pf_act2(g[i - U], M);
+        if (i >= 2 * U) J.h[i0 + i - 2 * U] = k3_act(g[i - 2 * U], u[i - 2 * U], M);
     }
-    pf_act2(g[CH_GU - 1], M);
-    J.h[i0 + CH_GU - 2] = k3_act(g[CH_GU - 2], u[CH_GU - 2], M);
-    J.h[i0 + CH_GU - 1] = k3_act(g[CH_GU - 1], u[CH_GU - 1], M);
+    for (int i = CH_GU - U; i < CH_GU; i++) pf_act2(g[i], M);
+    for (int i = CH_GU - 2 * U; i < CH_GU; i++) J.h[i0 + i] = k3_act(g[i], u[i], M);
     q8_block(J.h + i0, J.qh, c, M);
     if (J.e.g) memcpy(J.e.g + i0, g, sizeof g);
     if (J.e.u) memcpy(J.e.u + i0, u, sizeof u);
@@ -537,10 +734,14 @@ static void do_dn(k3cpu_pool * P, int ei, int c) {
     while (P->gu_done[ei].v.load(std::memory_order_acquire) < NGU) _mm_pause();
     const int r0 = c * CH_DN;
     float * out = J.e.out;
-    const int pfd = g_pf_rows;
-    for (int r = 0; r < CH_DN; r += 2) {
-        if (pfd && r + 2 * pfd < CH_DN) pf_bytes(J.down + (size_t) (r0 + r + 2 * pfd) * J.rbd, 2 * J.rbd);
-        rows2_any<NB_H>(J.e.td, J.e.td, J.down + (size_t) (r0 + r) * J.rbd, J.down + (size_t) (r0 + r + 1) * J.rbd, J.qh, &out[r0 + r], &out[r0 + r + 1]);
+    if (J.e.layout == K3CPU_V7) {
+        for (int r = 0; r < CH_DN; r += 4) rows4_v7_any<NB_H>(J.e.td, (const uint32_t *) J.down, (r0 + r) / 4, J.qh, &out[r0 + r]);
+    } else {
+        const int pfd = g_pf_rows;
+        for (int r = 0; r < CH_DN; r += 2) {
+            if (pfd && r + 2 * pfd < CH_DN) pf_bytes(J.down + (size_t) (r0 + r + 2 * pfd) * J.rbd, 2 * J.rbd);
+            rows2_any<NB_H>(J.e.td, J.e.td, J.down + (size_t) (r0 + r) * J.rbd, J.down + (size_t) (r0 + r + 1) * J.rbd, J.qh, &out[r0 + r], &out[r0 + r + 1]);
+        }
     }
     if (P->dn_done[ei].v.fetch_add(1, std::memory_order_acq_rel) + 1 == NDN) P->t_dn[ei].store(now_ns() - P->t0, std::memory_order_release);
 }
@@ -662,15 +863,21 @@ void k3cpu_submit(k3cpu_pool * P, const float * x, const k3cpu_expert * e, int k
     k3cpu_wait_all(P);   // the previous job (if any) must be complete
     P->x = x;
     auto rb = [](int t, int kk) { return (size_t) (kk / 256) * (t == K3CPU_T_IQ1_S ? 50 : 66); };
+    bool any_v7 = false;
     for (int i = 0; i < k; i++) {
         ExpertJob & J = P->job[i];
         J.e = e[i];
         J.rbg = rb(e[i].tg, D); J.rbu = rb(e[i].tu, D); J.rbd = rb(e[i].td, F);
-        J.gate = e[i].rec; J.up = J.gate + J.rbg * F; J.down = J.up + J.rbu * F;
+        const bool v7 = e[i].layout == K3CPU_V7;
+        J.gate = e[i].rec;
+        J.up = J.gate + (v7 ? v7_mat_bytes(e[i].tg, F, D) : J.rbg * F);
+        J.down = J.up + (v7 ? v7_mat_bytes(e[i].tu, F, D) : J.rbu * F);
+        J.qh.v7 = v7; any_v7 |= v7;
         P->gu_done[i].v.store(0, std::memory_order_relaxed);
         P->dn_done[i].v.store(0, std::memory_order_relaxed);
         P->t_gu[i].store(0, std::memory_order_relaxed); P->t_dn[i].store(0, std::memory_order_relaxed);
     }
+    P->qx.v7 = any_v7;
     P->k = k;
     P->interleave = P->o.interleave;
     P->t0 = t0;

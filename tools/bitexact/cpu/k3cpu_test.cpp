@@ -5,6 +5,7 @@
 //   k3cpu_test check MUFU_DIR RECORDS N TG TU TD CPUS [ntokens]
 //       random tokens (edge cases first) vs the scalar host reference of ../sycl/k3x_math.h, all 4 stages
 //   k3cpu_test bench MUFU_DIR RECORDS N TG TU TD CPUS ITERS [DUMP_DIR]
+//   (any mode) K3B_V7=1: the records are repacked to k3x's v7 GPU layout in memory and the kernels read that
 //       k = 1..4 (K3B_KS=1,2,..): per token p50/p90/min ms, GB/s of weights; records are used round robin so each is
 //       cold (not in L3) when reused; x from the dumps if given. K3B_GAP_US sleeps between tokens (engine-like
 //       pacing), K3B_SPIN_US sets the workers' spin before sleeping, K3B_INTERLEAVE=1 the streaming task order.
@@ -24,6 +25,13 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <csignal>
+#include <ucontext.h>
+static void on_segv(int, siginfo_t * si, void * ctx) {   // print the faulting address and pc (map with addr2line)
+    const ucontext_t * uc = (const ucontext_t *) ctx;
+    fprintf(stderr, "SIGSEGV addr %p pc 0x%llx\n", si->si_addr, (unsigned long long) uc->uc_mcontext.gregs[REG_RIP]);
+    _exit(139);
+}
 
 #define GGML_COMMON_DECL_C
 #define GGML_COMMON_IMPL_SYCL
@@ -54,6 +62,29 @@ static std::vector<int> parse_cpus(const char * s) {
 }
 static inline uint32_t fbits(float f) { uint32_t u; memcpy(&u, &f, 4); return u; }
 
+// ---- k3x's v7 repack (../sycl/k3x.cpp v7_off / v7_repack_matrix), for testing the v7 path from GGUF records
+static size_t v7_off(int nblk, int ndw, int rg4, int i, int u, int lane) {
+    const size_t g = (size_t) rg4 * (nblk * 4) * ndw;
+    return i < 3 ? g + ((size_t) i * ndw + u) * 16 + lane : g + (size_t) 48 * ndw + (size_t) u * 8 + lane;
+}
+static void v7_repack_matrix(const uint8_t * src, uint8_t * dst, int t, int nrows, int ncols) {
+    const int bb = t == 19 ? 50 : 66, ndw = (bb + 3) / 4, nblk = ncols / 256;
+    const size_t rb = (size_t) nblk * bb;
+    uint32_t * o = (uint32_t *) dst;
+    for (int rg = 0; rg < nrows / 4; rg++)
+        for (int i = 0; i < 4; i++)
+            for (int u = 0; u < ndw; u++)
+                for (int q = 0; q < 4; q++)
+                    for (int j = 0; j < 4; j++) {
+                        const int kb = q + 4 * i;
+                        if (kb >= nblk) continue;
+                        uint8_t b4[4] = {0, 0, 0, 0};
+                        for (int c = 0; c < 4; c++) if (u * 4 + c < bb) b4[c] = src[(size_t) (rg * 4 + j) * rb + (size_t) kb * bb + u * 4 + c];
+                        uint32_t v; memcpy(&v, b4, 4);
+                        o[v7_off(nblk, ndw, rg, i, u, q * 4 + j)] = v;
+                    }
+}
+
 // ---- scalar host reference (k3x_math.h, the code the k3x SYCL server's own check uses)
 static size_t rowb(int t, int k) { return (size_t) (k / 256) * (t == 19 ? 50 : 66); }
 static float ref_row(int t, const uint8_t * row, int nb, const k3_q8_1 * q8) {
@@ -79,11 +110,31 @@ static void ref_expert(const uint8_t * rec, int tg, int tu, int td, const float 
 
 int main(int argc, char ** argv) {
     if (argc < 9) { fprintf(stderr, "usage: see the head of k3cpu_test.cpp\n"); return 1; }
+    { struct sigaction sa = {}; sa.sa_sigaction = on_segv; sa.sa_flags = SA_SIGINFO; sigaction(SIGSEGV, &sa, nullptr); }
     const std::string mode = argv[1], mdir = argv[2];
     const int N = atoi(argv[4]), tg = atoi(argv[5]), tu = atoi(argv[6]), td = atoi(argv[7]);
     size_t fsz; const uint8_t * base = (const uint8_t *) map_file(argv[3], &fsz, true);
-    const size_t rec = k3cpu_rec_bytes(tg, tu, td);
-    if (fsz < rec * (size_t) N) { fprintf(stderr, "records file too small: %zu < %d x %zu\n", fsz, N, rec); return 1; }
+    const uint8_t * gbase = base;   // GGUF records (for the host reference)
+    const size_t grec = k3cpu_rec_bytes(tg, tu, td);
+    if (fsz < grec * (size_t) N) { fprintf(stderr, "records file too small: %zu < %d x %zu\n", fsz, N, grec); return 1; }
+    // K3B_V7=1: repack every record to k3x's v7 GPU layout in memory and run the kernels on that
+    const int layout = getenv("K3B_V7") && atoi(getenv("K3B_V7")) ? K3CPU_V7 : K3CPU_GGUF;
+    const size_t rec = k3cpu_rec_bytes(tg, tu, td, layout);
+    if (layout == K3CPU_V7) {
+        uint8_t * v = (uint8_t *) mmap(nullptr, rec * N, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        const size_t gb = (size_t) (D / 256) * (tg == 19 ? 50 : 66) * F, ub = (size_t) (D / 256) * (tu == 19 ? 50 : 66) * F;
+        const size_t vg = (size_t) F * (D / 256) * (tg == 19 ? 52 : 68), vu = (size_t) F * (D / 256) * (tu == 19 ? 52 : 68);
+        std::vector<std::thread> th;
+        for (int t0 = 0; t0 < 8; t0++) th.emplace_back([&, t0] {
+            for (int r = t0; r < N; r += 8) {
+                const uint8_t * src = base + (size_t) r * grec; uint8_t * dst = v + (size_t) r * rec;
+                v7_repack_matrix(src, dst, tg, F, D); v7_repack_matrix(src + gb, dst + vg, tu, F, D); v7_repack_matrix(src + gb + ub, dst + vg + vu, td, D, F);
+            }
+        });
+        for (auto & x : th) x.join();
+        base = v;
+        fprintf(stderr, "records repacked to v7: %d x %.2f MB\n", N, rec / 1e6);
+    }
     const int ai = mode == "validate" ? 9 : 8;   // CPUS argument
     if (argc <= ai) { fprintf(stderr, "missing CPUS\n"); return 1; }
     const std::vector<int> cpus = parse_cpus(argv[ai]);
@@ -114,7 +165,7 @@ int main(int argc, char ** argv) {
             k3cpu_expert e[16];
             for (int k = 0; k < K; k++) {
                 if (IDS[c * K + k] < 0 || IDS[c * K + k] >= N) { fprintf(stderr, "bad id\n"); return 1; }
-                e[k] = k3cpu_expert{base + (size_t) IDS[c * K + k] * rec, tg, tu, td, &dn[k * D], &g[k * F], &u[k * F], &h[k * F]};
+                e[k] = k3cpu_expert{base + (size_t) IDS[c * K + k] * rec, tg, tu, td, &dn[k * D], &g[k * F], &u[k * F], &h[k * F], layout};
             }
             std::fill(dn.begin(), dn.end(), -12345.0f);
             k3cpu_run(P, X + (size_t) c * D, e, K);
@@ -147,10 +198,9 @@ int main(int argc, char ** argv) {
             if (t % 11 == 5) for (int i = 0; i < D; i++) if (i % 64 < 32) x[i] = 0.0f;
             if (t % 13 == 6) for (int i = 0; i < D; i++) x[i] = k3_u2f(0x00000400u + i);   // denormals
             const int slot = (int) (rng() % N);
-            const uint8_t * r = base + (size_t) slot * rec;
-            k3cpu_expert e{r, tg, tu, td, dn.data(), g.data(), u.data(), h.data()};
+            k3cpu_expert e{base + (size_t) slot * rec, tg, tu, td, dn.data(), g.data(), u.data(), h.data(), layout};
             k3cpu_run(P, x.data(), &e, 1);
-            ref_expert(r, tg, tu, td, x.data(), mt, rg.data(), ru.data(), rh.data(), rd.data());
+            ref_expert(gbase + (size_t) slot * grec, tg, tu, td, x.data(), mt, rg.data(), ru.data(), rh.data(), rd.data());
             unsigned long long b = 0;
             for (int i = 0; i < F; i++) b += (fbits(g[i]) != fbits(rg[i])) + (fbits(u[i]) != fbits(ru[i])) + (fbits(h[i]) != fbits(rh[i]));
             for (int i = 0; i < D; i++) b += fbits(dn[i]) != fbits(rd[i]);
@@ -179,12 +229,12 @@ int main(int argc, char ** argv) {
         std::vector<float> out((size_t) 16 * D);
         FILE * dumpf = getenv("K3B_TRACE") ? fopen(getenv("K3B_TRACE"), "w") : nullptr;
         int slot = 0, xi = 0;
-        printf("records %d x %.2f MB, types %d/%d/%d, %zu workers, gap %d us%s%s\n", N, rec / 1e6, tg, tu, td, cpus.size(), gap, gapspin ? " (caller spins)" : "", o.interleave ? ", interleaved" : "");
+        printf("%srecords %d x %.2f MB, types %d/%d/%d, %zu workers, gap %d us%s%s\n", layout == K3CPU_V7 ? "v7 " : "", N, rec / 1e6, tg, tu, td, cpus.size(), gap, gapspin ? " (caller spins)" : "", o.interleave ? ", interleaved" : "");
         for (int k : ks) {
             std::vector<double> t, tgu, tdn0, tx;
             for (int it = 0; it < iters + 5; it++) {
                 k3cpu_expert e[16];
-                for (int j = 0; j < k; j++) { e[j] = k3cpu_expert{base + (size_t) slot * rec, tg, tu, td, &out[(size_t) j * D], nullptr, nullptr, nullptr}; slot = (slot + 1) % N; }
+                for (int j = 0; j < k; j++) { e[j] = k3cpu_expert{base + (size_t) slot * rec, tg, tu, td, &out[(size_t) j * D], nullptr, nullptr, nullptr, layout}; slot = (slot + 1) % N; }
                 const float * x = &xs[(size_t) (xi++ % nxs) * D];
                 if (gap && !gapspin) std::this_thread::sleep_for(std::chrono::microseconds(gap));
                 if (gap && gapspin) { auto g0 = std::chrono::steady_clock::now(); while (std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - g0).count() < gap) {} }

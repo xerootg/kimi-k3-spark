@@ -4,8 +4,8 @@
 // MUFU.TANH/EX2/RCP, q8_1(h), down MMVQ. Per row the arithmetic is SPEC section 3 in CUDA's order; only the integer
 // dot products are reorganised (exact). See README.md in this directory for the design, numbers and P/E-core notes.
 //
-// Records are in the GGUF row layout (gate rows | up rows | down rows, the layout of ../FORMAT.md and of the remote-set
-// .bin files): a pointer into any shared arena works, nothing is copied. Threads are created once by k3cpu_create and
+// Records are read in place from any arena, nothing is copied: either the GGUF row layout (gate rows | up rows | down
+// rows, ../FORMAT.md, the remote-set .bin files) or k3x's v7 GPU layout, so the CPU and the iGPU can share one copy. Threads are created once by k3cpu_create and
 // pinned; a call allocates nothing. Not thread-safe per pool: one caller submits at a time.
 #pragma once
 #include <cstddef>
@@ -13,6 +13,8 @@
 #include "../sycl/k3x_math.h"   // k3_mufu_tabs / k3_ptab: the same packed MUFU tables as the k3x SYCL server
 
 enum { K3CPU_T_IQ2_XXS = 16, K3CPU_T_IQ1_S = 19, K3CPU_KMAX = 16 };
+enum { K3CPU_GGUF = 0,   // record = gate | up | down in the GGUF row layout (../FORMAT.md, remote-set .bin files)
+       K3CPU_V7 = 1 };   // record = gate | up | down each repacked as k3x's v7 GPU layout (../sycl/k3x.cpp v7_off)
 
 // Load ../mufu raw tables ({rcp,ex2p,ex2n,tanh}.bin in dir) and pack them exactly like k3x (blocks of 64 entries,
 // int8 residuals, escapes; ~0.75 GB in all, verified entry by entry). The memory stays owned by the library.
@@ -26,6 +28,7 @@ struct k3cpu_expert {
     int tg, tu, td;           // ggml types: 19 = IQ1_S, 16 = IQ2_XXS
     float * out;              // 3584 floats: the unweighted down row (what the remote returns)
     float * g, * u, * h;      // optional (nullptr): 3072 floats each, for validation
+    int layout = K3CPU_GGUF;  // record layout
 };
 
 struct k3cpu_pool;
@@ -54,4 +57,4 @@ void k3cpu_run(k3cpu_pool * p, const float * x, const k3cpu_expert * e, int k);
 struct k3cpu_times { uint64_t x_done, gu_done[K3CPU_KMAX], dn_done[K3CPU_KMAX]; };   // x_done: job posted
 void k3cpu_last_times(k3cpu_pool * p, k3cpu_times * t);
 
-size_t k3cpu_rec_bytes(int tg, int tu, int td);
+size_t k3cpu_rec_bytes(int tg, int tu, int td, int layout = K3CPU_GGUF);
