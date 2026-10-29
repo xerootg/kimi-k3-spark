@@ -550,6 +550,17 @@ read by `MUL_MAT_ID`), with these changes:
   one line per box: posts, rows per post, rows placed, short requests and
   rows read locally, partial replies, NaN rows, breaker trips, round-trip
   percentiles, connects and drops.
+  `LLAMA_EXPERT_STORE_REMOTE_TRACE=<path>` (diagnostics, off by default)
+  records every request's hand-offs (CLOCK_MONOTONIC_RAW ns): the early
+  lookup, the `moe_rpost` hook, the cache lock, the post, the network
+  thread's pick-up and send, the reply's first byte, first row and last
+  byte, the real lookup's hook, the resolve, the wait's end, the rows
+  placed, plus the network thread's cpu, involuntary switches and idle
+  naps. The ring (65536 requests per box) is allocated at start and
+  written as TSV to `<path>.<box>` on SIGUSR1 (when nothing is in flight)
+  and at shutdown. With the trace on, header word 16 carries the request's
+  number (k < 16; servers ignore ids past k), so a k3x `K3X_TRACE` dump
+  joins request by request (`tools/bitexact/sycl/trace_report.py`).
 - Two I/O pool fixes. A worker of the previous run could still be between
   its last `fetch_sub` and the `fetch_add` that ends its loop when the next
   run reset the counters; it then ran a job of the new run twice and

@@ -30,6 +30,16 @@ Serving: `serve`/`serveidx` busy-poll the socket and stream each expert's row as
 (layer, expert) list to `K3X_SETOUT`, self-checks one token at startup and sends NaN for any all-zero row: above
 roughly 34-42 GB resident on the Arc 130T, kernel submissions sometimes fail with no error and leave rows zero.
 
+Tracing (`serveidx`, off by default): `K3X_TRACE=1` (or a ring size) records per request, in a ring allocated at start:
+idle wait, first byte, header and x received, x in host USM, each submission returned, each row in host memory and sent,
+queue drained (CLOCK_MONOTONIC_RAW ns). `K3X_TRACE_PROF=1` adds the queue's profiling (each command's device start/end),
+`K3X_TRACE_FREQ=1` the GT frequency before/after (a sysfs read on the request path, ~10 us). SIGUSR1 (while waiting) and
+every connection close write TSV to `K3X_TRACE_OUT` (default `/tmp/k3x-trace.tsv`). The client's request number is
+header word 16 when k < 16 (the engine's `LLAMA_EXPERT_STORE_REMOTE_TRACE`, `rrclient` with `RR_SEQ=1`).
+`trace_report.py --server <dump> [--engine <dump>] [--client <RR_OUT>] [--conn N]` prints the per-stage breakdown and
+joins the sides by request number (each clock compared only with itself). `rrclient` `RR_GAP_US` paces the requests
+like the engine (one per layer, ~5-12 ms apart); back to back hides the idle costs (2026-10-28 M section).
+
 Types: IQ1_S = 19, IQ2_XXS = 16. Results 2026-10-28 are in `docs/experiments.md`.
 
 Image: `ghcr.io/xerootg/k3x-serve:g<sha>` (`docker/k3x-serve.Dockerfile`, workflow `k3x-serve.yml`) holds `k3x` built

@@ -35,6 +35,8 @@
 #include <algorithm>
 #include <unordered_map>
 #include <cerrno>
+#include <csignal>
+#include <ctime>
 #include <cmath>
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -648,6 +650,78 @@ static void v7_repack_matrix(const uint8_t * src, uint8_t * dst, int t, int nrow
                     }
 }
 struct RecPtrs { const uint8_t * p[16]; };
+
+// K3X_TRACE=<ring entries> (serveidx, off by default): per-request timestamps (CLOCK_MONOTONIC_RAW ns) in a ring that is
+// allocated at start, so the request path only stores integers. Written as TSV to K3X_TRACE_OUT (default
+// /tmp/k3x-trace.tsv) on SIGUSR1 (while waiting for a request) and whenever a connection closes. The client's sequence
+// number is header word 16 when k < 16 (the traced engine and rrclient RR_SEQ=1 put it there; other clients send 0).
+// K3X_TRACE_PROF=1 also turns on queue profiling and records every command's submit/start/end (device clock, ns; read
+// after the reply is sent). K3X_TRACE_FREQ=1 reads the GT's actual frequency (sysfs) before and after the GPU work.
+// tools/bitexact/sycl/trace_report.py turns a dump (and the engine's) into a per-stage breakdown.
+static inline uint64_t k3x_ns() { timespec t; clock_gettime(CLOCK_MONOTONIC_RAW, &t); return (uint64_t) t.tv_sec * 1000000000ull + (uint64_t) t.tv_nsec; }
+constexpr int TR_K = 4;               // rows traced per request (production clients send k <= 2)
+constexpr int TR_NC = 4 + 2 * TR_K;   // commands: 0 x to device, 1 q8_1(x), 2 gate/up, 3 SiTU + q8_1(h), 4+2e down e, 5+2e row e to host
+struct k3x_tr {
+    int64_t idx, seq; int32_t k, conn;
+    uint64_t t_wait, t_first, t_hdr, t_rx, t_x, t_end, t_done;   // wait start, first byte, header, x received, x in host USM, queue drained, done
+    uint64_t t_sub[TR_NC];                                       // each submission returned
+    uint64_t t_row[TR_K], t_sent[TR_K];                          // row e in host memory (polled), row e written to the socket
+    uint64_t d_sub[TR_NC], d_start[TR_NC], d_end[TR_NC];         // K3X_TRACE_PROF: device clock
+    int32_t f_before, f_after;                                   // K3X_TRACE_FREQ: MHz
+};
+static k3x_tr * g_tr = nullptr; static size_t g_tr_n = 0; static int64_t g_tr_next = 0;
+static bool g_tr_prof = false; static int g_tr_freq_fd = -1;
+static volatile sig_atomic_t g_tr_dump = 0;
+static void k3x_tr_sig(int) { g_tr_dump = 1; }
+static int k3x_tr_freq() {
+    if (g_tr_freq_fd < 0) return 0;
+    char b[16] = {0}; return pread(g_tr_freq_fd, b, sizeof b - 1, 0) > 0 ? atoi(b) : -1;
+}
+static void k3x_tr_init() {
+    const char * e = getenv("K3X_TRACE"); if (!e || !atoi(e)) return;
+    g_tr_n = (size_t) std::max(1024, atoi(e) > 1 ? atoi(e) : 32768);
+    g_tr = (k3x_tr *) calloc(g_tr_n, sizeof(k3x_tr));
+    g_tr_prof = getenv("K3X_TRACE_PROF") != nullptr;
+    if (getenv("K3X_TRACE_FREQ")) g_tr_freq_fd = open("/sys/class/drm/card0/gt_act_freq_mhz", O_RDONLY);
+    signal(SIGUSR1, k3x_tr_sig);
+    fprintf(stderr, "K3X_TRACE: %zu entries%s%s, SIGUSR1 dumps to %s\n", g_tr_n, g_tr_prof ? ", queue profiling" : "",
+            g_tr_freq_fd >= 0 ? ", GT frequency" : "", getenv("K3X_TRACE_OUT") ? getenv("K3X_TRACE_OUT") : "/tmp/k3x-trace.tsv");
+}
+static k3x_tr * k3x_tr_begin() {   // before waiting for a request (off the request path)
+    if (!g_tr) return nullptr;
+    k3x_tr * r = &g_tr[(size_t) (g_tr_next % (int64_t) g_tr_n)];
+    memset(r, 0, sizeof *r); r->idx = g_tr_next++; r->t_wait = k3x_ns();
+    return r;
+}
+static void k3x_tr_dump() {
+    g_tr_dump = 0;
+    if (!g_tr) return;
+    const char * p = getenv("K3X_TRACE_OUT") ? getenv("K3X_TRACE_OUT") : "/tmp/k3x-trace.tsv";
+    FILE * f = fopen(p, "w"); if (!f) { perror(p); return; }
+    fprintf(f, "idx\tseq\tconn\tk\tt_wait\tt_first\tt_hdr\tt_rx\tt_x");
+    for (int i = 0; i < TR_NC; i++) fprintf(f, "\tt_sub%d", i);
+    for (int i = 0; i < TR_K; i++) fprintf(f, "\tt_row%d", i);
+    for (int i = 0; i < TR_K; i++) fprintf(f, "\tt_sent%d", i);
+    fprintf(f, "\tt_end\tt_done\tf_before\tf_after");
+    for (int i = 0; i < TR_NC; i++) fprintf(f, "\td_sub%d\td_start%d\td_end%d", i, i, i);
+    fprintf(f, "\n");
+    const int64_t n = std::min<int64_t>(g_tr_next, (int64_t) g_tr_n);
+    for (int64_t j = g_tr_next - n; j < g_tr_next; j++) {
+        const k3x_tr & r = g_tr[(size_t) (j % (int64_t) g_tr_n)];
+        if (!r.t_first) continue;   // still waiting for it
+        fprintf(f, "%lld\t%lld\t%d\t%d\t%llu\t%llu\t%llu\t%llu\t%llu", (long long) r.idx, (long long) r.seq, r.conn, r.k,
+                (unsigned long long) r.t_wait, (unsigned long long) r.t_first, (unsigned long long) r.t_hdr, (unsigned long long) r.t_rx, (unsigned long long) r.t_x);
+        for (int i = 0; i < TR_NC; i++) fprintf(f, "\t%llu", (unsigned long long) r.t_sub[i]);
+        for (int i = 0; i < TR_K; i++) fprintf(f, "\t%llu", (unsigned long long) r.t_row[i]);
+        for (int i = 0; i < TR_K; i++) fprintf(f, "\t%llu", (unsigned long long) r.t_sent[i]);
+        fprintf(f, "\t%llu\t%llu\t%d\t%d", (unsigned long long) r.t_end, (unsigned long long) r.t_done, r.f_before, r.f_after);
+        for (int i = 0; i < TR_NC; i++) fprintf(f, "\t%llu\t%llu\t%llu", (unsigned long long) r.d_sub[i], (unsigned long long) r.d_start[i], (unsigned long long) r.d_end[i]);
+        fprintf(f, "\n");
+    }
+    fclose(f);
+    fprintf(stderr, "K3X_TRACE: %lld requests written to %s\n", (long long) n, p);
+}
+
 struct Engine {
     sycl::queue q;
     int tg, td, E;
@@ -661,13 +735,14 @@ struct Engine {
     k3_mufu_tabs mt{};
     int nwg = getenv("K3X_NWG") ? atoi(getenv("K3X_NWG")) : 56;
     bool prof = false; std::vector<sycl::event> ev; double kt[4] = {0, 0, 0, 0}; double kspan = 0; long nrun = 0;
+    k3x_tr * tr = nullptr;   // K3X_TRACE: the request being served (set by serve_index, nullptr otherwise)
 
     static sycl::property_list props(bool p) {
         if (p) return sycl::property_list{sycl::property::queue::in_order(), sycl::property::queue::enable_profiling()};
         return sycl::property_list{sycl::property::queue::in_order()};
     }
     static sycl::queue & shared_queue() {
-        if (!g_queue) g_queue = new sycl::queue(sycl::gpu_selector_v, async_err, props(getenv("K3X_PROF") != nullptr));
+        if (!g_queue) g_queue = new sycl::queue(sycl::gpu_selector_v, async_err, props(getenv("K3X_PROF") != nullptr || getenv("K3X_TRACE_PROF") != nullptr));
         return *g_queue;
     }
     Engine(int tg_, int td_, int E_) : q(shared_queue()), tg(tg_), td(td_), E(E_) {
@@ -1013,7 +1088,9 @@ struct Engine {
     // one token: ids[0..k), x[D] -> rows[k][D]. With a sink, the down matmul runs per expert and sink(e) is called as
     // soon as row e is in host memory (in order), so the server can stream rows (C's engine takes partial replies).
     void run(int k, const std::function<void(int)> * sink = nullptr) {
-        q.memcpy(xd, x, D * 4);
+        sycl::event tev[TR_NC]; bool tset[TR_NC] = {};
+        auto T = [&](int i, const sycl::event & e) { if (tr && i < TR_NC) { tr->t_sub[i] = k3x_ns(); tev[i] = e; tset[i] = true; } };
+        T(0, q.memcpy(xd, x, D * 4));
         const float * x_ = xd; float * rows_ = rowsd;
         if (!ext_recs) for (int i = 0; i < k; i++) recs[i] = W + (size_t) ids[i] * prec;
         k3_q8_1 * yq_ = yq, * yq2_ = yq2;
@@ -1023,12 +1100,15 @@ struct Engine {
 #if K3X_FUSE_QX
         ev.push_back(matvec5(k, 2, F, D / K3_QK, tg, 0, pg, QT_, DT_, 0, gb, ub, nullptr, nullptr, 0, x_, D / 32));
         ev.push_back(ev.back());   // keeps the profiling slots: [0] = [1] = fused quant + gate/up
+        T(2, ev.back());
 #else
         ev.push_back(q.parallel_for(sycl::range<1>(D / 32), [=](sycl::id<1> i) {
             k3_quantize_block(x_ + i[0] * 32, yq_ + i[0], mt_);
             store_T(yq_[i[0]], (int) i[0], QT_, DT_);
         }));
+        T(1, ev.back());
         ev.push_back(matvec5(k, 2, F, D / K3_QK, tg, 0, pg, QT_, DT_, 0, gb, ub));
+        T(2, ev.back());
 #endif
         // SiTU + q8_1 of h: 32 work-items per q8 block (one element each, latency-bound table lookups in parallel),
         // then one work-item quantizes the block from SLM exactly as k3_quantize_block does.
@@ -1047,22 +1127,38 @@ struct Engine {
                 }
             });
         }));
+        T(3, ev.back());
         if (!sink) {
             ev.push_back(matvec5(k, 1, D, F / K3_QK, td, 2 * pg, 0, QT2_, DT2_, 1, rows_, nullptr));
+            T(4, ev.back());
             ev.push_back(q.memcpy(rows, rowsd, (size_t) k * D * 4));
+            T(5, ev.back());
             if (spin) { auto & last = ev.back(); while (last.get_info<sycl::info::event::command_execution_status>() != sycl::info::event_command_status::complete) {} }
+            if (tr) tr->t_row[0] = k3x_ns();
             q.wait_and_throw();
         } else {
             sycl::event cp[16];
             for (int e = 0; e < k; e++) {
-                matvec5(1, 1, D, F / K3_QK, td, 2 * pg, 0, QT2_, DT2_, 1, rows_, nullptr, nullptr, nullptr, e);
+                T(4 + 2 * e, matvec5(1, 1, D, F / K3_QK, td, 2 * pg, 0, QT2_, DT2_, 1, rows_, nullptr, nullptr, nullptr, e));
                 cp[e] = q.memcpy(rows + (size_t) e * D, rowsd + (size_t) e * D, D * 4);
+                T(5 + 2 * e, cp[e]);
             }
             for (int e = 0; e < k; e++) {
                 while (cp[e].get_info<sycl::info::event::command_execution_status>() != sycl::info::event_command_status::complete) {}
+                if (tr && e < TR_K) tr->t_row[e] = k3x_ns();
                 (*sink)(e);
+                if (tr && e < TR_K) tr->t_sent[e] = k3x_ns();
             }
             q.wait_and_throw();
+        }
+        if (tr) {
+            tr->t_end = k3x_ns();
+            if (g_tr_prof && sink)   // streamed: the reply went out already, so this is not on the request path
+                for (int i = 0; i < TR_NC; i++) if (tset[i]) {
+                    tr->d_sub[i]   = tev[i].get_profiling_info<sycl::info::event_profiling::command_submit>();
+                    tr->d_start[i] = tev[i].get_profiling_info<sycl::info::event_profiling::command_start>();
+                    tr->d_end[i]   = tev[i].get_profiling_info<sycl::info::event_profiling::command_end>();
+                }
         }
         if (prof && ev.size() >= 4) {
             kspan += (ev.back().get_profiling_info<sycl::info::event_profiling::command_end>() -
@@ -1191,9 +1287,19 @@ static void load_mufu(Engine & en) {
 static double now_ms() { return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now().time_since_epoch()).count(); }
 
 
-static bool rd_spin(int fd, void * p, size_t n) {
+// first (K3X_TRACE): set to the time the first bytes arrived; a SIGUSR1 dump runs here while nothing has arrived yet
+static bool rd_spin(int fd, void * p, size_t n, uint64_t * first = nullptr) {
     char * c = (char *) p;
-    while (n) { ssize_t r = recv(fd, c, n, MSG_DONTWAIT); if (r == 0) return false; if (r < 0) { if (errno == EAGAIN || errno == EWOULDBLOCK) continue; return false; } c += r; n -= r; }
+    while (n) {
+        ssize_t r = recv(fd, c, n, MSG_DONTWAIT);
+        if (r == 0) return false;
+        if (r < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) { if (g_tr_dump && first && !*first) k3x_tr_dump(); continue; }
+            return false;
+        }
+        if (first && !*first) *first = k3x_ns();
+        c += r; n -= r;
+    }
     return true;
 }
 static bool wr_all(int fd, const void * p, size_t n) { const char * c = (const char *) p; while (n) { ssize_t r = send(fd, c, n, 0); if (r <= 0) return false; c += r; n -= r; } return true; }
@@ -1335,30 +1441,42 @@ static int serve_index(const char * idxp, const char * binp, int port) {
     sockaddr_in a = {}; a.sin_family = AF_INET; a.sin_port = htons(port); a.sin_addr.s_addr = INADDR_ANY;
     if (bind(ls, (sockaddr *) &a, sizeof a) || listen(ls, 4)) { perror("bind"); return 1; }
     fprintf(stderr, "serving on %d (busy-poll)\n", port);
-    std::vector<float> nanrows(16 * D, NAN), xin(D); long zero_rows = 0;
+    k3x_tr_init();
+    std::vector<float> nanrows(16 * D, NAN), xin(D); long zero_rows = 0; int nconn = 0;
     for (;;) {
         int c = accept(ls, nullptr, nullptr);
         setsockopt(c, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
-        int32_t hdr[17];
-        while (rd_spin(c, hdr, 17 * 4) && rd_spin(c, xin.data(), D * 4)) {
+        int32_t hdr[17]; nconn++;
+        for (;;) {
+            k3x_tr * tr = k3x_tr_begin();
+            uint64_t t_first = 0;
+            if (!rd_spin(c, hdr, 17 * 4, tr ? &t_first : nullptr)) break;
+            if (tr) { tr->t_first = t_first; tr->t_hdr = k3x_ns(); }
+            if (!rd_spin(c, xin.data(), D * 4)) break;
             const int k = hdr[0];
+            if (tr) { tr->t_rx = k3x_ns(); tr->k = k; tr->conn = nconn; tr->seq = k >= 1 && k < 16 ? hdr[16] : -1; tr->f_before = k3x_tr_freq(); }
             if (k < 1 || k > 16) break;
             auto it0 = map.find(hdr[1]);
             Engine * e = it0 == map.end() ? nullptr : it0->second.first;
             bool ok = e != nullptr;
             for (int i = 0; ok && i < k; i++) { auto it = map.find(hdr[1 + i]); if (it == map.end() || it->second.first != e) ok = false; else e->recs[i] = it->second.second; }
-            if (!ok) { if (!wr_all(c, nanrows.data(), (size_t) k * D * 4)) break; continue; }
+            if (!ok) { if (!wr_all(c, nanrows.data(), (size_t) k * D * 4)) break; if (tr) tr->t_done = k3x_ns(); continue; }
             memcpy(e->x, xin.data(), D * 4);
+            if (tr) tr->t_x = k3x_ns();
+            e->tr = tr;
             bool okw = true;
             // A dropped GPU submission (i915 EXECBUFFER2 EFAULT under a very large residency set) leaves an all-zero
             // row; a real expert row is never all zero, so such a row is sent as NaN and the client reads it locally.
             auto guard = [&](int j) { const float * r = e->rows + (size_t) j * D; for (int i = 0; i < D; i++) if (r[i] != 0.0f) return r;
                                       zero_rows++; return (const float *) nanrows.data(); };
             if (stream) { std::function<void(int)> snk = [&](int j) { if (okw) okw = wr_all(c, guard(j), D * 4); }; e->run(k, &snk); }
-            else { e->run(k); for (int j = 0; j < k && okw; j++) okw = wr_all(c, guard(j), D * 4); }
+            else { e->run(k); for (int j = 0; j < k && okw; j++) okw = wr_all(c, guard(j), D * 4); if (tr) tr->t_sent[0] = k3x_ns(); }
+            e->tr = nullptr;
+            if (tr) { tr->t_done = k3x_ns(); tr->f_after = k3x_tr_freq(); }
             if (!okw) break;
         }
         close(c);
+        k3x_tr_dump();
     }
 }
 
