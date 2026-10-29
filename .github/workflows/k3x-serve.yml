@@ -7,6 +7,8 @@ on:
     branches: [main]
     paths:
       - "tools/bitexact/sycl/**"
+      - "tools/bitexact/cpu/k3cpu.h"
+      - "tools/bitexact/cpu/k3cpu.cpp"
       - "docker/k3x-serve.Dockerfile"
       - ".github/workflows/k3x-serve.yml"
   workflow_dispatch:

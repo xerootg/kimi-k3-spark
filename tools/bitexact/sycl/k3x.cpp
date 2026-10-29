@@ -52,6 +52,12 @@
 #include "k3x_tables.h"
 #include "k3x_math.h"
 #include "k3x_act.h"
+#ifndef K3X_CPU
+#define K3X_CPU 0   // build.sh sets 1 when ../cpu/k3cpu.cpp is there: the CPU half of a request (K3X_CPU_CPUS)
+#endif
+#if K3X_CPU
+#include "../cpu/k3cpu.h"
+#endif
 
 
 #include <sycl/ext/oneapi/dot_product.hpp>
@@ -662,7 +668,7 @@ static inline uint64_t k3x_ns() { timespec t; clock_gettime(CLOCK_MONOTONIC_RAW,
 constexpr int TR_K = 4;               // rows traced per request (production clients send k <= 2)
 constexpr int TR_NC = 4 + 2 * TR_K;   // commands: 0 x to device, 1 q8_1(x), 2 gate/up, 3 SiTU + q8_1(h), 4+2e down e, 5+2e row e to host
 struct k3x_tr {
-    int64_t idx, seq; int32_t k, conn;
+    int64_t idx, seq; int32_t k, conn, ncpu;   // ncpu: experts of this request computed on the CPU (slots 0..ncpu-1)
     uint64_t t_wait, t_first, t_hdr, t_rx, t_x, t_end, t_done;   // wait start, first byte, header, x received, x in host USM, queue drained, done
     uint64_t t_sub[TR_NC];                                       // each submission returned
     uint64_t t_row[TR_K], t_sent[TR_K];                          // row e in host memory (polled), row e written to the socket
@@ -704,7 +710,7 @@ static void k3x_tr_dump() {
     for (int i = 0; i < TR_K; i++) fprintf(f, "\tt_sent%d", i);
     fprintf(f, "\tt_end\tt_done\tf_before\tf_after");
     for (int i = 0; i < TR_NC; i++) fprintf(f, "\td_sub%d\td_start%d\td_end%d", i, i, i);
-    fprintf(f, "\n");
+    fprintf(f, "\tncpu\n");
     const int64_t n = std::min<int64_t>(g_tr_next, (int64_t) g_tr_n);
     for (int64_t j = g_tr_next - n; j < g_tr_next; j++) {
         const k3x_tr & r = g_tr[(size_t) (j % (int64_t) g_tr_n)];
@@ -716,11 +722,71 @@ static void k3x_tr_dump() {
         for (int i = 0; i < TR_K; i++) fprintf(f, "\t%llu", (unsigned long long) r.t_sent[i]);
         fprintf(f, "\t%llu\t%llu\t%d\t%d", (unsigned long long) r.t_end, (unsigned long long) r.t_done, r.f_before, r.f_after);
         for (int i = 0; i < TR_NC; i++) fprintf(f, "\t%llu\t%llu\t%llu", (unsigned long long) r.d_sub[i], (unsigned long long) r.d_start[i], (unsigned long long) r.d_end[i]);
-        fprintf(f, "\n");
+        fprintf(f, "\t%d\n", r.ncpu);
     }
     fclose(f);
     fprintf(stderr, "K3X_TRACE: %lld requests written to %s\n", (long long) n, p);
 }
+
+#if K3X_CPU
+// The CPU half (I, 2026-10-29). K3X_CPU_CPUS=<cpu list> (e.g. 4-11) turns it on; unset, the server is exactly the
+// iGPU-only S1 server. A k3cpu pool (../cpu/k3cpu.h, S3: bit-exact AVX2 + AVX-VNNI kernels, pinned workers created once,
+// nothing allocated per call) reads the v7 records in place from the same host-USM arena as the iGPU: one copy of the
+// experts. Per request the first n experts (slots 0..n-1) go to the CPU and the rest to the iGPU, both started at
+// once; the rows are sent in slot order, so the CPU's go first and the wire format is unchanged.
+//   K3X_CPU_SPLIT=<n at k=1>,<n at k=2>,...  experts on the CPU per k (the last value repeats, clamped to k; default 1)
+//   K3X_CPU_SPIN_US  idle workers spin this long, then sleep on a futex (default 20000; sleeping workers cost 0.5-0.8
+//                    ms on the next token, S3, and the engine sends one request per layer, 3-8 ms apart)
+//   K3X_CPU_INTERLEAVE=1  expert-by-expert task order (the first CPU row is done sooner, the last one later)
+//   K3X_CPU_LOOKUP   0 auto (P-cores gather, E-cores scalar loads), 1 gather, 2 scalar
+// The CPU keeps its own packed MUFU tables (0.75 GB in 2 MiB pages; the iGPU's are device USM), from K3X_MUFU.
+// K3X_CTL "cpu=<split list>" changes the split per connection ("cpu=0" = iGPU only).
+struct CpuHalf {
+    k3cpu_pool * P = nullptr; k3_mufu_tabs mt{};
+    float * rows = nullptr;                             // 16 x D: slot j's row (j < n)
+    float * g = nullptr, * u = nullptr, * h = nullptr;  // validate only (16 x F each)
+    int split[17] = {};
+    int n_for(int k) const { return k < 1 ? 0 : std::min(k, split[std::min(k, 16)]); }
+    void set_split(const char * s) {   // "1,1,2" -> k=1: 1, k=2: 1, k>=3: 2
+        int v[17], n = 0; const char * p = s;
+        while (*p && n < 16) { char * e; long x = strtol(p, &e, 10); if (e == p) break; v[n++] = (int) std::max(0L, x); p = *e == ',' ? e + 1 : e; if (!*e || *e == ' ') break; }
+        if (!n) v[n++] = 0;
+        for (int k = 1; k <= 16; k++) split[k] = v[std::min(k, n) - 1];
+        split[0] = 0;
+    }
+};
+static CpuHalf * g_cpu = nullptr;
+static std::vector<int> parse_cpu_list(const char * s) {
+    std::vector<int> v; std::string t(s); size_t i = 0;
+    while (i < t.size()) {
+        size_t j = t.find(',', i); if (j == std::string::npos) j = t.size();
+        std::string r = t.substr(i, j - i); size_t d = r.find('-');
+        if (d == std::string::npos) v.push_back(atoi(r.c_str()));
+        else for (int c = atoi(r.substr(0, d).c_str()); c <= atoi(r.substr(d + 1).c_str()); c++) v.push_back(c);
+        i = j + 1;
+    }
+    return v;
+}
+static void cpu_init() {
+    const char * cs = getenv("K3X_CPU_CPUS");
+    if (!cs || !*cs || g_cpu) return;
+    CpuHalf * C = new CpuHalf();
+    const char * dir = getenv("K3X_MUFU") ? getenv("K3X_MUFU") : "../ref/mufu";
+    if (!k3cpu_load_mufu(dir, &C->mt)) { fprintf(stderr, "K3X_CPU: MUFU tables from %s failed\n", dir); exit(1); }
+    static std::vector<int> cpus = parse_cpu_list(cs);
+    k3cpu_opts o; o.cpus = cpus.data(); o.ncpu = (int) cpus.size();
+    o.spin_us = getenv("K3X_CPU_SPIN_US") ? atoi(getenv("K3X_CPU_SPIN_US")) : 20000;
+    o.lookup = getenv("K3X_CPU_LOOKUP") ? atoi(getenv("K3X_CPU_LOOKUP")) : 0;
+    o.interleave = getenv("K3X_CPU_INTERLEAVE") && atoi(getenv("K3X_CPU_INTERLEAVE"));
+    C->P = k3cpu_create(&C->mt, o);
+    if (!C->P) { fprintf(stderr, "K3X_CPU: k3cpu_create failed (F16C check)\n"); exit(1); }
+    C->rows = (float *) aligned_alloc(4096, (size_t) 16 * D * 4); memset(C->rows, 0, (size_t) 16 * D * 4);
+    C->set_split(getenv("K3X_CPU_SPLIT") ? getenv("K3X_CPU_SPLIT") : "1");
+    g_cpu = C;
+    fprintf(stderr, "K3X_CPU: %d workers on cpus %s, spin %d us, lookup %d, interleave %d, split k=1..4: %d %d %d %d\n", o.ncpu, cs,
+            o.spin_us, o.lookup, (int) o.interleave, C->split[1], C->split[2], C->split[3], C->split[4]);
+}
+#endif
 
 struct Engine {
     sycl::queue q;
@@ -1174,6 +1240,63 @@ struct Engine {
         G.k = k; G.x = x; G.rows = rows;
         return G.g;
     }
+#if K3X_CPU
+    // One token split between the CPU (slots 0..c-1, g_cpu) and the iGPU (slots c..k-1, which are its experts 0..k-c-1),
+    // both reading the arena in place: recp[j] = slot j's record. sink(j, row) gets every row in slot order as soon as
+    // it and all earlier rows are complete (the CPU's rows come first). Zero-copy path only (x and rows in host USM).
+    template <class Sink> void run_split(int k, int c, const uint8_t * const * recp, Sink & sink) {
+        const int kg = k - c;
+        CpuHalf & C = *g_cpu;
+        if (tr) tr->ncpu = c;
+        if (prof) ev.clear();
+        if (c) {   // posting takes ~0.1 us; the workers start on q8_1(x) at once
+            k3cpu_expert ex[16];
+            for (int j = 0; j < c; j++) {
+                ex[j].rec = recp[j]; ex[j].tg = tg; ex[j].tu = tg; ex[j].td = td; ex[j].out = C.rows + (size_t) j * D;
+                ex[j].g = C.g ? C.g + (size_t) j * F : nullptr; ex[j].u = C.u ? C.u + (size_t) j * F : nullptr; ex[j].h = C.h ? C.h + (size_t) j * F : nullptr;
+                ex[j].layout = K3CPU_V7;
+            }
+            k3cpu_submit(C.P, x, ex, c);
+        }
+        sycl::event tev[TR_NC]; bool tset[TR_NC] = {};
+        sycl::event rev[16]; int nrev = 0;
+        if (kg) {
+            for (int i = 0; i < kg; i++) recs[i] = recp[c + i];
+            if (use_graph) {
+                auto * g = graph_for(kg);
+                if (tr) tr->t_sub[0] = k3x_ns();
+                rev[nrev++] = q.ext_oneapi_graph(*g);
+                if (tr) tr->t_sub[1] = k3x_ns();
+            } else {
+                submit_front(kg, x, tr ? tev : nullptr, tset);
+                if (down_split) for (int e = 0; e < kg; e++) {
+                    rev[nrev++] = submit_down(1, e, rows);
+                    if (tr && e < TR_K) { tr->t_sub[4 + 2 * e] = k3x_ns(); tev[4 + 2 * e] = rev[e]; tset[4 + 2 * e] = true; }
+                } else {
+                    rev[nrev++] = submit_down(kg, 0, rows);
+                    if (tr) { tr->t_sub[4] = k3x_ns(); tev[4] = rev[0]; tset[4] = true; }
+                }
+            }
+        }
+        for (int j = 0; j < k; j++) {
+            const float * r;
+            if (j < c) { k3cpu_wait(C.P, j); r = C.rows + (size_t) j * D; }
+            else { poll(rev[nrev == 1 ? 0 : j - c]); r = rows + (size_t) (j - c) * D; }
+            if (tr && j < TR_K) tr->t_row[j] = k3x_ns();
+            sink(j, r);
+            if (tr && j < TR_K) tr->t_sent[j] = k3x_ns();
+        }
+        if (kg) q.wait_and_throw();
+        if (tr) {
+            tr->t_end = k3x_ns();
+            if (g_tr_prof) for (int i = 0; i < TR_NC; i++) if (tset[i]) {
+                tr->d_sub[i]   = tev[i].get_profiling_info<sycl::info::event_profiling::command_submit>();
+                tr->d_start[i] = tev[i].get_profiling_info<sycl::info::event_profiling::command_start>();
+                tr->d_end[i]   = tev[i].get_profiling_info<sycl::info::event_profiling::command_end>();
+            }
+        }
+    }
+#endif
     template <class Sink> void run_s(int k, Sink & sink, bool stream) {
         sycl::event tev[TR_NC]; bool tset[TR_NC] = {};
         sycl::event * tv = tr ? tev : nullptr;
@@ -1406,7 +1529,7 @@ static K3xArena g_arena;
 //    accept() to close(), so the GT stays out of RC6 only while a client is connected.
 //  K3X_MEMWARM=<MB/s>: a thread streams a 64 MiB buffer at about that rate while the server waits for a request (the
 //    memory clocks drop between requests: M saw the kernels ~25-35 % slower after idle even with forcewake, and a
-//    background dd mostly restored them). Stops while a request is being served.
+//    background dd mostly restored them). Stops while a request is being served. K3X_MEMWARM_CPU=<cpu> pins the thread.
 static std::atomic<int> g_warm_on{0};
 static std::atomic<double> g_warm_mbps{0};
 static void memwarm_start(double mbps) {   // also from K3X_CTL "warm=<MB/s>" (0 = off)
@@ -1415,6 +1538,9 @@ static void memwarm_start(double mbps) {   // also from K3X_CTL "warm=<MB/s>" (0
     if (started || mbps <= 0) return;
     started = true;
     std::thread([]() {
+        if (const char * mc = getenv("K3X_MEMWARM_CPU")) {   // e.g. an LP-E core (12, 13) when cpus 0-11 are taken
+            cpu_set_t cs; CPU_ZERO(&cs); CPU_SET(atoi(mc), &cs); pthread_setaffinity_np(pthread_self(), sizeof cs, &cs);
+        }
         const size_t N = (size_t) 64 << 20; uint8_t * b = (uint8_t *) aligned_alloc(4096, N); memset(b, 1, N);
         const size_t step = 64 << 10;   // 64 KiB per burst, paced
         size_t off = 0; volatile uint64_t sink = 0;
@@ -1484,6 +1610,12 @@ static int serve_index(const char * idxp, const char * binp, int port) {
     if (!getenv("K3X_FULLCHECK")) for (auto & v : tab_host) v = HostPacked();   // host copies only serve the host reference
     fprintf(stderr, "loaded %zu of %zu records (%.1f GB, %s arena) in %.1f s, %zu engine kinds\n", map.size(), idx.size(), tot / 1e9,
             hostarena ? "host USM" : "device USM", (now_ms() - t0) / 1e3, eng.size());
+#if K3X_CPU
+    if (getenv("K3X_CPU_CPUS")) {
+        if (!hostarena) { fprintf(stderr, "K3X_CPU needs the host-USM arena (K3X_ARENA=host)\n"); return 1; }
+        cpu_init();
+    }
+#endif
     // One request slot shared by every engine (one request at a time): header + x received straight into host USM, rows
     // written there by the down kernels and sent from there.
     float * slot_rows = nullptr; int32_t * slot_hdr = nullptr; float * slot_x = nullptr;
@@ -1532,7 +1664,7 @@ static int serve_index(const char * idxp, const char * binp, int port) {
         std::vector<const R *> served; for (auto & r : idx) if (map.count(r.gid)) served.push_back(&r);
         const size_t ns = served.size();
         std::vector<float> xin(D); for (int i = 0; i < D; i++) xin[i] = 0.03f * (float) ((i * 53) % 67 - 33);
-        std::vector<float> devrows(ns * D);
+        std::vector<float> devrows(ns * D), cpurows;
         double t1 = now_ms();
         for (size_t s2 = 0; s2 < ns; s2++) {
             auto it = map.find(served[s2]->gid); Engine * e = it->second.first; e->ext_recs = true;
@@ -1540,7 +1672,20 @@ static int serve_index(const char * idxp, const char * binp, int port) {
             memcpy(&devrows[s2 * D], e->rows, D * 4);
         }
         fprintf(stderr, "FULLCHECK: GPU pass %.1f s, host reference on %u threads...\n", (now_ms() - t1) / 1e3, std::thread::hardware_concurrency());
-        std::atomic<size_t> next{0}, badrec{0}; std::atomic<long> badval{0};
+#if K3X_CPU
+        if (g_cpu) {   // the CPU half reads the same arena records: every record on the CPU too, against the same reference
+            const double tc = now_ms();
+            cpurows.resize(ns * D);
+            for (size_t s2 = 0; s2 < ns; s2++) {
+                const R & r = *served[s2];
+                k3cpu_expert ex; ex.rec = map.find(r.gid)->second.second; ex.tg = r.tg; ex.tu = r.tg; ex.td = r.td;
+                ex.out = &cpurows[s2 * D]; ex.g = ex.u = ex.h = nullptr; ex.layout = K3CPU_V7;
+                k3cpu_run(g_cpu->P, xin.data(), &ex, 1);
+            }
+            fprintf(stderr, "FULLCHECK: CPU pass %.1f s\n", (now_ms() - tc) / 1e3);
+        }
+#endif
+        std::atomic<size_t> next{0}, badrec{0}, badcpu{0}; std::atomic<long> badval{0};
         auto worker = [&]() {
             FILE * f = fopen(binp, "rb"); std::vector<uint8_t> rb; std::vector<float> ref(D); int zero = 0;
             for (size_t s2; (s2 = next++) < ns;) {
@@ -1549,14 +1694,17 @@ static int serve_index(const char * idxp, const char * binp, int port) {
                 host_ref(rb.data(), rec, r.tg, r.td, &zero, 1, xin.data(), ref.data(), host_mt);
                 long bv = 0; for (int i = 0; i < D; i++) bv += k3_f2u(ref[i]) != k3_f2u(devrows[s2 * D + i]);
                 if (bv) { badrec++; badval += bv; }
+                if (!cpurows.empty()) { long bc = 0; for (int i = 0; i < D; i++) bc += k3_f2u(ref[i]) != k3_f2u(cpurows[s2 * D + i]); if (bc) { badcpu++; badval += bc; } }
             }
             fclose(f);
         };
+        // the CPU half's workers (if any) sleep after their spin: no contention with the reference threads for long
         std::vector<std::thread> th; for (unsigned i = 0; i < std::max(1u, std::thread::hardware_concurrency() - 2); i++) th.emplace_back(worker);
         for (auto & t : th) t.join();
         fprintf(stderr, "FULLCHECK: %zu of %zu records bit-identical to the host reference (%ld values differ), %.1f s\n",
                 ns - badrec.load(), ns, badval.load(), (now_ms() - t1) / 1e3);
-        if (badrec) exit(6);
+        if (!cpurows.empty()) fprintf(stderr, "FULLCHECK: CPU half: %zu of %zu records bit-identical to the host reference\n", ns - badcpu.load(), ns);
+        if (badrec || badcpu) exit(6);
         for (auto & v : tab_host) v = HostPacked();
     }
     if (getenv("K3X_PROBEALL")) {   // diagnostic: one token through every served record, report all-zero rows by load order
@@ -1599,9 +1747,10 @@ static int serve_index(const char * idxp, const char * binp, int port) {
         int c = accept(ls, nullptr, nullptr);
         setsockopt(c, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
         int fw = -1;
-        if (const char * fp = getenv("K3X_FORCEWAKE")) { fw = open(fp, O_RDONLY); if (fw < 0) perror(fp); }
-        if (const char * cp = getenv("K3X_CTL")) {   // A/B without a reload: "zc=1 split=1 graph=0 qx=0 warm=0", read per connection
+        static bool fw_on = true;   // K3X_CTL "fw=0" skips K3X_FORCEWAKE for the connection (A/B)
+        if (const char * cp = getenv("K3X_CTL")) {   // A/B without a reload: "zc=1 split=1 graph=0 qx=0 warm=0 fw=1 cpu=1", read per connection
             char b[256] = {0}; FILE * cf = fopen(cp, "r"); if (cf) { size_t n = fread(b, 1, sizeof b - 1, cf); b[n] = 0; fclose(cf); }
+            if (const char * fv = strstr(b, "fw=")) fw_on = atoi(fv + 3) != 0;
             for (auto * e : eng) {
                 auto opt = [&](const char * key, auto & v) { const char * f = strstr(b, key); if (f) v = atoi(f + strlen(key)); };
                 bool z = e->zc, g = e->use_graph, fq = e->fuse_qx; int sp = e->down_split;
@@ -1610,8 +1759,13 @@ static int serve_index(const char * idxp, const char * binp, int port) {
                 if (fq != e->fuse_qx) for (auto & G : e->graphs) { delete G.g; G.g = nullptr; }
                 e->zc = z; e->down_split = sp; e->use_graph = g; e->fuse_qx = fq;
             }
-            fprintf(stderr, "conn %d: zc=%d split=%d graph=%d qx=%d warm=%.0f\n", nconn + 1, eng[0]->zc, eng[0]->down_split, eng[0]->use_graph, eng[0]->fuse_qx, g_warm_mbps.load());
+            fprintf(stderr, "conn %d: zc=%d split=%d graph=%d qx=%d warm=%.0f fw=%d\n", nconn + 1, eng[0]->zc, eng[0]->down_split, eng[0]->use_graph, eng[0]->fuse_qx, g_warm_mbps.load(), (int) fw_on);
+#if K3X_CPU
+            if (g_cpu) { if (const char * cv = strstr(b, "cpu=")) g_cpu->set_split(cv + 4);
+                         fprintf(stderr, "conn %d: cpu split k=1..4: %d %d %d %d\n", nconn + 1, g_cpu->split[1], g_cpu->split[2], g_cpu->split[3], g_cpu->split[4]); }
+#endif
         }
+        if (const char * fp = getenv("K3X_FORCEWAKE")) if (fw_on) { fw = open(fp, O_RDONLY); if (fw < 0) perror(fp); }
         int32_t * hdr = slot_hdr; nconn++;
         for (;;) {
             k3x_tr * tr = k3x_tr_begin();
@@ -1635,8 +1789,17 @@ static int serve_index(const char * idxp, const char * binp, int port) {
             bool okw = true;
             // A dropped GPU submission (i915 EXECBUFFER2 EFAULT under a very large residency set) leaves an all-zero
             // row; a real expert row is never all zero, so such a row is sent as NaN and the client reads it locally.
-            auto guard = [&](int j) { const float * r = e->rows + (size_t) j * D; for (int i = 0; i < D; i++) if (r[i] != 0.0f) return r;
-                                      zero_rows++; return (const float *) nanrows.data(); };
+            auto guardp = [&](const float * r) { for (int i = 0; i < D; i++) if (r[i] != 0.0f) return r;
+                                                 zero_rows++; return (const float *) nanrows.data(); };
+            auto guard = [&](int j) { return guardp(e->rows + (size_t) j * D); };
+#if K3X_CPU
+            const int ncpu = g_cpu && e->zc ? g_cpu->n_for(k) : 0;
+            if (ncpu > 0) {   // CPU half: slots 0..ncpu-1 on the CPU, the rest on the iGPU, always streamed in slot order
+                const uint8_t * recp[16]; for (int i = 0; i < k; i++) recp[i] = e->recs[i];
+                auto snk = [&](int, const float * r) { if (okw) okw = wr_all(c, guardp(r), D * 4); };
+                e->run_split(k, ncpu, recp, snk);
+            } else
+#endif
             if (stream) { auto snk = [&](int j) { if (okw) okw = wr_all(c, guard(j), D * 4); }; e->run(k, snk); }
             else { e->run(k); for (int j = 0; j < k && okw; j++) okw = wr_all(c, guard(j), D * 4); if (tr) tr->t_sent[0] = k3x_ns(); }
             e->tr = nullptr;
@@ -1670,6 +1833,13 @@ int main(int argc, char ** argv) {
         fclose(f);
     }
     en.upload(host.data(), 0, E);
+#if K3X_CPU
+    if (getenv("K3X_CPU_CPUS")) {
+        if (!Engine::arena_host()) { fprintf(stderr, "K3X_CPU needs the host-USM arena (K3X_ARENA=host)\n"); return 1; }
+        cpu_init();
+        if (mode == "validate") { g_cpu->g = new float[16 * F]; g_cpu->u = new float[16 * F]; g_cpu->h = new float[16 * F]; }
+    }
+#endif
     std::mt19937 rng(1234); std::normal_distribution<float> nd(0.f, 1.f);
 
     if (mode == "check") {
@@ -1797,9 +1967,27 @@ int main(int argc, char ** argv) {
         for (int c = 0; c < ncase; c++) {
             memcpy(en.x, X.data() + (size_t) c * D * 4, D * 4);
             memcpy(en.ids, I.data() + (size_t) c * K * 4, K * 4);
+#if K3X_CPU
+            // K3X_VCPU=n (with K3X_CPU_CPUS): the serving path's CPU/iGPU split, experts 0..n-1 of each case on the CPU and
+            // the rest on the iGPU, rows collected through the sink in slot order; g/u/h of the CPU's experts from k3cpu.
+            const int vc = g_cpu && getenv("K3X_VCPU") ? std::min(K, atoi(getenv("K3X_VCPU"))) : 0;
+            if (vc > 0) {
+                const uint8_t * recp[16]; for (int i = 0; i < K; i++) recp[i] = en.W + (size_t) en.ids[i] * en.prec;
+                static std::vector<float> vrows((size_t) K * D); int nx = 0;
+                auto snk = [&](int j, const float * r) { if (j != nx++) { fprintf(stderr, "sink order\n"); exit(7); } memcpy(&vrows[(size_t) j * D], r, D * 4); };
+                en.run_split(K, vc, recp, snk);
+                if (nx != K) { fprintf(stderr, "sink count %d\n", nx); exit(7); }
+                const size_t gf = (size_t) (K - vc) * F * 4;
+                if (gf) { en.q.memcpy(dg.data() + (size_t) vc * F, en.gbuf, gf); en.q.memcpy(du.data() + (size_t) vc * F, en.ubuf, gf); en.q.memcpy(dh.data() + (size_t) vc * F, en.hbuf, gf).wait(); }
+                memcpy(dg.data(), g_cpu->g, (size_t) vc * F * 4); memcpy(du.data(), g_cpu->u, (size_t) vc * F * 4); memcpy(dh.data(), g_cpu->h, (size_t) vc * F * 4);
+                memcpy(en.rows, vrows.data(), (size_t) K * D * 4);
+            } else
+#endif
+            {
             if (getenv("K3X_VSTREAM")) { int nx = 0; auto snk = [&](int j) { if (j != nx++) { fprintf(stderr, "sink order\n"); exit(7); } }; en.run(K, snk); }   // the serving path
             else en.run(K);
             en.q.memcpy(dg.data(), en.gbuf, K * F * 4); en.q.memcpy(du.data(), en.ubuf, K * F * 4); en.q.memcpy(dh.data(), en.hbuf, K * F * 4).wait();
+            }
             const uint32_t * rg = (const uint32_t *) (G.data() + (size_t) c * K * F * 4), * ru = (const uint32_t *) (U.data() + (size_t) c * K * F * 4);
             const uint32_t * rh = (const uint32_t *) (H.data() + (size_t) c * K * F * 4), * rd = (const uint32_t *) (DN.data() + (size_t) c * K * D * 4);
             int cbad[4] = {0, 0, 0, 0};
@@ -1826,7 +2014,7 @@ int main(int argc, char ** argv) {
         std::vector<int> ks; for (char * s = strtok(argv[6], ","); s; s = strtok(nullptr, ",")) ks.push_back(atoi(s));
         int iters = atoi(argv[7]);
         const long gap_us = getenv("K3X_BENCH_GAP_US") ? atol(getenv("K3X_BENCH_GAP_US")) : 0;
-        const bool strm = getenv("K3X_STREAM") != nullptr;
+        const bool strm = getenv("K3X_STREAM") != nullptr, rowt = strm || getenv("K3X_BCPU") != nullptr;
         for (int i = 0; i < D; i++) en.x[i] = nd(rng);
         for (int k : ks) {
             std::vector<double> t, tfirst, tlast;
@@ -1834,6 +2022,15 @@ int main(int argc, char ** argv) {
                 if (gap_us) { const double tg0 = now_ms(); while (now_ms() - tg0 < gap_us * 1e-3) usleep(gap_us > 200 ? 100 : 0); }
                 for (int i = 0; i < k; i++) en.ids[i] = rng() % E;
                 double t0 = now_ms(), tf = 0, tl = 0;
+#if K3X_CPU
+                // K3X_BCPU=n (with K3X_CPU_CPUS): the CPU/iGPU split of the serving path, n experts (clamped to k) on the CPU
+                const int bc = g_cpu && getenv("K3X_BCPU") ? std::min(k, atoi(getenv("K3X_BCPU"))) : 0;
+                if (bc > 0) {
+                    const uint8_t * recp[16]; for (int i = 0; i < k; i++) recp[i] = en.W + (size_t) en.ids[i] * en.prec;
+                    auto snk = [&](int j, const float *) { const double v = now_ms() - t0; if (j == 0) tf = v; tl = v; };
+                    en.run_split(k, bc, recp, snk);
+                } else
+#endif
                 if (strm) { auto snk = [&](int j) { const double v = now_ms() - t0; if (j == 0) tf = v; tl = v; }; en.run(k, snk); }
                 else en.run(k);
                 double dt = now_ms() - t0;
@@ -1842,7 +2039,7 @@ int main(int argc, char ** argv) {
             std::sort(t.begin(), t.end());
             double p50 = t[t.size() / 2], p90 = t[(size_t) (t.size() * 0.9)];
             if (en.prof && en.nrun) { printf("  kernels (ms avg): quant %.3f gate/up %.3f situ+quant %.3f down %.3f  gpu span %.3f\n", en.kt[0] / en.nrun, en.kt[1] / en.nrun, en.kt[2] / en.nrun, en.kt[3] / en.nrun, en.kspan / en.nrun); for (double & v : en.kt) v = 0; en.kspan = 0; en.nrun = 0; }
-            if (strm) { std::sort(tfirst.begin(), tfirst.end()); std::sort(tlast.begin(), tlast.end());
+            if (rowt) { std::sort(tfirst.begin(), tfirst.end()); std::sort(tlast.begin(), tlast.end());
                         printf("  first row p50 %.3f p90 %.3f ms, last row p50 %.3f p90 %.3f ms\n", tfirst[tfirst.size() / 2], tfirst[tfirst.size() * 9 / 10], tlast[tlast.size() / 2], tlast[tlast.size() * 9 / 10]); }
             printf("k=%2d: p50 %.3f ms  p90 %.3f ms  min %.3f ms  -> %.1f GB/s (p50)\n", k, p50, p90, t[0], k * en.rec / p50 / 1e6);
             fflush(stdout);

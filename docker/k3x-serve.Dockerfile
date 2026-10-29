@@ -17,8 +17,10 @@ ARG LLAMA_SHA
 # the Spark image applies patches/ on top of LLAMA_SHA but none touch it.
 ADD https://raw.githubusercontent.com/ggml-org/llama.cpp/${LLAMA_SHA}/ggml/src/ggml-common.h /ggml/ggml-common.h
 COPY tools/bitexact/sycl/build.sh tools/bitexact/sycl/k3x.cpp tools/bitexact/sycl/k3x_act.h \
-     tools/bitexact/sycl/k3x_math.h tools/bitexact/sycl/k3x_mufu.h /w/
-RUN bash /w/build.sh
+     tools/bitexact/sycl/k3x_math.h tools/bitexact/sycl/k3x_mufu.h /w/sycl/
+# the CPU half (K3X_CPU_CPUS): S3's bit-exact AVX2 + AVX-VNNI kernels, compiled by build.sh with g++
+COPY tools/bitexact/cpu/k3cpu.h tools/bitexact/cpu/k3cpu.cpp /w/cpu/
+RUN bash /w/sycl/build.sh
 # User-mode GPU driver stack, pinned (same URLs as tools/distributed/bundle.sh).
 ADD https://github.com/oneapi-src/level-zero/releases/download/v1.28.2/level-zero_1.28.2%2Bu24.04_amd64.deb \
     https://github.com/intel/intel-graphics-compiler/releases/download/v2.34.4/intel-igc-core-2_2.34.4+21428_amd64.deb \
@@ -26,7 +28,7 @@ ADD https://github.com/oneapi-src/level-zero/releases/download/v1.28.2/level-zer
     https://github.com/intel/compute-runtime/releases/download/26.18.38308.1/libigdgmm12_22.10.0_amd64.deb \
     https://github.com/intel/compute-runtime/releases/download/26.18.38308.1/libze-intel-gpu1_26.18.38308.1-0_amd64.deb \
     /debs/
-RUN set -e; mkdir -p /opt/k3x/lib /x; cp /w/k3x /opt/k3x/; \
+RUN set -e; mkdir -p /opt/k3x/lib /x; cp /w/sycl/k3x /opt/k3x/; \
     for d in /debs/*.deb; do dpkg -x "$d" /x; done; \
     find /x -name '*.so*' \( -type f -o -type l \) -exec cp -P {} /opt/k3x/lib/ \; ; \
     CL=/opt/intel/oneapi/compiler/latest/lib; \
