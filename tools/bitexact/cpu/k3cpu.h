@@ -39,6 +39,9 @@ struct k3cpu_opts {
                               // 1 = vpgatherdd everywhere, 2 = scalar loads everywhere
     bool interleave = false;  // task order gu(e0) dn(e0) gu(e1) ..: expert 0 finishes first (streaming), default batches
                               // gu(e0) gu(e1) .. dn(e0) dn(e1) .. (fewer stalls, earliest completion of the whole token)
+    int rt_prio = 0;          // > 0: workers run SCHED_FIFO at this priority (needs CAP_SYS_NICE; a warning otherwise), so
+                              // ordinary threads on their cpus cannot preempt them mid-token. Keep spin_us short then: a
+                              // spinning SCHED_FIFO worker uses up the RT budget (sched_rt_runtime_us, 95 %) and is throttled.
 };
 k3cpu_pool * k3cpu_create(const k3_mufu_tabs * mt, const k3cpu_opts & o);
 void k3cpu_destroy(k3cpu_pool * p);

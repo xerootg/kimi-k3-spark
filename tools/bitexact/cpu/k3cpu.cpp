@@ -786,6 +786,11 @@ static void worker(k3cpu_pool * P, int idx) {
         cpu_set_t cs; CPU_ZERO(&cs); CPU_SET(P->cpus[idx], &cs);
         pthread_setaffinity_np(pthread_self(), sizeof cs, &cs);
     }
+    if (P->o.rt_prio > 0) {
+        sched_param sp{}; sp.sched_priority = P->o.rt_prio;
+        const int rc = pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp);
+        if (rc && idx == 0) fprintf(stderr, "k3cpu: SCHED_FIFO %d not allowed (%s), workers stay SCHED_OTHER\n", P->o.rt_prio, strerror(rc));
+    }
     set_daz_ftz();
     // CPUID 0x1A: core type of the cpu this thread now runs on (0x20 = Atom/E-core, 0x40 = Core/P-core)
     unsigned a = 0, b_ = 0, c = 0, d = 0;

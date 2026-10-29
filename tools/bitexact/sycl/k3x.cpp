@@ -674,6 +674,7 @@ struct k3x_tr {
     uint64_t t_row[TR_K], t_sent[TR_K];                          // row e in host memory (polled), row e written to the socket
     uint64_t d_sub[TR_NC], d_start[TR_NC], d_end[TR_NC];         // K3X_TRACE_PROF: device clock
     int32_t f_before, f_after;                                   // K3X_TRACE_FREQ: MHz
+    uint64_t t_csub, c_gu, c_dn;   // CPU half: k3cpu posted; its last expert's gate/up and down done (ns after t_csub)
 };
 static k3x_tr * g_tr = nullptr; static size_t g_tr_n = 0; static int64_t g_tr_next = 0;
 static bool g_tr_prof = false; static int g_tr_freq_fd = -1;
@@ -710,7 +711,7 @@ static void k3x_tr_dump() {
     for (int i = 0; i < TR_K; i++) fprintf(f, "\tt_sent%d", i);
     fprintf(f, "\tt_end\tt_done\tf_before\tf_after");
     for (int i = 0; i < TR_NC; i++) fprintf(f, "\td_sub%d\td_start%d\td_end%d", i, i, i);
-    fprintf(f, "\tncpu\n");
+    fprintf(f, "\tncpu\tt_csub\tc_gu\tc_dn\n");
     const int64_t n = std::min<int64_t>(g_tr_next, (int64_t) g_tr_n);
     for (int64_t j = g_tr_next - n; j < g_tr_next; j++) {
         const k3x_tr & r = g_tr[(size_t) (j % (int64_t) g_tr_n)];
@@ -722,7 +723,7 @@ static void k3x_tr_dump() {
         for (int i = 0; i < TR_K; i++) fprintf(f, "\t%llu", (unsigned long long) r.t_sent[i]);
         fprintf(f, "\t%llu\t%llu\t%d\t%d", (unsigned long long) r.t_end, (unsigned long long) r.t_done, r.f_before, r.f_after);
         for (int i = 0; i < TR_NC; i++) fprintf(f, "\t%llu\t%llu\t%llu", (unsigned long long) r.d_sub[i], (unsigned long long) r.d_start[i], (unsigned long long) r.d_end[i]);
-        fprintf(f, "\t%d\n", r.ncpu);
+        fprintf(f, "\t%d\t%llu\t%llu\t%llu\n", r.ncpu, (unsigned long long) r.t_csub, (unsigned long long) r.c_gu, (unsigned long long) r.c_dn);
     }
     fclose(f);
     fprintf(stderr, "K3X_TRACE: %lld requests written to %s\n", (long long) n, p);
@@ -739,6 +740,9 @@ static void k3x_tr_dump() {
 //                    ms on the next token, S3, and the engine sends one request per layer, 3-8 ms apart)
 //   K3X_CPU_INTERLEAVE=1  expert-by-expert task order (the first CPU row is done sooner, the last one later)
 //   K3X_CPU_LOOKUP   0 auto (P-cores gather, E-cores scalar loads), 1 gather, 2 scalar
+//   K3X_CPU_RT=<prio>  workers run SCHED_FIFO (root): other threads on their cpus cannot preempt them mid-token (on nuc2
+//                    the k8s node's own threads did, for up to tens of ms). The spin is then capped at 2000 us so the
+//                    workers stay far below the RT budget (sched_rt_runtime_us), and they sleep on a futex in longer gaps.
 // The CPU keeps its own packed MUFU tables (0.75 GB in 2 MiB pages; the iGPU's are device USM), from K3X_MUFU.
 // K3X_CTL "cpu=<split list>" changes the split per connection ("cpu=0" = iGPU only).
 struct CpuHalf {
@@ -778,13 +782,15 @@ static void cpu_init() {
     o.spin_us = getenv("K3X_CPU_SPIN_US") ? atoi(getenv("K3X_CPU_SPIN_US")) : 20000;
     o.lookup = getenv("K3X_CPU_LOOKUP") ? atoi(getenv("K3X_CPU_LOOKUP")) : 0;
     o.interleave = getenv("K3X_CPU_INTERLEAVE") && atoi(getenv("K3X_CPU_INTERLEAVE"));
+    o.rt_prio = getenv("K3X_CPU_RT") ? atoi(getenv("K3X_CPU_RT")) : 0;
+    if (o.rt_prio > 0 && (o.spin_us < 0 || o.spin_us > 2000)) o.spin_us = 2000;
     C->P = k3cpu_create(&C->mt, o);
     if (!C->P) { fprintf(stderr, "K3X_CPU: k3cpu_create failed (F16C check)\n"); exit(1); }
     C->rows = (float *) aligned_alloc(4096, (size_t) 16 * D * 4); memset(C->rows, 0, (size_t) 16 * D * 4);
     C->set_split(getenv("K3X_CPU_SPLIT") ? getenv("K3X_CPU_SPLIT") : "1");
     g_cpu = C;
-    fprintf(stderr, "K3X_CPU: %d workers on cpus %s, spin %d us, lookup %d, interleave %d, split k=1..4: %d %d %d %d\n", o.ncpu, cs,
-            o.spin_us, o.lookup, (int) o.interleave, C->split[1], C->split[2], C->split[3], C->split[4]);
+    fprintf(stderr, "K3X_CPU: %d workers on cpus %s, spin %d us, SCHED_FIFO %d, lookup %d, interleave %d, split k=1..4: %d %d %d %d\n", o.ncpu, cs,
+            o.spin_us, o.rt_prio, o.lookup, (int) o.interleave, C->split[1], C->split[2], C->split[3], C->split[4]);
 }
 #endif
 
@@ -1256,6 +1262,7 @@ struct Engine {
                 ex[j].g = C.g ? C.g + (size_t) j * F : nullptr; ex[j].u = C.u ? C.u + (size_t) j * F : nullptr; ex[j].h = C.h ? C.h + (size_t) j * F : nullptr;
                 ex[j].layout = K3CPU_V7;
             }
+            if (tr) tr->t_csub = k3x_ns();
             k3cpu_submit(C.P, x, ex, c);
         }
         sycl::event tev[TR_NC]; bool tset[TR_NC] = {};
@@ -1287,6 +1294,7 @@ struct Engine {
             if (tr && j < TR_K) tr->t_sent[j] = k3x_ns();
         }
         if (kg) q.wait_and_throw();
+        if (tr && c) { k3cpu_times ct; k3cpu_last_times(C.P, &ct); tr->c_gu = ct.gu_done[c - 1]; tr->c_dn = ct.dn_done[c - 1]; }
         if (tr) {
             tr->t_end = k3x_ns();
             if (g_tr_prof) for (int i = 0; i < TR_NC; i++) if (tset[i]) {
