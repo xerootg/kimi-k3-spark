@@ -34,6 +34,8 @@ bit-identical to unpatched llama.cpp at temperature 0.
   1.96 tok/s, plus the dead ends, the limits and how to build and run it.
 - [`docs/experiments.md`](docs/experiments.md): the experiment ledger,
   every measurement and verdict.
+- [`docs/roadmap.md`](docs/roadmap.md): what we are doing next, in
+  priority order, and the status of each step.
 - The patch set as a llama.cpp fork, one commit per patch on the pinned
   upstream commit: [`xerootg/llama.cpp`, branch
   `kimi-k3`](https://github.com/xerootg/llama.cpp/tree/kimi-k3).
