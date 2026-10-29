@@ -6,10 +6,10 @@ memwait() { until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo)
 run() {   # run IDX PORT LOG [ENV...] : start server, wait for serving/FAIL, print summary lines, leave it running
   local idx=$1 port=$2 log=$3; shift 3
   (setsid nohup sudo -n -u xero -g render env "$@" LD_LIBRARY_PATH=lib taskset -c 4-11 choom -n 1000 -- $BIN $idx ../remote/experts.bin - - serveidx $port > $log 2>&1 &)
-  until grep -q "serving on\|FAIL\|rror" $log; do sleep 2; if ! pgrep -f "k3x-v1[01] $idx" >/dev/null; then break; fi; done
+  until grep -q "serving on\|FAIL\|rror" $log; do sleep 2; if ! pgrep -x "$(basename $BIN)" >/dev/null; then break; fi; done
   grep -E "loaded|ROWCHECK|FULLCHECK|self|FAIL|reached|rror" $log | grep -v "^ioctl" | sed "s|^|  [$port] |"
 }
-stopport() { for p in $(pgrep -a k3x-v1[01] | awk -v P="serveidx $1" 'index($0,P){print $1}'); do sudo -n kill $p; done; sleep 3; }
+stopport() { for p in $(pgrep -a "k3x" | awk -v P="serveidx $1" 'index($0,P){print $1}'); do sudo -n kill $p; done; sleep 3; }
 TE=/sys/kernel/tracing/events/i915
 traceon()  { sudo -n sh -c "echo > /sys/kernel/tracing/trace; for e in i915_gem_shrink i915_gem_evict i915_gem_evict_node i915_gem_evict_vm i915_vma_unbind; do echo 1 > $TE/\$e/enable; done; echo 1 > /sys/kernel/tracing/tracing_on"; }
 traceoff() { sudo -n sh -c "for e in i915_gem_shrink i915_gem_evict i915_gem_evict_node i915_gem_evict_vm i915_vma_unbind; do echo 0 > $TE/\$e/enable; done"; sudo -n cat /sys/kernel/tracing/trace | grep -o -E "i915_[a-z_]+:" | sort | uniq -c; }
