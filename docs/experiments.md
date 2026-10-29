@@ -39,6 +39,7 @@ Verdicts: **kept** = in the deployed config. **opt-in** = in the engine behind a
 | Spark + nuc2/nuc3 (RAM tier, CPU / Arc SYCL / NPU expert compute) after the Thunderbolt mesh, 2026-10-26 | mesh does not reach the Spark (2.5 GbE); predicted 0-1 % bit-identical, 3-6 % with other kernels; Arc = CPU speed (~23 GB/s IQ1_S); NPU needs Q4 requant | rejected (study section below) |
 | Bit-exact remote expert compute on nuc2's Arc iGPU (SYCL, tabulated MUFU), remote tier in the engine, 2026-10-28 | gold md5 everywhere incl. a server killed mid-answer; NVMe reads -13 to -17 %; speed neutral (engine round trip ~2.0 ms vs 1.24 ms bare) | kept on (neutral), round trip open |
 | `/dev/cpu_dma_latency` held at 0 on the Spark, 2026-10-28 | 1.98 -> 2.04-2.05 tok/s (tier on or off), gold md5 | kept (DaemonSet) |
+| Remote round trip: nuc2 GT RC6 between requests found; Spark-side doorbell, zero-copy k3x, AVX-VNNI CPU half, 2026-10-29 | forcewake alone 2.04 -> 2.12 tok/s; CPU half 2.103 (RTT 0.66 ms); Spark-side fix +0.5 %; all gold | A/B forcewake vs CPU half pending |
 | Fresh sequential copy of the store / 512 KiB-aligned reads, 2026-10-28 (microbenchmark) | 11.07 -> 11.9-12.0 / 12.9-13.0 GB/s | aligned store v2 next |
 | Patch 0003 expert store: repacked records, host LRU bank, O_DIRECT pread pool | Spark 0.71 tok/s, hit rate 55 % | kept |
 | Expert matmuls on the GPU straight from the registered host bank | Spark 1.43-1.47 tok/s (gap 12 -> 4 ms/layer) | kept |
@@ -861,6 +862,38 @@ Drive health: Gen5 x4 link, 55-60 °C, no thermal events, 0 errors, PS0, MDTS 51
 - **Not measured yet:** acceptance against our IQ1_S target, and the batch-invariant verify kernels that lossless verification needs.
 
 **Cluster:** nuc2 and nuc3 are reserved for Kimi: soft taint `kimi-k3/reserved=true:PreferNoSchedule` plus label `kimi-k3/expert-node=true`. A hard NoSchedule would stop about 15 DaemonSets that do not tolerate custom taints. The monitoring stack moved from nuc3 to nuc (argo-things 45de25b); Jellyfin moves once nuc1's render GID is known.
+
+### Spark + nuc2: where the remote round trip went, and four fixes (2026-10-29, workflow k3-remote-marshaling)
+
+**Measured at both ends.** Traced with `LLAMA_EXPERT_STORE_REMOTE_TRACE` and `K3X_TRACE*`, 65aaeb0. The missing ~0.8 ms was **not marshaling**:
+- The engine posts one request per layer, 3-8 ms apart. Between requests nuc2's Arc GT drops into RC6.
+- The first submission after idle blocks the host 267/592 µs (p50/p90).
+- Every kernel then runs 25-35 % slower (memory/fabric clocks, likely SAGV; not proven).
+- Holding `i915_forcewake_user` on nuc2: engine round trip 1.97 → 1.26 ms p50, wait at the real lookup 0.231 → 0.005 ms per layer, decode **2.04 → 2.12 tok/s**, gold.
+- On the Spark the cache lock + x copy cost 2 µs. The network thread's pick-up from 100 µs naps cost ~74 µs.
+
+**S2, Spark side** (c4efdca, image `547208dca250-gc4efdca`): the request goes out from the early lookup, the network thread is woken by a futex doorbell, and the header and input go in one sendmsg. Spark-side cost per request ~220 → ~15 µs; engine round trip 1.97 → 1.88 ms; decode 2.038 → 2.049 (+0.5 %, inside noise). Gold 20/20.
+
+**S1, zero-copy nuc2 server** (580ea49, image `k3x-serve:g580ea49`): one host-USM record arena, recv/compute/send in place, immediate command lists, optional graph mode.
+- Copies and submissions were not the cost: back-to-back round trip 1.072 → 0.987 ms.
+- Keep-awake knobs `K3X_FORCEWAKE` (held only while a client is connected) and `K3X_MEMWARM`: gapped round trip 2.03 → 1.03 ms. Not engine-tested yet.
+
+**S3, bit-exact AVX-VNNI CPU kernel** (`tools/bitexact/cpu/k3cpu`, 3f983d4, 6c44f7e): vpdpbusd on transposed activations, the float tail in CUDA's order with explicit FMAs and DAZ/FTZ, packed MUFU tables in 2 MiB pages, per-core-type lookup. Bit-exact in both record layouts on all three layer kinds. On nuc3's 8 E-cores: **0.25 ms per expert** (GGUF) / 0.34 ms (v7), against 0.78 ms for the iGPU on the engine's mix.
+
+**I, integration** (49c4c92, 486d2b9, image `k3x-serve:g486d2b9`): the CPU computes experts from the same host-USM arena as the iGPU (`K3X_CPU_CPUS=1-11`, `K3X_CPU_SPLIT=1,2`, EPP performance, memwarm on cpu 12). Engine legs, interleaved, means:
+
+| leg | decode, tok/s | engine RTT p50 |
+|---|---|---|
+| a, production engine + server | 2.044 | 2.02 ms |
+| b, S2 engine + production server | 2.051 | 1.93 ms |
+| **c, S2 engine + CPU-half server** | **2.103** (+2.9 %) | **0.66 ms** |
+| d, S2 engine, tier off | 2.040 | |
+
+The CPU path has tail stalls of 50-90 ms, cause unknown: 0.18-0.5 % of replies over 3 ms.
+
+**Verification (V)** re-ran every bit-exactness check independently and all held: vall from the image binaries, remotecanary through the socket, k3cpu from source, and a one-value perturbation caught on both paths. All 56 engine runs are gold.
+
+Caveat: M's forcewake-only leg (2.121 tok/s, 22 replies over 3 ms) may beat the CPU half (2.103, 87-237 replies over 3 ms). Once the reply arrives before the real lookup, a lower median gains nothing at REMOTE_ROWS=2 and the tail decides the result. **Open: an interleaved engine A/B of the S2 engine with g580ea49 + K3X_FORCEWAKE/MEMWARM against g486d2b9 (CPU half), then deploy the winner and the S2 engine.**
 
 ### Revisit when the bottleneck moves
 

@@ -43,8 +43,11 @@ Workflow `k3-remote-marshaling` (run `wf_2a8d1716-f97`), steps:
 
 Done when the engine's round trip sits inside the window and the tier is faster than tier-off in an interleaved A/B.
 
-- Status: running.
-- Result: _pending_.
+- Status: **done 2026-10-29** (see the ledger).
+- Result:
+  - The cost was nuc2's iGPU sleeping (RC6) between requests, not marshaling.
+  - Measured candidates: forcewake alone 2.12 tok/s; the CPU half (AVX-VNNI on the shared arena) 2.103 tok/s at a 0.66 ms round trip; the Spark-side fix +0.5 %.
+  - Next: an interleaved A/B of forcewake + memwarm against the CPU half, then deploy the winner plus the S2 engine (`gc4efdca`).
 
 ### 2. Spark: aligned expert store (next on the Spark)
 
