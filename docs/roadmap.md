@@ -69,6 +69,25 @@ Done when the engine's round trip sits inside the window and the tier is faster 
 - **Expected:** about +8-10 % tok/s, the disk being the main wall.
 - **Status:** not started; waits for the workflow's Spark windows to end.
 
+### 2b. Spark: cheap power-state and I/O-path tests (added 2026-10-29)
+
+Same lesson as the nuc2 RC6 find and the `cpu_dma_latency` win: power management costs that nobody measured.
+Each is an interleaved A/B with gold md5; none changes arithmetic.
+
+| test | evidence | expected | status |
+|---|---|---|---|
+| Lock the GB10 SM clock at its 3003 MHz max (`nvidia-smi -lgc`) | decode runs at a steady 2411 MHz (application clock 2418), no throttle reason active | 0-3 %; the dense kernels stream at 77 % of memory bandwidth, part of the gap may be issue rate | queued with the pool agent |
+| `--threads` re-sweep (4, 6, 8, 10) | 8 dates from the CPU-matmul era; the CPU does far less now | 0-2 % | queued with the pool agent |
+| Multi-user throughput with the pool on (1, 2, 3 clients) | dense weights are read once per batch; last multi-client number predates the pool | a throughput headline, not single-user speed | queued with the pool agent |
+| Polled NVMe completions (`nvme.poll_queues` + `IORING_SETUP_IOPOLL`) | ~4 reads of ~0.7 ms gate each layer, each completion is an interrupt | 50-100 us per layer, 1-2 %; needs a reboot and a small reader change | after the aligned store |
+| Reclaim the 6.7 GB prefill staging during decode | lazy staging thrashed on 10-19, before mlock and the valve existed; 6.7 GB = +13 % cache slots | about +1.5 % (replay: +20 % slots = best eviction policy) | after the aligned store |
+| NVMe APST off (`nvme_core.default_ps_max_latency_us=0`) | APST on with a 100 ms cap; the drive is never idle long during decode | probably nothing; free on the same reboot | with the polled-I/O reboot |
+
+### 2c. A faster link to the Spark (hardware, user's call)
+
+- **Cheap, ~$100:** a USB 3.2 10GbE adapter on a Spark USB-C port (20 Gbps USB 3.2, not USB4). Latency through USB is worse, so it suits a NUC RAM byte tier (raw records, predicted layers ahead): the study put that at +3-5 % with 10G against 0-1 % at 2.5 GbE.
+- **Proper, ~$250:** the ConnectX-7's QSFP28 cage with a 10GBASE-T SFP+ module in a QSA adapter, direct to a Thunderbolt 10GbE adapter on nuc2. Lowers every expert round trip too.
+
 ### 3. Spark: the CPU computes missed experts as their records land
 
 The GPU waits for all of a layer's misses, then runs one 8-row late matmul. Instead, the GB10's idle Arm cores compute each missed expert's row as soon as its record arrives, during the fill wait when the memory bus is mostly idle. The GPU then waits only for the last row.
@@ -137,4 +156,5 @@ The fork `xerootg/llama.cpp` is a research fork and will not be upstreamed. Its 
 - 2026-10-28: nuc2/nuc3 reserved for Kimi.
 - 2026-10-28: Spark priority order: aligned store, then CPU misses-as-they-land, then the GB10 Q6_K kernel.
 - 2026-10-28: the remote tier stays on although it is speed-neutral (fewer NVMe reads, the pooling demonstration).
+- 2026-10-29: plan review added the power-state/I/O tests (2b), the link options (2c) and a read-only code audit of the engine's hot path for performance left on the table.
 - 2026-10-28: the fork's default branch is `kimi-k3` (research fork, not for upstream); patch set e844a2a published as tag `kimi-k3-e844a2a`.
