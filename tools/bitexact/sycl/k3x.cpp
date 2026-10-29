@@ -1124,7 +1124,9 @@ static void synth_records(std::vector<uint8_t> & buf, int tg, int td, int E, siz
 static std::vector<char> slurp(const std::string & p) {
     FILE * f = fopen(p.c_str(), "rb"); if (!f) { perror(p.c_str()); exit(1); }
     fseek(f, 0, SEEK_END); long n = ftell(f); fseek(f, 0, SEEK_SET);
-    std::vector<char> v(n); if (fread(v.data(), 1, n, f) != (size_t) n) exit(1); fclose(f); return v;
+    std::vector<char> v(n); if (fread(v.data(), 1, n, f) != (size_t) n) exit(1);
+    posix_fadvise(fileno(f), 0, 0, POSIX_FADV_DONTNEED);   // do not leave the file in the page cache (see serve_index)
+    fclose(f); return v;
 }
 static k3_mufu_tabs host_mt{};
 struct HostPacked { std::vector<uint32_t> hdr; std::vector<int8_t> res; std::vector<uint32_t> esc; uint32_t n = 0; };
@@ -1218,6 +1220,9 @@ static int serve_index(const char * idxp, const char * binp, int port) {
         if (used + e->prec > CH) { chunk = getenv("K3X_HOSTW") ? sycl::malloc_host<uint8_t>(CH, e->q) : sycl::malloc_device<uint8_t>(CH, e->q); if (!chunk) { fprintf(stderr, "device alloc failed after %.1f GB\n", tot / 1e9); return 1; } used = 0; }
         buf.resize(e->rec);
         if (fseeko(f, (off_t) r.off, SEEK_SET) || fread(buf.data(), 1, e->rec, f) != e->rec) { fprintf(stderr, "short read gid %ld\n", r.gid); return 1; }
+        // Drop the record from the page cache right away: a page cache that grows with the 46 GB file squeezes memory
+        // while ~48 GB of GPU objects are being populated, which is when the silent all-zero failures happen.
+        if (!getenv("K3X_KEEPCACHE")) posix_fadvise(fileno(f), (off_t) r.off, (off_t) e->rec, POSIX_FADV_DONTNEED);
         // Stage through pinned USM host memory: copying from a pageable std::vector made the runtime import it as an
         // i915 userptr, and those submissions sometimes failed (EXECBUFFER2 EFAULT) without any error, leaving the
         // record zero on the GPU. Each record is then spot-checked by reading three 256-byte windows back.
