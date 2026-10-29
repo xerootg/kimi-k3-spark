@@ -145,6 +145,19 @@ k3cpu_test bench    MUFU_DIR RECORDS N TG TU TD CPUS ITERS [DUMP_DIR]
 # any mode: K3B_V7=1 repacks the records to v7 in memory and runs the v7 kernels
 #   e.g. R=~/k3-bitexact/ref; taskset -c 12 ./k3cpu_test bench $R/mufu $R/rec_L1.bin 32 19 19 19 4-11 300 $R/dumps/L1
 # bench knobs: K3B_KS=1,2 (k values), K3B_GAP_US (sleep between tokens), K3B_GAP_SPIN=1, K3B_SPIN_US (worker spin),
-#   K3B_LOOKUP=1|2 (gather | scalar everywhere), K3B_INTERLEAVE=1, K3B_TRACE=file (per token: k it x ms gu dn posted)
+#   K3B_LOOKUP=1|2 (gather | scalar everywhere), K3B_INTERLEAVE=1, K3B_TRACE=file (per token: k it x ms gu dn posted CLOCK_MONOTONIC-ns), K3B_RT=<prio> (SCHED_FIFO workers)
 # library knobs: K3CPU_PF_ROWS (weight prefetch distance), K3CPU_SPIN_MODE (0 pause, 1 no pause, 2 pause + memory touch)
 ```
+
+## k3cs: the CPU-only server
+
+`k3cs IDX BIN PORT` (`k3cs.cpp`, `build_k3cs.sh`, also in the k3x-serve image as `/opt/k3x/k3cs`) serves k3x serveidx's wire
+protocol from k3cpu alone: no SYCL and no iGPU, records kept in the GGUF layout (k3cpu is 20-27 % faster per expert on GGUF
+than on v7, and plain memory has no i915 residency limit), in 1 GiB transparent-huge-page chunks locked with mlockall once
+loaded. Knobs as k3x where the meaning is the same (`K3X_MUFU`, `K3X_MAX_GB`, `K3X_SETOUT`, `K3X_FULLCHECK`, `K3X_CPU_*`,
+`K3X_RT`, `K3X_RX_SPIN_US`, `K3X_MEMWARM*`, `K3X_TRACE*`), plus `K3X_MAIN_CPU` (pin the request thread once serving; do not
+start it under taskset, FULLCHECK's reference threads use every cpu). `K3X_FULLCHECK` runs every served record through the
+serving kernels and compares it bit for bit with the scalar host reference of `../sycl/k3x_math.h`; an all-zero row is sent
+as NaN. Checked on nuc3: FULLCHECK 636/636 and remotecanary L1/L11/L83 at K = 1, 2, 3, 4, 16 bit-identical; 21 GB (3117
+records) loads and locks on the 32 GB box with 7 GB left. nuc3 (one channel), RT on, 5 ms gaps, server time p50 per k:
+0.39 / 0.61 / 0.84 / 1.07 ms for k = 1..4.

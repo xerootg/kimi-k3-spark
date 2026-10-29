@@ -9,6 +9,8 @@ on:
       - "tools/bitexact/sycl/**"
       - "tools/bitexact/cpu/k3cpu.h"
       - "tools/bitexact/cpu/k3cpu.cpp"
+      - "tools/bitexact/cpu/k3cs.cpp"
+      - "tools/bitexact/cpu/build_k3cs.sh"
       - "docker/k3x-serve.Dockerfile"
       - ".github/workflows/k3x-serve.yml"
   workflow_dispatch:

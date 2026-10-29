@@ -42,6 +42,9 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <poll.h>
+#include <pthread.h>
+#include <sched.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -1488,13 +1491,31 @@ static double now_ms() { return std::chrono::duration<double, std::milli>(std::c
 
 
 // first (K3X_TRACE): set to the time the first bytes arrived; a SIGUSR1 dump runs here while nothing has arrived yet
+// K3X_RX_SPIN_US (default -1 = spin forever; K3X_RT sets 1000): after that long without a byte the main thread blocks in
+// poll() until the next one. A SCHED_FIFO thread must not spin without bound (the RT budget throttles the whole cpu),
+// and a woken SCHED_FIFO thread preempts whatever ordinary thread runs on its cpu at once.
+static long g_rx_spin_ns = -1;
 static bool rd_spin(int fd, void * p, size_t n, uint64_t * first = nullptr) {
     char * c = (char *) p;
+    uint64_t t_idle = 0;
     while (n) {
         ssize_t r = recv(fd, c, n, MSG_DONTWAIT);
         if (r == 0) return false;
         if (r < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) { if (g_tr_dump && first && !*first) k3x_tr_dump(); continue; }
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                if (g_tr_dump && first && !*first) k3x_tr_dump();
+                if (g_rx_spin_ns >= 0) {
+                    const uint64_t now = k3x_ns();
+                    if (!t_idle) t_idle = now;
+                    else if (now - t_idle > (uint64_t) g_rx_spin_ns) {
+                        pollfd pf{fd, POLLIN, 0};
+                        // wake up every 100 ms anyway: the SIGUSR1 trace dump is polled here
+                        if (poll(&pf, 1, 100) < 0 && errno != EINTR) return false;
+                        t_idle = 0;
+                    }
+                }
+                continue;
+            }
             return false;
         }
         if (first && !*first) *first = k3x_ns();
@@ -1546,6 +1567,7 @@ static void memwarm_start(double mbps) {   // also from K3X_CTL "warm=<MB/s>" (0
     if (started || mbps <= 0) return;
     started = true;
     std::thread([]() {
+        { sched_param sp{}; pthread_setschedparam(pthread_self(), SCHED_OTHER, &sp); }   // never spin at RT priority
         if (const char * mc = getenv("K3X_MEMWARM_CPU")) {   // e.g. an LP-E core (12, 13) when cpus 0-11 are taken
             cpu_set_t cs; CPU_ZERO(&cs); CPU_SET(atoi(mc), &cs); pthread_setaffinity_np(pthread_self(), sizeof cs, &cs);
         }
@@ -1750,6 +1772,18 @@ static int serve_index(const char * idxp, const char * binp, int port) {
     fprintf(stderr, "serving on %d (busy-poll)\n", port);
     k3x_tr_init();
     if (getenv("K3X_MEMWARM")) memwarm_start(atof(getenv("K3X_MEMWARM")));
+    // K3X_RT=<prio> (P, 2026-10-29): the request thread runs SCHED_FIFO, so the node's own threads (kubelet, containerd,
+    // longhorn, kworkers) cannot preempt it mid-request; on nuc3 that preemption, of this thread and of the k3cpu workers
+    // (K3X_CPU_RT), was the whole 3-90 ms tail (bpftrace: 246 of 252 slow tokens). SCHED_RESET_ON_FORK: threads the
+    // runtime creates later start as ordinary threads. It blocks after K3X_RX_SPIN_US (default 1000 with K3X_RT) of idle.
+    if (const char * rt = getenv("K3X_RT")) if (atoi(rt) > 0) {
+        sched_param sp{}; sp.sched_priority = atoi(rt);
+        if (sched_setscheduler(0, SCHED_FIFO | SCHED_RESET_ON_FORK, &sp)) perror("K3X_RT sched_setscheduler");
+        else fprintf(stderr, "K3X_RT: request thread SCHED_FIFO %d\n", sp.sched_priority);
+        g_rx_spin_ns = 1000 * 1000L;
+    }
+    if (const char * rs = getenv("K3X_RX_SPIN_US")) g_rx_spin_ns = atol(rs) < 0 ? -1 : atol(rs) * 1000L;
+    if (g_rx_spin_ns >= 0) fprintf(stderr, "K3X_RX_SPIN_US: %ld (then poll)\n", g_rx_spin_ns / 1000);
     std::vector<float> nanrows(16 * D, NAN), xin(D); long zero_rows = 0; int nconn = 0;
     for (;;) {
         int c = accept(ls, nullptr, nullptr);

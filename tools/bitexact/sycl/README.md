@@ -127,6 +127,14 @@ header word 16 when k < 16 (the engine's `LLAMA_EXPERT_STORE_REMOTE_TRACE`, `rrc
 joins the sides by request number (each clock compared only with itself). `rrclient` `RR_GAP_US` paces the requests
 like the engine (one per layer, ~5-12 ms apart); back to back hides the idle costs (2026-10-28 M section).
 
+Real-time request thread (P, 2026-10-29): `K3X_RT=<prio>` runs the request thread SCHED_FIFO (with SCHED_RESET_ON_FORK, so
+threads the runtime creates later stay ordinary) and makes it block in poll() after `K3X_RX_SPIN_US` (default 1000 with
+`K3X_RT`, otherwise -1 = spin forever) without a byte, so it never spins unbounded at RT priority; the memwarm thread is
+always SCHED_OTHER. Together with `K3X_CPU_RT` (the k3cpu workers) it removes the CPU half's 3-90 ms tail: bpftrace on nuc3
+showed 246 of 252 slow tokens were the request thread or a worker preempted by node threads (kubelet, containerd,
+longhorn, runc, kworkers), not SMIs, page faults or reclaim; `K3X_CPU_RT` alone left the request thread exposed. nuc3, local
+rrclient, 5 ms gaps, CPU half 1,2: server p99.9 10.6 -> 1.04 ms, max 28 -> 1.8 ms, none over 2 ms in 8000, p50 848 -> 698 us.
+
 Types: IQ1_S = 19, IQ2_XXS = 16. Results 2026-10-28 are in `docs/experiments.md`.
 
 Image: `ghcr.io/xerootg/k3x-serve:g<sha>` (`docker/k3x-serve.Dockerfile`, workflow `k3x-serve.yml`) holds `k3x` built

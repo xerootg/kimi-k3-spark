@@ -144,6 +144,7 @@ int main(int argc, char ** argv) {
     fprintf(stderr, "tables in %.1f s; %zu workers on cpus %s\n", std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count(), cpus.size(), argv[ai]);
     k3cpu_opts o; o.cpus = cpus.data(); o.ncpu = (int) cpus.size();
     if (getenv("K3B_SPIN_US")) o.spin_us = atoi(getenv("K3B_SPIN_US"));
+    if (getenv("K3B_RT")) { o.rt_prio = atoi(getenv("K3B_RT")); if (o.rt_prio > 0 && (o.spin_us < 0 || o.spin_us > 2000)) o.spin_us = 2000; }
     o.interleave = getenv("K3B_INTERLEAVE") && atoi(getenv("K3B_INTERLEAVE"));
     if (getenv("K3B_LOOKUP")) o.lookup = atoi(getenv("K3B_LOOKUP"));
     k3cpu_pool * P = k3cpu_create(&mt, o);
@@ -243,7 +244,7 @@ int main(int argc, char ** argv) {
                 const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - a).count();
                 k3cpu_times tm; k3cpu_last_times(P, &tm);
                 if (it >= 5) { t.push_back(ms); tgu.push_back(tm.gu_done[k - 1] / 1e6); tdn0.push_back(tm.dn_done[0] / 1e6); tx.push_back(tm.x_done / 1e6); }
-                if (dumpf) fprintf(dumpf, "%d %d %d %.4f %.4f %.4f %.4f\n", k, it, (xi - 1) % nxs, ms, tm.gu_done[k - 1] / 1e6, tm.dn_done[k - 1] / 1e6, tm.x_done / 1e6);
+                if (dumpf) { timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts); fprintf(dumpf, "%d %d %d %.4f %.4f %.4f %.4f %lld\n", k, it, (xi - 1) % nxs, ms, tm.gu_done[k - 1] / 1e6, tm.dn_done[k - 1] / 1e6, tm.x_done / 1e6, (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec); }
             }
             auto st = [](std::vector<double> v, double q) { std::sort(v.begin(), v.end()); return v[std::min(v.size() - 1, (size_t) (q * v.size()))]; };
             const double med = st(t, 0.5);
