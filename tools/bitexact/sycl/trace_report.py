@@ -64,6 +64,8 @@ def server_rows(S):
         ("submit: down 0 + row 0 copy", col(S, lambda r: d(r, "t_sub3", "t_sub5"))),
         ("submit: down 1 + row 1 copy", col(S, lambda r: d(r, "t_sub5", "t_sub7") if r["k"] >= 2 else None)),
         ("all submissions (t_x -> last submit)", col(S, lambda r: d(r, "t_x", "t_sub%d" % (3 + 2 * min(r["k"], 4))))),
+        ("all submissions (t_x -> last t_sub*, any path)", col(S, lambda r: (max(r.get("t_sub%d" % i, 0) for i in range(12)) - r["t_x"]) / 1e3
+                                                            if r.get("t_x") and max(r.get("t_sub%d" % i, 0) for i in range(12)) else None)),
         ("x in USM -> row 0 in host memory", col(S, lambda r: d(r, "t_x", "t_row0"))),
         ("row 0 send()", col(S, lambda r: d(r, "t_row0", "t_sent0"))),
         ("row 0 sent -> row 1 in host memory", col(S, lambda r: d(r, "t_sent0", "t_row1") if r["k"] >= 2 else None)),
@@ -81,6 +83,11 @@ def server_rows(S):
             if i:
                 dv.append((f"GPU gap before {nm}", col(S, lambda r, i=i: d(r, f"d_end{i-1}", f"d_start{i}"))))
         dv.append(("GPU: x copy start -> last row copy end", col(S, lambda r: d(r, "d_start0", "d_end%d" % (3 + 2 * min(r["k"], 4))))))
+        # zero-copy path (S1): no copies; down e is command 4 + 2e
+        dv.append(("zc GPU gap down 0 -> down 1", col(S, lambda r: d(r, "d_end4", "d_start6") if r["k"] >= 2 else None)))
+        dv.append(("zc GPU: first command start -> last down end", col(S, lambda r: (max(r.get("d_end%d" % i, 0) for i in (4, 6, 8, 10)) -
+                                                                              min(r.get("d_start%d" % i) for i in (1, 2) if r.get("d_start%d" % i))) / 1e3
+                                                                             if not r.get("d_start0") and (r.get("d_start1") or r.get("d_start2")) and r.get("d_end4") else None)))
         rows += dv
     if any(r.get("f_before", 0) or r.get("f_after", 0) for r in S):
         rows.append(("GT MHz before the GPU work (not us)", [r["f_before"] for r in S if r.get("t_x")]))

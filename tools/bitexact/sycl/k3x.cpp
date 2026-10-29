@@ -729,7 +729,17 @@ struct Engine {
     uint8_t * W = nullptr;
     uint32_t * g1 = nullptr; uint64_t * g2 = nullptr;
     float * x = nullptr; int * ids = nullptr; float * rows = nullptr; const uint8_t ** recs = nullptr; bool ext_recs = false; bool spin = false;
-    float * xd = nullptr, * rowsd = nullptr;   // device copies: explicit memcpy in/out (host USM read/written by kernels was not reliably coherent)   // host USM (zero copy on the iGPU)
+    float * xd = nullptr, * rowsd = nullptr;   // K3X_ZC=0 only: device copies with explicit memcpy in/out (the pre-S1 path)
+    // Zero copy (K3X_ZC, default on): the kernels read x from host USM and write the rows straight into host USM (one DRAM
+    // on the iGPU). Host USM is coherent at kernel boundaries only (the GT's L3 is not snooped by CPU stores while a kernel
+    // runs), so every hand-over between the CPU and the GPU happens at a command boundary: the CPU writes x/ids/recs before
+    // the submission and reads a row after its command's event completed. Needs immediate command lists (set in main).
+    bool zc = !getenv("K3X_ZC") || atoi(getenv("K3X_ZC"));
+    int down_split = getenv("K3X_DOWN_SPLIT") ? atoi(getenv("K3X_DOWN_SPLIT")) : 1;   // streaming: one down launch per expert
+    bool use_graph = getenv("K3X_GRAPH") && atoi(getenv("K3X_GRAPH"));     // pre-recorded per-k sequence (zc only)
+    bool fuse_qx = getenv("K3X_FUSE_QX_RT") && atoi(getenv("K3X_FUSE_QX_RT"));  // q8_1(x) per work-group inside gate/up (one launch less)
+    struct GraphK { int k = 0; const float * x = nullptr; float * rows = nullptr; sycl::ext::oneapi::experimental::command_graph<sycl::ext::oneapi::experimental::graph_state::executable> * g = nullptr; };
+    GraphK graphs[17];
     k3_q8_1 * yq = nullptr, * yq2 = nullptr; int * QT = nullptr, * QT2 = nullptr; int * QV = nullptr, * QV2 = nullptr; float * DV = nullptr, * DV2 = nullptr; sycl::float2 * DT = nullptr, * DT2 = nullptr; sycl::float2 * dsf = nullptr, * dsf2 = nullptr;
     float * gbuf = nullptr, * ubuf = nullptr, * hbuf = nullptr;
     k3_mufu_tabs mt{};
@@ -750,7 +760,7 @@ struct Engine {
         rbg = (size_t) D / K3_QK * k3_blk_bytes(tg); rbd = (size_t) F / K3_QK * k3_blk_bytes(td);
         gsz = rbg * F; dsz = rbd * D; rec = 2 * gsz + dsz;
         pg = V7 ? v7_mat_bytes(tg, F, D) : v5_mat_bytes(tg, F, D); pd = V7 ? v7_mat_bytes(td, D, F) : v5_mat_bytes(td, D, F); prec = V5 ? 2 * pg + pd : rec;
-        if (E > 0) W = sycl::malloc_device<uint8_t>(prec * E, q);
+        if (E > 0) W = arena_host() ? sycl::malloc_host<uint8_t>(prec * E, q) : sycl::malloc_device<uint8_t>(prec * E, q);
         g1 = sycl::malloc_device<uint32_t>(2048, q); g2 = sycl::malloc_device<uint64_t>(256, q);
         q.memcpy(g1, iq1s_grid_gpu, 2048 * 4); q.memcpy(g2, iq2xxs_grid, 256 * 8);
         x = sycl::malloc_host<float>(D, q); ids = sycl::malloc_host<int>(16, q); recs = sycl::malloc_host<const uint8_t *>(16, q); rows = sycl::malloc_host<float>(16 * D, q);
@@ -772,7 +782,9 @@ struct Engine {
         if (V7) { v7_repack_matrix(src, dst, tg, F, D); v7_repack_matrix(src + gsz, dst + pg, tg, F, D); v7_repack_matrix(src + 2 * gsz, dst + 2 * pg, td, D, F); return; }
         v5_repack_matrix(src, dst, tg, F, D); v5_repack_matrix(src + gsz, dst + pg, tg, F, D); v5_repack_matrix(src + 2 * gsz, dst + 2 * pg, td, D, F);
     }
+    static bool arena_host() { const char * a = getenv("K3X_ARENA"); return !a || strcmp(a, "device"); }   // default: host USM
     void upload(const uint8_t * host, size_t e0, size_t n) {
+        if (arena_host()) { for (size_t i = 0; i < n; i++) repack(host + i * rec, W + (e0 + i) * prec); return; }   // CPU writes the arena in place
         uint8_t * tmp = sycl::malloc_host<uint8_t>(prec, q);   // pinned staging (see serve_index)
         for (size_t i = 0; i < n; i++) { repack(host + i * rec, tmp); q.memcpy(W + (e0 + i) * prec, tmp, prec).wait(); }
         sycl::free(tmp, q);
@@ -783,7 +795,11 @@ struct Engine {
                           const int * qt, const sycl::float2 * dt, int estride, float * out0, float * out1,
                           const int * qv = nullptr, const float * dv = nullptr, int ebase = 0, const float * xsrc = nullptr, int xnb = 0) {
         const uint32_t * g1_ = g1; const uint64_t * g2_ = g2; const k3_mufu_tabs mt_ = mt;
-        RecPtrs recs_; for (int i = 0; i < 16; i++) recs_.p[i] = recs[i];
+        // record pointers are read at run time from the host-USM table recs[] (written before the submission). That is
+        // what lets a pre-recorded graph serve any ids, and it is also faster than the by-value RecPtrs (dynamically
+        // indexed kernel-argument array: k=1 0.74 -> 0.67 ms on nuc2). A select between the two made every matvec
+        // ~2x slower (IGC codegen): never mix them in one kernel.
+        const uint8_t * const * rt = recs;
         const long nitems = (long) k * nmat * nrows * (V7 ? 4 : 1);
         const int wg = MV5_WG;   // divides 3072 and 3584, so a work-group never spans two (expert, matrix) pairs
         return q.submit([&](sycl::handler & h) {
@@ -817,7 +833,7 @@ struct Engine {
                 // nitems here counts lanes: 4 per row
                 const long sgi = gi / 16; const int lane = (int) (gi % 16);
                 const int rg4 = (int) (sgi % (nrows / 4)), m = (int) ((sgi / (nrows / 4)) % nmat), e = ebase + (int) (sgi / ((long) (nrows / 4) * nmat));
-                const uint32_t * mat = (const uint32_t *) (recs_.p[e] + moff + m * mstride);
+                const uint32_t * mat = (const uint32_t *) (rt[e] + moff + m * mstride);
 #if K3X_GRID_SLM
                 const uint32_t * gl = GS.get_multi_ptr<sycl::access::decorated::no>().get();
 #else
@@ -828,7 +844,7 @@ struct Engine {
                 if (lane < 4) (m ? out1 : out0)[e * nrows + rg4 * 4 + lane] = v7;
 #else
                 const int r = (int) (gi % nrows), m = (int) ((gi / nrows) % nmat), e = ebase + (int) (gi / ((long) nrows * nmat));
-                const uint32_t * mat = (const uint32_t *) (recs_.p[e] + moff + m * mstride);
+                const uint32_t * mat = (const uint32_t *) (rt[e] + moff + m * mstride);
 #if V6
                 const float v = row_v6<T, NBLK>(it.get_sub_group(), mat, r / 16, r % 16, qv + (size_t) e * estride * 896, dv + (size_t) e * estride * 224, g1_, g2_);
 #else
@@ -1075,6 +1091,7 @@ struct Engine {
             store_T(yq2_[i[0]], (int) (i[0] % (F / 32)), QT2_ + (i[0] / (F / 32)) * 1024, DT2_ + (i[0] / (F / 32)) * 128);
             store_V(yq2_[i[0]], (int) (i[0] % (F / 32)), QV2_ + (i[0] / (F / 32)) * 896, DV2_ + (i[0] / (F / 32)) * 224);
         });
+        if (zc) { submit_down(k, 0, rows); q.wait_and_throw(); return; }
         if (V5) matvec5(k, 1, D, F / K3_QK, td, 2 * pg, 0, QT2, DT2, 1, rowsd, nullptr, QV2, DV2);
         else if (MV4) matvec4(k, 1, D, F / K3_QK, td, rbd, 2 * gsz, 0, QV2, DV2, 1, rowsd, nullptr);
         else if (MV3) matvec3(k, 1, D, F / K3_QK, td, rbd, 2 * gsz, 0, QT2, DT2, 1, rowsd, nullptr);
@@ -1084,35 +1101,41 @@ struct Engine {
         q.wait_and_throw();
     }
 
-    // one token: ids[0..k), x[D] -> rows[k][D]
-    // one token: ids[0..k), x[D] -> rows[k][D]. With a sink, the down matmul runs per expert and sink(e) is called as
-    // soon as row e is in host memory (in order), so the server can stream rows (C's engine takes partial replies).
-    void run(int k, const std::function<void(int)> * sink = nullptr) {
-        sycl::event tev[TR_NC]; bool tset[TR_NC] = {};
-        auto T = [&](int i, const sycl::event & e) { if (tr && i < TR_NC) { tr->t_sub[i] = k3x_ns(); tev[i] = e; tset[i] = true; } };
-        T(0, q.memcpy(xd, x, D * 4));
-        const float * x_ = xd; float * rows_ = rowsd;
-        if (!ext_recs) for (int i = 0; i < k; i++) recs[i] = W + (size_t) ids[i] * prec;
+    // one token: ids[0..k), x[D] -> rows[k][D]. run_s streams: sink(e) is called as soon as row e is in host memory (in
+    // order), so the server can send rows one by one (the Spark's engine takes partial replies). Sink is any callable.
+    void run(int k) { auto none = [](int) {}; run_s(k, none, false); }
+    template <class Sink> void run(int k, Sink & sink) { run_s(k, sink, true); }
+    static void poll(const sycl::event & e) {
+        while (e.get_info<sycl::info::event::command_execution_status>() != sycl::info::event_command_status::complete) {}
+    }
+    // the per-token command sequence: q8_1(x), gate/up, SiTU + q8_1(h), then down for experts [e0, e0 + n) (n = 0: none)
+    sycl::event submit_front(int k, const float * x_, sycl::event * tev, bool * tset) {
         k3_q8_1 * yq_ = yq, * yq2_ = yq2;
         int * QT_ = QT, * QT2_ = QT2; sycl::float2 * DT_ = DT, * DT2_ = DT2;
         float * gb = gbuf, * ub = ubuf, * hb = hbuf; const k3_mufu_tabs mt_ = mt;
-        ev.clear();
+        auto T = [&](int i, const sycl::event & e) { if (tev && i < TR_NC) { tr->t_sub[i] = k3x_ns(); tev[i] = e; tset[i] = true; } };
+        sycl::event last;
 #if K3X_FUSE_QX
-        ev.push_back(matvec5(k, 2, F, D / K3_QK, tg, 0, pg, QT_, DT_, 0, gb, ub, nullptr, nullptr, 0, x_, D / 32));
-        ev.push_back(ev.back());   // keeps the profiling slots: [0] = [1] = fused quant + gate/up
-        T(2, ev.back());
+        last = matvec5(k, 2, F, D / K3_QK, tg, 0, pg, QT_, DT_, 0, gb, ub, nullptr, nullptr, 0, x_, D / 32);
+        if (prof) { ev.push_back(last); ev.push_back(last); }   // keeps the profiling slots: [0] = [1] = fused quant + gate/up
+        T(2, last);
 #else
-        ev.push_back(q.parallel_for(sycl::range<1>(D / 32), [=](sycl::id<1> i) {
-            k3_quantize_block(x_ + i[0] * 32, yq_ + i[0], mt_);
-            store_T(yq_[i[0]], (int) i[0], QT_, DT_);
-        }));
-        T(1, ev.back());
-        ev.push_back(matvec5(k, 2, F, D / K3_QK, tg, 0, pg, QT_, DT_, 0, gb, ub));
-        T(2, ev.back());
+        if (!fuse_qx) {
+            last = q.parallel_for(sycl::range<1>(D / 32), [=](sycl::id<1> i) {
+                k3_quantize_block(x_ + i[0] * 32, yq_ + i[0], mt_);
+                store_T(yq_[i[0]], (int) i[0], QT_, DT_);
+            });
+            if (prof) ev.push_back(last);
+            T(1, last);
+        }
+        last = fuse_qx ? matvec5(k, 2, F, D / K3_QK, tg, 0, pg, QT_, DT_, 0, gb, ub, nullptr, nullptr, 0, x_, D / 32)
+                       : matvec5(k, 2, F, D / K3_QK, tg, 0, pg, QT_, DT_, 0, gb, ub);
+        if (prof) { ev.push_back(last); if (fuse_qx) ev.push_back(last); }
+        T(2, last);
 #endif
         // SiTU + q8_1 of h: 32 work-items per q8 block (one element each, latency-bound table lookups in parallel),
         // then one work-item quantizes the block from SLM exactly as k3_quantize_block does.
-        ev.push_back(q.submit([&](sycl::handler & h) {
+        last = q.submit([&](sycl::handler & h) {
             sycl::local_accessor<float, 1> HS(sycl::range<1>(32), h);
             h.parallel_for(sycl::nd_range<1>((size_t) k * F, 32), [=](sycl::nd_item<1> it) {
                 const size_t i = it.get_global_id(0); const int lid = it.get_local_id(0);
@@ -1126,34 +1149,80 @@ struct Engine {
                     store_T(yq2_[blk], (int) (blk % (F / 32)), QT2_ + (blk / (F / 32)) * 1024, DT2_ + (blk / (F / 32)) * 128);
                 }
             });
-        }));
-        T(3, ev.back());
-        if (!sink) {
-            ev.push_back(matvec5(k, 1, D, F / K3_QK, td, 2 * pg, 0, QT2_, DT2_, 1, rows_, nullptr));
-            T(4, ev.back());
-            ev.push_back(q.memcpy(rows, rowsd, (size_t) k * D * 4));
-            T(5, ev.back());
-            if (spin) { auto & last = ev.back(); while (last.get_info<sycl::info::event::command_execution_status>() != sycl::info::event_command_status::complete) {} }
+        });
+        if (prof) ev.push_back(last);
+        T(3, last);
+        return last;
+    }
+    sycl::event submit_down(int n, int e0, float * rows_) {   // experts e0..e0+n-1 -> rows_[e * D]
+        return matvec5(n, 1, D, F / K3_QK, td, 2 * pg, 0, QT2, DT2, 1, rows_, nullptr, nullptr, nullptr, e0);
+    }
+    // K3X_GRAPH: the whole sequence for k experts recorded once (kernel arguments fixed: x, rows and the recs table are
+    // read at run time), replayed with one submission.
+    sycl::ext::oneapi::experimental::command_graph<sycl::ext::oneapi::experimental::graph_state::executable> * graph_for(int k) {
+        GraphK & G = graphs[k];
+        if (G.g && G.x == x && G.rows == rows) return G.g;
+        namespace sx = sycl::ext::oneapi::experimental;
+        sx::command_graph<sx::graph_state::modifiable> g(q.get_context(), q.get_device());
+        const bool pv = prof; prof = false;
+        g.begin_recording(q);
+        submit_front(k, x, nullptr, nullptr);
+        submit_down(k, 0, rows);
+        g.end_recording();
+        prof = pv;
+        delete G.g; G.g = new sx::command_graph<sx::graph_state::executable>(g.finalize());
+        G.k = k; G.x = x; G.rows = rows;
+        return G.g;
+    }
+    template <class Sink> void run_s(int k, Sink & sink, bool stream) {
+        sycl::event tev[TR_NC]; bool tset[TR_NC] = {};
+        sycl::event * tv = tr ? tev : nullptr;
+        if (!ext_recs) for (int i = 0; i < k; i++) recs[i] = W + (size_t) ids[i] * prec;
+        if (prof) ev.clear();
+        if (zc && use_graph) {
+            auto * g = graph_for(k);
+            if (tr) tr->t_sub[0] = k3x_ns();
+            sycl::event last = q.ext_oneapi_graph(*g);
+            if (tr) tr->t_sub[1] = k3x_ns();
+            poll(last);
             if (tr) tr->t_row[0] = k3x_ns();
+            for (int e = 0; e < k; e++) { sink(e); if (tr && e < TR_K) tr->t_sent[e] = k3x_ns(); }
+            q.wait_and_throw();
+            if (tr) tr->t_end = k3x_ns();
+            return;
+        }
+        const float * x_ = x; float * rows_ = rows;
+        if (!zc) { sycl::event e0 = q.memcpy(xd, x, D * 4); if (tr) { tr->t_sub[0] = k3x_ns(); tev[0] = e0; tset[0] = true; } x_ = xd; rows_ = rowsd; }
+        submit_front(k, x_, tv, tset);
+        if (!stream || !down_split) {
+            sycl::event last = submit_down(k, 0, rows_);
+            if (prof) ev.push_back(last);
+            if (tr) { tr->t_sub[4] = k3x_ns(); tev[4] = last; tset[4] = true; }
+            if (!zc) { last = q.memcpy(rows, rowsd, (size_t) k * D * 4); if (tr) { tr->t_sub[5] = k3x_ns(); tev[5] = last; tset[5] = true; } }
+            if (spin || stream) poll(last);
+            if (tr) tr->t_row[0] = k3x_ns();
+            if (stream) for (int e = 0; e < k; e++) { sink(e); if (tr && e < TR_K) tr->t_sent[e] = k3x_ns(); }
             q.wait_and_throw();
         } else {
             sycl::event cp[16];
             for (int e = 0; e < k; e++) {
-                T(4 + 2 * e, matvec5(1, 1, D, F / K3_QK, td, 2 * pg, 0, QT2_, DT2_, 1, rows_, nullptr, nullptr, nullptr, e));
-                cp[e] = q.memcpy(rows + (size_t) e * D, rowsd + (size_t) e * D, D * 4);
-                T(5 + 2 * e, cp[e]);
+                cp[e] = submit_down(1, e, rows_);
+                if (tr && e < TR_K) { tr->t_sub[4 + 2 * e] = k3x_ns(); tev[4 + 2 * e] = cp[e]; tset[4 + 2 * e] = true; }
+                if (!zc) { cp[e] = q.memcpy(rows + (size_t) e * D, rowsd + (size_t) e * D, D * 4);
+                           if (tr && e < TR_K) { tr->t_sub[5 + 2 * e] = k3x_ns(); tev[5 + 2 * e] = cp[e]; tset[5 + 2 * e] = true; } }
             }
+            if (prof) ev.push_back(cp[k - 1]);
             for (int e = 0; e < k; e++) {
-                while (cp[e].get_info<sycl::info::event::command_execution_status>() != sycl::info::event_command_status::complete) {}
+                poll(cp[e]);
                 if (tr && e < TR_K) tr->t_row[e] = k3x_ns();
-                (*sink)(e);
+                sink(e);
                 if (tr && e < TR_K) tr->t_sent[e] = k3x_ns();
             }
             q.wait_and_throw();
         }
         if (tr) {
             tr->t_end = k3x_ns();
-            if (g_tr_prof && sink)   // streamed: the reply went out already, so this is not on the request path
+            if (g_tr_prof && stream)   // streamed: the reply went out already, so this is not on the request path
                 for (int i = 0; i < TR_NC; i++) if (tset[i]) {
                     tr->d_sub[i]   = tev[i].get_profiling_info<sycl::info::event_profiling::command_submit>();
                     tr->d_start[i] = tev[i].get_profiling_info<sycl::info::event_profiling::command_start>();
@@ -1304,8 +1373,67 @@ static bool rd_spin(int fd, void * p, size_t n, uint64_t * first = nullptr) {
 }
 static bool wr_all(int fd, const void * p, size_t n) { const char * c = (const char *) p; while (n) { ssize_t r = send(fd, c, n, 0); if (r <= 0) return false; c += r; n -= r; } return true; }
 
+// The record arena (serveidx; K3X_ARENA=host, the default since S1 2026-10-29). Every served record is repacked once at
+// load into host USM chunks of 1 GiB (sycl::malloc_host; the device caps one allocation at 4.29 GB), back to back in
+// IDX order, and nothing else holds a copy: the iGPU kernels and any CPU code read the same bytes in place (one DRAM).
+// Record layout (prec bytes, Engine::repack): gate matrix (pg bytes) | up matrix (pg) | down matrix (pd), each in the
+// v7 layout (v7_off/v7_repack_matrix: per group of 4 rows, per i = 0..3, per dword u, 16 dwords ordered (kb0, row);
+// blocks are the ggml IQ1_S (50 B) / IQ2_XXS (66 B) blocks split into 13 / 17 little-endian dwords, last one zero-padded;
+// no padding blocks for kb >= nblk). pg = 3072 * 14 * ndw(tg) * 4, pd = 3584 * 12 * ndw(td) * 4, ndw = 13 (IQ1_S) or 17.
+// Host USM here is an i915 GEM object mmapped write-back into the process (VM_PFNMAP, 4 KiB CPU pages: the runtime
+// does not offer 2 MiB pages for it); CPU reads run at malloc speed. K3X_ARENA_MAP=<file> writes one line per record:
+// "gid tg td chunk offset bytes" (chunk = index into g_arena.chunks, offset in bytes) for tools outside the process.
+struct K3xArena {
+    struct Rec { long gid; int tg, td; const uint8_t * p; size_t bytes; };
+    std::vector<uint8_t *> chunks;
+    std::vector<Rec> recs;
+    void add(long gid, int tg, int td, const uint8_t * p, size_t bytes) { recs.push_back({gid, tg, td, p, bytes}); }
+    void publish(const char * path) const {
+        if (!path || recs.empty()) return;
+        FILE * f = fopen(path, "w"); if (!f) { perror(path); return; }
+        for (const Rec & r : recs) {
+            size_t ci = 0; while (ci < chunks.size() && !(r.p >= chunks[ci] && r.p < chunks[ci] + ((size_t) 1 << 30))) ci++;
+            fprintf(f, "%ld %d %d %zu %zu %zu\n", r.gid, r.tg, r.td, ci, (size_t) (r.p - chunks[ci < chunks.size() ? ci : 0]), r.bytes);
+        }
+        fclose(f);
+    }
+};
+static K3xArena g_arena;
+
+// Keeping the GPU and the memory awake while a client is connected (the engine sends one request per layer, 3-8 ms
+// apart, and the Arc GT drops into RC6 in between: M 2026-10-28 measured +0.7 ms per request from that alone).
+//  K3X_FORCEWAKE=<path> (e.g. /sys/kernel/debug/dri/0/i915_forcewake_user; needs debugfs and root): held open from
+//    accept() to close(), so the GT stays out of RC6 only while a client is connected.
+//  K3X_MEMWARM=<MB/s>: a thread streams a 64 MiB buffer at about that rate while the server waits for a request (the
+//    memory clocks drop between requests: M saw the kernels ~25-35 % slower after idle even with forcewake, and a
+//    background dd mostly restored them). Stops while a request is being served.
+static std::atomic<int> g_warm_on{0};
+static std::atomic<double> g_warm_mbps{0};
+static void memwarm_start(double mbps) {   // also from K3X_CTL "warm=<MB/s>" (0 = off)
+    static bool started = false;
+    g_warm_mbps.store(mbps);
+    if (started || mbps <= 0) return;
+    started = true;
+    std::thread([]() {
+        const size_t N = (size_t) 64 << 20; uint8_t * b = (uint8_t *) aligned_alloc(4096, N); memset(b, 1, N);
+        const size_t step = 64 << 10;   // 64 KiB per burst, paced
+        size_t off = 0; volatile uint64_t sink = 0;
+        for (;;) {
+            const double mbps = g_warm_mbps.load(std::memory_order_relaxed);
+            if (!g_warm_on.load(std::memory_order_relaxed) || mbps <= 0) { usleep(50); continue; }
+            const double burst_us = step / (mbps * 1e6) * 1e6;
+            const uint64_t t0 = k3x_ns(); uint64_t acc = 0;
+            for (size_t i = 0; i < step; i += 64) acc += *(const uint64_t *) (b + off + i);
+            sink = acc; off = (off + step) % N;
+            while ((k3x_ns() - t0) / 1e3 < burst_us && g_warm_on.load(std::memory_order_relaxed)) {}
+        }
+    }).detach();
+    fprintf(stderr, "K3X_MEMWARM: %.0f MB/s while idle\n", mbps);
+}
+
 // serve agent C's remote set: IDX lines "<global_id> <tg> <td> <byte_offset>", BIN = records back to back.
-// Weights go to device USM in chunks of <= 1 GiB (no >4 GiB buffers needed); one Engine (scratch + kernels) per (tg, td).
+// Weights go to the record arena (host USM by default, see K3xArena; K3X_ARENA=device for device USM) in chunks of 1 GiB
+// (no >4 GiB buffers needed); one Engine (scratch + kernels) per (tg, td).
 static int serve_index(const char * idxp, const char * binp, int port) {
     g_host_tables = getenv("K3X_FULLCHECK") != nullptr;
     const bool stream = !getenv("K3X_NOSTREAM");
@@ -1314,6 +1442,7 @@ static int serve_index(const char * idxp, const char * binp, int port) {
     std::vector<Engine *> eng; auto get = [&](int tg, int td) -> Engine * { for (auto * e : eng) if (e->tg == tg && e->td == td) return e; eng.push_back(new Engine(tg, td, 0)); eng.back()->spin = true; load_mufu(*eng.back()); return eng.back(); };
     std::unordered_map<long, std::pair<Engine *, const uint8_t *>> map;
     FILE * f = fopen(binp, "rb"); if (!f) { perror(binp); return 1; }
+    const bool hostarena = Engine::arena_host();
     const size_t CH = (size_t) 1 << 30; uint8_t * chunk = nullptr; size_t used = CH; std::vector<uint8_t> buf; uint8_t * stage = nullptr; const size_t maxrec = (size_t) 16 << 20;
     double t0 = now_ms(); size_t tot = 0;
     // The Arc iGPU silently reads ZEROS from USM beyond roughly 25-35 GB mapped per process (measured 2026-10-28: 3500
@@ -1323,15 +1452,25 @@ static int serve_index(const char * idxp, const char * binp, int port) {
     for (auto & r : idx) {
         Engine * e = get(r.tg, r.td);
         if ((tot + e->prec) / 1e9 > max_gb) { fprintf(stderr, "K3X_MAX_GB %.1f reached: serving %zu of %zu records\n", max_gb, map.size(), idx.size()); break; }
-        if (used + e->prec > CH) { chunk = getenv("K3X_HOSTW") ? sycl::malloc_host<uint8_t>(CH, e->q) : sycl::malloc_device<uint8_t>(CH, e->q); if (!chunk) { fprintf(stderr, "device alloc failed after %.1f GB\n", tot / 1e9); return 1; } used = 0; }
+        if (used + e->prec > CH) {
+            chunk = hostarena ? sycl::malloc_host<uint8_t>(CH, e->q) : sycl::malloc_device<uint8_t>(CH, e->q);
+            if (!chunk) { fprintf(stderr, "%s alloc failed after %.1f GB\n", hostarena ? "host USM" : "device", tot / 1e9); return 1; }
+            used = 0; g_arena.chunks.push_back(chunk);
+        }
         buf.resize(e->rec);
         if (fseeko(f, (off_t) r.off, SEEK_SET) || fread(buf.data(), 1, e->rec, f) != e->rec) { fprintf(stderr, "short read gid %ld\n", r.gid); return 1; }
         // Drop the record from the page cache right away: a page cache that grows with the 46 GB file squeezes memory
         // while ~48 GB of GPU objects are being populated, which is when the silent all-zero failures happen.
         if (!getenv("K3X_KEEPCACHE")) posix_fadvise(fileno(f), (off_t) r.off, (off_t) e->rec, POSIX_FADV_DONTNEED);
-        // Stage through pinned USM host memory: copying from a pageable std::vector made the runtime import it as an
-        // i915 userptr, and those submissions sometimes failed (EXECBUFFER2 EFAULT) without any error, leaving the
-        // record zero on the GPU. Each record is then spot-checked by reading three 256-byte windows back.
+        if (hostarena) {   // the arena is host USM: the CPU repacks straight into it, nothing to copy or read back
+            e->repack(buf.data(), chunk + used);
+            g_arena.add(r.gid, r.tg, r.td, chunk + used, e->prec);
+            map[r.gid] = {e, chunk + used}; used += e->prec; tot += e->prec;
+            continue;
+        }
+        // K3X_ARENA=device: stage through pinned USM host memory: copying from a pageable std::vector made the runtime
+        // import it as an i915 userptr, and those submissions sometimes failed (EXECBUFFER2 EFAULT) without any error,
+        // leaving the record zero on the GPU. Each record is then spot-checked by reading three 256-byte windows back.
         if (!stage) stage = sycl::malloc_host<uint8_t>(maxrec, e->q);
         e->repack(buf.data(), stage);
         e->q.memcpy(chunk + used, stage, e->prec).wait();
@@ -1343,7 +1482,19 @@ static int serve_index(const char * idxp, const char * binp, int port) {
     }
     fclose(f);
     if (!getenv("K3X_FULLCHECK")) for (auto & v : tab_host) v = HostPacked();   // host copies only serve the host reference
-    fprintf(stderr, "loaded %zu of %zu records (%.1f GB on the GPU) in %.1f s, %zu engine kinds\n", map.size(), idx.size(), tot / 1e9, (now_ms() - t0) / 1e3, eng.size());
+    fprintf(stderr, "loaded %zu of %zu records (%.1f GB, %s arena) in %.1f s, %zu engine kinds\n", map.size(), idx.size(), tot / 1e9,
+            hostarena ? "host USM" : "device USM", (now_ms() - t0) / 1e3, eng.size());
+    // One request slot shared by every engine (one request at a time): header + x received straight into host USM, rows
+    // written there by the down kernels and sent from there.
+    float * slot_rows = nullptr; int32_t * slot_hdr = nullptr; float * slot_x = nullptr;
+    {
+        sycl::queue & q0 = Engine::shared_queue();
+        uint8_t * sb = sycl::malloc_host<uint8_t>(4096 + (size_t) D * 4, q0);   // [60 B pad][hdr 68 B][x at +128]
+        slot_hdr = (int32_t *) (sb + 60); slot_x = (float *) (sb + 128);
+        slot_rows = sycl::malloc_host<float>((size_t) 16 * D, q0);
+        for (auto * e : eng) { e->x = slot_x; e->rows = slot_rows; }
+        g_arena.publish(getenv("K3X_ARENA_MAP"));
+    }
     if (const char * so = getenv("K3X_SETOUT")) {   // "layer expert" of the served records, for LLAMA_EXPERT_STORE_REMOTE_SET
         FILE * f = fopen(so, "w");
         for (auto & r : idx) if (map.count(r.gid)) fprintf(f, "%ld %ld\n", r.gid / 896, r.gid % 896);
@@ -1442,17 +1593,35 @@ static int serve_index(const char * idxp, const char * binp, int port) {
     if (bind(ls, (sockaddr *) &a, sizeof a) || listen(ls, 4)) { perror("bind"); return 1; }
     fprintf(stderr, "serving on %d (busy-poll)\n", port);
     k3x_tr_init();
+    if (getenv("K3X_MEMWARM")) memwarm_start(atof(getenv("K3X_MEMWARM")));
     std::vector<float> nanrows(16 * D, NAN), xin(D); long zero_rows = 0; int nconn = 0;
     for (;;) {
         int c = accept(ls, nullptr, nullptr);
         setsockopt(c, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
-        int32_t hdr[17]; nconn++;
+        int fw = -1;
+        if (const char * fp = getenv("K3X_FORCEWAKE")) { fw = open(fp, O_RDONLY); if (fw < 0) perror(fp); }
+        if (const char * cp = getenv("K3X_CTL")) {   // A/B without a reload: "zc=1 split=1 graph=0 qx=0 warm=0", read per connection
+            char b[256] = {0}; FILE * cf = fopen(cp, "r"); if (cf) { size_t n = fread(b, 1, sizeof b - 1, cf); b[n] = 0; fclose(cf); }
+            for (auto * e : eng) {
+                auto opt = [&](const char * key, auto & v) { const char * f = strstr(b, key); if (f) v = atoi(f + strlen(key)); };
+                bool z = e->zc, g = e->use_graph, fq = e->fuse_qx; int sp = e->down_split;
+                opt("zc=", z); opt("split=", sp); opt("graph=", g); opt("qx=", fq);
+                if (const char * wv = strstr(b, "warm=")) memwarm_start(atof(wv + 5));
+                if (fq != e->fuse_qx) for (auto & G : e->graphs) { delete G.g; G.g = nullptr; }
+                e->zc = z; e->down_split = sp; e->use_graph = g; e->fuse_qx = fq;
+            }
+            fprintf(stderr, "conn %d: zc=%d split=%d graph=%d qx=%d warm=%.0f\n", nconn + 1, eng[0]->zc, eng[0]->down_split, eng[0]->use_graph, eng[0]->fuse_qx, g_warm_mbps.load());
+        }
+        int32_t * hdr = slot_hdr; nconn++;
         for (;;) {
             k3x_tr * tr = k3x_tr_begin();
             uint64_t t_first = 0;
-            if (!rd_spin(c, hdr, 17 * 4, tr ? &t_first : nullptr)) break;
+            g_warm_on.store(1, std::memory_order_relaxed);
+            const bool got = rd_spin(c, hdr, 17 * 4, tr ? &t_first : nullptr);
+            g_warm_on.store(0, std::memory_order_relaxed);
+            if (!got) break;
             if (tr) { tr->t_first = t_first; tr->t_hdr = k3x_ns(); }
-            if (!rd_spin(c, xin.data(), D * 4)) break;
+            if (!rd_spin(c, slot_x, D * 4)) break;   // straight into the slot the kernels read
             const int k = hdr[0];
             if (tr) { tr->t_rx = k3x_ns(); tr->k = k; tr->conn = nconn; tr->seq = k >= 1 && k < 16 ? hdr[16] : -1; tr->f_before = k3x_tr_freq(); }
             if (k < 1 || k > 16) break;
@@ -1461,7 +1630,6 @@ static int serve_index(const char * idxp, const char * binp, int port) {
             bool ok = e != nullptr;
             for (int i = 0; ok && i < k; i++) { auto it = map.find(hdr[1 + i]); if (it == map.end() || it->second.first != e) ok = false; else e->recs[i] = it->second.second; }
             if (!ok) { if (!wr_all(c, nanrows.data(), (size_t) k * D * 4)) break; if (tr) tr->t_done = k3x_ns(); continue; }
-            memcpy(e->x, xin.data(), D * 4);
             if (tr) tr->t_x = k3x_ns();
             e->tr = tr;
             bool okw = true;
@@ -1469,19 +1637,24 @@ static int serve_index(const char * idxp, const char * binp, int port) {
             // row; a real expert row is never all zero, so such a row is sent as NaN and the client reads it locally.
             auto guard = [&](int j) { const float * r = e->rows + (size_t) j * D; for (int i = 0; i < D; i++) if (r[i] != 0.0f) return r;
                                       zero_rows++; return (const float *) nanrows.data(); };
-            if (stream) { std::function<void(int)> snk = [&](int j) { if (okw) okw = wr_all(c, guard(j), D * 4); }; e->run(k, &snk); }
+            if (stream) { auto snk = [&](int j) { if (okw) okw = wr_all(c, guard(j), D * 4); }; e->run(k, snk); }
             else { e->run(k); for (int j = 0; j < k && okw; j++) okw = wr_all(c, guard(j), D * 4); if (tr) tr->t_sent[0] = k3x_ns(); }
             e->tr = nullptr;
             if (tr) { tr->t_done = k3x_ns(); tr->f_after = k3x_tr_freq(); }
             if (!okw) break;
         }
         close(c);
+        if (fw >= 0) close(fw);
         k3x_tr_dump();
     }
 }
 
 int main(int argc, char ** argv) {
     if (argc < 6) { fprintf(stderr, "usage: k3x RECORDS N TG TD check|bench|serve ...\n"); return 1; }
+    // Immediate command lists: every command goes to the GPU when it is appended (no batching until an event is queried),
+    // which the zero-copy path's polling relies on (S1, 2026-10-29: a host-USM flag behind a batched list never arrives).
+    // The level_zero v2 adapter gave stale host-USM rows in the same probe: keep v1 (the default of this runtime).
+    setenv("UR_L0_USE_IMMEDIATE_COMMANDLISTS", "1", 0);
     std::string path = argv[1]; int E = atoi(argv[2]), tg = atoi(argv[3]), td = atoi(argv[4]); std::string mode = argv[5];
     if (mode == "serveidx") return serve_index(argv[1], argv[2], atoi(argv[6]));
     Engine en(tg, td, E);
@@ -1624,7 +1797,8 @@ int main(int argc, char ** argv) {
         for (int c = 0; c < ncase; c++) {
             memcpy(en.x, X.data() + (size_t) c * D * 4, D * 4);
             memcpy(en.ids, I.data() + (size_t) c * K * 4, K * 4);
-            en.run(K);
+            if (getenv("K3X_VSTREAM")) { int nx = 0; auto snk = [&](int j) { if (j != nx++) { fprintf(stderr, "sink order\n"); exit(7); } }; en.run(K, snk); }   // the serving path
+            else en.run(K);
             en.q.memcpy(dg.data(), en.gbuf, K * F * 4); en.q.memcpy(du.data(), en.ubuf, K * F * 4); en.q.memcpy(dh.data(), en.hbuf, K * F * 4).wait();
             const uint32_t * rg = (const uint32_t *) (G.data() + (size_t) c * K * F * 4), * ru = (const uint32_t *) (U.data() + (size_t) c * K * F * 4);
             const uint32_t * rh = (const uint32_t *) (H.data() + (size_t) c * K * F * 4), * rd = (const uint32_t *) (DN.data() + (size_t) c * K * D * 4);
@@ -1648,24 +1822,28 @@ int main(int argc, char ** argv) {
         printf("  dn ulp diff histogram: 1:%ld <=4:%ld <=16:%ld <=256:%ld more:%ld\n", hist[1], hist[2], hist[3], hist[4], hist[5]);
         return 0;
     }
-    if (mode == "bench") {
+    if (mode == "bench") {   // K3X_STREAM=1: time to first/last row through the streaming path; K3X_BENCH_GAP_US: idle between tokens
         std::vector<int> ks; for (char * s = strtok(argv[6], ","); s; s = strtok(nullptr, ",")) ks.push_back(atoi(s));
         int iters = atoi(argv[7]);
+        const long gap_us = getenv("K3X_BENCH_GAP_US") ? atol(getenv("K3X_BENCH_GAP_US")) : 0;
+        const bool strm = getenv("K3X_STREAM") != nullptr;
         for (int i = 0; i < D; i++) en.x[i] = nd(rng);
         for (int k : ks) {
-            std::vector<double> t, tfirst;
+            std::vector<double> t, tfirst, tlast;
             for (int it = 0; it < iters + 5; it++) {
+                if (gap_us) { const double tg0 = now_ms(); while (now_ms() - tg0 < gap_us * 1e-3) usleep(gap_us > 200 ? 100 : 0); }
                 for (int i = 0; i < k; i++) en.ids[i] = rng() % E;
-                double t0 = now_ms(), tf = 0;
-                if (getenv("K3X_STREAM")) { std::function<void(int)> snk = [&](int j) { if (j == 0) tf = now_ms() - t0; }; en.run(k, &snk); }
+                double t0 = now_ms(), tf = 0, tl = 0;
+                if (strm) { auto snk = [&](int j) { const double v = now_ms() - t0; if (j == 0) tf = v; tl = v; }; en.run(k, snk); }
                 else en.run(k);
                 double dt = now_ms() - t0;
-                if (it >= 5) { t.push_back(dt); tfirst.push_back(tf); }
+                if (it >= 5) { t.push_back(dt); tfirst.push_back(tf); tlast.push_back(tl); }
             }
             std::sort(t.begin(), t.end());
             double p50 = t[t.size() / 2], p90 = t[(size_t) (t.size() * 0.9)];
-            if (en.prof) { printf("  kernels (ms avg): quant %.3f gate/up %.3f situ+quant %.3f down %.3f  gpu span %.3f\n", en.kt[0] / en.nrun, en.kt[1] / en.nrun, en.kt[2] / en.nrun, en.kt[3] / en.nrun, en.kspan / en.nrun); for (double & v : en.kt) v = 0; en.kspan = 0; en.nrun = 0; }
-            if (getenv("K3X_STREAM")) { std::sort(tfirst.begin(), tfirst.end()); printf("  first row p50 %.3f ms\n", tfirst[tfirst.size() / 2]); }
+            if (en.prof && en.nrun) { printf("  kernels (ms avg): quant %.3f gate/up %.3f situ+quant %.3f down %.3f  gpu span %.3f\n", en.kt[0] / en.nrun, en.kt[1] / en.nrun, en.kt[2] / en.nrun, en.kt[3] / en.nrun, en.kspan / en.nrun); for (double & v : en.kt) v = 0; en.kspan = 0; en.nrun = 0; }
+            if (strm) { std::sort(tfirst.begin(), tfirst.end()); std::sort(tlast.begin(), tlast.end());
+                        printf("  first row p50 %.3f p90 %.3f ms, last row p50 %.3f p90 %.3f ms\n", tfirst[tfirst.size() / 2], tfirst[tfirst.size() * 9 / 10], tlast[tlast.size() / 2], tlast[tlast.size() * 9 / 10]); }
             printf("k=%2d: p50 %.3f ms  p90 %.3f ms  min %.3f ms  -> %.1f GB/s (p50)\n", k, p50, p90, t[0], k * en.rec / p50 / 1e6);
             fflush(stdout);
         }
@@ -1691,7 +1869,7 @@ int main(int argc, char ** argv) {
                 if (k < 1 || k > 16) break;
                 for (int i = 0; i < k; i++) en.ids[i] = ((hdr[1 + i] % E) + E) % E;
                 bool okw = true;
-                if (stream) { std::function<void(int)> snk = [&](int j) { if (okw) okw = wr(c, en.rows + (size_t) j * D, D * 4); }; en.run(k, &snk); }
+                if (stream) { auto snk = [&](int j) { if (okw) okw = wr(c, en.rows + (size_t) j * D, D * 4); }; en.run(k, snk); }
                 else { en.run(k); okw = wr(c, en.rows, (size_t) k * D * 4); }
                 if (!okw) break;
             }

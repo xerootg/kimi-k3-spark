@@ -30,6 +30,47 @@ Serving: `serve`/`serveidx` busy-poll the socket and stream each expert's row as
 (layer, expert) list to `K3X_SETOUT`, self-checks one token at startup and sends NaN for any all-zero row: above
 roughly 34-42 GB resident on the Arc 130T, kernel submissions sometimes fail with no error and leave rows zero.
 
+Zero-copy request path (S1, 2026-10-29; defaults on, arithmetic unchanged, every mode validated bit for bit):
+- **One record arena in host USM** (`K3X_ARENA=host`, default; `device` = the old device-USM chunks). `serveidx` repacks
+  each record once, straight into 1 GiB `sycl::malloc_host` chunks; the iGPU and CPU code read the same bytes. Layout and
+  `K3X_ARENA_MAP=<file>` (per record: gid, types, chunk, offset, bytes) are documented at `struct K3xArena` in `k3x.cpp`.
+  The runtime maps host USM as an i915 GEM object, write-back, 4 KiB CPU pages (no 2 MiB pages); CPU reads run at
+  malloc speed. The full set (7031 records incl. the 64 canary records, 48.3 GB + 0.75 GB tables) passed `K3X_FULLCHECK`
+  on 3/3 cold starts on nuc2 with this arena. GPU speed host vs device USM: equal within ~3 % (nuc2 bench).
+- **Request slot in host USM**: header and x are `recv()`d straight into it, the q8_1 kernel reads x there, the down
+  kernels write the rows there, and `send()` sends from there. No H2D/D2H copies, no `std::vector`/`std::function`/`new`
+  on the request path in k3x itself (the SYCL runtime still allocates ~20 times per submission: `mcount.c` counts it).
+- **Record pointers from a host-USM table** read by the kernels at run time (`recs[]`), not a by-value kernel argument:
+  makes pre-recorded graphs possible and is faster (down per expert 122 -> 93-101 us). A select between the two kinds of
+  pointer in one kernel made every matvec ~2x slower (IGC codegen): never mix them.
+- **Immediate command lists** (`UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`, set by `main` unless already set). With the default
+  batched lists nothing reaches the GPU until an event is queried. The level_zero v2 adapter returned stale host-USM data.
+- Host USM on this iGPU is coherent only at command boundaries: CPU stores are not seen by a running kernel (even system-
+  scope atomics; a GPU spin/mailbox kernel cannot work, and a 3 s spinning kernel is a GPU hang), and in-kernel
+  completion flags (fence + atomic counter) gave stale rows. So the CPU writes x/ids before the submission and reads a
+  row after its command's event completed (polled).
+- Options: `K3X_DOWN_SPLIT=0` one down launch for all k (rows arrive together), `K3X_GRAPH=1` the per-k sequence as a
+  SYCL graph (limited graphs only on this runtime; one submission), `K3X_FUSE_QX_RT=1` q8_1(x) inside gate/up.
+  `K3X_CTL=<file>` switches `zc= split= graph= qx= warm=` per connection without a reload (A/B). Measured on nuc2 these
+  are within ~±30 us of the default (split streaming). Gate/up + SiTU in one kernel was 10-25 % slower: removed.
+- **Keep-awake while a client is connected**: `K3X_FORCEWAKE=<path>` holds
+  `/sys/kernel/debug/dri/0/i915_forcewake_user` open from accept() to close() (needs root and debugfs in the
+  container), and `K3X_MEMWARM=<MB/s>` streams a 64 MiB buffer on a spare core while waiting for a request (the memory
+  clocks drop between requests). 4000 MB/s was best of 1000/2000/4000/8000.
+
+nuc2, full set, rrclient from the Spark (`RR_IDX` real ids, dist = 31 % k=1 / 69 % k=2), p50 / p90 ms:
+
+| server | k=1 | k=2 | k=3 | dist | dist, 8 ms gap | gap + forcewake | gap + fw + memwarm 4000 |
+|---|---|---|---|---|---|---|---|
+| before (65aaeb0 = production v11 path) | 0.812 | 1.081 | 1.347 | 1.072 / 1.207 | 2.025 / 2.866 | 1.310 / 1.490 | |
+| zero copy, split streaming (default) | 0.808 | 1.007 | 1.256 | 0.987 / 1.133 | 1.835 / 2.516 | 1.283 / 1.407 | 1.028 / 1.226 |
+| zero copy, graph + one down launch | 0.753 | 0.982 | 1.222 | 0.958 / 1.046 | 1.836 / 2.470 | 1.217 / 1.352 | 0.997 / 1.182 |
+
+Server stages, zero copy, warm, k=2 (K3X_TRACE_PROF, us p50): x received 60 after the first byte; GPU q8_1(x) 29,
+gate/up 279, SiTU + q8_1(h) 95, down 93 + 93; GPU gaps between commands 14-42 (one per boundary); all submissions
+done 138 after x; first byte -> last row sent 841. After an 8 ms idle without keep-awake: submissions 434 (RC6 exit),
+gate/up 374, SiTU 151, down 134 each; with forcewake + memwarm the kernels are back at 306 / 96 / 101.
+
 Tracing (`serveidx`, off by default): `K3X_TRACE=1` (or a ring size) records per request, in a ring allocated at start:
 idle wait, first byte, header and x received, x in host USM, each submission returned, each row in host memory and sent,
 queue drained (CLOCK_MONOTONIC_RAW ns). `K3X_TRACE_PROF=1` adds the queue's profiling (each command's device start/end),
