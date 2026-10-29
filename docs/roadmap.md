@@ -106,6 +106,19 @@ The Hopper kernel is 5-10 % faster per kernel but not bit-identical on the GB10.
 - **ConnectX-7 to a NUC with RDMA.** The Spark's two QSFP28 cages are idle. A ConnectX-4/5 Lx in a Thunderbolt enclosure on nuc2 would give RoCE with a few-µs round trip. Worth it only if, after step 1, the network is the largest remaining slice (today ~0.2 ms of ~2.0 ms).
 - **More pool boxes.** nuc1 and nuc3 have a single memory channel (~45 GB/s); nuc (Minisforum i7-12650H, DDR4 dual channel ~51 GB/s, UHD iGPU) would mainly be a CPU-kernel box. The iGPU memory cap on 32 GB boxes is still unknown.
 
+### Coming hardware: a fleet of A10s (24 GB each)
+
+Enough cards to hold the whole 594 GB model in VRAM (25+ cards). That makes K3 a multi-GPU, multi-node problem instead of a
+disk-streaming one: no SSD wall, and the 45.5 GB spine split across GPUs. The new limits are each card's ~600 GB/s, PCIe 4.0
+(no NVLink on the A10) and the network between hosts.
+
+Planning, to do before the cards arrive:
+- **Placement:** layers or experts per GPU, and pipeline vs expert-parallel vs tensor-parallel for the spine.
+- **Host specs to learn:** CPU memory channels, PCIe topology, NICs (RDMA?).
+- **Bit-exactness on sm_86:** whether the GB10/GH200 bit-exact discipline carries over to Ampere kernels.
+
+The fork `xerootg/llama.cpp` is a research fork and will not be upstreamed. Its default branch is `kimi-k3`.
+
 ## Cluster layout for this work
 
 | node | role |
@@ -121,3 +134,4 @@ The Hopper kernel is 5-10 % faster per kernel but not bit-identical on the GB10.
 - 2026-10-28: nuc2/nuc3 reserved for Kimi.
 - 2026-10-28: Spark priority order: aligned store, then CPU misses-as-they-land, then the GB10 Q6_K kernel.
 - 2026-10-28: the remote tier stays on although it is speed-neutral (fewer NVMe reads, the pooling demonstration).
+- 2026-10-28: the fork's default branch is `kimi-k3` (research fork, not for upstream); patch set e844a2a published as tag `kimi-k3-e844a2a`.
