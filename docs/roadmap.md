@@ -88,6 +88,23 @@ Each is an interleaved A/B with gold md5; none changes arithmetic.
 - **Cheap, ~$100:** a USB 3.2 10GbE adapter on a Spark USB-C port (20 Gbps USB 3.2, not USB4). Latency through USB is worse, so it suits a NUC RAM byte tier (raw records, predicted layers ahead): the study put that at +3-5 % with 10G against 0-1 % at 2.5 GbE.
 - **Proper, ~$250:** the ConnectX-7's QSFP28 cage with a 10GBASE-T SFP+ module in a QSA adapter, direct to a Thunderbolt 10GbE adapter on nuc2. Lowers every expert round trip too.
 
+### 2d. Engine hot-path audit findings (2026-10-29, `docs/audit-2026-10-29.md`)
+
+Ranked by expected gain per hour. All bit-identical by construction.
+
+| # | change | expected | status |
+|---|---|---|---|
+| 1 | skip zero-record ids inside `mul_mat_vec_q` (about 9 dummy ids per layer at 28 us) and set SPLIT_LATE=16 | +5-6 % | agent Q |
+| 2 | bound the speculative reader's bytes in flight (own piece size, stop issuing on preempt) | +3-6 % (guess) | agent Q |
+| 3 | fused SiTU GLU op with the gate/up MUL_MAT_ID fusion (27 tiny kernels per layer) | +2-3 % | after Q |
+| 4 | remote tier: REMOTE_ROWS 3-4 and a shorter deadline now that the round trip is 0.66 ms | +1-2 % | pool agent, env only |
+| 5 | store v2 needs a per-entry file stride (5 offset sites), not only a header change; `max_sectors_kb` is already 512 | part of the aligned store | with step 2 |
+| 6 | fill and spec thread wake-ups on the critical path (condvar per layer) | +0.5-1 % | after Q |
+| 7 | io_uring SINGLE_ISSUER, DEFER_TASKRUN, COOP_TASKRUN | 0-1 % | agent Q |
+| 8 | predictions should not promote hits or earn second chances | +/-1 %, replay first | agent Q |
+| 9 | byte strides in mmvq, drop the IQ2_XXS slot padding (+3 % cache) | +0.3 % | later |
+| 10 | k3cpu tail: re-execute a claimed-but-unfinished chunk; SO_BUSY_POLL | +1 % on the remote leg | pool agent |
+
 ### 3. Spark: the CPU computes missed experts as their records land
 
 The GPU waits for all of a layer's misses, then runs one 8-row late matmul. Instead, the GB10's idle Arm cores compute each missed expert's row as soon as its record arrives, during the fill wait when the memory bus is mostly idle. The GPU then waits only for the last row.
@@ -156,5 +173,6 @@ The fork `xerootg/llama.cpp` is a research fork and will not be upstreamed. Its 
 - 2026-10-28: nuc2/nuc3 reserved for Kimi.
 - 2026-10-28: Spark priority order: aligned store, then CPU misses-as-they-land, then the GB10 Q6_K kernel.
 - 2026-10-28: the remote tier stays on although it is speed-neutral (fewer NVMe reads, the pooling demonstration).
+- 2026-10-29: hot-path audit done (docs/audit-2026-10-29.md); items 1, 2, 7, 8 go to agent Q, 4 and 10 to the pool agent.
 - 2026-10-29: plan review added the power-state/I/O tests (2b), the link options (2c) and a read-only code audit of the engine's hot path for performance left on the table.
 - 2026-10-28: the fork's default branch is `kimi-k3` (research fork, not for upstream); patch set e844a2a published as tag `kimi-k3-e844a2a`.
