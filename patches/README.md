@@ -515,13 +515,24 @@ read by `MUL_MAT_ID`), with these changes:
   usable box's set that are not in the bank are left out of the plan (no
   slot, no NVMe read, the zero record in the early matmul), as many as the
   late matmul could still take (`LLAMA_EXPERT_STORE_REMOTE_ROWS`, default 8,
-  and SPLIT_LATE minus the local misses), grouped by box. After the early
-  post the graph copies the experts' input (`routed_in`, f32) into a
-  per-layer registered vector and posts `moe_rpost-<il>` (a waiting lookup,
-  served in microseconds): the poller hands input + global ids
-  (`layer * n_expert + expert`) to each box involved. One client per box: a
-  persistent TCP connection (`TCP_NODELAY`), its own busy-polling network
-  thread, requests pipelined (wire format of `tools/distributed/rrclient.c`),
+  and SPLIT_LATE minus the local misses), grouped by box. The graph copies
+  the experts' input (`routed_in`, f32) into a per-layer registered vector
+  right before the early lookup, and the early lookup itself hands input +
+  global ids (`layer * n_expert + expert`) to each box involved as soon as
+  it has chosen the candidates, before it plans the local reads.
+  (`LLAMA_EXPERT_STORE_REMOTE_LATE_POST=1` restores the first version: the
+  copy after the early lookup and a separate waiting post `moe_rpost-<il>`;
+  that sent the request ~130 us later and cost the GPU one more wait on the
+  poller per layer.) One client per box: a persistent TCP connection
+  (`TCP_NODELAY`), its own network thread, requests pipelined (wire format
+  of `tools/distributed/rrclient.c`, header and input in one `sendmsg`).
+  The network thread busy-polls while a request is in flight and for
+  `LLAMA_EXPERT_STORE_REMOTE_SPIN_US` (300) after its last work, then
+  blocks on a futex doorbell that the post rings (it used to nap 100 us at
+  a time, which cost ~75 us per request: the requests are one per layer,
+  3-8 ms apart). `LLAMA_EXPERT_STORE_REMOTE_CPUS=<cpu>[,<cpu>...]` pins the
+  network thread of box i to the i-th CPU (the last one repeats; unset:
+  `LLAMA_EXPERT_STORE_CPUS` or no pinning). Each box has
   its own deadline (`LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US`, one value or one
   per box, default 3000, from the post) and stats. The real lookup, after the
   local reads, waits for each box until its deadline and places the rows
@@ -552,11 +563,11 @@ read by `MUL_MAT_ID`), with these changes:
   percentiles, connects and drops.
   `LLAMA_EXPERT_STORE_REMOTE_TRACE=<path>` (diagnostics, off by default)
   records every request's hand-offs (CLOCK_MONOTONIC_RAW ns): the early
-  lookup, the `moe_rpost` hook, the cache lock, the post, the network
-  thread's pick-up and send, the reply's first byte, first row and last
-  byte, the real lookup's hook, the resolve, the wait's end, the rows
-  placed, plus the network thread's cpu, involuntary switches and idle
-  naps. The ring (65536 requests per box) is allocated at start and
+  lookup, the `moe_rpost` hook (= the early lookup with the early post),
+  the cache lock, the post, the network thread's pick-up and send, the
+  reply's first byte, first row and last byte, the real lookup's hook, the
+  resolve, the wait's end, the rows placed, plus the network thread's cpu,
+  involuntary switches and idle blocks (doorbell waits). The ring (65536 requests per box) is allocated at start and
   written as TSV to `<path>.<box>` on SIGUSR1 (when nothing is in flight)
   and at shutdown. With the trace on, header word 16 carries the request's
   number (k < 16; servers ignore ids past k), so a k3x `K3X_TRACE` dump
