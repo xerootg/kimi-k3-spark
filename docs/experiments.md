@@ -37,11 +37,14 @@ Verdicts: **kept** = in the deployed config. **opt-in** = in the engine behind a
 | Pulsar (io_uring O_DIRECT expert streaming), Spark | 0.73-0.75 tok/s | speed reference only |
 | RPC: experts of some layers computed on LAN nodes | 0.30 tok/s with 0001; with 0003, 0.68-0.70 vs 0.71 without RPC | dropped: LAN is 40-90x slower than the NVMe |
 | Spark + nuc2/nuc3 (RAM tier, CPU / Arc SYCL / NPU expert compute) after the Thunderbolt mesh, 2026-10-26 | mesh does not reach the Spark (2.5 GbE); predicted 0-1 % bit-identical, 3-6 % with other kernels; Arc = CPU speed (~23 GB/s IQ1_S); NPU needs Q4 requant | rejected (study section below) |
+| Bit-exact remote expert compute on nuc2's Arc iGPU (SYCL, tabulated MUFU), remote tier in the engine, 2026-10-28 | gold md5 everywhere incl. a server killed mid-answer; NVMe reads -13 to -17 %; speed neutral (engine round trip ~2.0 ms vs 1.24 ms bare) | kept on (neutral), round trip open |
+| `/dev/cpu_dma_latency` held at 0 on the Spark, 2026-10-28 | 1.98 -> 2.04-2.05 tok/s (tier on or off), gold md5 | kept (DaemonSet) |
+| Fresh sequential copy of the store / 512 KiB-aligned reads, 2026-10-28 (microbenchmark) | 11.07 -> 11.9-12.0 / 12.9-13.0 GB/s | aligned store v2 next |
 | Patch 0003 expert store: repacked records, host LRU bank, O_DIRECT pread pool | Spark 0.71 tok/s, hit rate 55 % | kept |
 | Expert matmuls on the GPU straight from the registered host bank | Spark 1.43-1.47 tok/s (gap 12 -> 4 ms/layer) | kept |
 | `--threads 8` vs 16 on the GB10 | 0.84 vs 0.71 tok/s (little cores off the critical path) | kept (8) |
 | expert_used_count 12 instead of 16 (Spark) | 1.71 tok/s | rejected: changes the model's output |
-| Speculative decoding while NVMe-bound | each draft token selects its own experts | rejected |
+| Speculative decoding while NVMe-bound | each draft token selects its own experts; replay 2026-10-28: a K-token batch needs 1.7x (K=2) to 4.8x (K=8) the experts of one token but the misses per accepted token stay ~6.8/layer, so rejected drafts add reads on a drive that is already ~80 % busy (see the 2026-10-28 section) | rejected alone; possible with the remote tier plus a confidence-gated draft (DSpark) |
 | vLLM / SGLang / ktransformers | cannot run K3 on these boxes (ktransformers is x86 AMX only) | rejected |
 
 ### GH200 bring-up and the first speed pass (2026-10-18/19)
@@ -622,7 +625,7 @@ weights last. Nothing deployed; the Spark pod was not touched.
 | RAM | 62 GB DDR5-5600, 2 channels; ~33 GB available, the Qwen3-Coder `llama-cpp` pod requests 60Gi | 30 GB, **one DIMM** (single channel); ~11 GB available (GitLab, Prometheus, Jellyfin, ...) | 62 GB DDR5-4800 (excluded) | 121 GB, ~8 GB available with the pod up |
 | iGPU | Arc 130T (8086:7d51, 7 Xe cores), i915 | same silicon, reports as "Intel Graphics" (8086:7dd1: no Arc branding on one channel) | Iris Xe (excluded) | |
 | NPU | NPU 3720 class (8086:7d1d), `intel_vpu` loaded, `/dev/accel0`, no user-space driver installed | same | | |
-| Network | 2.5 GbE + Thunderbolt to nuc3 (20 Gb/s link) and nas-large (40 Gb/s link) | 2.5 GbE + TB to nuc2 and nas-large | 2.5 GbE (VLAN 3) + 10 GbE (VLAN 1) + TB | **2.5 GbE only** (Realtek RTL8127, a 10GBASE-T chip negotiating 2.5G; no ConnectX, no USB4/Thunderbolt) |
+| Network | 2.5 GbE + Thunderbolt to nuc3 (20 Gb/s link) and nas-large (40 Gb/s link) | 2.5 GbE + TB to nuc2 and nas-large | 2.5 GbE (VLAN 3) + 10 GbE (VLAN 1) + TB | **2.5 GbE only** (Realtek RTL8127, a 10GBASE-T chip negotiating 2.5G; no ConnectX, no USB4/Thunderbolt) | (CORRECTION 2026-10-28: the Spark Founders Edition has a ConnectX-7 with two QSFP28 cages; DGX OS removes it from the PCIe bus when no cable has link, which is why it was missed)
 
 Network (Python TCP bench `tools/distributed/netbench.py`): Thunderbolt pairs 14-18 Gbit/s (1.75-2.2 GB/s) with one
 or four streams, but small-message latency is not better than the LAN (14 KB request/response p50 0.16-0.31 ms,
@@ -682,7 +685,7 @@ give ~2.46 tok/s; that is the ceiling for any shape that only removes reads.
 |---|---|---|---|
 | **A. NUC RAM as an expert tier, the Spark computes (bit-identical)** | identical | **~1.93-1.95 (0-1 %)** | 290 MB/s is 2.6 % of the NVMe's 11 GB/s; one record takes 22 ms over the wire, about 4 layers, so it can only carry predictions 4+ layers ahead (precision below 0.55). With a 10 GbE link to the Spark (its RTL8127 can do 10GBASE-T; needs a 10G switch port) it would be ~11 % extra bandwidth and ~5.5 ms per record: realistically +3-5 %, still bit-identical. |
 | **B. NUCs compute the experts they hold (same weights, other kernels)** | KL not measured (not built) | **ideal 2.12-2.2 (+10-14 %); with the measured round trip ~2.0-2.05 (+3-6 %)** | A 7000-expert set on nuc2 (needs the Qwen3-Coder pod off nuc2) cuts misses 18.5-25 %: fill 3.9 -> 2.9-3.2 records, wait -0.5 to -0.7 ms per layer. But the rows must be back before the merge, ~2.5 ms after the router, and the measured round trip is p50 1.9 / p90 3.3 / p99 5.8 ms: ~30 % of the layers stall 0.5-3 ms, ~0.3 ms per layer on average, which eats half or more of the gain. No head start is possible: the experts need the real FFN input, which exists only right before the router. With nuc2 keeping Qwen3-Coder (3700 set): +2-4 %. |
-| B', bit-identical remote compute | identical | not viable | The integer dot products and even the accumulation order of CUDA's MMVQ could be emulated on the CPU, but the fused SwiGLU uses the GPU's own `expf`; splitting it out means two round trips per layer (~3-4 ms), more than the window. |
+| B', bit-identical remote compute | identical | **done 2026-10-28** | The "not viable" verdict was wrong: K3's routed experts use SiTU (tanh, ex2, rcp), not SwiGLU, and all three NVIDIA approximations are deterministic single-float functions that were tabulated and verified over all 2^32 inputs. A SYCL kernel on nuc2's Arc reproduces the production rows bit for bit (2026-10-28 section). |
 | C. Whole layers on the NUCs (the 2026-10-18 RPC shape) | other kernels | ≤ 1.95 | nuc2 holds ~7 layers; all 16 experts of a layer remote = 3.9-4.5 ms compute + RTT in series with the Spark, which then idles. Same conclusion as the old RPC row. |
 | D. NPU | requantized | not a fit | The upstream OpenVINO backend (the only llama.cpp path to the NPU) supports Q4_0 as its main NPU format and requantizes everything else. It has no IQ1_S/IQ2_XXS path, uses static graphs, runs one sequence and is stateless only. IQ1_S -> Q4_x is 2.9x the bytes (nuc2 would hold ~2400 experts instead of 7000; Q4_1 with 32-groups can hold IQ1_S's three levels per block almost exactly, Q4_0 cannot). It shares the same DDR5 and adds dispatch latency. Not measured beyond the backend's documented constraints. |
 | nas-large as storage | n/a | no tok/s effect | Loading a 46 GB shard into nuc2 over Thunderbolt (~2 GB/s link) instead of the Spark's 2.5 GbE (~160 s): a load-time convenience only. The repacked store is not on nas-large; Garage there holds the GGUF on the HDD array. |
@@ -759,6 +762,105 @@ here, it needs the CPU split and no split GEMV) and decode at 0.67 (baseline) vs
 64-token tail -- a single short noisy sample at 31k context, not a real second-chance regression (the short-prompt
 A/B and the bit-identical md5 rule that out), but long-context decode speed is unmeasured and worth a clean run if
 it matters. The 2-sequence 2x66k case that OOM'd before (seventh pass) was deliberately not repeated.
+
+### Spark: bit-exact remote experts on the Intel NUCs, the CPU latency hold, the disk (2026-10-28)
+
+The goal set for this pass: pooled commodity hardware, lossless, past 2 tok/s on the Spark.
+
+**Bit-exact expert compute on another vendor's GPU.** The 2026-10-26 study rejected bit-identical remote
+compute because of the fast-math `expf`. That was wrong on two counts:
+- **The activation is SiTU, not SwiGLU:** `4·tanh(g/4)·sigmoid(g) · 25·tanh(u/25)`.
+- **The approximations can be tabulated.** With `-use_fast_math` the kernels use MUFU.TANH, MUFU.EX2 and MUFU.RCP, each a deterministic function of one float.
+
+What was built:
+- **Spec and tables:** the exact production path was read from the sm_121 SASS (`tools/bitexact/SPEC.md`):
+  - kernel order: quantize, gate GEMV, tanh step, sigmoid×multiply, quantize, up GEMV, tanh, multiply, quantize, down GEMV;
+  - `mul_mat_vec_q` small_k at 4 warps × 32 lanes, 4 rows per block;
+  - the warp and lane reduction order, FTZ on every add, multiply and FMA;
+  - q8_1 quantization by multiplying with `amax·(1/127)`.
+
+  The three MUFU ops were tabulated on the GB10 and verified over all 2^32 inputs with zero mismatches: RCP is one 32 MiB mantissa table; TANH and EX2 are stored per binade, 2.5 GB raw, packed exactly to 0.75 GB.
+- **Implementations:** a scalar CPU reference (`tools/bitexact/cpu/k3ref.cpp`) and a SYCL kernel for the Arc iGPU (`tools/bitexact/sycl/k3x.cpp`). Both reproduce 512 dump cases from the production kernels bit for bit at every stage (layer 1 all IQ1_S, layer 11 IQ2_XXS gate/up, layer 83 IQ2_XXS down; 4096 + 2560 + 1536 expert rows).
+- **Kernel speed:** IGC compiled `dot_acc` as byte extraction plus emulated multiplies. Calling `__builtin_IB_dp4a_ss` cut the IQ1_S kernel from 10,328 to 4,037 instructions. k=2 went from 1.26-1.40 to 0.78 ms, and k=8 runs at 1.93 ms (27 GB/s).
+- **iGPU memory:** k3x-v8 and older silently returned all-zero rows above about 34-42 GB resident (`I915_GEM_EXECBUFFER2` EFAULT, never reported to the program). The root cause was not isolated. What fixed it in k3x-v11 (4de37ce): an unpadded GPU layout (+4 % instead of +19 %), packed tables, pinned and read-back uploads, and dropping the page cache while loading. The full 46 GB set (6967 records) then served 6/6 cold starts, with every record checked against the host reference.
+
+**Network latency, Spark to nuc2** (`tools/distributed/rrlat.c`). The extra time was host power saving, not the switch:
+- **QoS:** no effect; the links are nearly idle.
+- **EEE:** already off or inactive on all three links.
+- **What mattered, largest first:**
+  - PCIe ASPM L1 on the NUC NICs: 64 B round trip 233 → 60 µs;
+  - deep idle on the Spark's NIC interrupt cores (433 µs exit): 14 KB/28-43 KB round trip ~390-440 → 250-310 µs with `/dev/cpu_dma_latency` held at 0;
+  - nuc2 interrupt coalescing `rx-usecs 3 → 0`: ~100 µs;
+  - one nuc2 NIC queue on an LP-E core: ~70 µs on a quarter of connections.
+- **Remaining floor:** about 0.2 ms, which is the 2.5 GbE wire time.
+- **Deployed:** the NUC settings are the `kimi-k3-nic-lowlat` DaemonSet (nuc2, nuc3).
+
+**Engine: remote expert tier** (e844a2a, `LLAMA_EXPERT_STORE_REMOTE*`, patches/README). Selected experts in a box's set that are not in the bank are left out of the plan and computed remotely. Rows that arrive late or not at all are read locally, so output never depends on the network.
+
+Native A/B, interleaved: gold md5 on all 15 runs with the tier on, including nuc3's server killed mid-answer. NVMe bytes for decode −12.6 % (nuc2), −16.5 % (nuc2+nuc3), but speed was neutral to +2 %.
+
+Production (the k8s pod `kimi-k3-k3x-nuc2`, full set, image ge844a2a), warm-up + 3 × 200-token coding runs, gold md5 on every run:
+
+| leg | warm-up | runs (tok/s) | notes |
+|---|---|---|---|
+| no hold, tier off (gcdba886, morning) | 1.99 | 1.98 | |
+| no hold, tier on, up to 8 remote rows | 2.03 | 1.94 / 1.93 / 1.94 | 2.41 experts per request, RTT p50 2.15 ms, 11 % of requests short |
+| no hold, tier on, `REMOTE_ROWS=2` | 2.08 | 1.98 / 1.98 / 1.98 | wait 0.26 ms per layer with candidates |
+| **hold on, tier on** | — | **2.049 / 2.044 / 2.049** | |
+| **hold on, tier off** | 2.13 | **2.038 / 2.049 / 2.050** | |
+
+Verdict:
+- **The CPU latency hold (+3.5 %) is what took the Spark past 2 tok/s.** It also speeds up the engine's own read completions. Deployed as `configs/kimi-k3/spark-dma-latency.yaml` in argo-things, because the engine's container cannot open the device.
+- **The remote tier is neutral on speed and kept on** (fewer NVMe reads, pooling demonstrated).
+- **Open:** the engine's round trip is p50 ~2.0 ms against 1.24 ms for the same two experts from rrclient. Something on the Spark side adds ~0.8 ms per request; until it is found, the tier cannot pay.
+
+**Disk** (production pod down, `tools/readbench.cpp`, 7-record fills, io_uring, 1 MiB pieces, QD 32).
+
+Drive health: Gen5 x4 link, 55-60 °C, no thermal events, 0 errors, PS0, MDTS 512 KiB. At the filesystem level the store is not fragmented: 280 extents, average 1.86 GB.
+
+| read | GB/s |
+|---|---|
+| the store, written 2026-10-18 | 11.07-11.15 (k=4: 10.37) |
+| a fresh sequential copy of it (written in 94 s, 5.8 GB/s) | 11.90-12.02 (k=4: 11.34) |
+| the fresh copy, reads starting on 512 KiB boundaries | **12.93-12.97** |
+| the fresh copy, 2 MiB boundaries | 12.65-12.93 |
+| sequential dd, QD 1, 16 MiB | 8.7 |
+
+- **Fresh copy (+8 %):** probably flash-internal layout or charge drift on 10-day-old data. Some of it may be the SLC cache; re-measure after the drive settles.
+- **512 KiB alignment (+8 %):** each 1 MiB piece then splits into whole MDTS commands.
+- **Together:** about +17 % read bandwidth.
+- **Next:**
+  - a store version 2 with a 512 KiB record stride, where the engine reads only `record_size` so the bank does not grow;
+  - an engine A/B;
+  - a periodic rewrite if aging is confirmed.
+
+  The fresh copy is at `/srv/kimi-k3/store/kimi-k3-ud-iq1_s.experts.fresh`, byte-identical (sampled).
+
+**Speculation, offline from the routing dumps** (pfdump-code2, pfdump-prose):
+
+| K tokens per batch | distinct experts per layer, code | multiple of 16 | misses per accepted token |
+|---|---|---|---|
+| 1 | 16 | 1.00 | 6.80 |
+| 2 | 27.0 | 1.69 | 6.81 |
+| 4 | 45.6 | 2.85 | 6.66 |
+| 8 | 77.4 | 4.84 | 6.25 |
+
+- **Batching saves no disk reads per token:** the shared experts are the ones that hit anyway.
+- **The disk is already ~80 % busy:** about 4.1 GB per token at 11 GB/s.
+- **So speculation needs the remote tier, or more read bandwidth, before it can pay.**
+- **Future knowledge barely helps eviction.** Misses per layer: LRU 6.80, knowing the next 1 / 4 / 8 tokens 6.70 / 6.36 / 5.96, Belady 4.51. The oracle's gain is long-range reuse that nothing realistic predicts.
+- **K3 speculators exist** (Hugging Face, trained against bf16/NVFP4 K3):
+
+  | model | type | acceptance per verify step |
+  |---|---|---|
+  | RadixArk/Kimi-K3-DSpark | DFlash backbone, 5 layers, block 7, confidence head, aux layers 7/23/51/67/83 | 4.0-5.5 code/math, 3.9 MT-Bench, 3.0 AIME |
+  | lightseekorg/kimi-k3-eagle3.1-mla | EAGLE-3.1 | 2.5-3.6 at 4 draft tokens |
+  | modal-labs / lightseekorg dflash | DFlash | not checked |
+
+  The draft takes K3's aux hidden states, `l_out` = HF `prefix_sum`.
+- **Not measured yet:** acceptance against our IQ1_S target, and the batch-invariant verify kernels that lossless verification needs.
+
+**Cluster:** nuc2 and nuc3 are reserved for Kimi: soft taint `kimi-k3/reserved=true:PreferNoSchedule` plus label `kimi-k3/expert-node=true`. A hard NoSchedule would stop about 15 DaemonSets that do not tolerate custom taints. The monitoring stack moved from nuc3 to nuc (argo-things 45de25b); Jellyfin moves once nuc1's render GID is known.
 
 ### Revisit when the bottleneck moves
 
