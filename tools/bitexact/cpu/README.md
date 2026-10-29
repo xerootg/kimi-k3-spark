@@ -26,6 +26,10 @@ k3cpu_submit(P, x, e, k);   k3cpu_wait(P, 0); ...   // or k3cpu_run(P, x, e, k)
   per expert (stream rows as they finish), `interleave` orders tasks expert by expert instead of all gate/up first.
 - The packed MUFU table format is k3x's `k3_ptab` (`../sycl/k3x_math.h`), so a `k3_mufu_tabs` pointing at tables that
   another component already holds can be passed in directly.
+- `k3cpu_opts.rt_prio > 0` runs the workers SCHED_FIFO (needs CAP_SYS_NICE, else a warning); keep `spin_us` short then.
+- In the k3x server: `K3X_CPU_CPUS` and the rest of the CPU-half knobs in `../sycl/README.md`. On nuc2 (dual channel)
+  11 workers on cpus 1-11 compute one v7 expert in ~0.21-0.25 ms; 8 E-cores alone ~0.34 ms, about nuc3's single-channel
+  speed, so the kernels are compute-bound there.
 
 ## How it stays bit-exact
 

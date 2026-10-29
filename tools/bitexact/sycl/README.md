@@ -71,6 +71,52 @@ gate/up 279, SiTU + q8_1(h) 95, down 93 + 93; GPU gaps between commands 14-42 (o
 done 138 after x; first byte -> last row sent 841. After an 8 ms idle without keep-awake: submissions 434 (RC6 exit),
 gate/up 374, SiTU 151, down 134 each; with forcewake + memwarm the kernels are back at 306 / 96 / 101.
 
+CPU half (I, 2026-10-29; off unless `K3X_CPU_CPUS` is set): the server also holds a k3cpu pool (`../cpu/k3cpu.h`, S3's
+bit-exact AVX2 + AVX-VNNI kernels) that reads the same v7 records in place from the host-USM arena, so there is still one
+copy of the experts. Per request the first n experts (slots 0..n-1) go to the CPU and the rest to the iGPU, started
+together; rows go out in slot order (the CPU's first), so the wire format is unchanged.
+- `K3X_CPU_CPUS=<list>` worker cpus (one pinned worker each), `K3X_CPU_SPLIT=<n at k=1>,<n at k=2>,...` experts on the CPU
+  per k (the last value repeats, clamped to k; default 1), `K3X_CPU_SPIN_US` (20000), `K3X_CPU_RT=<prio>` SCHED_FIFO workers
+  (spin capped at 2 ms), `K3X_CPU_INTERLEAVE`, `K3X_CPU_LOOKUP`. `K3X_MEMWARM_CPU=<cpu>` pins the memwarm thread.
+  `K3X_CTL` takes `cpu=<split list>` and `fw=0|1` per connection. The CPU has its own packed MUFU tables (0.75 GB).
+- Checks: `K3X_FULLCHECK` runs every served record on the CPU too (vs the host reference); `validate` with `K3X_VCPU=n`
+  runs the serving path's split (n experts of each case on the CPU) and checks g/u/h/dn; `bench` with `K3X_BCPU=n`.
+- Build: `build.sh` compiles `../cpu/k3cpu.cpp` with g++ (the flags of `../cpu/build_k3cpu.sh`) and links it (mount
+  `tools/bitexact` at /w and run `/w/sycl/build.sh`; `NO_CPU=1` leaves it out).
+
+What decides the split on nuc2 (Core Ultra 5 225H, Arc 130T): the CPU computes one expert in ~0.25 ms (11 workers,
+cpus 1-11) and does not fall asleep between requests the way the GT does, so for the engine's k = 1-2 the CPU alone is
+fastest; at k = 3 two experts on the CPU and one on the iGPU beat either alone. The iGPU after an 8 ms gap is slow even
+with forcewake + memwarm. Two host conditions matter: EPP `performance` on nuc2 (with `balance_performance` 40-55 % of
+the CPU requests after a gap run ~1.5x slower: the "slow after idle" mode S3 saw; EPP performance removes most of it)
+and the memwarm thread off the worker cpus (`K3X_MEMWARM_CPU=12`, an LP-E core). With EPP balance_performance the
+memwarm thread on cpu 12 made things worse.
+
+rrclient from the Spark, full set, p50 / p90 ms (dist = 31 % k=1 / 69 % k=2; gap = 8 ms between requests, like the engine):
+
+| server (nuc2) | k=1 | k=2 | k=3 | dist | gap k=1 | gap k=2 | gap dist |
+|---|---|---|---|---|---|---|---|
+| production g4de37ce (pod) | 0.828 | 1.159 | 1.264 | 1.135 / 1.192 | 1.788 / 2.199 | 2.246 / 2.555 | 2.107 / 2.525 |
+| iGPU only (S1 path), forcewake + memwarm 4000 | 0.738 | 1.004 | 1.263 | 0.983 / 1.083 | 0.803 / 0.909 | 1.076 / 1.259 | 1.029 / 1.217 |
+| 1 expert CPU (8 E-cores) + rest iGPU, fw + memwarm | 0.543 | 0.807 | 1.134 | 0.798 / 0.883 | 0.708 / 0.765 | 1.062 / 1.249 | 0.988 / 1.240 |
+| CPU for k <= 2 (8 E-cores 4-11), no keep-awake | 0.533 | 0.885 | 0.973 | 0.863 / 0.959 | 0.683 / 0.742 | 0.949 / 1.201 | 0.839 / 1.198 |
+| same, 11 workers (cpus 1-11, server on cpu 0) | 0.461 | 0.712 | 0.880 | 0.692 / 0.801 | 0.633 / 0.744 | 1.008 / 1.170 | 0.994 / 1.159 |
+| same + EPP performance | 0.443 | 0.675 | 0.861 | 0.661 / 0.755 | 0.589 / 0.696 | 0.733 / 1.023 | 0.679 / 0.991 |
+| same + EPP performance + memwarm 4000 on cpu 12 (the engine legs' config) | 0.436 | 0.662 | 0.859 | 0.664 / 0.777 | 0.456 / 0.587 | 0.684 / 0.818 | 0.671 / 0.789 |
+
+Server side in the engine leg c2 (that config, K3X_TRACE): first byte -> last row sent k=1 298 / 394 us, k=2 516 /
+641 us p50 / p90 (CPU per expert ~0.21-0.25 ms). Tail: p99 1.06 ms, p99.9 3.4 ms, max 90 ms; the long ones are the CPU
+workers finishing late (c_dn in the trace), also with SCHED_FIFO workers (`K3X_CPU_RT=50`: still 1-8 per 4000 requests
+over 3 ms), and they are not page faults; the cause is open. The engine's breaker tripped 4 and 1 times in the two legs.
+
+Engine A/B (2026-10-29, native on the Spark, production env, 3 x 200 tokens + warm-up per leg, every run gold): tok/s
+- a production engine e844a2a + production server: 2.047 / 2.045 / 2.040
+- b S2 engine c4efdca + production server: 2.052 / 2.057 / 2.054, 2.040 / 2.052 / 2.048
+- c S2 engine + this server (CPU for k <= 2): 2.102 / 2.101 / 2.088, 2.111 / 2.111 / 2.106
+- d S2 engine, tier off: 2.045 / 2.044 / 2.029, 2.043 / 2.045 / 2.033
+Engine RTT p50 / p90: b 1.93-1.94 / 2.36-2.37 ms, c 0.65-0.67 / 0.78-0.84 ms; wait at the real lookup b 0.166-0.170, c
+0.006-0.013 ms per layer; short requests b 40-71, c 82-228 of ~48k (the tail above).
+
 Tracing (`serveidx`, off by default): `K3X_TRACE=1` (or a ring size) records per request, in a ring allocated at start:
 idle wait, first byte, header and x received, x in host USM, each submission returned, each row in host memory and sent,
 queue drained (CLOCK_MONOTONIC_RAW ns). `K3X_TRACE_PROF=1` adds the queue's profiling (each command's device start/end),
