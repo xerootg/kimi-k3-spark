@@ -22,6 +22,8 @@ the NUC's Arc iGPU is in `sycl/`.
 - `cpu/k3ref.cpp`: scalar reference. `g++ -O2 -std=c++17 -ffp-contract=off -fno-fast-math -pthread
   -march=x86-64-v3 -static -I <llama.cpp>/ggml/src -I mufu k3ref.cpp -o k3ref`;
   `k3ref validate MUFU_DIR RECORDS N TG TU TD DUMP_DIR [threads]`, `k3ref bench MUFU_DIR RECORDS N TG TU TD threads iters`.
+- `cpu/k3cpu.{h,cpp}`: the serving-speed CPU version (AVX2 + AVX-VNNI library, thread pool, P-core gather and E-core
+  scalar-load kernels), bit-identical on all dumps; ~0.25 ms per expert on nuc3's 8 E-cores. See `cpu/README.md`.
 
 Results: MUFU emulation 0 mismatches over 2^32 inputs for each of the three ops; k3ref bit-identical on every
 value of every stage of 512 dumped cases (256 of layer 1, all IQ1_S; 160 of layer 11, IQ2_XXS gate/up and IQ1_S
