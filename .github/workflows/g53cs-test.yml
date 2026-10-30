@@ -1,0 +1,35 @@
+name: GLM exact CPU expert server
+on:
+  push:
+    paths:
+      - tools/glm53/cpu/**
+      - tools/glm53/g53exact.h
+      - tools/glm53/g53ref_exact.cpp
+      - tools/glm53/ref/**
+      - tools/bitexact/expert_disk.h
+      - tools/bitexact/mufu/mufu_emu.h
+      - .github/workflows/g53cs-test.yml
+  pull_request:
+    paths:
+      - tools/glm53/**
+      - tools/bitexact/expert_disk.h
+      - tools/bitexact/mufu/mufu_emu.h
+      - .github/workflows/g53cs-test.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cpu:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: AVX2 kernels against exact scalar oracle (offline, no model required)
+        run: G53_VNNI=' ' tools/glm53/cpu/test.sh
+      - name: VNNI kernels when supported by runner
+        run: |
+          if lscpu | grep -qw avx_vnni; then tools/glm53/cpu/test.sh; fi
+      - name: Production server build and CPU wire/disk/allocation tests
+        run: |
+          G53_VNNI=' ' tools/glm53/cpu/build.sh
+          python3 tools/glm53/cpu/test_server.py

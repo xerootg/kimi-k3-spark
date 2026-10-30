@@ -283,3 +283,107 @@ proper on an idle Arrow Lake NUC (item 3 of section 8).
   (tables above), `check.sh` (section 5), `asmstat.sh DUMPDIR REGEX` (instruction mix of IGC `.asm` dumps).
   Work dir `$W` (default `~/glm53-work`): `llama/` = the fork's tree, `data/` = `extract.py` output.
 - `results/`: inventories, the two benchmark runs, the check output.
+
+## 10. CUDA-exact CPU experts and g53cs (2026-10-29)
+
+`tools/glm53/cpu/` adds AVX2/AVX-VNNI IQ2_XS, IQ3_XXS and IQ4_XS
+kernels and a CPU-only `g53cs` server. The scalar oracle is the existing
+`g53ref_exact.cpp`, whose GLM CUDA verification is recorded in
+`tools/glm53/EXACT-RESULT.md`. The new kernels preserve its half q8 scales and
+float butterfly sums, signed integer truncations, CUDA virtual-thread FMA and
+reduction order, MUFU SwiGLU, FTZ and canonical NaN. Integer arithmetic and
+independent virtual lanes are vectorized; there is no AVX-512 requirement.
+
+The server accepts the k3x header and returns 6144-float expert rows. It uses
+`expert_disk.h` for K3XS v1/v2 metadata and the preallocated disk tier, including
+pinning until compute completes, deadlines and partial misses. Valid zero rows
+are preserved. All request scratch and worker arenas are preallocated; startup
+warms the workers and requires successful `mlockall`. Unlocked test mode must
+be explicitly enabled with `G53_ALLOW_UNLOCKED=1`. Raw MUFU mappings add about
+2.18 GB; there is no TANH dependency. See `tools/glm53/cpu/README.md` for the API
+and environment variables. Submit is currently synchronous across two phases;
+computation and row transmission do not overlap.
+
+CPU-only offline validation:
+
+```sh
+tools/glm53/cpu/test.sh "$HOME/glm53-work/data" "$HOME/glm53-work/mufu"
+python3 tools/glm53/cpu/test_server.py
+G53_VNNI=' ' tools/glm53/cpu/test.sh
+```
+
+The first command checks 600 random/exceptional rows and all g/u/h/down words
+for 3 extracted layers, 8 experts, 4 input cases and both worker counts. It also
+counts allocations on caller and compute threads and reports warm page faults.
+The second compares server wire bytes with independently generated scalar rows
+at k=1/4/8/16, both store versions, heterogeneous gate/up types, missing and
+unsupported IDs, duplicate disk IDs, partial misses and zero deadlines. It runs
+the inherited disk-cache pin/LRU/read-failure/concurrency/allocation suite too.
+Malloc-family and C++ new wrappers gate the real server request loop. Synthetic
+and closed-form zero-gate server cases run without tables/model files; missing
+external cases print SKIP explicitly. `.github/workflows/g53cs-test.yml` runs
+these CPU-only tests without downloading model headers or data.
+
+This sandbox forbids creating local sockets. Local integration therefore used
+the same server request loop with a compile-time pipe transport; actual TCP is
+selected automatically on unrestricted hosts/CI. Memory locking is unavailable
+here, so the tests explicitly allowed unlocked operation. The final kernel run
+reported zero allocations and zero warm minor/major faults for all six
+layer/thread combinations. This does not establish a residency guarantee for
+an unlocked process or certify the NUC's locked/TCP execution.
+
+Measured on this laptop (Core Ultra 7 165H, Meteor Lake, shared host). Values
+are **microseconds per expert**, including quantization, SwiGLU and worker
+scheduling; they exclude sockets and disk I/O. Fast is the median of 7 runs,
+scalar the median of 3, using the same number of workers and finite uniform
+[-1,1] input. Experts 0..k-1 use the extracted weights; no replicated DRAM-sized
+weight set is claimed. Workers were unpinned; these are indicative numbers.
+Raw output: `tools/glm53/results/cpu-exact-mtl-165h.txt`.
+
+| Layer | Threads | k | Fast us/expert | Scalar us/expert | Speedup |
+|---|---:|---:|---:|---:|---:|
+| L3 | 4 | 1 | 4849 | 28280 | 5.83x |
+| L3 | 4 | 4 | 5076 | 23942 | 4.72x |
+| L3 | 4 | 8 | 4698 | 27155 | 5.78x |
+| L3 | 8 | 1 | 4080 | 25552 | 6.26x |
+| L3 | 8 | 4 | 3817 | 20866 | 5.47x |
+| L3 | 8 | 8 | 3585 | 24079 | 6.72x |
+| L8 | 4 | 1 | 7774 | 31804 | 4.09x |
+| L8 | 4 | 4 | 6459 | 32329 | 5.01x |
+| L8 | 4 | 8 | 5730 | 31015 | 5.41x |
+| L8 | 8 | 1 | 4458 | 20256 | 4.54x |
+| L8 | 8 | 4 | 3793 | 21828 | 5.75x |
+| L8 | 8 | 8 | 3748 | 19194 | 5.12x |
+| L75 | 4 | 1 | 5644 | 27054 | 4.79x |
+| L75 | 4 | 4 | 5455 | 24830 | 4.55x |
+| L75 | 4 | 8 | 5794 | 29562 | 5.10x |
+| L75 | 8 | 1 | 4226 | 20648 | 4.89x |
+| L75 | 8 | 4 | 3868 | 23721 | 6.13x |
+| L75 | 8 | 8 | 3385 | 18839 | 5.57x |
+
+The improvement is 4.09–6.72x over the exact scalar pool. At 8 threads and k=8,
+3.38–3.75 ms per expert still means 27–30 ms for eight experts. This does **not**
+meet the earlier ~3 ms per-layer budget. Further row batching, IQ decoding and
+activation/table prefetch work remain; there is no NUC speed claim.
+
+NUC run instructions (Intel Core Ultra 5 225H, AVX2 + AVX-VNNI):
+
+```sh
+tools/glm53/cpu/build.sh
+tools/glm53/cpu/test.sh "$HOME/glm53-work/data" "$HOME/glm53-work/mufu"
+python3 tools/glm53/cpu/test_server.py
+# Configure the service shell's memlock limit to cover arenas, cache and tables.
+ulimit -l unlimited
+export K3X_CPU_CPUS=0-7 K3X_MUFU="$HOME/glm53-work/mufu"
+export K3X_DISK_TIER=1 K3X_DISK_LRU_GB=1 K3X_DISK_THREADS=4
+export K3X_DISK_DEADLINE_MS=20 K3X_MAX_GB=24 K3X_FULLCHECK=1
+unset G53_ALLOW_UNLOCKED
+# IDX lines: gid gate_type down_type byte_offset; use the same full store here.
+tools/glm53/cpu/g53cs /path/to/selected.idx /path/to/glm.k3xs 9000
+```
+
+Choose available worker CPUs from `lscpu -e`/the service affinity, reserve a CPU
+for the request thread with `K3X_MAIN_CPU`, and repeat the benchmark at 4/8
+workers on an otherwise idle NUC. The test driver accepts its 4/8-worker sets
+internally; pin it with `taskset` if comparing core classes. Successful locked
+startup, actual TCP rows and service latency remain NUC validation steps.
