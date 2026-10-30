@@ -143,7 +143,7 @@ Then ROWS=2 ... ab. Patch optional only if source is already patched.
 Overrides: G53X IMAGE SPARK NUC NUC_IP PORT WORK SPWORK PLACEMENT ROWS.
 Kubernetes: --k8s stage; --k8s start; --k8s probe; --k8s ab; --k8s stop.
 Run ak first if kubectl needs cluster authentication. Image/deploy must exist.
-K8s overrides: DEPLOY (glm-nuc2), NAMESPACE (kimi-k3), NUC_NODE (nuc2),
+K8s overrides: DEPLOY (glm53-nuc2), NAMESPACE (kimi-k3), NUC_NODE (nuc2),
 K8S_PLACEMENT K8S_SERVED READY_TIMEOUT MAX_GB (44 on nuc2, 18 on nuc3).
 status [Spark-leg-log] (or LEG_LOG) shows pods, server stats, remote layer lines.
 For nuc3 also override NUC, NUC_IP, WORK and DEPLOY to match that node.
