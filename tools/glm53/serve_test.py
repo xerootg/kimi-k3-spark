@@ -174,6 +174,8 @@ def run_store(args, g53x, store, quant, ref, env_extra, label):
     log = store + f".{label}.log"
     setout = store + f".{label}.setout"
     env = dict(os.environ, K3X_SETOUT=setout, **env_extra)
+    if quant == "UD-Q4_K_XL":
+        env["G53X_EXACT"] = "0"  # Q4 regression exercises the retained non-exact path
     with open(log, "w") as lf:
         srv = subprocess.Popen([g53x, store + ".set", store, "-", "-", "serveidx", str(port)], stderr=lf, stdout=lf, env=env)
     try:
@@ -288,11 +290,14 @@ def inner(args):
         for L in LAYERS:
             ty = [str(TYPE_IDS[sl[L][w]["type"]]) for w in ("gate", "up", "down")]
             name = f"{q}_L{L}"
-            p = subprocess.run([g53x, f"data/{name}", *ty, "check", os.path.join(dumps, name)], capture_output=True, text=True)
+            env = dict(os.environ)
+            if q == "UD-Q4_K_XL":
+                env["G53X_EXACT"] = "0"
+            p = subprocess.run([g53x, f"data/{name}", *ty, "check", os.path.join(dumps, name)], capture_output=True, text=True, env=env)
             if p.returncode:
                 raise SystemExit(f"check {name} failed:\n{p.stderr}")
             fused = [l for l in p.stderr.splitlines() if "fused" in l]
-            print(f"check {name} {' '.join(ty)}: {fused[0] if fused else ''}", flush=True)
+            print(f"check {name} exact={env.get('G53X_EXACT', '1')} {' '.join(ty)}: {fused[0] if fused else ''}", flush=True)
             xs = open(os.path.join(dumps, name + ".x"), "rb").read()
             dn = open(os.path.join(dumps, name + ".dn"), "rb").read()
             assert len(xs) == 6144 * 4 and len(dn) == NE * 6144 * 4

@@ -9,11 +9,15 @@
 // Env: G53X_PROF=1 per-kernel device times; G53X_XIN=file use that x (6144 f32) instead of the seeded one;
 // G53X_HOSTW=1 weights in host USM instead of device USM.
 //
+// Default: source-derived exact IQ candidate, requires G53X_MUFU. G53X_EXACT=0 selects the old fast path.
+// The following kernel shape describes ONLY that non-exact fast path.
 // Kernel shape: 256-item work-groups = 16 sub-groups of 16 lanes, one output row per sub-group (gate and up rows
 // together); the lanes stride over the row's 32-value units (IQ: one 32-block, K-quants: 64 values). The q8_1
 // activation and the type's lookup tables (IQ2_XS grid 4 KiB, IQ3_XXS grid 1 KiB, sign masks 1 KiB, IQ4 nibble
 // pairs 0.5 KiB) live in SLM. Integer dot products use IGC's dp4a builtin.
 #include <sycl/sycl.hpp>
+#define G53EX_SYCL
+#include "g53exact.h"
 #define GGML_COMMON_DECL_SYCL
 #define GGML_COMMON_IMPL_SYCL
 #include "ggml-common.h"
@@ -127,9 +131,19 @@ template <int T, int R, int NSB> static inline void rows_dot(const uint8_t * con
     }
 }
 
-// q8_1 of r rows of n floats: one item per 32-block (amax / 127, round half away from zero). xs = d * sum(q), the
-// block sum of the quantized values (ggml-sycl stores the float sum of x instead), so the K-quant min term is exact.
+#include "g53x_exact.inc"
+
+// Exact dispatch below stores CUDA half(d), half(float butterfly sum(x)).
+// The legacy non-exact branch retains float d and d*sum(q).
 static void quantize(sycl::queue & q, const float * x, int8_t * xq, float * xd, float * xs, int nblk) {
+    if (exact_mode()) {
+        const auto t=exact_device.mt;
+        q.parallel_for(sycl::range<1>(nblk),[=](sycl::id<1>id){
+            int b=id[0];g53exact::Q8 y;g53exact::quant(x+32*b,y,t);
+            for(int i=0;i<32;i++)xq[32*b+i]=y.q[i];
+            xd[b]=g53exact::half(y.d);xs[b]=g53exact::half(y.s);
+        });return;
+    }
     q.parallel_for(sycl::range<1>(nblk), [=](sycl::id<1> id) {
         const int bI = id[0]; const float * v = x + bI * 32;
         float amax = 0.f, sum = 0.f;
@@ -254,12 +268,22 @@ using DownFn = sycl::event (*)(sycl::queue &, const uint8_t * const *, int, cons
 #define G53X_DIMS DIM(6144, 2048)   // GLM-5.3: hidden 6144, expert FFN 2048
 #endif
 template <int DD, int FF> static GateUpFn pick_gu_df(int tg, int tu) {
+    if (exact_mode()) {
+        if(tg==T_IQ2_XS&&tu==tg)return exact_gateup<T_IQ2_XS,T_IQ2_XS,DD,FF>;
+        if(tg==T_IQ3_XXS&&tu==tg)return exact_gateup<T_IQ3_XXS,T_IQ3_XXS,DD,FF>;
+        return nullptr; // fail closed: no non-exact fallback for other quants
+    }
 #define GU(a, b) if (tg == a && tu == b) return gateup<a, b, DD, FF>;
     GU(T_IQ2_XS, T_IQ2_XS) GU(T_IQ3_XXS, T_IQ3_XXS) GU(T_Q4_K, T_Q4_K) GU(T_Q5_K, T_Q5_K)
 #undef GU
     return nullptr;
 }
 template <int DD, int FF> static DownFn pick_dn_df(int td) {
+    if(exact_mode()) {
+        if(td==T_IQ3_XXS)return exact_down<T_IQ3_XXS,DD,FF>;
+        if(td==T_IQ4_XS)return exact_down<T_IQ4_XS,DD,FF>;
+        return nullptr;
+    }
     switch (td) {
         case T_IQ3_XXS: return down<T_IQ3_XXS, DD, FF>; case T_IQ4_XS: return down<T_IQ4_XS, DD, FF>;
         case T_Q5_K: return down<T_Q5_K, DD, FF>; case T_Q6_K: return down<T_Q6_K, DD, FF>;
@@ -433,6 +457,7 @@ static int serve_index(const char * setp, const char * storep, const char * hidp
     // load: one read + repack per record, straight into host USM
     setenv("UR_L0_USE_IMMEDIATE_COMMANDLISTS", "1", 0);
     sycl::queue q{sycl::gpu_selector_v, sycl::property::queue::in_order()};
+    exact_init(q);
     fprintf(stderr, "device: %s\n", q.get_device().get_info<sycl::info::device::name>().c_str());
     struct Served { int kind; const uint8_t * p; };
     std::unordered_map<long, Served> map; map.reserve(want.size() * 2 + 16);
@@ -579,6 +604,7 @@ int main(int argc, char ** argv) {
                                   : sycl::property_list{sycl::property::queue::in_order()};
     setenv("UR_L0_USE_IMMEDIATE_COMMANDLISTS", "1", 0);   // batched lists delay submission (k3x found the same)
     sycl::queue q{sycl::gpu_selector_v, pl};
+    exact_init(q);
     fprintf(stderr, "device: %s\n", q.get_device().get_info<sycl::info::device::name>().c_str());
 
     const size_t gsz = row_bytes(tg, D) * F, usz = row_bytes(tu, D) * F, dsz = row_bytes(td, F) * D, rec = gsz + usz + dsz;
@@ -615,7 +641,7 @@ int main(int argc, char ** argv) {
         for (int i = 0; i < k; i++) { B.W[3 * i] = wg + (size_t) ids[i] * gsz; B.W[3 * i + 1] = wu + (size_t) ids[i] * usz; B.W[3 * i + 2] = wd + (size_t) ids[i] * dsz; }
     };
     std::vector<sycl::event> ev(4);
-    const bool fuseq = !getenv("G53X_FUSEQ") || atoi(getenv("G53X_FUSEQ"));   // check mode runs both and compares
+    bool fuseq = !getenv("G53X_FUSEQ") || atoi(getenv("G53X_FUSEQ"));   // check mode runs both and compares
     auto run = [&](int k) {
         if (fuseq) {   // two launches: q8_1 inside the matvec kernels
             ev[1] = gu(q, B.W, k, B.x, nullptr, nullptr, nullptr, B.h, B.gu);
@@ -634,12 +660,22 @@ int main(int argc, char ** argv) {
         B.gu = sycl::malloc_shared<float>(2 * NE * F, q);
         std::vector<float> fused;
         if (fuseq) { run(NE); fused.assign(B.out, B.out + NE * D); }
-        const bool f0 = fuseq; const_cast<bool &>(fuseq) = false; run(NE); const_cast<bool &>(fuseq) = f0;
-        if (f0) fprintf(stderr, "fused q8_1 vs separate quantize kernels: dn %s\n", memcmp(fused.data(), B.out, NE * D * 4) ? "DIFFER" : "bit-identical");
+        const bool f0 = fuseq; fuseq = false; run(NE); fuseq = f0;
+        if (f0) {
+            const bool bad=memcmp(fused.data(),B.out,NE*D*4)!=0;
+            fprintf(stderr,"fused q8_1 vs separate quantize kernels: dn %s\n",bad?"DIFFER":"bit-identical");
+            if(bad)return 2;
+        }
         auto dump = [&](const std::string & name, const void * dev, size_t n) {
             std::vector<char> v(n); q.memcpy(v.data(), dev, n).wait();
             FILE * f = fopen((std::string(argv[6]) + name).c_str(), "wb"); fwrite(v.data(), 1, n, f); fclose(f);
         };
+        if (exact_mode()) {
+            std::vector<float> v(2*NE*F), g(NE*F), u(NE*F);
+            q.memcpy(v.data(),B.gu,v.size()*4).wait();
+            for(int e=0;e<NE;e++) {memcpy(g.data()+e*F,v.data()+2*e*F,F*4);memcpy(u.data()+e*F,v.data()+(2*e+1)*F,F*4);}
+            for(int st=0;st<2;st++) {FILE*f=fopen((std::string(argv[6])+(st?".u":".g")).c_str(),"wb");if(!f)return 1;fwrite(st?u.data():g.data(),4,NE*F,f);fclose(f);}
+        }
         dump(".gu", B.gu, 2 * NE * F * 4); dump(".xq", B.xq, D); dump(".xd", B.xd, D / 32 * 4);
         dump(".hq", B.hq, NE * F); dump(".hd", B.hd, NE * F / 32 * 4);
         std::string o = argv[6];

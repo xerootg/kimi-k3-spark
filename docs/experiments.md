@@ -1095,6 +1095,21 @@ The user chose full GLM-5.3 UD-Q2_K_XL (254 GB, 7 shards) as the starting point 
 - **SSD tier in k3cs** (PR #4): O_DIRECT reads into a preallocated LRU, io_uring or pread workers, per-request deadline answering NaN like a non-resident expert. Tests pass with pread and liburing; output byte-identical to the pre-disk server with the tier off. Not yet measured on a NUC.
 - **g53x serveidx** (Copilot CLI worker, reviewed): the GLM iGPU kernel behind the k3x wire protocol, store v1/v2 via `expert_disk.h`. Served rows bit-identical to `g53x check` on both quants, both store versions, streamed and not; `check.sh` output unchanged. Laptop (Meteor Lake 165H, shared, load 5-6) per-request latency, median of 200, k = 1/4/8: Q2 L3 591/1271/2400 us, Q4 L8 in a quiet run 655/2162/4092 us against `g53x bench` 534/1745/3382 us. Noisy; measure on nuc2 before drawing conclusions. Not ported yet: trace, the CPU split, Q2_K/Q3_K (so the MTP layer answers NaN).
 
+### GLM-5.3: Spark cache legs and CUDA-exact expert math (2026-10-29)
+
+**Cache and context legs** (native `~/llama-k3-s2`, same cache snapshot per leg, warm-up then 2 x 128-token runs, one md5 `9449ae5738` in every run):
+
+| expert cache / ctx | tok/s | hit rate | MemAvailable |
+|---|---|---|---|
+| 76000 MiB / 64k (was deployed) | 3.76 | 74.8 % | 16.5 GB |
+| 80000 / 64k (deployed now) | 3.85 | 76.2 % | 12.5 GB |
+| 80000 / 32k | 3.87 | 76.2 % | 15.7 GB |
+| 84000 / 32k | 3.94 | 77.3 % | 11.7 GB |
+
+About 2 % per 4 GB of cache; the context costs RAM, not speed. A sol analysis (`gpt-6.1-sol`, read-only) found that GLM's cache slots are padded 22.8 % (12091392 B records in 14852096 B slots: the slot stride must be a multiple of 4096 and of both block sizes, 74 and 98 B), against ~3 % on K3; byte-stride slot addressing would give ~23 % more slots in the same RAM. Not yet built. It also found the K3 speculative prefetch is not wired into GLM's graph, and ~104 ms of the 272 ms token is the wait at the real lookup.
+
+**CUDA-exact GLM expert math.** Sol derived `tools/glm53/SPEC-glm.md` from the ggml-cuda sources and wrote `glmdump` (CUDA reference dumps from the production `libggml-cuda.so`), an exact CPU path and an exact g53x mode. On the Spark, g/u/h matched CUDA bit for bit at once on L3/L8/L75 x 32 cases; dn differed only in NaN payload (CUDA 0x7fffffff, CPU 0x7fc00000) in the sigma-1000 case. Canonicalising NaN in `ftz()` made all four stages bit-identical on all 96 cases. On the laptop iGPU, g53x exact matches the CPU path, and `cuda_serve_check.py` (g53x serveidx fed the CUDA inputs) changes no computed row; only all-zero rows differ, sent as the NaN "missing" sentinel by design (the engine recomputes them locally). **But the exact path is scalar: ~24 ms per expert against 0.42-0.84 ms for the fast path**, unusable inside the ~3 ms budget. Details in `tools/glm53/EXACT-RESULT.md`.
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because
