@@ -3,8 +3,20 @@
 Applied in order (`git apply`) on top of the `LLAMA_SHA` pinned in
 `versions.env`, by both `llamacpp-spark` and `llamacpp-rpc-cpu`, so every
 binary that talks RPC runs the same sources. Each patch is a plain
-`git diff` against that commit; regenerate it (and re-pin `LLAMA_SHA`) when
+`git diff` against the tree after the preceding patches; regenerate the stack
+(and re-pin `LLAMA_SHA`) when
 bumping llama.cpp.
+
+Patch order and the check: patches are cumulative and applied in lexical filename
+order, exactly as the Dockerfile's `patches/*.patch` glob; each patch must apply
+after all earlier patches. `.github/workflows/patch-stack.yml` shallow-fetches
+`LLAMA_SHA`, checks then applies each patch (naming any rejection), and syntax-checks
+the touched `src/**/*.cpp` and `ggml/src/ggml-cpu/**/*.cpp` files with host `c++`.
+The job has a two-minute limit and does not build CUDA or check `.c`, `.cu`, or
+`.cuh` translation units. Locally, run `tools/patch-stack-check.sh ~/llama-k3-s2`
+with Git, Bash, GNU coreutils/findutils, a C++17 compiler, and `liburing-dev` installed.
+The checkout's HEAD must match `LLAMA_SHA` (currently `547208d`); the script uses
+a temporary copy of HEAD, ignores local edits, and leaves the checkout untouched.
 
 ## 0001-prefetch-mmapped-experts
 
@@ -600,6 +612,12 @@ is left. Only pointer arithmetic changes; for ordinary tensors (nb02 a multiple 
 same. `LLAMA_EXPERT_STORE_BYTE_STRIDE=1` turns it on (default 0); the old padded rule stays for paths that cannot use
 byte addressing (the CPU split `GPU_SLOTS=0`, CPU MUL_MAT_ID, types other than IQ2_XS / IQ3_XXS / IQ4_XS).
 
+2026-10-30, second revision: the guard audits 19 ggml types (load widths from the CUDA vec-dots: 2-byte for IQ1_S,
+IQ2_XXS, IQ2_XS, IQ2_S, IQ3_XXS, IQ3_S, Q3_K, Q6_K, Q8_0...; 4-byte for IQ1_M, IQ4_XS, Q2_K, Q4_K, Q5_K, Q4_1, Q5_1) and
+checks every part offset at runtime, so Kimi K3's groups qualify too: its two mixed groups (IQ2_XXS/IQ1_S) lose 22.8 %
+and 29.6 % of padding, +3.2 % slots overall (GH200 65102 -> 67198 at 424000 MiB; Spark K3 7980 -> 8237). Host unit
+test in `tools/validation/`; analysis in `docs/experimental/0004b-byte-stride-types.md`. Not yet measured on K3.
+
 Measured on the Spark, GLM-5.3, 80000 MiB cache, 64k context, 128-token runs, legs off/on/off/on from the same cache
 snapshot: 3.83/3.86, **4.25/4.24**, 3.86/3.86, **4.25/4.25 tok/s (+10.3 %)**, md5 `9449ae5738` in every run, same
 MemAvailable. Written by a sol worker (gpt-6.1-sol) from the code; path audit in its RESULT (scratch), summary in
@@ -618,3 +636,11 @@ rotation) a multi-token plan could evict experts the same plan had selected (`sl
 Spark, GLM-5.3 with patch 0004, legs off/on/off/on: 4.256/4.239, **4.899/4.926**, 4.252/4.249, **4.877/4.906 tok/s
 (+15.3 %)**, md5 `9449ae5738` in every run; top-8 precision 85.3 %, 67.8 % of the predicted misses read were used.
 Written by sol workers (gpt-6.1-sol), built and measured here.
+
+## 0006-expert-store-v2
+
+The reader accepts expert store format v2 (`repack-experts.py --stride-align`, per-entry stride, header align): v1
+stores behave byte-identically. Measured on the Spark with GLM-5.3 (2026-10-30, same warm snapshot per leg, legs
+v2/v1/v2/v1): **v2 is slower, 4.82 against 4.90 tok/s**, md5 unchanged. The 512 KiB stride that made K3's reads ~8 %
+faster buys nothing here and the padded records are 4 % more bytes. Kept for compatibility (the NUCs' stores are v2);
+the Spark keeps its v1 store. Written by a sol worker.

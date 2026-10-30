@@ -101,7 +101,7 @@ index b1c2509..95d3f8a 100644
  
      const int64_t s12 = ne11*s11;
 diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
-index 3439cd4..6d41d82 100644
+index 3439cd4..00bcc6e 100644
 --- a/src/llama-moe-cache.cpp
 +++ b/src/llama-moe-cache.cpp
 @@ -1833,7 +1833,8 @@ struct llama_moe_cache::impl {
@@ -114,7 +114,7 @@ index 3439cd4..6d41d82 100644
          std::vector<size_t> part_off; // offset of each expert tensor's bytes inside a record
          size_t hbm_budget = 0;        // share of LLAMA_EXPERT_STORE_HBM_MIB; the first lru.n_hbm slots are on the HBM node
          int32_t hbm_min_slot = -1;    // the least used expert in the HBM slots, refreshed every few fills
-@@ -2793,11 +2794,28 @@ struct llama_moe_cache::impl {
+@@ -2793,13 +2794,39 @@ struct llama_moe_cache::impl {
                      g.part_off.push_back(off);
                      off += e0->sizes[ip];
                  }
@@ -130,24 +130,35 @@ index 3439cd4..6d41d82 100644
 +                    !(env_gpu != nullptr && env_gpu[0] == '0') && !(env_slots != nullptr && env_slots[0] == '0') &&
 +                    ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_host_bank_buffer_from_ptr") != nullptr &&
 +                    ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_set_host_bank_hook") != nullptr;
++                std::string byte_reason = !byte_requested ? "disabled" : !g.byte_stride ? "needs CUDA GPU slots and host-bank hooks" : "aligned CUDA loads";
++                std::string byte_parts;
++                std::string byte_layers;
++                for (int32_t il : g.layers) {
++                    byte_layers += (byte_layers.empty() ? "" : ",") + std::to_string(il);
++                }
 +                for (size_t ip = 0; ip < g.ref.size(); ++ip) {
 +                    const ggml_tensor * t = g.ref[ip];
-+                    // IQ2_XS/IQ3_XXS load uint16_t; IQ4_XS also loads uint32_t (qs at offset 8).
-+                    const size_t alignment = t->type == GGML_TYPE_IQ4_XS ? 4 : 2;
-+                    g.byte_stride = g.byte_stride &&
-+                        (t->type == GGML_TYPE_IQ2_XS || t->type == GGML_TYPE_IQ3_XXS || t->type == GGML_TYPE_IQ4_XS) &&
-+                        g.part_off[ip] % alignment == 0 && t->nb[1] % alignment == 0;
-+                }
-+                if (byte_requested && !g.byte_stride) {
-+                    LLAMA_LOG_WARN("%s: expert store: byte stride unavailable for layer %d (needs CUDA GPU slots and aligned IQ2_XS/IQ3_XXS/IQ4_XS parts), using block padding\n", __func__, g.layers[0]);
++                    const size_t alignment = llama_moe_cache_cuda_alignment(t->type);
++                    byte_parts += (byte_parts.empty() ? "" : "/") + std::string(ggml_type_name(t->type));
++                    if (!llama_moe_cache_byte_stride_aligned(alignment, ggml_type_size(t->type), g.part_off[ip], t->nb[1])) {
++                        if (g.byte_stride) {
++                            byte_reason = format("part %zu %s: alignment %zu, block %zu, offset %zu, row %zu (zero alignment means unaudited)",
++                                ip, ggml_type_name(t->type), alignment, ggml_type_size(t->type), g.part_off[ip], t->nb[1]);
++                        }
++                        g.byte_stride = false;
++                    }
 +                }
                  g.slot_stride = GGML_PAD(g.record_size, (size_t) 4096);
 -                while (std::any_of(g.ref.begin(), g.ref.end(), [&](const ggml_tensor * t) { return g.slot_stride % ggml_type_size(t->type) != 0; })) {
 +                while (!g.byte_stride && std::any_of(g.ref.begin(), g.ref.end(), [&](const ggml_tensor * t) { return g.slot_stride % ggml_type_size(t->type) != 0; })) {
                      g.slot_stride += 4096;
                  }
++                LLAMA_LOG_INFO("%s: expert store: layers [%s], %s: stride %zu B (%s), %s\n", __func__,
++                    byte_layers.c_str(), byte_parts.c_str(), g.slot_stride, g.byte_stride ? "bytes" : "block padded", byte_reason.c_str());
                  for (int32_t il : g.layers) {
-@@ -3012,6 +3030,9 @@ struct llama_moe_cache::impl {
+                     const expert_store_entry * e = store.find(il);
+                     if (e->record_size != g.record_size || memcmp(e->sizes, e0->sizes, sizeof(e->sizes)) != 0 || memcmp(e->types, e0->types, sizeof(e->types)) != 0) {
+@@ -3012,6 +3039,9 @@ struct llama_moe_cache::impl {
                              region_buf = bank_from_ptr(g.region, g.region_size);
                          }
                      }
@@ -157,7 +168,7 @@ index 3439cd4..6d41d82 100644
                      bank_on_gpu = region_buf != nullptr;
                      if (region_buf == nullptr) {
                          region_buf = ggml_backend_cpu_buffer_from_ptr(g.region, g.region_size);
-@@ -3362,6 +3383,9 @@ struct llama_moe_cache::impl {
+@@ -3362,6 +3392,9 @@ struct llama_moe_cache::impl {
                  throw std::runtime_error("expert store: the CPU backend has no graph hook (ggml-cpu is missing patch 0003)");
              }
              set_hook(&impl::graph_hook, this);
@@ -167,7 +178,7 @@ index 3439cd4..6d41d82 100644
              if (slots_on_gpu) {
                  auto * set_cuda_hook2 = (void (*)(cuda_host_bank_hook_t, void *)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_set_host_bank_hook");
                  set_cuda_hook2(&impl::cuda_hook, this);
-@@ -3477,8 +3501,8 @@ struct llama_moe_cache::impl {
+@@ -3477,8 +3510,8 @@ struct llama_moe_cache::impl {
                  ggml_backend_buft_name(d.buft), d.buf_size/1024.0/1024.0, d.host_bytes/1024.0/1024.0);
              for (const group & g : groups) {
                  if (g.id == (int32_t) id) {
@@ -178,3 +189,49 @@ index 3439cd4..6d41d82 100644
                  }
              }
          }
+diff --git a/src/llama-moe-cache.h b/src/llama-moe-cache.h
+index bf6df63..087a5a8 100644
+--- a/src/llama-moe-cache.h
++++ b/src/llama-moe-cache.h
+@@ -6,6 +6,41 @@
+ #include <memory>
+ #include <vector>
+ 
++// Minimum bank alignment for CUDA MMVQ/MMQ and dequantization loads; zero means unaudited.
++inline size_t llama_moe_cache_cuda_alignment(ggml_type type) {
++    switch (type) {
++        case GGML_TYPE_IQ1_S:
++        case GGML_TYPE_IQ2_XXS:
++        case GGML_TYPE_IQ2_XS:
++        case GGML_TYPE_IQ2_S:
++        case GGML_TYPE_IQ3_XXS:
++        case GGML_TYPE_IQ3_S:
++        case GGML_TYPE_IQ4_NL:
++        case GGML_TYPE_Q3_K:
++        case GGML_TYPE_Q6_K:
++        case GGML_TYPE_Q4_0:
++        case GGML_TYPE_Q5_0:
++        case GGML_TYPE_Q8_0:
++            return 2;
++        case GGML_TYPE_IQ1_M:
++        case GGML_TYPE_IQ4_XS:
++        case GGML_TYPE_Q2_K:
++        case GGML_TYPE_Q4_K:
++        case GGML_TYPE_Q5_K:
++        case GGML_TYPE_Q4_1:
++        case GGML_TYPE_Q5_1:
++            return 4;
++        default:
++            return 0;
++    }
++}
++
++inline bool llama_moe_cache_byte_stride_aligned(size_t alignment, size_t block_size, size_t part_off, size_t row_stride) {
++    // Check block_size too: an odd block would misalign the next block even when rows are aligned.
++    return alignment != 0 && 4096 % alignment == 0 && block_size % alignment == 0 &&
++        part_off % alignment == 0 && row_stride % alignment == 0;
++}
++
+ struct llama_model;
+ 
+ // keeps the most recently used experts of host-resident MoE layers in a device buffer

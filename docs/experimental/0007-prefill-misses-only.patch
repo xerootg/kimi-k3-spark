@@ -1,0 +1,57 @@
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index ceb87cf..d50e16c 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -4882,7 +4882,7 @@ struct llama_moe_cache::impl {
+     }
+ 
+     // large batch: the scheduler offloads the matmul and asks for a copy of w's used experts; read them from the
+-    // store into the staging (once per layer and ids) and upload this tensor's part of every record
++    // store misses into staging, copy resident records, then upload this tensor's part of every record
+     bool fill_prefill(ggml_backend_t backend, const ggml_tensor * w, ggml_tensor * dst, const ggml_tensor * ids, const std::vector<bool> & used) {
+         if (!use_store || !ensure_staging()) {
+             return false;
+@@ -4907,15 +4907,41 @@ struct llama_moe_cache::impl {
+             // the uploads of the previous layer may still be reading the staging
+             ggml_backend_synchronize(backend);
+             jobs.clear();
++            std::vector<int32_t> selected;
+             for (int64_t x = 0; x < n_expert; ++x) {
+-                if (used[x]) {
+-                    jobs.push_back({ (char *) staging + (size_t) x*rec, rec, (off_t) (e->offset((size_t) x)) });
++                if (!used[x]) {
++                    continue;
++                }
++                selected.push_back((int32_t) x);
++                const int32_t slot = g.lru.slot_map[b.il][x];
++                char * record = (char *) staging + (size_t) x*rec;
++                if (slot >= 0) {
++                    GGML_ASSERT(slot < g.n_slots && g.lru.key_of[slot] == b.il*n_expert + x);
++                    std::memcpy(record, (const char *) g.region + (size_t) slot*g.slot_stride, rec);
++                } else {
++                    jobs.push_back({ record, rec, (off_t) (e->offset((size_t) x)) });
+                 }
+             }
+             if (!pool->run(store.fd, jobs)) {
+                 GGML_ABORT("expert store: read failed for layer %d: %s", b.il, strerror(errno));
+             }
+             store_prefill_bytes += jobs.size()*rec;
++            // Copy hits before planning: a fill can evict a record already saved in staging.
++            // Keep the decode working set with the same scan resistance as bank prefill.
++            const char * warm = getenv("LLAMA_EXPERT_STORE_PREFILL_WARM");
++            size_t available = 0;
++            for (int32_t slot = 0; slot < g.n_slots; ++slot) {
++                available += !g.spec_state || g.spec_state[slot].load(std::memory_order_acquire) == 0;
++            }
++            if ((warm == nullptr || warm[0] != '0') && !selected.empty() && selected.size() <= available) {
++                size_t n_hit = 0;
++                if (g.lru.plan(b.il, selected.data(), selected.size(), fills, n_hit, prefill_promote)) {
++                    for (const auto & f : fills) {
++                        std::memcpy((char *) g.region + (size_t) f.slot*g.slot_stride,
++                                (const char *) staging + (size_t) f.expert*rec, rec);
++                    }
++                }
++            }
+             prefill.il  = b.il;
+             prefill.ids = ids;
+         }

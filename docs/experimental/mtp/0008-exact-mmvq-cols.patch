@@ -1,0 +1,375 @@
+diff --git a/ggml/src/ggml-cuda/mmvq.cu b/ggml/src/ggml-cuda/mmvq.cu
+index 95d3f8a..a323d0b 100644
+--- a/ggml/src/ggml-cuda/mmvq.cu
++++ b/ggml/src/ggml-cuda/mmvq.cu
+@@ -4,6 +4,8 @@
+ #include "vecdotq.cuh"
+ 
+ #include <cstdint>
++#include <cstdlib>
++#include <cstring>
+ #include <type_traits>
+ 
+ // only enabled on DGX Spark, where it is a gain on every type below. On the higher-bandwidth parts the kernel
+@@ -1356,6 +1358,36 @@ static void mul_mat_vec_q_switch_ncols_dst(
+     GGML_ASSERT(ncols_x % ggml_blck_size(type) == 0);
+     GGML_ASSERT(ncols_dst <= MMVQ_MAX_BATCH_SIZE);
+ 
++    static const bool exact_cols = [] {
++        const char * value = std::getenv("GGML_CUDA_MMVQ_EXACT_COLS");
++        return value && std::strcmp(value, "1") == 0;
++    }();
++    if (exact_cols && ids && ncols_dst >= 2 && ncols_dst <= 4) {
++        if constexpr (type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ3_XXS || type == GGML_TYPE_IQ4_XS ||
++                      type == GGML_TYPE_Q2_K || type == GGML_TYPE_Q3_K) {
++            // Reuse singleton dispatch, including small-K geometry and fusion. This costs one launch per column.
++            for (int col = 0; col < ncols_dst; ++col) {
++                auto column_fusion = fusion;
++                if (column_fusion.shared_dst) {
++                    column_fusion.shared_dst += int64_t(col) * fusion.shared_stride_col_dst;
++                }
++                mul_mat_vec_q_switch_ncols_dst<type>(
++                    vx, (const block_q8_1 *) vy + int64_t(col) * stride_col_y,
++                    ids + int64_t(col) * ids_stride, column_fusion, dst + int64_t(col) * stride_col_dst,
++                    ncols_x, nrows_x, 1, stride_row_x, stride_col_y, stride_col_dst,
++                    nchannels_x, nchannels_y, nchannels_dst, stride_channel_x, stride_channel_y, stride_channel_dst,
++                    nsamples_x, nsamples_dst, stride_sample_x, stride_sample_y, stride_sample_dst, ids_stride, stream);
++            }
++            return;
++        } else {
++            static const bool warned = [] {
++                GGML_LOG_WARN("GGML_CUDA_MMVQ_EXACT_COLS: %s unsupported; using original batched MMVQ path\n", ggml_type_name(type));
++                return true;
++            }();
++            GGML_UNUSED(warned);
++        }
++    }
++
+     const uint3 nchannels_y_fd   = ids ? init_fastdiv_values(nchannels_y) : make_uint3(0, 0, 0);
+     const uint3 channel_ratio_fd = ids ? make_uint3(0, 0, 0)              : init_fastdiv_values(nchannels_dst / nchannels_x);
+     const uint3 sample_ratio_fd  = init_fastdiv_values(nsamples_dst  / nsamples_x);
+diff --git a/tools/glm53/batchdump.cpp b/tools/glm53/batchdump.cpp
+new file mode 100644
+--- /dev/null
++++ b/tools/glm53/batchdump.cpp
+@@ -0,0 +1,248 @@
++// Standalone K3XS v1/v2 expert-store MUL_MAT_ID bit comparison. See README.md.
++#include "ggml.h"
++#include "ggml-alloc.h"
++#include "ggml-backend.h"
++#include "ggml-cuda.h"
++
++#include <algorithm>
++#include <cstdint>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
++#include <fstream>
++#include <limits>
++#include <memory>
++#include <sstream>
++#include <stdexcept>
++#include <string>
++#include <vector>
++
++static void check(bool ok, const char * message) {
++    if (!ok) { throw std::runtime_error(message); }
++}
++static uint32_t u32(const uint8_t * p) {
++    return uint32_t(p[0]) | uint32_t(p[1]) << 8 | uint32_t(p[2]) << 16 | uint32_t(p[3]) << 24;
++}
++static uint64_t u64(const uint8_t * p) {
++    return uint64_t(u32(p)) | uint64_t(u32(p + 4)) << 32;
++}
++static uint64_t number(const std::string & s) {
++    check(!s.empty() && s.find_first_not_of("0123456789") == std::string::npos, "invalid unsigned integer");
++    size_t end;
++    auto n = std::stoull(s, &end);
++    check(end == s.size(), "invalid integer");
++    return n;
++}
++static size_t product(uint64_t a, uint64_t b) {
++    check(b == 0 || a <= std::numeric_limits<size_t>::max()/b, "size overflow");
++    return size_t(a*b);
++}
++struct store {
++    std::ifstream file;
++    uint64_t length;
++    uint32_t experts;
++    uint32_t types[3];
++    uint64_t sizes[3], base, stride, record;
++    void read(uint64_t offset, void * dst, size_t size) {
++        check(offset <= length && size <= length - offset && size <= uint64_t(INT64_MAX), "read outside file");
++        file.clear();
++        file.seekg(std::streamoff(offset));
++        file.read(static_cast<char *>(dst), std::streamsize(size));
++        check(bool(file), "short read");
++    }
++    store(const char * path, uint32_t layer) : file(path, std::ios::binary | std::ios::ate) {
++        check(bool(file), "cannot open store");
++        auto end = file.tellg();
++        check(end >= 64, "short store");
++        length = uint64_t(end);
++        uint8_t h[64];
++        read(0, h, sizeof(h));
++        const auto version = u32(h + 4), count = u32(h + 8), align = u32(h + 16);
++        experts = u32(h + 12);
++        check(std::memcmp(h, "K3XS", 4) == 0 && (version == 1 || version == 2) &&
++              count && experts && align && u32(h + 20) == 64, "unsupported store header");
++        const auto index = u64(h + 24);
++        check(index <= length && count <= (length - index)/64, "index outside file");
++        bool found = false;
++        for (uint32_t i = 0; i < count; ++i) {
++            uint8_t p[64];
++            read(index + uint64_t(i)*64, p, sizeof(p));
++            if (u32(p) != layer) { continue; }
++            check(!found, "duplicate layer");
++            found = true;
++            record = u64(p + 40); base = u64(p + 48);
++            stride = version == 1 ? record : u64(p + 56);
++            uint64_t remaining = record;
++            for (int j = 0; j < 3; ++j) {
++                types[j] = u32(p + 4 + 4*j); sizes[j] = u64(p + 16 + 8*j);
++                check(sizes[j] <= remaining, "components exceed record");
++                remaining -= sizes[j];
++            }
++            check(record && stride >= record && base % align == 0 && stride % align == 0 &&
++                  (version == 1 || (align % 4096 == 0 && record % 4096 == 0)), "bad record alignment");
++            check(base <= length && record <= length - base &&
++                  experts - 1 <= (length - base - record)/stride, "records outside file");
++        }
++        check(found, "layer not found");
++    }
++};
++using context_ptr = std::unique_ptr<ggml_context, decltype(&ggml_free)>;
++using buffer_ptr = std::unique_ptr<ggml_backend_buffer, decltype(&ggml_backend_buffer_free)>;
++using backend_ptr = std::unique_ptr<ggml_backend, decltype(&ggml_backend_free)>;
++static context_ptr context() {
++    auto p = ggml_init({8*1024*1024, nullptr, true});
++    check(p != nullptr, "ggml_init failed");
++    return context_ptr(p, ggml_free);
++}
++static buffer_ptr allocate(ggml_context * ctx, ggml_backend_t backend) {
++    auto p = ggml_backend_alloc_ctx_tensors(ctx, backend);
++    check(p != nullptr, "CUDA allocation failed");
++    return buffer_ptr(p, ggml_backend_buffer_free);
++}
++static void dump(const std::string & path, const std::vector<float> & values) {
++    std::ofstream f(path, std::ios::binary);
++    f.write(reinterpret_cast<const char *>(values.data()), std::streamsize(values.size()*sizeof(float)));
++    check(bool(f), "cannot write dump");
++}
++static std::vector<float> run(ggml_backend_t backend, ggml_tensor * weight, ggml_tensor * gate,
++                             int k, int rows, int used, int channels, int cols,
++                             const float * input, const int32_t * routes) {
++    auto ctx = context();
++    auto x = ggml_new_tensor_3d(ctx.get(), GGML_TYPE_F32, k, channels, cols);
++    auto ids = ggml_new_tensor_2d(ctx.get(), GGML_TYPE_I32, used, cols);
++    auto out = ggml_mul_mat_id(ctx.get(), weight, x, ids);
++    if (gate) {
++        auto g = ggml_mul_mat_id(ctx.get(), gate, x, ids);
++        out = ggml_swiglu_split(ctx.get(), g, out);
++    }
++    check(ggml_backend_supports_op(backend, out), "CUDA does not support output op");
++    auto graph = ggml_new_graph(ctx.get());
++    ggml_build_forward_expand(graph, out);
++    auto buffer = allocate(ctx.get(), backend);
++    ggml_backend_tensor_set(x, input, 0, ggml_nbytes(x));
++    ggml_backend_tensor_set(ids, routes, 0, ggml_nbytes(ids));
++    check(ggml_backend_graph_compute(backend, graph) == GGML_STATUS_SUCCESS, "CUDA compute failed");
++    ggml_backend_synchronize(backend);
++    std::vector<float> result(product(product(rows, used), cols));
++    check(result.size()*sizeof(float) == ggml_nbytes(out), "output shape mismatch");
++    ggml_backend_tensor_get(out, result.data(), 0, ggml_nbytes(out));
++    return result;
++}
++int main(int argc, char ** argv) {
++    try {
++        if (argc != 12) {
++            std::fprintf(stderr, "usage: %s STORE LAYER gate|up|down|swiglu K ROWS EXPERT_CSV USED CHANNELS seed|X.f32 off|on DUMP_PREFIX\n", argv[0]);
++            return 2;
++        }
++        const auto layer = number(argv[2]), k64 = number(argv[4]), rows64 = number(argv[5]);
++        const auto used64 = number(argv[7]), channels64 = number(argv[8]);
++        check(layer <= INT32_MAX && k64 && k64 <= INT32_MAX && rows64 && rows64 <= INT32_MAX &&
++              used64 && used64 <= 256 && (channels64 == 1 || channels64 == used64), "invalid dimensions");
++        const int k = int(k64), rows = int(rows64), used = int(used64), channels = int(channels64);
++        const std::string part = argv[3], expect = argv[10];
++        check(part == "gate" || part == "up" || part == "down" || part == "swiglu", "invalid component");
++        check(expect == "off" || expect == "on", "invalid expectation");
++        const char * knob = std::getenv("GGML_CUDA_MMVQ_EXACT_COLS");
++        check((knob && std::strcmp(knob, "1") == 0) == (expect == "on"), "knob and expectation disagree");
++        store s(argv[1], uint32_t(layer));
++        std::vector<uint32_t> records;
++        std::istringstream csv(argv[6]);
++        std::string item;
++        while (std::getline(csv, item, ',')) {
++            auto id = number(item);
++            check(id < s.experts && records.size() < 256, "expert out of range or more than 256 slots");
++            check(std::find(records.begin(), records.end(), id) == records.end(), "duplicate expert record");
++            records.push_back(uint32_t(id));
++        }
++        check(records.size() >= size_t(used), "need at least USED records");
++        const int component = part == "gate" ? 0 : part == "down" ? 2 : 1;
++        backend_ptr backend(ggml_backend_cuda_init(0), ggml_backend_free);
++        check(bool(backend), "CUDA backend unavailable");
++        auto weights_ctx = context();
++        const auto load = [&](int c) {
++            check(s.types[c] < GGML_TYPE_COUNT, "invalid ggml type");
++            const auto type = ggml_type(s.types[c]);
++            check(type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ3_XXS || type == GGML_TYPE_IQ4_XS ||
++                  type == GGML_TYPE_Q2_K || type == GGML_TYPE_Q3_K, "type outside exact-cols coverage");
++            check(k % ggml_blck_size(type) == 0, "K is not block aligned");
++            check(product(ggml_row_size(type, k), rows) == s.sizes[c], "K/ROWS disagree with store component size");
++            return ggml_new_tensor_3d(weights_ctx.get(), type, k, rows, int64_t(records.size()));
++        };
++        auto weight = load(component);
++        auto gate = part == "swiglu" ? load(0) : nullptr;
++        if (gate) { check(gate->type == weight->type, "fusion requires matching types"); }
++        auto weights_buffer = allocate(weights_ctx.get(), backend.get());
++        ggml_backend_buffer_set_usage(weights_buffer.get(), GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
++        const auto upload = [&](ggml_tensor * tensor, int c) {
++            std::vector<uint8_t> bytes(size_t(s.sizes[c]));
++            const uint64_t component_offset = c == 0 ? 0 : c == 1 ? s.sizes[0] : s.sizes[0] + s.sizes[1];
++            for (size_t slot = 0; slot < records.size(); ++slot) {
++                s.read(s.base + uint64_t(records[slot])*s.stride + component_offset, bytes.data(), bytes.size());
++                ggml_backend_tensor_set(tensor, bytes.data(), slot*bytes.size(), bytes.size());
++            }
++        };
++        upload(weight, component);
++        if (gate) { upload(gate, 0); }
++        std::vector<float> x(product(product(k, channels), 4));
++        if (std::string(argv[9]) == "seed") {
++            uint32_t state = 0x53ba7c;
++            for (auto & value : x) {
++                state ^= state << 13; state ^= state >> 17; state ^= state << 5;
++                value = (int32_t(state & 0xffff) - 32768)/8192.0f;
++            }
++        } else {
++            std::ifstream f(argv[9], std::ios::binary | std::ios::ate);
++            check(bool(f) && f.tellg() == std::streamoff(x.size()*sizeof(float)), "X.f32 must contain exactly 4*K*CHANNELS floats");
++            f.seekg(0); f.read(reinterpret_cast<char *>(x.data()), std::streamsize(x.size()*sizeof(float)));
++            check(bool(f), "cannot read activations");
++        }
++        bool passed = true;
++        bool witnessed[5] = {};
++        // Same, overlapping and disjoint routes (disjoint requires at least 4*USED records).
++        for (const int shift : {0, 1, used}) {
++            std::vector<int32_t> ids(size_t(4*used));
++            for (int col = 0; col < 4; ++col) {
++                for (int slot = 0; slot < used; ++slot) {
++                    ids[size_t(col*used + slot)] = (col*shift + slot) % int(records.size());
++                }
++            }
++            std::vector<float> singles;
++            for (int col = 0; col < 4; ++col) {
++                auto one = run(backend.get(), weight, gate, k, rows, used, channels, 1,
++                               x.data() + size_t(col)*k*channels, ids.data() + col*used);
++                singles.insert(singles.end(), one.begin(), one.end());
++            }
++            const auto stem = std::string(argv[11]) + ".shift" + std::to_string(shift);
++            dump(stem + ".single.f32", singles);
++            for (int n = 2; n <= 4; ++n) {
++                auto batch = run(backend.get(), weight, gate, k, rows, used, channels, n, x.data(), ids.data());
++                const bool equal = std::memcmp(singles.data(), batch.data(), batch.size()*sizeof(float)) == 0;
++                size_t different = 0, first = batch.size();
++                uint32_t a = 0, b = 0;
++                for (size_t i = 0; i < batch.size(); ++i) {
++                    if (std::memcmp(&singles[i], &batch[i], sizeof(float)) != 0) {
++                        if (first == batch.size()) {
++                            first = i; std::memcpy(&a, &singles[i], 4); std::memcpy(&b, &batch[i], 4);
++                        }
++                        ++different;
++                    }
++                }
++                dump(stem + ".batch" + std::to_string(n) + ".f32", batch);
++                std::printf("shift=%d batch=%d unequal=%zu/%zu first=%zu single=%08x batch=%08x %s\n",
++                            shift, n, different, batch.size(), first, a, b, equal ? "IDENTICAL" : "DIFFERENT");
++                // Off mode needs a witness for every batch size, across the route patterns below.
++                if (expect == "on" && !equal) { passed = false; }
++                if (!equal) { witnessed[n] = true; }
++            }
++        }
++        if (expect == "off") {
++            for (int n = 2; n <= 4; ++n) { passed = passed && witnessed[n]; }
++        }
++        std::printf("%s: %s batch 2..4 vs singleton columns\n", passed ? "PASS" : "FAIL",
++                    expect == "on" ? "bit-identical" : "difference witnessed for each of");
++        return passed ? 0 : 1;
++    } catch (const std::exception & e) {
++        std::fprintf(stderr, "batchdump: %s\n", e.what());
++        return 2;
++    }
++}
+diff --git a/tools/glm53/README.md b/tools/glm53/README.md
+new file mode 100644
+--- /dev/null
++++ b/tools/glm53/README.md
+@@ -0,0 +1,67 @@
++# Exact expert batch experiment (patch 0008)
++
++`GGML_CUDA_MMVQ_EXACT_COLS=1` is read once per MMVQ type, default off; use a new process for each mode.
++For MUL_MAT_ID with 2..4 columns and IQ2_XS, IQ3_XXS, IQ4_XS, Q2_K or Q3_K, dispatch each column through the existing ncols=1 dispatcher.
++This preserves the device/type-dependent singleton nwarps (four on GB10 for these normal expert shapes), small-K decision, K stride, ordered shared-memory additions, warp reduction and fusion.
++Activation q8_1 quantization is unchanged: quantize.cu:54 reduces independent 32-element blocks; batch count changes grid.z and addresses, not arithmetic within a block.
++Quantized activation column offsets are in block_q8_1 units; IDs are in int32 units; outputs are in float units; bank offsets remain byte strides.
++Shared expert weights stay fixed and shared_dst advances by shared_stride_col_dst per column. Biases remain expert-indexed, not token-indexed.
++The ncols=1 dispatch and kernel are unchanged. Unsupported MMVQ types retain original dispatch and emit one warning per type when a gated-size call is encountered.
++Batches outside 2..4, non-ID matmuls, and operations that never select MMVQ are unchanged; this knob does not force MMVQ on other devices.
++Expected cost: 2..4 singleton kernel launches instead of one MoE launch, repeated weight reads, no inter-column compute reuse, potentially several-fold compute/launch overhead. Store/cache union lookup is unchanged.
++
++## Build and run on Spark
++
++Rebuild the patched CUDA libraries in ~/llama-k3-bs/build first. Do not link an unpatched installation.
++From this sandbox directory (runtime loader must also resolve the CUDA dependencies of libggml-cuda):
++
++```sh
++LIB="$HOME/llama-k3-bs/build/bin"
++c++ -O2 -std=c++17 -Illama/ggml/include tools/glm53/batchdump.cpp \
++    -L"$LIB" -Wl,-rpath,"$LIB" -lggml-cuda -lggml -lggml-base -o tools/glm53/batchdump
++# Set STORE, LAYER, K, ROWS for an actual component. Store metadata has byte sizes/types, not dimensions.
++# Example route bank; load at least 32 records for four disjoint groups of 8.
++EXPERTS=$(seq -s, 0 31)
++GGML_CUDA_MMVQ_EXACT_COLS=0 tools/glm53/batchdump "$STORE" "$LAYER" up "$K" "$ROWS" "$EXPERTS" 8 1 seed off /tmp/up-off
++GGML_CUDA_MMVQ_EXACT_COLS=1 tools/glm53/batchdump "$STORE" "$LAYER" up "$K" "$ROWS" "$EXPERTS" 8 1 seed on /tmp/up-on
++```
++
++Arguments: STORE LAYER gate|up|down|swiglu K ROWS EXPERT_CSV USED CHANNELS seed|X.f32 off|on DUMP_PREFIX.
++K is input width, ROWS output width. Each store record contains packed gate|up|down, with padding only after down.
++The selected component's computed byte size must match the index. EXPERT_CSV maps loaded records to compact GPU slots; IDs select those slots.
++CHANNELS must be 1 (shared activation, gate/up) or USED (per-route activation, down). No repeated expert IDs within a column.
++`seed` creates deterministic nonzero F32 activations; X.f32 supplies exactly 4*K*CHANNELS native F32 values in [column][channel][K] order.
++Repeat for gate, up and down on all five types/layer layouts; down uses its transposed K/ROWS and CHANNELS=USED.
++`swiglu` loads up and gate, constructs two MUL_MAT_IDs followed by ggml_swiglu_split; normal backend fusion may combine them.
++Repeat with `GGML_CUDA_DISABLE_FUSION=1` in both processes to exercise unfused operations. The tool does not assert that fusion was selected.
++For identical-input trials, supply X.f32 with one column repeated four times; the shift=0 case then repeats IDs too.
++
++For each route shift (0, 1, USED), the harness runs four independent singleton graphs and batches of size 2,3,4 with identical input/ID bytes.
++It synchronizes CUDA, compares every output F32 bit using memcmp, prints unequal count plus first mismatch index/hex words, and writes packed binary dumps.
++Exit 0 in `off` mode requires a mismatch witness for EACH batch size across the route patterns; exit 0 in `on` mode requires ALL comparisons identical.
++Exit 1 means the expectation failed; exit 2 means usage, store, allocation or compute failure. Equal zero/degenerate inputs may fail the off witness test without indicating a harness bug.
++The final expected success lines are `PASS: difference witnessed for each of batch 2..4 vs singleton columns` and `PASS: bit-identical batch 2..4 vs singleton columns`.
++For external cmp, compare the first N*ROWS*USED*4 bytes of shiftS.single.f32 against shiftS.batchN.f32 (the singleton file contains four columns).
++Passing both modes on the same corpus demonstrates this operator issue and its correction on that build/device; it is not an engine or universal proof.
++This harness uploads compact packed banks; it does not exercise large bank strides, cache fills/evictions, fused shared experts, bias fusion, or dump internal q8_1 bytes.
++Those require engine dumps/additional cases on Spark. File byte counts/offsets are checked before reads; malformed model payloads are not validated as quant blocks.
++
++## Engine exactness audit (paths relative to llama/)
++
++No: enabling this knob does NOT establish that draft-mtp verification emits the sequential batch-1 greedy token sequence.
++Temperature 0 only makes sampling greedy; any changed logit or router/indexer tie can change the selected token and all subsequent state.
++The following remaining batch-sensitive paths need separate gates/dumps; no implementation is included here:
++
++| Site | Per-column numerical effect and required singleton-equivalent variant |
++| --- | --- |
++| ggml/src/ggml-cuda/fattn.cu:155, :180, :187 | Query count selects MMA query tile 1/2/4 etc. (depending on GQA). Tile config affects reduction/softmax association, not just scheduling. Pin singleton tile/config/precision for every query, including KV split/combine order and visible KV extent/padding. |
++| ggml/src/ggml-cuda/fattn.cu:9, :128, :160 | Sparse versus dense and grouped sparse-union gather change traversal and tile padding. Use singleton per-query sparse decision and ordered key list, same mask and reduction. Causal masking alone does not prove bit equality. |
++| ggml/src/ggml-cuda/fattn.cu:634 | DKQ>256 excludes vector FA; 576/512 MLA stays MMA, but that does not remove the preceding tile/sparse differences. Exact model dimensions remain to be confirmed from GGUF. |
++| src/models/glm-dsa.cpp:309; ggml/src/ggml-cuda/lightning-indexer.cu:618, :660, :700, :720 | Fused DSA: 128x64/32 keep WMMA (or vector for F32/BF16), 128x4 stays vector until threshold8 (:240). Batch1..4 changes grid scheduling only for these score kernels; no new exact kernel needed there. Compare upstream Q/K/weights, visible scores and top-k ties/KV padding. |
++| src/models/glm-dsa.cpp:319, :350; src/llama-graph.cpp:3588 | Unfused DSA KQ matmul may select different arithmetic as query count grows; ReLU/weight/sum/mask/top-k then propagate it. Replay singleton matmul with singleton precision/strides, same visible KV and deterministic top-k tie behavior; retain per-position causal mask. Fused/unfused selection itself is a context flag, not a batch-count branch. |
++| src/llama-graph.cpp:3166; ggml/src/ggml-cuda/ggml-cuda.cu:2577, :2597, :2609; ggml/src/ggml-cuda/mmvf.cu:825 | v_mla puts tokens in matrix columns. F16 singleton MMVF can become MMF/cuBLAS for 2..4; F32 MMVF threshold is 3 (:811). Accumulation/precision can change. Replay each column through the singleton dispatcher with identical layout/precision. Permute/cont alone only move bits. |
++| src/models/glm-dsa.cpp:467, :489; src/llama-graph.cpp:2508, :2549; src/llama-moe-cache.cpp:4970 | Predictor/prefetch and its split path require batch1. Local prefetch only changes cache scheduling. Split restores each expert row by position before the original weighted sum, rather than summing hit/miss groups. Generalization needs union routes/slot maps, correct events/lifetimes and unchanged row arithmetic; remote expert execution is outside this local exactness claim. |
++| ggml/src/ggml-cuda/ggml-cuda.cu:2557; ggml/src/ggml-cuda/mmvq.cu:1409, :1447 | All ordinary dense projections (attention, router, shared experts, output head) retain MMVF/MMF/MMVQ/MMQ/cuBLAS batch heuristics; even non-ID MMVQ small-K/halve_iters vary with columns. Replay singleton dispatch and geometry per column, matching precision and activation quantization. This knob intentionally covers only ID MMVQ. |
++| ggml/src/ggml-cuda/ggml-cuda.cu:2494, :4361, :4880 | Fusion eligibility can change with batch shape, particularly dense GLU (singleton-only) and routed/shared matching. Fused vs unfused intermediates may change rounding. Match singleton fusion boundaries and intermediate rounding per column, rather than merely turning all fusion off. Routed ID fusion is retained by this patch when selected. |
++
++This is a source audit, not an exhaustive measured trace of the actual model graph. After closing these paths, compare logits and intermediate tensors from restored identical KV snapshots, then compare baseline/MTP greedy IDs with rejection/rollback cases.
