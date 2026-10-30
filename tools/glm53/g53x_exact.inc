@@ -1,7 +1,11 @@
 // Deliberately scalar-per-row SYCL oracle. Same shared arithmetic as CPU; no
 // unspecified subgroup reductions or compiler-selected exp/div approximations.
+static int exact_version() { const char*s=getenv("G53X_EXACT");return s?atoi(s):1; }
 static bool exact_mode() { const char *s=getenv("G53X_EXACT");return !s||atoi(s)!=0; }
-struct ExactDevice { mufu_tables mt{};uint64_t*g2=nullptr;uint32_t*g3=nullptr;int8_t*k4=nullptr; };
+struct ExactDevice { mufu_tables mt{};uint64_t*g2=nullptr;uint32_t*g3=nullptr;int8_t*k4=nullptr;
+    // Reused on the single in-order production queue, including streamed down calls.
+    g53exact::Q8 *prepared=nullptr;float *scales=nullptr;size_t capacity=0;
+};
 static ExactDevice exact_device;
 static void exact_init(sycl::queue&q) {
     if(!exact_mode()||exact_device.g2)return;
@@ -20,7 +24,7 @@ static void exact_init(sycl::queue&q) {
     exact_device.k4=sycl::malloc_shared<int8_t>(16,q);
     if(!exact_device.g2||!exact_device.g3||!exact_device.k4){fprintf(stderr,"exact tables allocation failed\n");exit(1);}
     memcpy(exact_device.g2,iq2xs_grid,4096);memcpy(exact_device.g3,iq3xxs_grid,1024);memcpy(exact_device.k4,kvalues_iq4nl,16);
-    fprintf(stderr,"G53X_EXACT=1: source-derived CUDA IQ arithmetic; GLM SASS validation pending\n");
+    fprintf(stderr,"G53X_EXACT=%d: CUDA IQ arithmetic (%s)\n",exact_version(),exact_version()==2?"parallel candidate":"scalar oracle");
 }
 static inline void exact_qrow(const float*f,const int8_t*q,const float*d,const float*s,int n,
                               g53exact::Q8*y,const mufu_tables&t) {
@@ -29,9 +33,12 @@ static inline void exact_qrow(const float*f,const int8_t*q,const float*d,const f
         else {for(int i=0;i<32;i++)y[b].q[i]=q[32*b+i];y[b].d=g53exact::tohalf(d[b]);y[b].s=g53exact::tohalf(s[b]);}
     }
 }
+#include "g53x_parallel.inc"
+
 template<int TG,int TU,int DD,int FF>
 static sycl::event exact_gateup(sycl::queue&q,const uint8_t*const*W,int k,const float*xf,const int8_t*xq,
                                const float*xd,const float*xs,float*h,float*gu) {
+    if(exact_version()==2)return parallel_exact<TG,TU,DD,FF,true>(q,W,k,xf,xq,xd,xs,h,gu);
     const auto t=exact_device;
     return q.parallel_for(sycl::range<1>(size_t(k)*FF),[=](sycl::id<1>id){
         const int e=id[0]/FF,j=id[0]%FF;g53exact::Q8 y[DD/32];exact_qrow(xf,xq,xd,xs,DD,y,t.mt);
@@ -44,6 +51,7 @@ static sycl::event exact_gateup(sycl::queue&q,const uint8_t*const*W,int k,const 
 template<int TD,int DD,int FF>
 static sycl::event exact_down(sycl::queue&q,const uint8_t*const*W,int k,const float*hf,const int8_t*hq,
                              const float*hd,const float*hs,float*out) {
+    if(exact_version()==2)return parallel_exact<TD,TD,FF,DD,false>(q,W,k,hf,hq,hd,hs,out,nullptr);
     const auto t=exact_device;
     return q.parallel_for(sycl::range<1>(size_t(k)*DD),[=](sycl::id<1>id){
         const int e=id[0]/DD,j=id[0]%DD;g53exact::Q8 y[FF/32];

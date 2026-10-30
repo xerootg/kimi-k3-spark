@@ -125,7 +125,7 @@ def inner(args):
     with socket.socket() as probe:
         probe.bind(('127.0.0.1', 0))
         port = probe.getsockname()[1]
-    env = dict(os.environ, G53X_EXACT='1', G53X_MUFU='/w/mufu',
+    env = dict(os.environ, G53X_EXACT=os.environ.get('G53X_EXACT', '1'), G53X_MUFU='/w/mufu',
                K3X_SETOUT=str(out / 'served.set'))
     store = str(out / 'experts.k3xs')
     report, failed = [], False
@@ -209,7 +209,11 @@ def host(args):
         cases = parse_dump(source)
         dest = out / 'dumps' / f'L{layer}'
         dest.mkdir(parents=True, exist_ok=True)
-        for name in ('x.bin', 'ids.bin', 'dn.bin', 'kind.txt'):
+        # Stage gate uses the same container-visible dump directory. Preserve
+        # intermediate stages when supplied; wire-only dumps remain supported.
+        for name in ('x.bin', 'ids.bin', 'dn.bin', 'kind.txt', 'g.bin', 'u.bin', 'h.bin'):
+            if name in ('g.bin', 'u.bin', 'h.bin') and not (source / name).exists():
+                continue
             if (source / name).resolve() != (dest / name).resolve():
                 shutil.copyfile(source / name, dest / name)
         nan_rows = sum(bool(nan_info(w[i * ROW:(i + 1) * ROW])[0])
@@ -220,7 +224,7 @@ def host(args):
         return 0
     cmd = ('python3 /w/tools/cuda_serve_check.py --inner '
            f'--startup-timeout {args.startup_timeout} --request-timeout {args.request_timeout}')
-    env = dict(os.environ, W=str(work), G53X_EXACT='1', G53X_MUFU='/w/mufu')
+    env = dict(os.environ, W=str(work), G53X_EXACT=os.environ.get('G53X_EXACT', '1'), G53X_MUFU='/w/mufu')
     with (out / 'run.log').open('w') as log:
         with subprocess.Popen([str(script_dir / 'dsycl.sh'), cmd], env=env,
                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as proc:

@@ -9,7 +9,8 @@
 // Env: G53X_PROF=1 per-kernel device times; G53X_XIN=file use that x (6144 f32) instead of the seeded one;
 // G53X_HOSTW=1 weights in host USM instead of device USM.
 //
-// Default: source-derived exact IQ candidate, requires G53X_MUFU. G53X_EXACT=0 selects the old fast path.
+// Default: scalar CUDA-exact IQ oracle (G53X_EXACT=1), requires G53X_MUFU.
+// G53X_EXACT=2 selects the parallel exact candidate; 0 selects the old non-exact fast path.
 // The following kernel shape describes ONLY that non-exact fast path.
 // Kernel shape: 256-item work-groups = 16 sub-groups of 16 lanes, one output row per sub-group (gate and up rows
 // together); the lanes stride over the row's 32-value units (IQ: one 32-block, K-quants: 64 values). The q8_1
@@ -513,11 +514,29 @@ static int serve_index(const char * setp, const char * storep, const char * hidp
     std::vector<float> nanrows((size_t) 16 * D, NAN);
     sycl::event ev[16];
     const bool stream = !getenv("K3X_NOSTREAM");
+    const bool fuseq = !getenv("G53X_FUSEQ") || atoi(getenv("G53X_FUSEQ"));
+    int8_t *xq=nullptr,*hq=nullptr;float *xd=nullptr,*xs=nullptr,*hd=nullptr,*hs=nullptr;
+    if(!fuseq) {
+        xq=sycl::malloc_device<int8_t>(D,q);hq=sycl::malloc_device<int8_t>(size_t(16)*Fmax,q);
+        xd=sycl::malloc_device<float>(D/32,q);xs=sycl::malloc_device<float>(D/32,q);
+        hd=sycl::malloc_device<float>(size_t(16)*Fmax/32,q);hs=sycl::malloc_device<float>(size_t(16)*Fmax/32,q);
+        if(!xq||!hq||!xd||!xs||!hd||!hs){fprintf(stderr,"quantizer allocation failed\n");return 1;}
+    }
+    fprintf(stderr,"serveidx: fused quantization %s\n",fuseq?"on":"off");
     // gate/up for all k in one launch; down per expert when streaming (rows go out as they finish), else one launch
     auto run = [&](const Kind & K, int k) {
-        K.gu(q, W, k, x, nullptr, nullptr, nullptr, h, nullptr);
-        if (stream) for (int j = 0; j < k; j++) ev[j] = K.dn(q, W + 3 * j, 1, h + (size_t) j * K.F, nullptr, nullptr, nullptr, rows + (size_t) j * D);
-        else ev[k - 1] = K.dn(q, W, k, h, nullptr, nullptr, nullptr, rows);
+        if(fuseq) {
+            K.gu(q,W,k,x,nullptr,nullptr,nullptr,h,nullptr);
+            if(stream)for(int j=0;j<k;j++)ev[j]=K.dn(q,W+3*j,1,h+size_t(j)*K.F,nullptr,nullptr,nullptr,rows+size_t(j)*D);
+            else ev[k-1]=K.dn(q,W,k,h,nullptr,nullptr,nullptr,rows);
+        } else {
+            quantize(q,x,xq,xd,xs,D/32);
+            K.gu(q,W,k,nullptr,xq,xd,xs,h,nullptr);
+            quantize(q,h,hq,hd,hs,k*K.F/32);
+            if(stream)for(int j=0;j<k;j++)ev[j]=K.dn(q,W+3*j,1,nullptr,hq+size_t(j)*K.F,
+                hd+size_t(j)*K.F/32,hs+size_t(j)*K.F/32,rows+size_t(j)*D);
+            else ev[k-1]=K.dn(q,W,k,nullptr,hq,hd,hs,rows);
+        }
     };
     const bool blockw = getenv("G53X_WAIT") && atoi(getenv("G53X_WAIT"));
     auto done = [&](int j) { if (blockw) { ev[j].wait(); return; } while (ev[j].get_info<sycl::info::event::command_execution_status>() != sycl::info::event_command_status::complete) {} };

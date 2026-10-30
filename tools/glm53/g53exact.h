@@ -9,13 +9,43 @@ namespace g53exact {
 inline uint32_t bits(float x) { return sycl::bit_cast<uint32_t>(x); }
 inline float value(uint32_t x) { return sycl::bit_cast<float>(x); }
 inline float half(uint16_t x) { return float(sycl::bit_cast<sycl::half>(x)); }
-inline uint16_t tohalf(float x) { return sycl::bit_cast<uint16_t>(sycl::half(x)); }
 #else
 inline uint32_t bits(float x) { uint32_t u; memcpy(&u,&x,4); return u; }
 inline float value(uint32_t u) { float x; memcpy(&x,&u,4); return x; }
 inline float half(uint16_t x) { _Float16 h; memcpy(&h,&x,2); return float(h); }
-inline uint16_t tohalf(float x) { _Float16 h = (_Float16)x; uint16_t u; memcpy(&u,&h,2); return u; }
 #endif
+// Make the binary16 boundary explicit even when immediately widened in a
+// prepass: no dependence on native FP16 denormal modes or conversion folding.
+// Round to nearest/even, preserving signed zero and half subnormals explicitly.
+inline uint16_t storage_half(float x) {
+    uint32_t u=bits(x), a=u&0x7fffffff, sign=(u>>16)&0x8000;
+    if(a>=0x7f800000) return uint16_t(sign|0x7c00|(a>0x7f800000 ? ((a>>13)&1023)|512 : 0));
+    if(a>=0x47800000) return uint16_t(sign|0x7c00);
+    if(a<0x33000000) return uint16_t(sign);
+    if(a<0x38800000) {
+        unsigned shift=126-(a>>23), m=(a&0x7fffff)|0x800000;
+        unsigned n=m>>shift, rem=m&((1u<<shift)-1), tie=1u<<(shift-1);
+        return uint16_t(sign| (n+(rem>tie || (rem==tie && (n&1)))));
+    }
+    unsigned n=(a-0x38000000)>>13, rem=a&8191;
+    return uint16_t(sign|(n+(rem>4096 || (rem==4096 && (n&1)))));
+}
+inline float storage_float(uint16_t h) {
+    unsigned sign=unsigned(h&0x8000)<<16, e=(h>>10)&31, m=h&1023;
+    if(e==31)return value(sign|0x7f800000|(m<<13));
+    if(e)return value(sign|((e+112)<<23)|(m<<13));
+    if(!m)return value(sign);
+    unsigned exp=113;
+    while(!(m&1024)){m<<=1;--exp;}
+    return value(sign|(exp<<23)|((m&1023)<<13));
+}
+inline uint16_t tohalf(float x) {
+#ifdef G53EX_SYCL
+    return storage_half(x);
+#else
+    _Float16 h = (_Float16)x; uint16_t u; memcpy(&u,&h,2); return u;
+#endif
+}
 // NVIDIA FP32 units return one canonical NaN (0x7fffffff) whatever the inputs; x86, Arm and Intel GPUs return
 // 0x7fc00000 or propagate payloads. Every op result passes through here, so canonicalise NaN here too (measured:
 // the GB10 dumps' only difference from this path was that payload, case 7, sigma 1000).
