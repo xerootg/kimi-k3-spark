@@ -604,3 +604,17 @@ Measured on the Spark, GLM-5.3, 80000 MiB cache, 64k context, 128-token runs, le
 snapshot: 3.83/3.86, **4.25/4.24**, 3.86/3.86, **4.25/4.25 tok/s (+10.3 %)**, md5 `9449ae5738` in every run, same
 MemAvailable. Written by a sol worker (gpt-6.1-sol) from the code; path audit in its RESULT (scratch), summary in
 docs/experiments.md (2026-10-30).
+
+## 0005-glm-predictive-prefetch
+
+The expert store's predictive prefetch (a side reader fetches the next layer's predicted misses during the current
+layer's GPU work) was wired only into Kimi K3's graph. This patch wires it into GLM-5.3 (`glm-dsa.cpp`): the predictor
+input for layer L+1 is `ffn_norm_{L+1}(attention residual_L + shared expert_L + the resident experts' weighted share of
+routed_L)` (`LLAMA_EXPERT_STORE_PREFETCH_INPUT=3`; 2 drops the routed share), run through layer L+1's router (sigmoid,
+expert bias, top-8 of 256). Dense layers 0-2, the last MoE layer and the MTP layer post nothing. It adds a top-k
+precision stat and fixes a latent planner bug the side reader exposed: with busy speculative slots (or second-chance
+rotation) a multi-token plan could evict experts the same plan had selected (`slot -1 after the plan`).
+
+Spark, GLM-5.3 with patch 0004, legs off/on/off/on: 4.256/4.239, **4.899/4.926**, 4.252/4.249, **4.877/4.906 tok/s
+(+15.3 %)**, md5 `9449ae5738` in every run; top-8 precision 85.3 %, 67.8 % of the predicted misses read were used.
+Written by sol workers (gpt-6.1-sol), built and measured here.

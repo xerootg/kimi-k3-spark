@@ -1,0 +1,4 @@
+enP7s7           UP             192.168.4.209/22 fe80::58e8:a3f4:ca73:7b2e/64 
+wlP9s9           DOWN           
+docker0          DOWN           172.17.0.1/16 
+tailscale0       UNKNOWN        100.121.202.122/32 fd7a:115c:a1e0::4738:ca7d/128 fe80::71b1:bc10:174e:25f1/64 

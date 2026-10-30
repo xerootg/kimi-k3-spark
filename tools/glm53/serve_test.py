@@ -20,9 +20,22 @@ Inner part (in the container, $W at /w): `g53x <slice> TG TU TD check` writes th
   - per-request latency (send to last reply byte) for k = 1, 4, 8, median of --iters, per layer.
 The v1 stores take SET as "layer expert" lines, the v2 stores as k3x IDX lines "gid tg td offset". The Q2/Q4 v1 stores
 run a second time with K3X_NOSTREAM=1 (one down launch, rows sent at the end).
+
+Disk tier (K3X_DISK_TIER=1, every store and quant, and v1 with K3X_NOSTREAM=1): SET is experts 0-3 of each layer
+(.dset), every other expert of the store is read from it on demand into an LRU of 10 records (so they are evicted and
+read again: cold reads and LRU hits, both asserted from the server's "disk:" stats line, no deadline misses). The same
+requests as above, with per-row answers: the disk rows bit-identical to check, an unservable id or a second kind only
+NaNs its own row; K3X_SETOUT lists every expert of the servable layers. One more run per quant with
+K3X_DISK_DEADLINE_MS=0: a disk row's first request is NaN (its read misses the deadline), resident rows in the same
+request are served, and once the read has landed (LRU hit) the row is served bit-identically.
+
+Kernel mode: UD-Q2_K_XL runs (check and serveidx) use G53X_EXACT from the environment (default 2, the fast CUDA-exact
+kernels; 1 the scalar exact ones, MUFU tables at G53X_MUFU, default /w/mufu via dsycl.sh); UD-Q4_K_XL always runs G53X_EXACT=0 (no exact
+kernels for its K-quants). G53X_EXACT=0 python3 serve_test.py runs every case on the fast path.
 """
 import argparse
 import json
+import re
 import math
 import os
 import socket
@@ -40,6 +53,8 @@ NE = 8
 MTP = 78                     # unsupported layer: Q2_K gate/up, Q3_K down
 NOT_IN_SET = (75, 7)          # in the store, left out of SET
 ALIGN = 4096
+DISK_SET = 4                 # disk runs: experts 0..3 of each layer resident, the rest from the disk tier
+DISK_SLOTS = 10              # disk runs: LRU records (fewer than the 12 disk experts: evictions)
 HEADER = struct.Struct("<4sIIIIIQQ24x")
 ENTRY = struct.Struct("<IIIIQQQQQ8x")
 ENTRY_V2 = struct.Struct("<IIIIQQQQQQ")
@@ -107,10 +122,10 @@ def build_store(data, quant, path, stride_align):
     return layers
 
 
-def write_set(path, layers, idx_format):
+def write_set(path, layers, idx_format, nset=NE):
     with open(path, "w") as f:
         for L in layers:
-            for e in range(NE):
+            for e in range(nset):
                 if (L["layer"], e) == NOT_IN_SET:
                     continue
                 if idx_format:
@@ -130,6 +145,7 @@ def host(args):
             name = f"{q}.{v}.k3xs"
             layers = build_store(os.path.join(W, "data"), q, os.path.join(out, name), sa)
             write_set(os.path.join(out, name + ".set"), layers, idx_format=(v == "v2"))
+            write_set(os.path.join(out, name + ".dset"), layers, idx_format=(v == "v2"), nset=DISK_SET)
     print(f"stores built in {time.time() - t0:.1f} s ({out})", flush=True)
     cmd = f"python3 /w/tools/serve_test.py inner --iters {args.iters}" + (f" --only {args.only}" if args.only else "")
     return subprocess.run([os.path.join(T, "dsycl.sh"), cmd]).returncode
@@ -154,6 +170,7 @@ class Client:
     def connect(self):
         self.s = socket.create_connection(("127.0.0.1", self.port))
         self.s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        self.s.settimeout(60)   # a lost reply fails the run instead of hanging it
 
     def request(self, gids, x, seq=0):
         k = len(gids)
@@ -168,16 +185,32 @@ def all_nan(b):
     return all(math.isnan(v) for v in struct.unpack(f"<{len(b) // 4}f", b))
 
 
-def run_store(args, g53x, store, quant, ref, env_extra, label):
+def disk_stats(log):
+    """-> the last "disk: k=v ..." stats line of a server log as a dict"""
+    lines = [l for l in open(log).read().splitlines() if l.startswith("disk: ")]
+    return {k: float(v) for k, v in re.findall(r"(\w+)=([\d.]+)", lines[-1])} if lines else None
+
+
+def run_store(args, g53x, store, quant, ref, env_extra, label, disk=None):
+    """disk: None (SET = .set), "lru" or "deadline0" (SET = .dset, K3X_DISK_TIER=1)"""
     D = 6144
     port = free_port()
     log = store + f".{label}.log"
     setout = store + f".{label}.setout"
     env = dict(os.environ, K3X_SETOUT=setout, **env_extra)
+    setf = store + (".dset" if disk else ".set")
+    if disk:
+        side = json.load(open(store + ".json"))
+        largest = max(L["record_size"] for L in side["layers"] if L["layer"] in LAYERS)
+        env.update(K3X_DISK_TIER="1", K3X_DISK_LRU_GB=f"{(DISK_SLOTS + 0.5) * largest / 1e9:.9f}" if disk == "lru" else "1",
+                   K3X_DISK_DEADLINE_MS="10000" if disk == "lru" else "0")
+    resident = {(L, e) for L in LAYERS for e in range(DISK_SET if disk else NE) if (L, e) != NOT_IN_SET}
+    servable = {(L, e) for L in LAYERS for e in range(NE)} if disk else resident
+    kind = {L: tuple(TYPE_IDS[slices("/w/data", quant)[L][w]["type"]] for w in ("gate", "up", "down")) for L in LAYERS}
     if quant == "UD-Q4_K_XL":
         env["G53X_EXACT"] = "0"  # Q4 regression exercises the retained non-exact path
     with open(log, "w") as lf:
-        srv = subprocess.Popen([g53x, store + ".set", store, "-", "-", "serveidx", str(port)], stderr=lf, stdout=lf, env=env)
+        srv = subprocess.Popen([g53x, setf, store, "-", "-", "serveidx", str(port)], stderr=lf, stdout=lf, env=env)
     try:
         t0 = time.time()
         while True:
@@ -188,42 +221,81 @@ def run_store(args, g53x, store, quant, ref, env_extra, label):
                 raise SystemExit(f"{label}: server did not start:\n{txt}")
             time.sleep(0.2)
         for line in txt.splitlines():
-            if line.startswith(("loaded", "layer", "self-check")):
+            if line.startswith(("loaded", "layer", "self-check", "K3X_DISK_TIER", "disk tier")):
                 print(f"  [{label}] {line}")
         fails = []
         check = lambda ok, what: ok or fails.append(what)
         c = Client(port, D)
-        served = [(L, e) for L in LAYERS for e in range(NE) if (L, e) != NOT_IN_SET]
+
+        def expect(gids):
+            """-> per row the check row (bytes) or None (NaN): k3x (disk off) NaNs the whole reply for an unservable
+            id or a second kind, the disk tier (k3cs) only that row"""
+            rows, k0 = [], None
+            for g in gids:
+                L, e = (g // NE, g % NE) if g >= 0 else (None, None)
+                ok = (L, e) in servable and (k0 is None or kind[L] == k0)
+                if ok:
+                    k0 = kind[L]
+                rows.append(ref[(quant, L)][1][e * D * 4:(e + 1) * D * 4] if ok else None)
+            return rows if disk or all(r is not None for r in rows) else [None] * len(gids)
+
+        def req(gids, xs, what, seq=0, want=None):
+            r = c.request(gids, xs, seq)
+            want = expect(gids) if want is None else want
+            got = [r[i * D * 4:(i + 1) * D * 4] for i in range(len(gids))]
+            bad = [i for i, (g, w) in enumerate(zip(got, want)) if (g != w if w is not None else not all_nan(g))]
+            check(len(r) == len(gids) * D * 4 and not bad, f"{what}: rows {bad} differ from " +
+                  "/".join("nan" if w is None else "check" for w in want))
+            return len(gids)
+
         x = ref[(quant, LAYERS[0])][0]
         nrows = 0
-        # every served expert alone
-        for L, e in served:
-            xs, dn = ref[(quant, L)]
-            r = c.request([L * NE + e], xs, seq=nrows)
-            check(r == dn[e * D * 4:(e + 1) * D * 4], f"k=1 L{L} e{e} differs from check")
-            nrows += 1
+        if disk == "deadline0":
+            # first request of a disk row: its read misses the 0 ms deadline (NaN), the resident row is served; then
+            # (read landed, an LRU hit) the same request is served in full
+            for L in LAYERS:
+                xs = ref[(quant, L)][0]
+                for e in range(DISK_SET, NE):
+                    g = [L * NE + e, L * NE + 0]
+                    nrows += req(g, xs, f"deadline 0, cold L{L} e{e}", want=[None, expect(g)[1]])
+                    time.sleep(0.05)
+                    nrows += req(g, xs, f"deadline 0, LRU hit L{L} e{e}")
+            c.s.close()
+            time.sleep(0.2)
+            srv.terminate()
+            srv.wait(10)
+            st = disk_stats(log)
+            ncold = len(LAYERS) * (NE - DISK_SET)
+            check(st is not None and st["deadline_misses"] == ncold and st["lru_hits"] >= ncold,
+                  f"disk stats {st}: want deadline_misses={ncold}, lru_hits>={ncold}")
+            print(f"  [{label}] {nrows} rows compared ({ncold} cold disk rows NaN by the deadline, then served); {st}")
+            for f in fails:
+                print(f"  [{label}] FAIL: {f}")
+            return fails, {}
+        # every expert of the layers alone (k = 1): served ones against check, the rest NaN
+        for L in LAYERS:
+            xs = ref[(quant, L)][0]
+            for e in range(NE):
+                nrows += req([L * NE + e], xs, f"k=1 L{L} e{e}", seq=nrows)
         # several experts per request, in shuffled orders, and k = 16 with repeats (hdr[16] is then an id, no seq)
         for L in LAYERS:
-            xs, dn = ref[(quant, L)]
-            es = [e for e in range(NE) if (L, e) != NOT_IN_SET]
+            xs = ref[(quant, L)][0]
+            es = [e for e in range(NE) if (L, e) in servable]
             orders = [es[::-1], [es[i] for i in (2, 0, 3, 1)], es[1::2] + es[0::2], (es * 3)[:16]]
             for o in orders:
-                r = c.request([L * NE + e for e in o], xs)
-                want = b"".join(dn[e * D * 4:(e + 1) * D * 4] for e in o)
-                check(r == want, f"k={len(o)} L{L} {o} differs from check")
-                nrows += len(o)
-        # NaN replies (and the connection keeps working after them)
+                nrows += req([L * NE + e for e in o], xs, f"k={len(o)} L{L} {o}")
+        # unservable ids (and the connection keeps working after them)
         nan_cases = {
             "layer not in the store": [5 * NE + 0],
             "expert in the store, not in SET": [NOT_IN_SET[0] * NE + NOT_IN_SET[1]],
             "unsupported layer (Q2_K/Q3_K)": [MTP * NE + 1],
             "served + unserved id": [3 * NE + 0, 3 * NE + 1, 5 * NE + 2],
+            "served + unsupported + disk id": [3 * NE + 0, MTP * NE + 1, 3 * NE + 6],
             "two layers in one request": [3 * NE + 0, 8 * NE + 0],
             "negative id": [-1],
         }
         for what, gids in nan_cases.items():
-            r = c.request(gids, x)
-            check(len(r) == len(gids) * D * 4 and all_nan(r), f"NaN reply expected: {what}")
+            req(gids, ref[(quant, gids[0] // NE if gids[0] // NE in LAYERS else 3)][0], what)
             xs, dn = ref[(quant, 8)]
             check(c.request([8 * NE + 4], xs) == dn[4 * D * 4:5 * D * 4], f"row after NaN reply ({what}) differs")
         # k = 0 closes the connection; a new one works
@@ -235,17 +307,16 @@ def run_store(args, g53x, store, quant, ref, env_extra, label):
         check(closed, "k=0 did not close the connection")
         c.s.close()
         c.connect()
-        xs, dn = ref[(quant, 75)]
-        check(c.request([75 * NE + 6, 75 * NE + 0], xs) == dn[6 * D * 4:7 * D * 4] + dn[0:D * 4], "after reconnect")
-        # K3X_SETOUT
+        nrows += req([75 * NE + 6, 75 * NE + 0], ref[(quant, 75)][0], "after reconnect")
+        # K3X_SETOUT: SET's experts, and with the disk tier every expert of the servable layers
         got = sorted(tuple(map(int, l.split())) for l in open(setout))
-        check(got == sorted(served), f"K3X_SETOUT lists {len(got)} experts, {len(served)} served")
+        check(got == sorted(servable), f"K3X_SETOUT lists {len(got)} experts, {len(servable)} served")
         # latency
         lat = {}
         for L in LAYERS:
             xs, _ = ref[(quant, L)]
-            es = [e for e in range(NE) if (L, e) != NOT_IN_SET]
-            for k in (1, 4, 8):   # L75 serves 7 experts: its k = 8 repeats one
+            es = [e for e in range(NE) if (L, e) in servable]
+            for k in (1, 4, 8):   # L75 serves 7 experts without the disk tier: its k = 8 repeats one
                 ts = []
                 for i in range(args.iters + 10):
                     o = [es[(i * 3 + j) % len(es)] for j in range(k)]
@@ -259,9 +330,13 @@ def run_store(args, g53x, store, quant, ref, env_extra, label):
         time.sleep(0.2)
         srv.terminate()
         srv.wait(10)
+        st = disk_stats(log)
+        if disk:
+            check(st is not None and st["hits"] > 0 and st["lru_hits"] > 0 and st["deadline_misses"] == 0,
+                  f"disk stats {st}: want cold reads, LRU hits, no deadline misses")
         print(f"  [{label}] {nrows} rows compared, {len(nan_cases)} NaN cases, latency median of {args.iters} (us): " +
               "  ".join(f"L{L} " + "/".join(f"{lat[(L, k)]:.0f}" for k in (1, 4, 8) if (L, k) in lat) for L in LAYERS) +
-              "  (k=1/4/8)")
+              "  (k=1/4/8)" + (f"\n  [{label}] disk: " + " ".join(f"{k}={v:g}" for k, v in st.items()) if st else ""))
         for f in fails:
             print(f"  [{label}] FAIL: {f}")
         return fails, lat
@@ -297,24 +372,28 @@ def inner(args):
             if p.returncode:
                 raise SystemExit(f"check {name} failed:\n{p.stderr}")
             fused = [l for l in p.stderr.splitlines() if "fused" in l]
-            print(f"check {name} exact={env.get('G53X_EXACT', '1')} {' '.join(ty)}: {fused[0] if fused else ''}", flush=True)
+            print(f"check {name} exact={env.get('G53X_EXACT', '2')} {' '.join(ty)}: {fused[0] if fused else ''}", flush=True)
             xs = open(os.path.join(dumps, name + ".x"), "rb").read()
             dn = open(os.path.join(dumps, name + ".dn"), "rb").read()
             assert len(xs) == 6144 * 4 and len(dn) == NE * 6144 * 4
             ref[(q, L)] = (xs, dn)
     allfails, table = [], {}
-    runs = [(q, v, {}, f"{v}") for q in QUANTS for v in ("v1", "v2")]
-    runs += [(q, "v1", {"K3X_NOSTREAM": "1"}, "v1-nostream") for q in QUANTS]
-    unknown = set(filter(None, args.only.split(","))) - {f"{q}.{label}" for q, _, _, label in runs}
+    runs = [(q, v, {}, f"{v}", None) for q in QUANTS for v in ("v1", "v2")]
+    runs += [(q, "v1", {"K3X_NOSTREAM": "1"}, "v1-nostream", None) for q in QUANTS]
+    runs += [(q, v, {}, f"{v}-disk", "lru") for q in QUANTS for v in ("v1", "v2")]
+    runs += [(q, "v1", {"K3X_NOSTREAM": "1"}, "v1-nostream-disk", "lru") for q in QUANTS]
+    runs += [(q, "v2", {}, "v2-disk-deadline0", "deadline0") for q in QUANTS]
+    unknown = set(filter(None, args.only.split(","))) - {f"{q}.{label}" for q, _, _, label, _ in runs}
     if unknown:
         raise SystemExit(f"--only: no such run {sorted(unknown)}")
-    for q, v, env, label in runs:
+    for q, v, env, label, disk in runs:
         if args.only and f"{q}.{label}" not in args.only.split(","):
             continue
-        print(f"{q} store {v}{' ' + str(env) if env else ''}:", flush=True)
-        fails, lat = run_store(args, g53x, os.path.join(out, f"{q}.{v}.k3xs"), q, ref, env, label)
+        print(f"{q} store {v}{' ' + str(env) if env else ''}{' disk tier (' + disk + ')' if disk else ''}:", flush=True)
+        fails, lat = run_store(args, g53x, os.path.join(out, f"{q}.{v}.k3xs"), q, ref, env, label, disk)
         allfails += [f"{q} {label}: {f}" for f in fails]
-        table[(q, label)] = lat
+        if lat:
+            table[(q, label)] = lat
     print("\nper-request latency, client send to last byte, median of %d (us)" % args.iters)
     print("%-11s %-12s %s" % ("quant", "server", "  ".join(f"L{L:<2} k=1/4/8 " for L in LAYERS)))
     for (q, label), lat in table.items():
@@ -326,7 +405,7 @@ def inner(args):
             print("  " + f)
         return 1
     print("\nPASS: serveidx rows bit-identical to g53x check (UD-Q2_K_XL, UD-Q4_K_XL; store v1, v2; streamed and not), "
-          "NaN replies as k3x")
+          "NaN replies as k3x; disk tier: cold reads and LRU hits bit-identical, per-row NaN, deadline)")
     return 0
 
 

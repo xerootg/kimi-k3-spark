@@ -229,7 +229,8 @@ wire protocol of k3x `serveidx`, so the Spark engine (`rrclient.c`, patch 0003) 
   comes from the store header (256 for GLM, 896 for K3).
 - As in k3x: if any id is not served, k rows of NaN come back. That covers a layer not in the store, an expert not in
   SET, a layer with unsupported types (GLM's MTP layer 78, Q2_K/Q3_K), and ids of two kinds mixed in one request. The
-  engine then computes those experts itself. An all-zero row is sent as NaN and counted (`conn N: M all-zero rows sent
+  engine then computes those experts itself. With the disk tier (section 10) only the unservable row is NaN, as in
+  k3cs. An all-zero row is sent as NaN and counted (`conn N: M all-zero rows sent
   as NaN so far` at connection close, as in k3cs). The log lines (`loaded ... host USM arena ...`, `self-check ok`,
   `serving on PORT (busy-poll)`, `K3X_MAX_GB ... reached`) are k3x's.
 - The store is parsed by `tools/bitexact/expert_disk.h`, which now also reads v2 (per-layer stride). The tensor types
@@ -243,7 +244,7 @@ wire protocol of k3x `serveidx`, so the Spark engine (`rrclient.c`, patch 0003) 
   serving, so the request path allocates nothing. The kernels take a per-expert pointer table instead of slot ids.
 - Env (k3x names): `K3X_MAX_GB` (24), `K3X_SETOUT`, `K3X_KEEPCACHE`, `K3X_NOSTREAM`, `K3X_RT`, `K3X_RX_SPIN_US`,
   `K3X_MEMWARM`, `K3X_MEMWARM_CPU`, `K3X_FORCEWAKE`. K3-only parts (SiTU, softcap, MUFU tables) do not apply. Trace,
-  `K3X_CTL` and the CPU split are not ported yet.
+  `K3X_CTL` and the CPU split are not ported yet. Disk tier (`K3X_DISK_*`) and the g53x-only `G53X_*` knobs: section 10.
 
 Test: `./tools/glm53/build-sycl.sh && python3 tools/glm53/serve_test.py`. The test uses only the standard library. It
 builds four 0.3-0.6 GB stores in `$W/tmp/serve_test` from `data/`: UD-Q2_K_XL and UD-Q4_K_XL, each as v1 and as v2
@@ -271,15 +272,270 @@ shared host is up to 2x. In the bench, host-USM weights (`G53X_HOSTW=1`) cost th
 does not change the arena: v1 and v2 differ only in where the records sit in the file. Measure the serve overhead
 proper on an idle Arrow Lake NUC (item 3 of section 8).
 
+## 10. g53x serveidx disk tier: any expert, streamed from the local NVMe
+
+`K3X_DISK_TIER=1` lets serveidx serve every record of the store, not only the SET loaded at startup. With the variable
+unset, the behaviour and the wire bytes are the same as in section 9: serve_test runs the old configurations unchanged.
+
+- **Store, LRU, reads.** The store comes from `tools/bitexact/expert_disk.h`, shared with k3cs. `k3disk::Cache` reads
+  with O_DIRECT into one preallocated arena of fixed slots, one per record, sized to the largest record. g53x passes an
+  arena made with `sycl::malloc_host`, allocated once at startup, made resident with `zeContextMakeMemoryResident`
+  and covered by `mlockall`, so the kernels read the slots zero-copy. The reads run on reader threads: `K3X_DISK_THREADS`
+  is the number in flight, i.e. the queue depth; the container has no liburing, so the readers use pread. Each record is
+  split into `K3X_DISK_PIECE_KB` pieces, and LRU eviction skips held slots. Env (k3cs names): `K3X_DISK_STORE` (default:
+  the served STORE), `K3X_DISK_LRU_GB` (1), `K3X_DISK_DEADLINE_MS` (20), `K3X_DISK_THREADS` (8), `K3X_DISK_PIECE_KB` (512).
+- **Repack.** The new `Options::transform` hook converts the field-run layout in place on the reader thread, as soon as
+  a piece's rows have fully landed: rows that span two pieces are converted by whichever piece completes second. One
+  row at a time goes through a 16 KiB stack buffer, so there is no heap buffer and no second pass. A record is ready
+  after its last transform. k3cs passes no transform, so its behaviour is unchanged.
+- **Overlap.** Once the 68-byte header arrives, the ids are classified and every miss's read is started
+  (`acquire`); x arrives meanwhile. The resident rows go through gate/up and down first. The send loop then polls:
+  each disk row is launched (gate/up + down into its own row slot) as soon as `settled()` says its record is complete,
+  so each expert finishes on its own with no shared barrier. Rows are sent in request order, each as soon as its kernel
+  is done.
+- **Deadline.** It is measured from the header. A record that is not ready by then (`wait(handle, deadline)` returns
+  null), or whose read failed, is answered with a NaN row, as an unserved expert would be, and the Spark computes it.
+  The read itself keeps going and ends up in the LRU.
+- **Stats** are printed on the connection-close line, as in k3cs: `disk: hits lru_hits bytes p50_us p99_us
+  deadline_misses busy_ms gbps`. p50/p99 come from power-of-two latency buckets, and gbps = bytes ÷ time with at
+  least one read in flight.
+
+### Allocation and page-fault gate (`disk_test.py gate`, `allocgate.c`)
+
+`allocgate.so` is an LD_PRELOAD interposer that counts, between two SIGUSR2 signals:
+- malloc, calloc, realloc, posix_memalign/aligned_alloc/memalign, operator new and free;
+- mmap and munmap;
+- zeMemAllocHost/Device/Shared, zeMemFree, zeEventCreate, zeEventPoolCreate and zeCommandListCreate(Immediate).
+
+The ze* calls can be interposed because SYCL's Level Zero adapter reaches them through the dynamic symbol table.
+
+The gate (with ALLOCGATE_BT=n, allocgate also prints backtraces of the first n window allocations):
+1. builds a 22.5 GB synthetic v2 store: layers 3-9 x 256 experts, each record a copy of one of the UD-Q2_K_XL
+   layer-3 experts, 12.1 MB like GLM-5.3's (1792 records);
+2. starts serveidx with resident experts 0-7 per layer and a 2 GB LRU;
+3. warms up with 300 requests on one connection, then sends 50 more on a second;
+4. opens the window and sends 1200 requests of k = 1..8, mixing resident, LRU-hit, cold and NaN rows;
+5. asserts zero counts, zero minor and major faults (/proc/PID/stat fields 10 and 12), bit-exact rows against
+   `g53x check` of the source experts, and disk stats equal to the client's own cold/LRU counts.
+
+With `--fault-addrs N` (default 20), allocgate's perf_event_open sampler prints the address and maps line of each
+fault; for that, the container runs with `seccomp=unconfined`.
+
+Found on the request path, in order:
+1. SYCL `submit`: a handler and a UR event per launch (~10 allocations). Fix: the kernels are SYCL functors,
+   pre-recorded into Level Zero regular command lists at startup (one per kernel x batch size and per row slot,
+   pointer-table arguments in USM), each executed once before serving. A list's first execution allocates.
+   `G53X_SYCL_LAUNCH=1` restores the SYCL path.
+2. NEO gathered every USM allocation for indirect-access kernels into a new vector on each execute (~4 `new`).
+   - `MakeIndirectAllocationsResidentAsPack=1` avoids that, but under memory pressure it returned all-zero rows
+     after 8-500 requests: the buffers had been evicted.
+   - Fix: `DisableIndirectAccess=1` plus `zeContextMakeMemoryResident` on every USM buffer (arena chunks, LRU arena,
+     request slot, pointer table).
+3. i915 execbuffer pushed onto the GEM close worker's std::deque (512 B every 64 submissions). Fix: `EnableGemCloseWorker=0`.
+4. The immediate command list grew its command-buffer vector each time its stream filled (one `new`). Fix: an in-order
+   command queue with `zeCommandQueueExecuteCommandLists` (`G53X_SUBMIT=queue`, default; `immediate` = the old path).
+5. Page faults:
+   - Library and anonymous pages paged out under host memory pressure. Fix: `mlockall(MCL_CURRENT)` before serving
+     (`G53X_MLOCKALL=0` turns it off; dsycl.sh raises the memlock limit).
+   - NEO patched a jump-back into each regular list's batch buffer, through an i915 GEM CPU map, on every execute
+     (~260 faults per window). Fix: `DispatchCmdlistCmdBufferPrimary=0`.
+6. ULLS (`EnableDirectSubmission=1`) also removed 3 and 4, but on this i915 laptop it stalled the GPU now and then: the
+   append spins forever. It is opt-in (`G53X_ULLS=1`). The ev_wait timeout (`G53X_GPU_TIMEOUT_MS`, 10 s) exits with
+   status 4 instead of hanging.
+
+The keys in 2, 3 and 5 are NEO debug keys, set by g53x itself (`NEOReadDebugKeys=1`; `G53X_NEO_TUNE=0` = the driver's
+defaults).
+
+Result on this laptop (93 GB RAM, swap 100 % full from other jobs):
+- 0 allocations of any kind in the window (the ze totals are all at startup), every row bit-exact, stats matching;
+- but 1-3 minor faults per 1200 requests, which fails the gate. Every one is on an `anon_inode:i915.gem` mapping: the
+  command queue's 192 KiB ring buffer (the same IP in NEO each time) and once a 4 KiB BO. i915 GEM mmaps are PFN maps
+  that mlock does not pin, and the shrinker zaps idle ones under memory pressure. Runs on a less loaded host gave 0/0.
+- Check it on the NUC (xe KMD there, and the NEO keys need `NEOReadDebugKeys` support in its driver).
+
+Exact modes (`EXACT-RESULT.md`, `FASTEXACT-RESULT.md`): `G53X_EXACT=2` (the default) is the fast CUDA-exact path
+(`g53x_parallel.inc`), `G53X_EXACT=1` the scalar exact oracle; both give the same bits. The exact kernels are functors
+like the fast ones (`ExactGateUpK` / `ExactDownK` in `g53x_exact.inc`; `ParPrepK` + `ParMatK`, the MUFU tables and IQ
+grids as direct arguments), so serveidx pre-records them the same way and resident and disk-tier rows take the same
+allocation-free path. Mode 2's lists are two kernels each (q8_1 preparation into a scratch slot, a barrier, the SIMD16
+matvec); the scratch (one region per slot plus one for x) is reserved and made resident at startup, as are the 2.1 GB of
+MUFU tables. Gate after the fast-exact merge: 0 allocations in modes 0 and 2; minor faults on i915 GEM mappings only,
+36 (mode 0) and 31-74 (mode 2) with swap 100 % full, earlier 1-5 on a quieter host (`MERGE-RESULT.md`).
+
+### Throughput (this laptop, `disk_test.py bench`)
+
+Method:
+- Store: the same synthetic 22.5 GB store, 2 GB LRU, deadline 1 s so latency is measured rather than NaN rows.
+- 200 requests per cell; client-side send to last byte over loopback.
+- Cold rows are never in the LRU; warm rows are resident.
+- "Wall GB/s" = bytes ÷ the cell's wall time; busy = bytes ÷ time with a read in flight.
+- The host was loaded (load average 7-9) and noisy; cells varied by up to 1.5x between passes.
+- All cells: 0 NaN rows, 0 wrong rows.
+
+Median / p99 µs, wall GB/s, at the default (512 KiB pieces, 8 readers) and 16 readers:
+
+| k | cold % | 512 KiB x 8 | 512 KiB x 16 |
+|---|---|---|---|
+| 1 | 0 | 683 / 1233 | 763 / 1457 |
+| 1 | 50 | 2848 / 5359, 2.4 | 1994 / 4388, 2.8 |
+| 1 | 100 | 3808 / 4887, 3.2 | 3296 / 4481, 3.7 |
+| 4 | 0 | 2194 / 3098 | 1647 / 2498 |
+| 4 | 50 | 6493 / 11502, 3.6 | 6222 / 7270, 4.0 |
+| 4 | 100 | 8383 / 9817, 6.0 | 6029 / 8646, 8.0 |
+| 8 | 0 | 5279 / 6046 | 5292 / 6818 |
+| 8 | 50 | 9656 / 11383, 5.3 | 10430 / 13182, 4.9 |
+| 8 | 100 | 15572 / 17830, 6.5 | 16613 / 20672, 5.9 |
+
+Read size x readers at k = 8, 100 % cold (median / p99 µs, wall GB/s):
+
+| piece | 2 readers | 4 | 8 | 16 |
+|---|---|---|---|---|
+| 256 KiB | | | 15453 / 17406, 6.5 | 14809 / 18445, 6.7 |
+| 512 KiB | 52506 / 85930, 1.9 | 44065 / 63680, 2.3 | 15572 / 17830, 6.5 | 16613 / 20672, 5.9 |
+| 1 MiB | 34144 / 42821, 2.9 | 23048 / 35456, 4.1 | 20039 / 26135, 4.9 | 19538 / 38655, 4.8 |
+| 4 MiB | 102945 / 144768, 1.0 | 74883 / 119313, 1.3 | 23760 / 46660, 3.9 | 24638 / 54786, 3.4 |
+
+Findings:
+- Many reads in flight matter more than their size. 4 MiB pieces leave only three reads per 12 MB expert, so a k = 1
+  cold read cannot use the drive's parallelism.
+- 256-512 KiB with 8-16 readers reached 6-8 GB/s wall, at the laptop drive's limit.
+- The k = 8, 100 % cold case is bound by the drive (8 x 12.1 MB = 97 MB per request).
+
+Defaults: 512 KiB pieces, 8 readers (as good as 16 at k = 8, half the threads), 20 ms deadline, 1 GB LRU.
+
+On a NUC (TM8FGM002T at ~5.7 GB/s), one cold expert takes ~2.1 ms of reading alone, so a cold row fits the Spark's
+3 ms budget only if the request has slack. LRU hits and resident rows cost what section 9's rows cost.
+
+### Running it on a NUC
+
+1. Build: `./tools/glm53/build-sycl.sh`. It also builds `$W/allocgate.so`.
+2. Correctness: `python3 tools/glm53/serve_test.py`. It includes the disk runs: cold read, LRU hit and deadline NaN
+   rows, both quants, store v1 and v2, bit-exact against `g53x check`.
+3. Gate: `python3 tools/glm53/disk_test.py gate`. It builds `$W/tmp/disk_test/synthetic.k3xs` (22.5 GB) from
+   `data/` unless `--store` is given. It ends with `GATE PASS: ...` or `GATE FAILED: <reasons>`.
+4. Bench: `python3 tools/glm53/disk_test.py bench [--pieces 256,512,1024,4096] [--threads 4,8,16] [--iters 200]`. It
+   prints the table above and writes `$W/tmp/disk_test/bench.json`.
+5. Clean up: `python3 tools/glm53/disk_test.py clean` removes the synthetic store.
+
+To use the real GLM store, mount it into the container: `DSYCL_ARGS="-v /path/to/store:/store:ro"`, then pass
+`--store /store/glm.k3xs` (with its `.json` sidecar). With `--store`, rows are not compared against `g53x check`
+(only the synthetic store's records have references), so the gate then checks allocations, faults and stats only. Serving for real:
+`K3X_DISK_TIER=1 K3X_DISK_LRU_GB=8 g53x SET STORE - - serveidx PORT`.
+
 ## Files (`tools/glm53/`)
 
 - `gguf_hdr.py URL OUT.json` (one shard's header via Range), `inventory.py HDRDIR` (classes, bytes per token, fit),
   `extract.py HDRDIR QUANT LAYERS OUTDIR` (experts 0-7 of the given layers).
 - `glmbench.cpp` + `CMakeLists.txt`: ggml baseline and `--check` dumps. `glmref.cpp`: fp64 reference and comparisons.
 - `g53x.cpp` + `g53x_ty.inc`: the iGPU kernels (`bench`, `check`, `serveidx`; `G53X_PROF=1` per-kernel times,
-  `G53X_HOSTW=1` bench weights in host USM). `bw.cpp`: iGPU read roofline. `serve_test.py`: serveidx test (section 9).
+  `G53X_HOSTW=1` bench weights in host USM). `bw.cpp`: iGPU read roofline. `serve_test.py`: serveidx test (sections 9, 10).
+  `disk_test.py gate|bench|clean` + `allocgate.c`: disk-tier allocation/fault gate and throughput bench (section 10).
 - `g53c.cpp`: the CPU kernels. `bwcpu.c`: CPU read roofline.
 - `build-cpu.sh`, `build-sycl.sh`, `dsycl.sh` (run in the oneAPI container with `/dev/dri`), `all.sh gpu|cpu`
   (tables above), `check.sh` (section 5), `asmstat.sh DUMPDIR REGEX` (instruction mix of IGC `.asm` dumps).
   Work dir `$W` (default `~/glm53-work`): `llama/` = the fork's tree, `data/` = `extract.py` output.
 - `results/`: inventories, the two benchmark runs, the check output.
+
+## 10. CUDA-exact CPU experts and g53cs (2026-10-29)
+
+`tools/glm53/cpu/` adds AVX2/AVX-VNNI IQ2_XS, IQ3_XXS and IQ4_XS
+kernels and a CPU-only `g53cs` server. The scalar oracle is the existing
+`g53ref_exact.cpp`, whose GLM CUDA verification is recorded in
+`tools/glm53/EXACT-RESULT.md`. The new kernels preserve its half q8 scales and
+float butterfly sums, signed integer truncations, CUDA virtual-thread FMA and
+reduction order, MUFU SwiGLU, FTZ and canonical NaN. Integer arithmetic and
+independent virtual lanes are vectorized; there is no AVX-512 requirement.
+
+The server accepts the k3x header and returns 6144-float expert rows. It uses
+`expert_disk.h` for K3XS v1/v2 metadata and the preallocated disk tier, including
+pinning until compute completes, deadlines and partial misses. Valid zero rows
+are preserved. All request scratch and worker arenas are preallocated; startup
+warms the workers and requires successful `mlockall`. Unlocked test mode must
+be explicitly enabled with `G53_ALLOW_UNLOCKED=1`. Raw MUFU mappings add about
+2.18 GB; there is no TANH dependency. See `tools/glm53/cpu/README.md` for the API
+and environment variables. Submit is currently synchronous across two phases;
+computation and row transmission do not overlap.
+
+CPU-only offline validation:
+
+```sh
+tools/glm53/cpu/test.sh "$HOME/glm53-work/data" "$HOME/glm53-work/mufu"
+python3 tools/glm53/cpu/test_server.py
+G53_VNNI=' ' tools/glm53/cpu/test.sh
+```
+
+The first command checks 600 random/exceptional rows and all g/u/h/down words
+for 3 extracted layers, 8 experts, 4 input cases and both worker counts. It also
+counts allocations on caller and compute threads and reports warm page faults.
+The second compares server wire bytes with independently generated scalar rows
+at k=1/4/8/16, both store versions, heterogeneous gate/up types, missing and
+unsupported IDs, duplicate disk IDs, partial misses and zero deadlines. It runs
+the inherited disk-cache pin/LRU/read-failure/concurrency/allocation suite too.
+Malloc-family and C++ new wrappers gate the real server request loop. Synthetic
+and closed-form zero-gate server cases run without tables/model files; missing
+external cases print SKIP explicitly. `.github/workflows/g53cs-test.yml` runs
+these CPU-only tests without downloading model headers or data.
+
+This sandbox forbids creating local sockets. Local integration therefore used
+the same server request loop with a compile-time pipe transport; actual TCP is
+selected automatically on unrestricted hosts/CI. Memory locking is unavailable
+here, so the tests explicitly allowed unlocked operation. The final kernel run
+reported zero allocations and zero warm minor/major faults for all six
+layer/thread combinations. This does not establish a residency guarantee for
+an unlocked process or certify the NUC's locked/TCP execution.
+
+Measured on this laptop (Core Ultra 7 165H, Meteor Lake, shared host). Values
+are **microseconds per expert**, including quantization, SwiGLU and worker
+scheduling; they exclude sockets and disk I/O. Fast is the median of 7 runs,
+scalar the median of 3, using the same number of workers and finite uniform
+[-1,1] input. Experts 0..k-1 use the extracted weights; no replicated DRAM-sized
+weight set is claimed. Workers were unpinned; these are indicative numbers.
+Raw output: `tools/glm53/results/cpu-exact-mtl-165h.txt`.
+
+| Layer | Threads | k | Fast us/expert | Scalar us/expert | Speedup |
+|---|---:|---:|---:|---:|---:|
+| L3 | 4 | 1 | 4849 | 28280 | 5.83x |
+| L3 | 4 | 4 | 5076 | 23942 | 4.72x |
+| L3 | 4 | 8 | 4698 | 27155 | 5.78x |
+| L3 | 8 | 1 | 4080 | 25552 | 6.26x |
+| L3 | 8 | 4 | 3817 | 20866 | 5.47x |
+| L3 | 8 | 8 | 3585 | 24079 | 6.72x |
+| L8 | 4 | 1 | 7774 | 31804 | 4.09x |
+| L8 | 4 | 4 | 6459 | 32329 | 5.01x |
+| L8 | 4 | 8 | 5730 | 31015 | 5.41x |
+| L8 | 8 | 1 | 4458 | 20256 | 4.54x |
+| L8 | 8 | 4 | 3793 | 21828 | 5.75x |
+| L8 | 8 | 8 | 3748 | 19194 | 5.12x |
+| L75 | 4 | 1 | 5644 | 27054 | 4.79x |
+| L75 | 4 | 4 | 5455 | 24830 | 4.55x |
+| L75 | 4 | 8 | 5794 | 29562 | 5.10x |
+| L75 | 8 | 1 | 4226 | 20648 | 4.89x |
+| L75 | 8 | 4 | 3868 | 23721 | 6.13x |
+| L75 | 8 | 8 | 3385 | 18839 | 5.57x |
+
+The improvement is 4.09–6.72x over the exact scalar pool. At 8 threads and k=8,
+3.38–3.75 ms per expert still means 27–30 ms for eight experts. This does **not**
+meet the earlier ~3 ms per-layer budget. Further row batching, IQ decoding and
+activation/table prefetch work remain; there is no NUC speed claim.
+
+NUC run instructions (Intel Core Ultra 5 225H, AVX2 + AVX-VNNI):
+
+```sh
+tools/glm53/cpu/build.sh
+tools/glm53/cpu/test.sh "$HOME/glm53-work/data" "$HOME/glm53-work/mufu"
+python3 tools/glm53/cpu/test_server.py
+# Configure the service shell's memlock limit to cover arenas, cache and tables.
+ulimit -l unlimited
+export K3X_CPU_CPUS=0-7 K3X_MUFU="$HOME/glm53-work/mufu"
+export K3X_DISK_TIER=1 K3X_DISK_LRU_GB=1 K3X_DISK_THREADS=4
+export K3X_DISK_DEADLINE_MS=20 K3X_MAX_GB=24 K3X_FULLCHECK=1
+unset G53_ALLOW_UNLOCKED
+# IDX lines: gid gate_type down_type byte_offset; use the same full store here.
+tools/glm53/cpu/g53cs /path/to/selected.idx /path/to/glm.k3xs 9000
+```
+
+Choose available worker CPUs from `lscpu -e`/the service affinity, reserve a CPU
+for the request thread with `K3X_MAIN_CPU`, and repeat the benchmark at 4/8
+workers on an otherwise idle NUC. The test driver accepts its 4/8-worker sets
+internally; pin it with `taskset` if comparing core classes. Successful locked
+startup, actual TCP rows and service latency remain NUC validation steps.

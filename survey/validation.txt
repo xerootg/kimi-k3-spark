@@ -1,0 +1,30 @@
+All latency columns in us; nearest-rank percentiles.
+Budget: 3000.0 us (ASSUMED K3 deadline; GLM window unmeasured).
+| hop | p50 | p90 | p99 | max | samples | p99 budget |
+|---|---:|---:|---:|---:|---:|---|
+| spark->nuc2/exact=1/cold/prototype/k=1 | 2500.0 | 4500.0 | 4950.0 | 5000.0 | 1000 | EXCEEDS; prototype |
+| spark->nuc2/exact=1/lru/prototype/k=1 | 1000.0 | 1800.0 | 1980.0 | 2000.0 | 1000 | fits; prototype |
+| spark->nuc2/exact=1/resident/prototype/k=1 | 500.0 | 900.0 | 990.0 | 1000.0 | 1000 | fits; prototype |
+| spark/log/mean-layer-from-decode | 3137.3 | 3137.3 | 3137.3 | 3137.3 | 1 | — |
+| spark/log/mean-real-lookup-wait | 1400.0 | 1400.0 | 1400.0 | 1400.0 | 1 | — |
+| spark/trace/post-to-real-window | 3000.0 | 3000.0 | 3000.0 | 3000.0 | 1 | — |
+| spark/trace/real-lookup-wait | 100.0 | 100.0 | 100.0 | 100.0 | 1 | — |
+Errors: 0. Raw files remain authoritative; incomplete cases are never imputed.
+NOTE: Below 1,000 samples: tail estimate is weak; rerun that section with a higher time cap. At 1,000 samples only ~10 observations cover the top 1%.
+NOTE: CPU comparison absent; g53c is bench-only, no GLM CPU server exists in this checkout.
+NOTE: Log rows are distributions of reported averages, not individual layer observations.
+NOTE: Missing NVMe record distributions (inspect *-nvme-build.log).
+NOTE: Missing Spark end-to-end: nuc2 exact=0 cold k=[1, 2, 3, 4, 5, 6, 7, 8]
+NOTE: Missing Spark end-to-end: nuc2 exact=0 lru k=[1, 2, 3, 4, 5, 6, 7, 8]
+NOTE: Missing Spark end-to-end: nuc2 exact=0 resident k=[1, 2, 3, 4, 5, 6, 7, 8]
+NOTE: Missing Spark end-to-end: nuc2 exact=1 cold k=[2, 3, 4, 5, 6, 7, 8]
+NOTE: Missing Spark end-to-end: nuc2 exact=1 lru k=[2, 3, 4, 5, 6, 7, 8]
+NOTE: Missing Spark end-to-end: nuc2 exact=1 resident k=[2, 3, 4, 5, 6, 7, 8]
+NOTE: Missing Spark end-to-end: nuc3 exact=0 cold k=[1, 2, 3, 4, 5, 6, 7, 8]
+NOTE: Missing Spark end-to-end: nuc3 exact=0 lru k=[1, 2, 3, 4, 5, 6, 7, 8]
+NOTE: Missing Spark end-to-end: nuc3 exact=0 resident k=[1, 2, 3, 4, 5, 6, 7, 8]
+NOTE: Missing Spark end-to-end: nuc3 exact=1 cold k=[1, 2, 3, 4, 5, 6, 7, 8]
+NOTE: Missing Spark end-to-end: nuc3 exact=1 lru k=[1, 2, 3, 4, 5, 6, 7, 8]
+NOTE: Missing Spark end-to-end: nuc3 exact=1 resident k=[1, 2, 3, 4, 5, 6, 7, 8]
+NOTE: Trace windows are reported separately; choose --budget-us for the required lower-tail window. No automatic substitution of their median.
+PASS: synthetic nearest-rank tails, counts, log/trace parsing, fits/exceeds; no hardware probes executed.

@@ -85,7 +85,8 @@ int main(int argc,char**argv)try {
         need(ids.size()==cases*NE*4,"ids size");
         const char*names[]={"g","u","h","dn"};std::vector<uint8_t>want[4];
         for(int s=0;s<4;s++){want[s]=read_blob(dir+"/"+names[s]+".bin");need(want[s].size()==cases*NE*(s==3?D:F)*4,"stage size");}
-        auto gate=pick_gu(tgs[li],tgs[li],D,F);auto down=pick_dn(tds[li],D,F);
+        auto gate=pick_gu(tgs[li],tgs[li],D,F).run;auto down=pick_dn(tds[li],D,F).run;
+        need(gate&&down,"kernels not instantiated");
         std::vector<float>hosth(NE*F),got[4];got[0].resize(NE*F);got[1].resize(NE*F);
         for(int fused:{0,1})for(int stream:{0,1}) {
             size_t diffs[4]={};

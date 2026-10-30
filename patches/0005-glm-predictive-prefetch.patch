@@ -1,0 +1,270 @@
+diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
+index 9f7d2e5..57969e8 100644
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@ -2514,6 +2514,8 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+         ggml_tensor * e_early = run_experts(cur, slots); // [n_embd, n_expert_used + 1, 1]
+         ggml_build_forward_expand(gf, e_early);
+         if (moe_split_partial_cb) {
++            // The merge writes this buffer later; the predictor must not reuse it.
++            ggml_set_output(e_early);
+             // the resident experts' share of the routed output, for the next layer's prefetch predictor
+             ggml_tensor * w = ggml_view_3d(ctx0, e_early, n_embd, n_expert_used, n_tokens, e_early->nb[1], e_early->nb[2], 0);
+             w = ggml_mul(ctx0, w, weights);
+@@ -2738,8 +2740,8 @@ llama_expert_gating_func_type gating_op,
+         router_in = router_in_alt;
+     }
+     const int64_t n_tok = router_in->ne[1];
+-    if (n_tok > 4) {
+-        return; // decode only: a prefill ubatch touches most experts anyway
++    if (n_tok != 1) {
++        return; // predictions are only valid for single-token decode
+     }
+     ggml_tensor * slot_map = moe_cache->get_slot_map(il_next, n_tok, n_expert_used);
+     if (slot_map == nullptr) {
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index 6d41d82..c060f7f 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -301,13 +301,12 @@ struct moe_cache_lru {
+             }
+             int32_t s = head;
+             if (scan || busy != nullptr || skip_layer >= 0 || chance_max > 0) {
+-                // the hits of this layer were not moved to the tail (scan): the victim search must step over them, or a
+-                // miss would evict a hit of the same batch and the lookup would read -1 for it; likewise over the
+-                // slots the speculative reader is filling, and over the layer the GPU computes during a lookahead.
++                // Busy slots and second chances can move the search past the promoted hits. Never evict an expert
++                // selected by this plan, including a miss assigned a slot earlier in this loop.
+                 // A resident expert with a second chance left spends it (count--, slot to the tail) and the search
+                 // goes on from the slot after it; the counts only fall, so the search ends at a slot with none.
+                 while (s >= 0) {
+-                    if ((scan && key_of[s] >= 0 && key_of[s] / n_expert == il && seen[key_of[s] % n_expert] == seen_gen) ||
++                    if ((key_of[s] >= 0 && key_of[s] / n_expert == il && seen[key_of[s] % n_expert] == seen_gen) ||
+                         (busy != nullptr && busy[s].load(std::memory_order_acquire) != 0) ||
+                         (skip_layer >= 0 && key_of[s] >= 0 && key_of[s] / n_expert == skip_layer)) {
+                         s = next[s];
+@@ -1929,6 +1928,8 @@ struct llama_moe_cache::impl {
+     uint64_t n_pf_fills = 0, n_pf_records = 0, t_pf_io_us = 0, n_pf_hits = 0, n_pf_lookups = 0;
+     std::chrono::steady_clock::time_point t_pf_first, t_pf_last;
+     std::vector<int32_t> last_fill_ids;
++    std::vector<std::vector<int32_t>> prediction_ids; // pending single-token top-k, including resident experts
++    uint64_t n_prediction_ids = 0, n_prediction_hits = 0, n_prediction_pairs = 0;
+     uint64_t n_prefetch_calls = 0, n_prefetch_reads = 0, n_prefetch_used = 0;
+     bool     self_prefetch = false;  // LLAMA_EXPERT_STORE_SELF_PREFETCH=1 (needs slots_on_gpu): the layer's real experts posted early
+     uint64_t n_self_calls = 0, n_self_reads = 0, t_self_io_us = 0;
+@@ -3410,6 +3411,7 @@ struct llama_moe_cache::impl {
+             if (prefetch) {
+                 prefetched.assign(model.layers.size()*(size_t) store.n_expert, 0);
+                 spec_ids.assign(model.layers.size(), {});
++                prediction_ids.assign(model.layers.size(), {});
+                 if (getenv("LLAMA_EXPERT_STORE_PREFETCH_DEPTH") != nullptr) {
+                     spec_depth = (unsigned) std::max(1, atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_DEPTH")));
+                 }
+@@ -3686,6 +3688,11 @@ struct llama_moe_cache::impl {
+     void fill_decode(int32_t il, const int32_t * ids_data, size_t n_ids) {
+         lock_memory_once();
+         la_finish();
++        if (n_ids != (size_t) n_expert_used) {
++            prediction_discard();
++        } else {
++            prediction_measure(il, ids_data, n_ids);
++        }
+         layer & l = layers[il];
+         group & g = groups[l.ig];
+         const expert_store_entry * e = store.find(il);
+@@ -3923,6 +3930,7 @@ struct llama_moe_cache::impl {
+         layer & l = layers[il];
+         group & g = groups[l.ig];
+         GGML_ASSERT(split && n_ids == (size_t) n_expert_used);
++        prediction_measure(il, ids_data, n_ids);
+         const auto t0 = std::chrono::steady_clock::now();
+         if (split_il >= 0) {
+             // an early lookup without its real one (should not happen): finish its reads first
+@@ -4393,6 +4401,9 @@ struct llama_moe_cache::impl {
+     // lookup that follows plans the same ids and finds them resident
+     void fill_self(int32_t il, const int32_t * ids_data, size_t n_ids) {
+         la_finish();
++        if (n_ids != (size_t) n_expert_used) {
++            prediction_discard();
++        }
+         if (!self_prefetch || n_ids > (size_t) 4*n_expert_used) {
+             return;
+         }
+@@ -4407,6 +4418,57 @@ struct llama_moe_cache::impl {
+         t_self_io_us += t_fill_io_us;
+     }
+ 
++    void prediction_measure(int32_t il, const int32_t * ids_data, size_t n_ids) {
++        if (!prefetch || prediction_ids[il].empty()) {
++            return;
++        }
++        GGML_ASSERT(n_ids == (size_t) n_expert_used);
++        const auto & predicted = prediction_ids[il];
++        n_prediction_pairs++;
++        n_prediction_ids += predicted.size();
++        for (int32_t x : predicted) {
++            n_prediction_hits += std::find(ids_data, ids_data + n_ids, x) != ids_data + n_ids;
++        }
++        prediction_ids[il].clear();
++    }
++
++    // Batch fills must not inherit speculative reservations or pending decode predictions.
++    void prediction_discard() {
++        if (!prefetch) {
++            return;
++        }
++        spec_reclaim();
++        for (group & g : groups) {
++            if (!g.spec_state) {
++                continue;
++            }
++            moe_cache_lru & lru = g.lru;
++            for (int32_t s = 0; s < g.n_slots; ++s) {
++                const int32_t key = lru.key_of[s];
++                if (key < 0) {
++                    continue; // includes parked slots (state 3)
++                }
++                if (!prefetched[key] && g.spec_state[s].load(std::memory_order_acquire) == 0) {
++                    continue;
++                }
++                while (g.spec_state[s].load(std::memory_order_acquire) != 0) {
++                    io_pool::cpu_relax();
++                }
++                lru.slot_map[key / lru.n_expert][key % lru.n_expert] = -1;
++                lru.key_of[s] = -1;
++                lru.n_filled--;
++                lru.demote(s);
++            }
++        }
++        std::fill(prefetched.begin(), prefetched.end(), 0);
++        for (auto & ids : prediction_ids) {
++            ids.clear();
++        }
++        for (auto & ids : spec_ids) {
++            ids.clear();
++        }
++    }
++
+     // stop the speculative reader from starting records and take back the ones it has not started: their slots
+     // are emptied and go to the eviction end, the next plan reuses them first
+     void spec_reclaim() {
+@@ -4463,7 +4525,11 @@ struct llama_moe_cache::impl {
+     // real fill and are far from the eviction end, so the reads cannot land in a slot the GPU is reading.
+     void prefetch_decode(int32_t il, const int32_t * ids_data, size_t n_ids) {
+         la_finish();
+-        if (!prefetch || !spec_ok() || n_ids > (size_t) 4*n_expert_used) {
++        if (n_ids != (size_t) n_expert_used) {
++            prediction_discard();
++            return;
++        }
++        if (!prefetch || !spec_ok()) {
+             return;
+         }
+         layer & l = layers[il];
+@@ -4472,6 +4538,7 @@ struct llama_moe_cache::impl {
+         if (e == nullptr || g.region == nullptr) {
+             return;
+         }
++        prediction_ids[il].assign(ids_data, ids_data + n_ids);
+         spec_reclaim(); // a prediction not started by now is stale
+         if (remote_on() && !remote_shadow && l.rpost_map != nullptr) {
+             // the remote experts are not read ahead: saving the drive those reads is the point
+@@ -4766,6 +4833,10 @@ struct llama_moe_cache::impl {
+                 (unsigned long long) n_self_calls, (double) n_self_reads/n_self_calls, t_self_io_us/1e3/n_self_calls);
+         }
+         if (prefetch) {
++            LLAMA_LOG_INFO("%s: expert store: predictor top-k: %llu/%llu ids matched (%.1f%%), %llu single-token pairs\n", func,
++                (unsigned long long) n_prediction_hits, (unsigned long long) n_prediction_ids,
++                n_prediction_ids ? 100.0*n_prediction_hits/n_prediction_ids : 0.0,
++                (unsigned long long) n_prediction_pairs);
+             LLAMA_LOG_INFO("%s: expert store: prefetch: %llu predicted misses read, %llu of them used by the real fill (%.1f%%)\n", func,
+                 (unsigned long long) n_prefetch_reads, (unsigned long long) n_prefetch_used,
+                 n_prefetch_reads ? 100.0*n_prefetch_used/n_prefetch_reads : 0.0);
+@@ -4813,6 +4884,7 @@ struct llama_moe_cache::impl {
+         if (it == bindings.end()) {
+             return false;
+         }
++        prediction_discard();
+         const binding & b = it->second;
+         group & g = groups[layers[b.il].ig];
+         const expert_store_entry * e = store.find(b.il);
+diff --git a/src/models/glm-dsa.cpp b/src/models/glm-dsa.cpp
+index a9d62c0..485724e 100644
+--- a/src/models/glm-dsa.cpp
++++ b/src/models/glm-dsa.cpp
+@@ -1,6 +1,7 @@
+ #include "models.h"
+ 
+ #include "llama-kv-cache-dsa.h"
++#include "llama-moe-cache.h"
+ 
+ // https://huggingface.co/zai-org/GLM-5.2/blob/main/config.json#L26
+ const std::array<uint32_t, LLAMA_MAX_LAYERS> GLM_5_2_DEFAULT_INDEXER_TYPES = {
+@@ -454,7 +455,42 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
+                 NULL, LLM_FFN_SILU, LLM_FFN_PAR, il);
+             cb(cur, "ffn_out", il);
+         } else {
+-            // MoE branch
++            ggml_tensor * ffn_shexp = build_ffn(cur,
++                model.layers[il].ffn_up_shexp, NULL, model.layers[il].ffn_up_shexp_s,
++                model.layers[il].ffn_gate_shexp, NULL, model.layers[il].ffn_gate_shexp_s,
++                model.layers[il].ffn_down_shexp, NULL, model.layers[il].ffn_down_shexp_s,
++                NULL, LLM_FFN_SILU, LLM_FFN_PAR, il);
++            cb(ffn_shexp, "ffn_shexp", il);
++
++            moe_overlap.clear();
++            moe_split_partial_cb = nullptr;
++            if (moe_cache != nullptr && moe_cache->prefetch_enabled() && cur->ne[1] == 1 && il + 1 < n_layer &&
++                    model.layers[il + 1].ffn_gate_inp != nullptr) {
++                moe_overlap.push_back(ffn_shexp);
++                const int mode = moe_cache->prefetch_input();
++                auto predict = [&, cur, ffn_inp, ffn_shexp, il, mode](ggml_tensor * partial) -> ggml_tensor * {
++                    ggml_tensor * alt = nullptr;
++                    if (mode >= 1) {
++                        alt = ggml_add(ctx0, ffn_inp, ffn_shexp);
++                        if (partial != nullptr) {
++                            alt = ggml_add(ctx0, alt, partial);
++                        }
++                        alt = build_norm(alt, model.layers[il + 1].ffn_norm, nullptr, LLM_NORM_RMS, il + 1);
++                    }
++                    build_moe_cache_prefetch(cur, alt, model.layers[il + 1].ffn_gate_inp,
++                        model.layers[il + 1].ffn_exp_probs_b, n_expert_used,
++                        (llama_expert_gating_func_type) hparams.expert_gating_func, il + 1);
++                    ggml_tensor * pf = moe_prefetch_node;
++                    moe_prefetch_node = nullptr;
++                    return pf;
++                };
++                // Keep the fallback if the cache cannot use the split path for this layer.
++                moe_prefetch_node = predict(nullptr);
++                if (mode == 3 && moe_cache->split_enabled() && cur->ne[1] == 1) {
++                    moe_split_partial_cb = predict;
++                }
++            }
++
+             ggml_tensor * moe_out = build_moe_ffn(cur,
+                 model.layers[il].ffn_gate_inp,
+                 model.layers[il].ffn_up_exps,
+@@ -473,19 +509,10 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
+                 model.layers[il].ffn_down_exps_s);
+             cb(moe_out, "ffn_moe_out", il);
+ 
+-            // FFN shared expert
+-            {
+-                ggml_tensor * ffn_shexp =
+-                    build_ffn(cur,
+-                        model.layers[il].ffn_up_shexp, NULL, model.layers[il].ffn_up_shexp_s,
+-                        model.layers[il].ffn_gate_shexp, NULL, model.layers[il].ffn_gate_shexp_s,
+-                        model.layers[il].ffn_down_shexp, NULL, model.layers[il].ffn_down_shexp_s,
+-                        NULL, LLM_FFN_SILU, LLM_FFN_PAR, il);
+-                cb(ffn_shexp, "ffn_shexp", il);
+-
+-                cur = ggml_add(ctx0, moe_out, ffn_shexp);
+-                cb(cur, "ffn_out", il);
+-            }
++            moe_overlap.clear();
++            moe_split_partial_cb = nullptr;
++            cur = ggml_add(ctx0, moe_out, ffn_shexp);
++            cb(cur, "ffn_out", il);
+         }
+         cur = ggml_add(ctx0, cur, ffn_inp);
+ 

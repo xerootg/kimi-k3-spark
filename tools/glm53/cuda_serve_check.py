@@ -125,7 +125,7 @@ def inner(args):
     with socket.socket() as probe:
         probe.bind(('127.0.0.1', 0))
         port = probe.getsockname()[1]
-    env = dict(os.environ, G53X_EXACT=os.environ.get('G53X_EXACT', '1'), G53X_MUFU='/w/mufu',
+    env = dict(os.environ, G53X_EXACT=os.environ.get('G53X_EXACT', '2'), G53X_MUFU='/w/mufu',
                K3X_SETOUT=str(out / 'served.set'))
     store = str(out / 'experts.k3xs')
     report, failed = [], False
@@ -224,7 +224,7 @@ def host(args):
         return 0
     cmd = ('python3 /w/tools/cuda_serve_check.py --inner '
            f'--startup-timeout {args.startup_timeout} --request-timeout {args.request_timeout}')
-    env = dict(os.environ, W=str(work), G53X_EXACT=os.environ.get('G53X_EXACT', '1'), G53X_MUFU='/w/mufu')
+    env = dict(os.environ, W=str(work), G53X_EXACT=os.environ.get('G53X_EXACT', '2'), G53X_MUFU='/w/mufu')
     with (out / 'run.log').open('w') as log:
         with subprocess.Popen([str(script_dir / 'dsycl.sh'), cmd], env=env,
                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as proc:

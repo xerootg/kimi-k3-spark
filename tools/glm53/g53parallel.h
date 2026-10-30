@@ -1,6 +1,10 @@
 // Shared by the SIMD16 kernel and CPU scheduling emulation. Oracle stays in g53exact.h.
 #pragma once
 #include "g53exact.h"
+#ifdef __clang__   // exact arithmetic, whatever the TU's FP flags (as g53exact.h)
+#pragma float_control(precise, on, push)
+#pragma clang fp contract(off)
+#endif
 #if defined(__SYCL_DEVICE_ONLY__)
 extern "C" SYCL_EXTERNAL int __builtin_IB_dp4a_ss(int, int, int, bool);
 #endif
@@ -118,3 +122,6 @@ inline float lane16(const uint8_t *r,int lane,const g53exact::Q8 *y,const float 
     return rowadd(v[0],v[1]);
 }
 }
+#ifdef __clang__
+#pragma float_control(pop)
+#endif

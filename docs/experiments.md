@@ -1123,6 +1123,10 @@ The padding found in the 2026-10-29 analysis (records rounded to a multiple of 4
 
 +10.3 %, bit-identical, same MemAvailable (12.5 GB). Misses read under the early matmul fell from 1.80 to 1.44 per layer (6.2 -> 6.6 of 8 experts complete at the early lookup). Matches the estimate from the cache legs (~2 % per 4 GB, ~23 % more slots). K3's mixed IQ2_XXS layers were padded up to 30 % by the same rule; worth the same A/B when K3 runs again.
 
+### GLM-5.3: predictive prefetch, +15.3 % (2026-10-30, patch 0005)
+
+K3's speculative prefetch ported to GLM's graph (input 3: next ffn_norm of attention residual + shared expert + resident routed share). First Spark run crashed on the next prompt's prefill (`slot -1 after the plan`): a latent planner bug, busy speculative slots let a multi-token plan evict its own selected experts; fixed in the same patch. Legs with byte stride on, 128-token runs: prefetch off 4.256/4.239 and 4.252/4.249, input 3 **4.899/4.926 and 4.877/4.906 tok/s**, md5 9449ae5738 throughout. Top-8 precision 85.3 % (190999/223944), 67.8 % of predicted misses read were used. Input 2 not re-measured after the fix. GLM on the Spark today: 3.76 -> 3.85 (cache) -> 4.25 (byte stride) -> 4.90 tok/s.
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because

@@ -3,6 +3,10 @@
 #include <cstdint>
 #include <cmath>
 #include <cstring>
+#ifdef __clang__   // exact arithmetic, whatever the TU's FP flags (g53x keeps icpx's defaults for its fast kernels)
+#pragma float_control(precise, on, push)
+#pragma clang fp contract(off)
+#endif
 #include "mufu/mufu_emu.h"
 namespace g53exact {
 #ifdef G53EX_SYCL
@@ -157,3 +161,6 @@ inline float row(int type,const uint8_t*r,int nb,const Q8*y,bool packed,
     return s[0];
 }
 } // namespace g53exact
+#ifdef __clang__
+#pragma float_control(pop)
+#endif

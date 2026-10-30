@@ -1,0 +1,29 @@
+2026-10-29, Core Ultra 7 165H, shared laptop, unpinned workers.
+Fast median of 7, scalar median of 3, same worker pool. Finite uniform [-1,1] input.
+synthetic: q8 half scale/sum, rounding, FTZ, FMA, SwiGLU zero, IQ signed truncation, raw/repacked K=2048/6144 PASS
+PASS 600 AVX rows vs g53ref_exact (all q8 bytes, exceptional half scales, CUDA reduction)
+PASS L3 threads=4 g/u/h/dn; allocations=0 warm minor/major faults=0/0
+BENCH L3 threads=4 k=1 fast_us/expert=4848.92 scalar_us/expert=28280.1 ratio=5.83224
+BENCH L3 threads=4 k=4 fast_us/expert=5076.25 scalar_us/expert=23942.1 ratio=4.71651
+BENCH L3 threads=4 k=8 fast_us/expert=4698.42 scalar_us/expert=27155.4 ratio=5.7797
+PASS L3 threads=8 g/u/h/dn; allocations=0 warm minor/major faults=0/0
+BENCH L3 threads=8 k=1 fast_us/expert=4079.7 scalar_us/expert=25552.1 ratio=6.26323
+BENCH L3 threads=8 k=4 fast_us/expert=3817.39 scalar_us/expert=20865.8 ratio=5.46599
+BENCH L3 threads=8 k=8 fast_us/expert=3585.04 scalar_us/expert=24079 ratio=6.71652
+PASS L8 threads=4 g/u/h/dn; allocations=0 warm minor/major faults=0/0
+BENCH L8 threads=4 k=1 fast_us/expert=7773.77 scalar_us/expert=31804 ratio=4.0912
+BENCH L8 threads=4 k=4 fast_us/expert=6459.14 scalar_us/expert=32328.6 ratio=5.0051
+BENCH L8 threads=4 k=8 fast_us/expert=5730.34 scalar_us/expert=31015.3 ratio=5.41246
+PASS L8 threads=8 g/u/h/dn; allocations=0 warm minor/major faults=0/0
+BENCH L8 threads=8 k=1 fast_us/expert=4457.9 scalar_us/expert=20256.1 ratio=4.54386
+BENCH L8 threads=8 k=4 fast_us/expert=3792.88 scalar_us/expert=21827.6 ratio=5.7549
+BENCH L8 threads=8 k=8 fast_us/expert=3748.46 scalar_us/expert=19194.4 ratio=5.12061
+PASS L75 threads=4 g/u/h/dn; allocations=0 warm minor/major faults=0/0
+BENCH L75 threads=4 k=1 fast_us/expert=5644.21 scalar_us/expert=27054.2 ratio=4.79327
+BENCH L75 threads=4 k=4 fast_us/expert=5455.07 scalar_us/expert=24830.1 ratio=4.55175
+BENCH L75 threads=4 k=8 fast_us/expert=5793.83 scalar_us/expert=29561.8 ratio=5.10228
+PASS L75 threads=8 g/u/h/dn; allocations=0 warm minor/major faults=0/0
+BENCH L75 threads=8 k=1 fast_us/expert=4226.21 scalar_us/expert=20648 ratio=4.88571
+BENCH L75 threads=8 k=4 fast_us/expert=3868.32 scalar_us/expert=23721 ratio=6.13211
+BENCH L75 threads=8 k=8 fast_us/expert=3384.93 scalar_us/expert=18838.6 ratio=5.56543
+PASS ALL GLM CPU exact tests

@@ -12,6 +12,7 @@ filesystem, not tmpfs, for the O_DIRECT cases),
 which is removed even after failures. No production files are changed.
 The only download is ggml-common.h at versions.env's LLAMA_SHA, into the
 automatically cleaned workspace; repository dependency files are not changed.
+Offline: K3X_GGML_COMMON=/path/to/llama.cpp/ggml/src/ggml-common.h copies it instead.
 
 Exactness scope: byte-identical RAM/disk/opt-out wire replies through the real
 unmodified k3cpu.cpp kernels, with a linker-wrapped synthetic packed MUFU loader
@@ -75,9 +76,13 @@ def build(uring, baseline):
     common.parent.mkdir()
     sha = re.search(r"^LLAMA_SHA=([0-9a-f]{40})$",
                     (ROOT / "versions.env").read_text(), re.M).group(1)
-    run(["curl", "--fail", "--location", "--retry", "3",
-         f"https://raw.githubusercontent.com/ggml-org/llama.cpp/{sha}/ggml/src/ggml-common.h",
-         "--output", common])
+    local = os.environ.get("K3X_GGML_COMMON")
+    if local:  # offline: a local ggml-common.h (same quant block layouts)
+        common.write_bytes(Path(local).read_bytes())
+    else:
+        run(["curl", "--fail", "--location", "--retry", "3",
+             f"https://raw.githubusercontent.com/ggml-org/llama.cpp/{sha}/ggml/src/ggml-common.h",
+             "--output", common])
     cxx = os.environ.get("CXX", "g++")
     production_env = dict(os.environ, OUT=str(WORK / "production-k3cs"),
                           EXTRA=f"-I{include}")
