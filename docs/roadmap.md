@@ -176,6 +176,20 @@ The fork `xerootg/llama.cpp` is a research fork and will not be upstreamed. Its 
     (2) routing traces from that engine, then the owner table; (3) g53x serveidx on nuc2 (Arrow Lake numbers) with an
     SSD tier like k3cs's; (4) the routing table in the engine.
 
+- 2026-10-30: **GLM on the Spark is at 4.93 tok/s in production** (3.76 -> 3.85 cache 80000 -> 4.25 byte-stride patch 0004
+  -> 4.90 predictive prefetch patch 0005; md5 `9449ae5738` throughout). The bottleneck moved: the miss wait is mostly
+  hidden; ~168 ms per token of GPU/host work remains (never profiled; a profiled leg is in progress). Spark-alone ceiling
+  with this structure ~5.9 tok/s.
+  - NUC side: GLM expert math is **CUDA-exact** on the CPU (`tools/glm53/cpu/g53cs`, ~2 ms/expert) and on the iGPU
+    (`g53x` `G53X_EXACT=2`, ~1.5x the fast path); the iGPU server has a disk tier with an allocation gate. Latency
+    survey (`survey/FINDINGS.md`): Spark->nuc2 RTT 0.10 ms; resident k=1 0.92 ms p50 / 2.0 p99 from the Spark; k=8
+    3.5 ms; the per-layer window is ~2.72 ms, so 1-2 remote experts per layer per NUC.
+  - Next levers, ranked: (1) MTP speculative decoding with GLM's own draft head (the only path past ~6 tok/s; exactness
+    of the verify batch under study), (2) the 168 ms floor after the profile, (3) prefill for 15-45k prompts (today
+    ~20 min for 30k: the staging path re-reads every used expert per ubatch; fix in progress), (4) the NUC remote tier
+    (placement tooling in progress), (5) GLM Q5_K_XL on the GH200 (displaces K3; user's call).
+  - Store v2 in the engine (patch 0006 draft): first A/B invalid (v2 leg started cold); rerun in progress.
+
 ## Cluster layout for this work
 
 | node | role |
