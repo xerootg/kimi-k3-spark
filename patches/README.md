@@ -3,8 +3,20 @@
 Applied in order (`git apply`) on top of the `LLAMA_SHA` pinned in
 `versions.env`, by both `llamacpp-spark` and `llamacpp-rpc-cpu`, so every
 binary that talks RPC runs the same sources. Each patch is a plain
-`git diff` against that commit; regenerate it (and re-pin `LLAMA_SHA`) when
+`git diff` against the tree after the preceding patches; regenerate the stack
+(and re-pin `LLAMA_SHA`) when
 bumping llama.cpp.
+
+Patch order and the check: patches are cumulative and applied in lexical filename
+order, exactly as the Dockerfile's `patches/*.patch` glob; each patch must apply
+after all earlier patches. `.github/workflows/patch-stack.yml` shallow-fetches
+`LLAMA_SHA`, checks then applies each patch (naming any rejection), and syntax-checks
+the touched `src/**/*.cpp` and `ggml/src/ggml-cpu/**/*.cpp` files with host `c++`.
+The job has a two-minute limit and does not build CUDA or check `.c`, `.cu`, or
+`.cuh` translation units. Locally, run `tools/patch-stack-check.sh ~/llama-k3-s2`
+with Git, Bash, GNU coreutils/findutils, a C++17 compiler, and `liburing-dev` installed.
+The checkout's HEAD must match `LLAMA_SHA` (currently `547208d`); the script uses
+a temporary copy of HEAD, ignores local edits, and leaves the checkout untouched.
 
 ## 0001-prefetch-mmapped-experts
 
