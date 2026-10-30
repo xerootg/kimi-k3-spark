@@ -161,3 +161,64 @@ serving kernels and compares it bit for bit with the scalar host reference of `.
 as NaN. Checked on nuc3: FULLCHECK 636/636 and remotecanary L1/L11/L83 at K = 1, 2, 3, 4, 16 bit-identical; 21 GB (3117
 records) loads and locks on the 32 GB box with 7 GB left. nuc3 (one channel), RT on, 5 ms gaps, server time p50 per k:
 0.39 / 0.61 / 0.84 / 1.07 ms for k = 1..4.
+
+### Optional SSD tier
+
+`K3X_DISK_TIER=1` enables nonresident experts from a full `K3XS` v1 store produced by
+`tools/repack-experts.py`. Set `K3X_DISK_STORE=/path/to/full.store`; it defaults to
+the positional `BIN`. The existing `IDX BIN PORT` invocation is unchanged: `IDX`
+still orders the startup RAM records and its offsets refer to `BIN` (which can
+be either the old raw record file or the full store). `K3X_MAX_GB=0` makes every
+expert disk-only. The full store must contain the same expert bytes as the RAM
+file. Without `K3X_DISK_TIER`, the legacy wire output, including an all-NaN
+request if any ID is missing, is unchanged.
+
+- `K3X_DISK_LRU_GB` (default `1`, **decimal GB**, fractional values allowed):
+  startup-allocated, page-faulted 4096-byte-aligned arena. Slots are sized to the
+  largest padded record in the store; the budget is rounded down to whole slots
+  and must hold at least one. Metadata and reader threads are also allocated
+  before serving. Nothing is allocated per disk request.
+- `K3X_DISK_THREADS` (default `4`, range `1..64`): independent `O_DIRECT` reads.
+  `build_k3cs.sh` uses liburing if its headers and static libraries are available
+  through pkg-config; otherwise it builds the pread pool without extra dependencies.
+  If io_uring is disabled at runtime, the same workers use pread.
+- `K3X_DISK_DEADLINE_MS` (default `20`, `0` forces cold-read fallback): a single
+  monotonic deadline starting after the complete request is received. All misses
+  are queued before waiting. A late read, unavailable cache slot, unknown ID, or
+  failed read sends the existing full-length NaN row (“short”) for that expert;
+  other rows in the request are still computed. The budget limits waiting for
+  disk, not compute or socket transmission. Timed-out reads can populate the
+  cache later. Their slots cannot be evicted until I/O finishes; compute pins
+  all its records until the workers finish, even if the client disconnects.
+- With the tier enabled, `K3X_SETOUT` lists all **compute-supported** store
+  experts, not only startup RAM residents. Global IDs are `layer * n_expert +
+  expert`, using the header's expert count. The disk metadata/cache is shared
+  in `../expert_disk.h`, independent of layer count, expert count, quantization
+  types, or tensor sizes. The existing k3cpu kernels remain Kimi-sized
+  (3584/3072, IQ1_S and IQ2_XXS); other types/shapes are safely answered short,
+  not interpreted as IQ2_XXS. Adding GLM compute kernels is separate from this
+  storage tier.
+
+Connection-close stats add cumulative `disk: hits`, `lru_hits`, `bytes`,
+`p50_us`, `p99_us`, and `deadline_misses`. Hits count completed successful disk
+reads (including late fills); bytes count bytes actually read. Latencies include
+queueing and use a fixed logarithmic histogram, reported as upper bounds in
+microseconds. LRU hits count acquisitions of already-ready records. Deadline
+misses count rows whose disk wait expired or had no available slot; read errors
+and unknown IDs do not count as deadline misses.
+
+CPU-only storage regressions (Linux x86-64, Python stdlib, g++, curl; no GPU,
+model weights, or production MUFU tables):
+
+```
+python3 tools/bitexact/cpu/test_disk_tier.py
+python3 tools/bitexact/cpu/test_disk_tier.py --uring  # also needs liburing-dev
+```
+
+The tests build a tiny synthetic store and compare RAM/disk replies through the
+unchanged compute kernels, using test-only synthetic packed MUFU tables. They
+also compare disk-disabled replies with the pre-tier server from git history,
+exercise eviction, concurrent reads, pinned/timed-out slots and malformed
+metadata, and check for cache-path allocations. These establish storage-path
+equivalence, not CUDA MUFU accuracy (which still requires the production tables
+and reference dumps). CI runs on Ubuntu without a GPU.

@@ -1,0 +1,36 @@
+name: k3cs CPU disk regressions
+
+on:
+  push:
+    paths:
+      - tools/bitexact/expert_disk.h
+      - tools/bitexact/cpu/**
+      - tools/bitexact/sycl/*.h
+      - versions.env
+      - .github/workflows/k3cs-test.yml
+  pull_request:
+    paths:
+      - tools/bitexact/expert_disk.h
+      - tools/bitexact/cpu/**
+      - tools/bitexact/sycl/*.h
+      - versions.env
+      - .github/workflows/k3cs-test.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cpu:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install optional Linux I/O backend
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends liburing-dev
+      - name: Pread cache and real-kernel server regressions
+        run: python3 tools/bitexact/cpu/test_disk_tier.py
+      - name: Liburing cache and real-kernel server regressions
+        run: python3 tools/bitexact/cpu/test_disk_tier.py --uring
