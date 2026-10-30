@@ -618,3 +618,11 @@ rotation) a multi-token plan could evict experts the same plan had selected (`sl
 Spark, GLM-5.3 with patch 0004, legs off/on/off/on: 4.256/4.239, **4.899/4.926**, 4.252/4.249, **4.877/4.906 tok/s
 (+15.3 %)**, md5 `9449ae5738` in every run; top-8 precision 85.3 %, 67.8 % of the predicted misses read were used.
 Written by sol workers (gpt-6.1-sol), built and measured here.
+
+## 0006-expert-store-v2
+
+The reader accepts expert store format v2 (`repack-experts.py --stride-align`, per-entry stride, header align): v1
+stores behave byte-identically. Measured on the Spark with GLM-5.3 (2026-10-30, same warm snapshot per leg, legs
+v2/v1/v2/v1): **v2 is slower, 4.82 against 4.90 tok/s**, md5 unchanged. The 512 KiB stride that made K3's reads ~8 %
+faster buys nothing here and the padded records are 4 % more bytes. Kept for compatibility (the NUCs' stores are v2);
+the Spark keeps its v1 store. Written by a sol worker.

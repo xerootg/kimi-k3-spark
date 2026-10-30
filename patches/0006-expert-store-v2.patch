@@ -1,0 +1,91 @@
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index c060f7f..ceb87cf 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -353,6 +353,9 @@ struct expert_store_entry {
+     size_t  sizes[3];   // bytes per expert of gate, up, down
+     size_t  record_size;
+     size_t  base_offset; // record of expert 0
++    size_t  stride;      // file spacing; cache slots still use record_size
++
++    size_t offset(size_t expert) const { return base_offset + expert*stride; }
+ };
+ 
+ static uint32_t store_rd_u32(const uint8_t * p) { uint32_t v; memcpy(&v, p, 4); return v; }
+@@ -393,7 +396,7 @@ struct expert_store {
+         const uint32_t align        = store_rd_u32(hdr + 16);
+         const uint32_t entry_size   = store_rd_u32(hdr + 20);
+         const uint64_t index_offset = store_rd_u64(hdr + 24);
+-        if (version != 1 || entry_size != 64 || align == 0 || n_records == 0 || n_expert == 0) {
++        if ((version != 1 && version != 2) || entry_size != 64 || align == 0 || (version == 2 && align % 4096 != 0) || n_records == 0 || n_expert == 0) {
+             err = "unsupported expert store header";
+             close(hfd);
+             return false;
+@@ -417,7 +420,13 @@ struct expert_store {
+             e.sizes[2]    = store_rd_u64(p + 32);
+             e.record_size = store_rd_u64(p + 40);
+             e.base_offset = store_rd_u64(p + 48);
+-            if (e.record_size % align != 0 || e.base_offset % align != 0 || e.sizes[0] + e.sizes[1] + e.sizes[2] > e.record_size) {
++            e.stride      = version == 1 ? e.record_size : store_rd_u64(p + 56);
++            // v2 aligns file spacing, not the payload size. Read only the 4 KiB-aligned payload.
++            const bool bad_layout = version == 1 ? e.record_size % align != 0 :
++                (e.record_size == 0 || e.record_size % 4096 != 0 || e.stride < e.record_size || e.stride % align != 0 ||
++                 e.record_size > INT64_MAX || e.base_offset > INT64_MAX - e.record_size ||
++                 (n_expert > 1 && e.stride > (INT64_MAX - e.base_offset - e.record_size)/(n_expert - 1)));
++            if (bad_layout || e.base_offset % align != 0 || e.sizes[0] + e.sizes[1] + e.sizes[2] > e.record_size) {
+                 err = "inconsistent index entry for layer " + std::to_string(e.layer);
+                 return false;
+             }
+@@ -3677,7 +3686,7 @@ struct llama_moe_cache::impl {
+         protect_layer(nl); // the memory valve leaves the slots in flight alone
+         jobs.clear();
+         for (const auto & f : fills) {
+-            jobs.push_back({ (char *) g.region + (size_t) f.slot*g.slot_stride, g.record_size, (off_t) (e->base_offset + (size_t) f.expert*g.record_size) });
++            jobs.push_back({ (char *) g.region + (size_t) f.slot*g.slot_stride, g.record_size, (off_t) (e->offset((size_t) f.expert)) });
+         }
+         filler.submit(store.fd, jobs);
+         la_il = nl;
+@@ -3883,7 +3892,7 @@ struct llama_moe_cache::impl {
+         }
+         jobs.clear();
+         for (const auto & f : fills) {
+-            jobs.push_back({ (char *) g.region + (size_t) f.slot*g.slot_stride, g.record_size, (off_t) (e->base_offset + (size_t) f.expert*g.record_size) });
++            jobs.push_back({ (char *) g.region + (size_t) f.slot*g.slot_stride, g.record_size, (off_t) (e->offset((size_t) f.expert)) });
+         }
+     }
+ 
+@@ -4585,7 +4594,7 @@ struct llama_moe_cache::impl {
+         for (const auto & f : fills) {
+             const int32_t key = il*store.n_expert + f.expert;
+             spec_recs.push_back({ l.ig, f.slot, key, (char *) g.region + (size_t) f.slot*g.slot_stride, g.record_size,
+-                (off_t) (e->base_offset + (size_t) f.expert*g.record_size), &g.spec_state[f.slot] });
++                (off_t) (e->offset((size_t) f.expert)), &g.spec_state[f.slot] });
+             prefetched[key] = 1;
+             sid.push_back(f.expert);
+         }
+@@ -4599,6 +4608,7 @@ struct llama_moe_cache::impl {
+     //
+     // file: "K3SN" u32 version, u64 store size, u32 n_expert, u32 n_layer, u32 n_groups, then per group
+     // u32 n_layers u64 record_size u32 n_entries and n_entries x (i32 key, u16 uses) in recency order (least recent first)
++    // Keys are logical (layer, expert) pairs; restore resolves offsets using the current store layout.
+ 
+     void snapshot_save(const char * why) {
+         if (snapshot_path.empty() || !use_store || groups.empty() || groups[0].region == nullptr) {
+@@ -4761,7 +4771,7 @@ struct llama_moe_cache::impl {
+                     order.push_back(s);
+                     const expert_store_entry * se = store.find(il);
+                     GGML_ASSERT(se != nullptr);
+-                    jobs.push_back({ (char *) g.region + (size_t) s*g.slot_stride, g.record_size, (off_t) (se->base_offset + (size_t) ex*g.record_size) });
++                    jobs.push_back({ (char *) g.region + (size_t) s*g.slot_stride, g.record_size, (off_t) (se->offset((size_t) ex)) });
+                 }
+                 lru.n_filled = (int32_t) ent.size();
+                 lru.relink(order);
+@@ -4899,7 +4909,7 @@ struct llama_moe_cache::impl {
+             jobs.clear();
+             for (int64_t x = 0; x < n_expert; ++x) {
+                 if (used[x]) {
+-                    jobs.push_back({ (char *) staging + (size_t) x*rec, rec, (off_t) (e->base_offset + (size_t) x*rec) });
++                    jobs.push_back({ (char *) staging + (size_t) x*rec, rec, (off_t) (e->offset((size_t) x)) });
+                 }
+             }
+             if (!pool->run(store.fd, jobs)) {

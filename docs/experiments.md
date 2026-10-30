@@ -1127,6 +1127,10 @@ The padding found in the 2026-10-29 analysis (records rounded to a multiple of 4
 
 K3's speculative prefetch ported to GLM's graph (input 3: next ffn_norm of attention residual + shared expert + resident routed share). First Spark run crashed on the next prompt's prefill (`slot -1 after the plan`): a latent planner bug, busy speculative slots let a multi-token plan evict its own selected experts; fixed in the same patch. Legs with byte stride on, 128-token runs: prefetch off 4.256/4.239 and 4.252/4.249, input 3 **4.899/4.926 and 4.877/4.906 tok/s**, md5 9449ae5738 throughout. Top-8 precision 85.3 % (190999/223944), 67.8 % of predicted misses read were used. Input 2 not re-measured after the fix. GLM on the Spark today: 3.76 -> 3.85 (cache) -> 4.25 (byte stride) -> 4.90 tok/s.
 
+### GLM-5.3: store v2 on the Spark is a dead end (2026-10-30, patch 0006)
+
+Engine reader for store v2 (512 KiB stride). First A/B was invalid (the cache snapshot is keyed to the store file, so the v2 leg started cold). Rerun with a v2 snapshot made by a warm-up leg: v2 4.839/4.829 (cold), v2 4.819/4.816, v1 4.907/4.870, v2 4.823/4.821, v1 4.905/4.906 tok/s; md5 9449ae5738 throughout. **v2 -1.7 %.** Unlike K3 (whose misaligned IQ2_XXS records gained ~8 %), GLM's 12091392-byte records are already 4096-aligned and the stride pads them 4 %. Reader kept (the NUC stores are v2); the Spark stays on v1. A profiled leg (`GGML_CUDA_OP_PROFILE=16`) ran in the same window: 4.75 tok/s, same md5; analysis to follow.
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because
