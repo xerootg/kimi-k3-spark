@@ -20,16 +20,27 @@ PFDUMP=$HOME/llama-k3-bs/build/bin/llama-k3-pfdump PROMPT_FILE=$HOME/glm-prompts
   [the production model/cache CLI arguments from glm53-spark.yaml]
 ```
 
-The bracketed arguments are a placeholder: that YAML and its cache CLI are not
-in this checkout. Reuse its 80000 MiB cache, 64k context, GPU placement and thread
-arguments. Build pfdump from the same engine with patches 0003/0004/0005 applied;
-its graph callback is architecture independent and records GLM's top-8 tensor.
+The bracketed arguments are a placeholder: that YAML is absent from this checkout.
+Use its 80000 MiB cache, 65536 context, GPU placement and thread arguments.
+Build/update the collector using [../k3-pfdump/README.md](../k3-pfdump/README.md)
+against the engine with patches 0001–0006 and the GLM predictor. Patch 0003
+installs the source; the Dockerfile applies patches rather than copying tools.
+The CMake target/binary is `llama-k3-pfdump` (a local `k3-pfdump` may be an alias).
+Sanity-check without loading a model:
+
+```bash
+~/llama-k3-bs/build/bin/llama-k3-pfdump --check decode.bin
+```
+
+Expect 75 real layers (3..77), with predictor pairs normally only for 4..77;
+layer 78 is MTP. Counts should match the requested decode length. Precision is
+measured only on same-step, same-destination-layer pairs.
 The script sets the exact store, split, byte-stride and predictor environment;
 remote tier is unset during capture. Do not set PREFETCH_DUMP: alternative K3
 predictors are unnecessary. At 4.9 tok/s 2048 decode tokens take about 7 minutes
 plus model load/prefill (callback overhead can make it longer). Expect roughly
 0.5 MB/token, 1 GB for 2048: 75 layers of predictor and routing float vectors,
-top-8 integers and headers. EOS may shorten it; use multiple representative
+top-8 integers and headers. `--ignore-eos` forces all 2048 decode steps; otherwise EOS may shorten it; use multiple representative
 prompts and an independent `--eval` run for a useful out-of-domain estimate.
 
 Trace formats are explicitly selected: default pfdump is little-endian

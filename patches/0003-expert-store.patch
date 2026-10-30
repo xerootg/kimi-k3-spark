@@ -7682,7 +7682,6 @@ index c8ad1db..46c9be4 100644
 +add_subdirectory(k3-pfdump)
 diff --git a/tools/k3-pfdump/CMakeLists.txt b/tools/k3-pfdump/CMakeLists.txt
 new file mode 100644
-index 0000000..26c1419
 --- /dev/null
 +++ b/tools/k3-pfdump/CMakeLists.txt
 @@ -0,0 +1,4 @@
@@ -7692,10 +7691,9 @@ index 0000000..26c1419
 +target_compile_features(${TARGET} PRIVATE cxx_std_17)
 diff --git a/tools/k3-pfdump/k3-pfdump.cpp b/tools/k3-pfdump/k3-pfdump.cpp
 new file mode 100644
-index 0000000..cb6fb3f
 --- /dev/null
 +++ b/tools/k3-pfdump/k3-pfdump.cpp
-@@ -0,0 +1,168 @@
+@@ -0,0 +1,185 @@
 +// k3-pfdump: decode a chat prompt greedily and dump, per decode step and layer, the speculative prefetch
 +// predictor's scores, the real router's selection scores and the real selected expert ids, for an offline
 +// evaluation of prediction precision (kimi-k3-spark expert store).
@@ -7705,12 +7703,15 @@ index 0000000..cb6fb3f
 +//   kind 4: ffn_moe_probs (f32)        kind 5: generated token id (i32, n = 1, layer = -1)
 +// Usage: llama-k3-pfdump <common args> -p "<user prompt>" -n <decode tokens> --out <file>
 +
++#include "trace.h"
++#ifndef PFDUMP_CALLBACK_TEST
 +#include "arg.h"
 +#include "common.h"
 +#include "chat.h"
 +#include "log.h"
 +#include "llama.h"
 +#include "ggml-backend.h"
++#endif
 +
 +#include <cstdio>
 +#include <cstring>
@@ -7721,56 +7722,53 @@ index 0000000..cb6fb3f
 +    FILE * f = nullptr;
 +    int step = -1; // -1 during the prefill: nothing is recorded
 +    std::vector<uint8_t> buf;
++    trace_layout layout;
 +};
-+
-+static int kind_of(const char * name, int & il) {
-+    static const struct { const char * prefix; int kind; } kinds[] = {
-+        { "moe_prefetch_probs-",   1 },
-+        { "ffn_moe_probs_biased-", 2 },
-+        { "ffn_moe_topk-",         3 },
-+        { "ffn_moe_probs-",        4 },
-+        { "pfv2_probs-",           6 },
-+        { "pfv3_probs-",           7 },
-+        { "pfv4_probs-",           8 },
-+        { "pfv5_probs-",           9 },
-+    };
-+    for (const auto & k : kinds) {
-+        const size_t n = strlen(k.prefix);
-+        if (strncmp(name, k.prefix, n) == 0) {
-+            il = atoi(name + n);
-+            return k.kind;
-+        }
-+    }
-+    return 0;
-+}
 +
 +static bool cb_eval(struct ggml_tensor * t, bool ask, void * ud) {
 +    auto * st = (dump_state *) ud;
 +    int il = -1;
 +    const int kind = kind_of(t->name, il);
++    const bool eligible = kind && st->layout.contains(il);
 +    if (ask) {
-+        return st->step >= 0 && kind != 0;
++        return st->step >= 0 && eligible;
 +    }
-+    if (st->step < 0 || kind == 0) {
++    if (st->step < 0 || !eligible) {
 +        return true;
 +    }
 +    const int64_t n = ggml_nelements(t);
-+    if (!(t->type == GGML_TYPE_F32 || t->type == GGML_TYPE_I32) || !ggml_is_contiguous(t)) {
++    const bool ids = kind == 3;
++    if (n != (ids ? st->layout.topk : st->layout.experts) ||
++        t->type != (ids ? GGML_TYPE_I32 : GGML_TYPE_F32) || !ggml_is_contiguous(t)) {
 +        LOG_ERR("%s: unexpected tensor %s type %s\n", __func__, t->name, ggml_type_name(t->type));
-+        return true;
++        throw std::runtime_error("unexpected decode routing tensor");
 +    }
 +    st->buf.resize((size_t) n * 4);
 +    ggml_backend_tensor_get(t, st->buf.data(), 0, st->buf.size());
-+    const int32_t hdr[4] = { st->step, il, kind, (int32_t) n };
-+    fwrite(hdr, sizeof(hdr), 1, st->f);
-+    fwrite(st->buf.data(), 4, (size_t) n, st->f);
++    write_record(st->f, st->step, il, kind, (int) n, st->buf.data());
 +    return true;
 +}
 +
-+int main(int argc, char ** argv) {
++#ifndef PFDUMP_CALLBACK_TEST
++// Metadata uses the architecture namespace; block_count includes MTP blocks.
++static int meta_int(const llama_model * model, const std::string & key, int fallback = -1) {
++    char value[64];
++    if (llama_model_meta_val_str(model, key.c_str(), value, sizeof(value)) < 0) return fallback;
++    char * end;
++    long n = strtol(value, &end, 10);
++    if (*end || n < 0 || n > INT32_MAX) throw std::runtime_error("invalid model metadata: " + key);
++    return (int) n;
++}
++int main(int argc, char ** argv) try {
++    if (argc == 3 && strcmp(argv[1], "--check") == 0) return check_trace(argv[2]);
 +    std::string out_path = "pfdump.bin";
++    bool ignore_eos = false;
 +    std::vector<char *> args;
 +    for (int i = 0; i < argc; i++) {
++        if (strcmp(argv[i], "--ignore-eos") == 0) {
++            ignore_eos = true;
++            continue;
++        }
 +        if (strcmp(argv[i], "--out") == 0 && i + 1 < argc) {
 +            out_path = argv[++i];
 +            continue;
@@ -7802,6 +7800,18 @@ index 0000000..cb6fb3f
 +        LOG_ERR("%s : failed to init\n", __func__);
 +        return 1;
 +    }
++    char arch[128];
++    if (llama_model_meta_val_str(model, "general.architecture", arch, sizeof(arch)) < 0)
++        throw std::runtime_error("missing architecture");
++    const std::string prefix = std::string(arch) + ".";
++    st.layout = {meta_int(model, prefix + "block_count") - meta_int(model, prefix + "nextn_predict_layers", 0),
++                 meta_int(model, prefix + "expert_count"), meta_int(model, prefix + "expert_used_count"),
++                 meta_int(model, prefix + "leading_dense_block_count", 0)};
++    if (st.layout.layers <= st.layout.first || st.layout.experts <= 0 ||
++        st.layout.topk <= 0 || st.layout.topk > st.layout.experts)
++        throw std::runtime_error("invalid MoE model dimensions");
++    LOG_INF("routing: layers %d..%d, %d experts, top-%d (dense/MTP excluded)\n",
++            st.layout.first, st.layout.layers - 1, st.layout.experts, st.layout.topk);
 +    const llama_vocab * vocab = llama_model_get_vocab(model);
 +
 +    // the chat template, like the server with --jinja
@@ -7836,7 +7846,7 @@ index 0000000..cb6fb3f
 +    const int64_t t0 = ggml_time_us();
 +    for (int i = 0; i < params.n_predict; i++) {
 +        llama_token tok = llama_sampler_sample(smpl, ctx, -1);
-+        if (llama_vocab_is_eog(vocab, tok)) {
++        if (!ignore_eos && llama_vocab_is_eog(vocab, tok)) {
 +            LOG_INF("eog after %d tokens\n", i);
 +            break;
 +        }
@@ -7854,7 +7864,7 @@ index 0000000..cb6fb3f
 +    }
 +    const double dt = (ggml_time_us() - t0) / 1e6;
 +    LOG_INF("decode: %d steps in %.1f s (%.2f tok/s, with the dump callback)\n", st.step + 1, dt, (st.step + 1) / dt);
-+    fclose(st.f);
++    if (fclose(st.f) != 0) throw std::runtime_error("trace close failed");
 +    FILE * ft = fopen((out_path + ".txt").c_str(), "wb");
 +    if (ft != nullptr) {
 +        fwrite(out_text.data(), 1, out_text.size(), ft);
@@ -7863,4 +7873,130 @@ index 0000000..cb6fb3f
 +    llama_sampler_free(smpl);
 +    llama_backend_free();
 +    return 0;
++}
++ catch (const std::exception & e) {
++    fprintf(stderr, "pfdump: %s\n", e.what());
++    return 1;
++}
++#endif
+diff --git a/tools/k3-pfdump/trace.h b/tools/k3-pfdump/trace.h
+new file mode 100644
+--- /dev/null
++++ b/tools/k3-pfdump/trace.h
+@@ -0,0 +1,116 @@
++#pragma once
++#include <algorithm>
++#include <cmath>
++#include <cstdint>
++#include <cstdio>
++#include <cstring>
++#include <cstdlib>
++#include <map>
++#include <numeric>
++#include <stdexcept>
++#include <string>
++#include <vector>
++
++// No architecture constants: the callback adapter supplies model dimensions.
++struct trace_layout {
++    int layers = 0, experts = 0, topk = 0, first = 0;
++    bool contains(int il) const { return il >= first && il < layers; }
++};
++inline int kind_of(const char * name, int & il) {
++    static const struct { const char * prefix; int kind; } kinds[] = {
++        {"moe_prefetch_probs-", 1}, {"ffn_moe_probs_biased-", 2},
++        {"ffn_moe_topk-", 3}, {"ffn_moe_probs-", 4},
++        {"pfv2_probs-", 6}, {"pfv3_probs-", 7},
++        {"pfv4_probs-", 8}, {"pfv5_probs-", 9},
++    };
++    for (const auto & k : kinds) {
++        size_t n = strlen(k.prefix);
++        if (strncmp(name, k.prefix, n) != 0) continue;
++        char * end;
++        long l = strtol(name + n, &end, 10);
++        if (end == name + n || *end || l < 0 || l > INT32_MAX) return 0;
++        il = (int) l;
++        return k.kind;
++    }
++    return 0;
++}
++inline void write_record(FILE * f, int step, int il, int kind, int n, const void * data) {
++    // GGML platforms used here are little endian; preserve the historical words exactly.
++    const int32_t hdr[] = {step, il, kind, n};
++    if (fwrite(hdr, sizeof(hdr), 1, f) != 1 || fwrite(data, 4, n, f) != (size_t) n)
++        throw std::runtime_error("trace write failed");
++}
++inline int check_trace(const char * path) {
++    FILE * f = fopen(path, "rb");
++    if (!f) throw std::runtime_error("cannot open trace");
++    struct counts { int real=0, pred=0, pairs=0, hits=0, ids=0; };
++    std::map<int, counts> stats;
++    std::map<int, std::vector<int32_t>> actual;
++    std::map<int, std::vector<float>> predicted;
++    int step = -1, steps = 0;
++    auto finish = [&]() {
++        if (step < 0) return;
++        ++steps;
++        for (const auto & a : actual) {
++            auto it = predicted.find(a.first);
++            if (it == predicted.end()) continue;
++            const auto & scores = it->second;
++            if (scores.size() < a.second.size()) throw std::runtime_error("too few scores");
++            std::vector<int> order(scores.size());
++            std::iota(order.begin(), order.end(), 0);
++            std::stable_sort(order.begin(), order.end(), [&](int a, int b) { return scores[a] > scores[b]; });
++            auto & c = stats[a.first];
++            ++c.pairs;
++            c.ids += a.second.size();
++            for (size_t j=0; j<a.second.size(); ++j)
++                c.hits += std::find(a.second.begin(), a.second.end(), order[j]) != a.second.end();
++            for (int id : a.second) if (id < 0 || id >= (int) scores.size())
++                throw std::runtime_error("expert id outside predictor vector");
++        }
++        actual.clear(); predicted.clear();
++    };
++    try {
++        while (true) {
++            int32_t h[4];
++            size_t got = fread(h, 1, sizeof(h), f);
++            if (!got) break;
++            if (got != sizeof(h) || h[0] < 0 || h[3] < 0 || h[3] > 1048576)
++                throw std::runtime_error("invalid/truncated header");
++            if (h[0] != step) {
++                if (h[0] < step) throw std::runtime_error("steps out of order");
++                finish(); step = h[0];
++            }
++            std::vector<int32_t> words(h[3]);
++            if (fread(words.data(), 4, words.size(), f) != words.size())
++                throw std::runtime_error("truncated payload");
++            if (h[2] == 3) {
++                if (h[1] < 0 || words.empty() || actual.count(h[1])) throw std::runtime_error("invalid/duplicate real ids");
++                auto sorted = words; std::sort(sorted.begin(), sorted.end());
++                if (sorted.front() < 0 || std::adjacent_find(sorted.begin(), sorted.end()) != sorted.end())
++                    throw std::runtime_error("invalid real ids");
++                actual[h[1]] = words; ++stats[h[1]].real;
++            } else if (h[2] == 1) {
++                if (h[1] < 0 || words.empty() || predicted.count(h[1])) throw std::runtime_error("invalid/duplicate scores");
++                std::vector<float> scores(words.size());
++                memcpy(scores.data(), words.data(), words.size()*4);
++                for (float x : scores) if (!std::isfinite(x)) throw std::runtime_error("nonfinite score");
++                predicted[h[1]] = scores; ++stats[h[1]].pred;
++            }
++        }
++        if (ferror(f)) throw std::runtime_error("trace read failed");
++        finish();
++        if (stats.empty()) throw std::runtime_error("no routing records");
++        counts total;
++        for (const auto & kv : stats) {
++            const auto & c = kv.second;
++            printf("layer %d real=%d predictor=%d pairs=%d precision=", kv.first, c.real, c.pred, c.pairs);
++            if (c.ids) printf("%.3f%% (%d/%d)\n", 100.0*c.hits/c.ids, c.hits, c.ids);
++            else printf("n/a\n");
++            total.hits += c.hits; total.ids += c.ids; total.pairs += c.pairs;
++        }
++        printf("steps=%d layers=%zu pairs=%d precision=", steps, stats.size(), total.pairs);
++        if (total.ids) printf("%.3f%% (%d/%d)\n", 100.0*total.hits/total.ids, total.hits, total.ids);
++        else printf("n/a\n");
++        fclose(f); return 0;
++    } catch (...) { fclose(f); throw; }
 +}
