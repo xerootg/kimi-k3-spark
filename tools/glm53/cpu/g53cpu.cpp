@@ -3,6 +3,7 @@
 #define GGML_COMMON_IMPL_SYCL
 #include "../ref/ggml-common.h"
 #include <atomic>
+#include <cerrno>
 #include <chrono>
 #include <climits>
 #include <cstdio>
@@ -43,7 +44,38 @@ static __m256i dp(__m256i a, __m256i b) {
                                          _mm256_extracti128_si256(lo, 1)));
 #endif
 }
-template <int ty> static inline int isum(const uint8_t *b, int j, const Q8 &y) {
+// Reused by every row. Preserve exact q8 bytes and half-to-float conversion;
+// the unsigned-dot bias uses integer sums, never the rounded Q8::s field.
+struct alignas(64) RowInput {
+  __m256i q[D / 32];
+  int correction[D / 32][2];
+  __m256 scale[D / 256];
+};
+static void prepare_block(RowInput &dst, const Q8 *src, int b) {
+  alignas(16) uint16_t hd[8];
+  for (int j = 0; j < 8; ++j) {
+    int n = b * 8 + j;
+    dst.q[n] = _mm256_loadu_si256((const __m256i *)src[n].q);
+    int lo = 0, hi = 0;
+    for (int i = 0; i < 16; ++i) {
+      lo += src[n].q[i];
+      hi += src[n].q[i + 16];
+    }
+    dst.correction[n][0] = lo * 128;
+    dst.correction[n][1] = hi * 128;
+    hd[j] = src[n].d;
+  }
+  dst.scale[b] = _mm256_cvtph_ps(_mm_load_si128((const __m128i *)hd));
+}
+static void prepare(RowInput &dst, const Q8 *src, int nb) {
+  for (int b = 0; b < nb; ++b)
+    prepare_block(dst, src, b);
+}
+struct IntDot {
+  int a, c, sc;
+};
+template <int ty>
+static inline IntDot isum(const uint8_t *b, int j, const RowInput &y, int n) {
   __m256i w;
   unsigned sc = 0;
   if (ty == 17) {
@@ -78,14 +110,12 @@ template <int ty> static inline int isum(const uint8_t *b, int j, const Q8 &y) {
   // Offset signed weights into unsigned bytes, and subtract 128*sum(q).
   // Keeping signs on weights also handles q=-128 without byte negation
   // overflow.
-  auto yy = _mm256_loadu_si256((const __m256i *)y.q);
-  auto v = dp(_mm256_xor_si256(w, _mm256_set1_epi8(char(128))), yy);
-  v = _mm256_sub_epi32(v, _mm256_slli_epi32(dp(_mm256_set1_epi8(1), yy), 7));
-  int a = sum4(_mm256_castsi256_si128(v)),
-      c = sum4(_mm256_extracti128_si256(v, 1));
-  return ty == 17   ? (a * int(sc & 15) + c * int(sc >> 4) + (a + c) / 2) / 4
-         : ty == 18 ? (int(sc >> 28) * (a + c) + (a + c) / 2) / 2
-                    : (a + c) * (int(sc) - 32);
+  auto yy = y.q[n];
+  w = _mm256_xor_si256(w, _mm256_set1_epi8(char(128)));
+  auto v = dp(w, yy);
+  int a = sum4(_mm256_castsi256_si128(v)) - y.correction[n][0],
+      c = sum4(_mm256_extracti128_si256(v, 1)) - y.correction[n][1];
+  return {a, c, int(sc)};
 }
 static __m256 clean(__m256 x) {
   auto u = _mm256_castps_si256(x),
@@ -99,24 +129,59 @@ static __m256 clean(__m256 x) {
 }
 // p[b] packs virtual threads 8*b..8*b+7. b+16 revisits the same
 // accumulator, retaining each CUDA thread's increasing-kb FMA sequence.
-template <int ty, int nb> static float fast_row(const uint8_t *r, const Q8 *y) {
+template <int ty, int nb>
+static float fast_row(const uint8_t *r, const RowInput *y) {
   __m256 p[16];
   for (auto &v : p)
     v = _mm256_setzero_ps();
   for (int b = 0; b < nb; b++) {
-    alignas(32) uint16_t hd[8];
-    alignas(32) int s[8];
+    alignas(32) int aa[8], cc[8], ss[8];
     const auto *w = r + b * blockbytes(ty);
-    for (int j = 0; j < 8; j++) {
-      hd[j] = y[b * 8 + j].d;
-      s[j] = isum<ty>(w, j, y[b * 8 + j]);
+    auto dot_at = [&](int j) {
+      auto dot = isum<ty>(w, j, *y, b * 8 + j);
+      if constexpr (ty == 18) {
+        int total = dot.a + dot.c;
+        ss[j] = (int(unsigned(dot.sc) >> 28) * total + total / 2) / 2;
+      } else {
+        aa[j] = dot.a;
+        cc[j] = dot.c;
+        ss[j] = dot.sc;
+      }
+    };
+    if constexpr (ty == 18) {
+      for (int j = 0; j < 8; ++j)
+        dot_at(j);
+    } else {
+#pragma GCC unroll 8
+      for (int j = 0; j < 8; ++j)
+        dot_at(j);
     }
-    auto d = clean(
-        _mm256_mul_ps(_mm256_set1_ps(half(u16(w))),
-                      _mm256_cvtph_ps(_mm_load_si128((const __m128i *)hd))));
-    p[b % 16] = clean(_mm256_fmadd_ps(
-        d, _mm256_cvtepi32_ps(_mm256_load_si256((const __m256i *)s)),
-        p[b % 16]));
+    __m256i sum;
+    if constexpr (ty == 18) {
+      sum = _mm256_load_si256((const __m256i *)ss);
+    } else {
+      auto a = _mm256_load_si256((const __m256i *)aa);
+      auto c = _mm256_load_si256((const __m256i *)cc);
+      auto sc = _mm256_load_si256((const __m256i *)ss);
+      auto total = _mm256_add_epi32(a, c);
+      auto halfsum = _mm256_srai_epi32(
+          _mm256_add_epi32(total, _mm256_srli_epi32(total, 31)), 1);
+      if (ty == 17) {
+        sum = _mm256_add_epi32(
+            halfsum, _mm256_add_epi32(
+                         _mm256_mullo_epi32(
+                             a, _mm256_and_si256(sc, _mm256_set1_epi32(15))),
+                         _mm256_mullo_epi32(c, _mm256_srli_epi32(sc, 4))));
+        auto bias =
+            _mm256_and_si256(_mm256_srai_epi32(sum, 31), _mm256_set1_epi32(3));
+        sum = _mm256_srai_epi32(_mm256_add_epi32(sum, bias), 2);
+      } else {
+        sum = _mm256_mullo_epi32(total,
+                                 _mm256_sub_epi32(sc, _mm256_set1_epi32(32)));
+      }
+    }
+    auto d = clean(_mm256_mul_ps(_mm256_set1_ps(half(u16(w))), y->scale[b]));
+    p[b % 16] = clean(_mm256_fmadd_ps(d, _mm256_cvtepi32_ps(sum), p[b % 16]));
   }
   // Each group of four b vectors is a CUDA warp. Add w0,w1,w2,w3
   // in order, then apply XOR offsets 16,8,4,2,1 (lane-zero subtree).
@@ -128,14 +193,14 @@ template <int ty, int nb> static float fast_row(const uint8_t *r, const Q8 *y) {
   lane[0] = clean(_mm256_add_ps(lane[0], lane[2]));
   lane[1] = clean(_mm256_add_ps(lane[1], lane[3]));
   lane[0] = clean(_mm256_add_ps(lane[0], lane[1]));
-  alignas(32) float s[8];
-  _mm256_store_ps(s, lane[0]);
-  for (int off = 4; off; off >>= 1)
-    for (int i = 0; i < off; i++)
-      s[i] = add(s[i], s[i + off]);
-  return s[0];
+  // Same lane-zero butterfly subtree, keeping its three additions in SIMD.
+  auto v = clean(
+      _mm256_add_ps(lane[0], _mm256_permute2f128_ps(lane[0], lane[0], 1)));
+  v = clean(_mm256_add_ps(v, _mm256_permute_ps(v, 0x4e)));
+  v = clean(_mm256_add_ps(v, _mm256_permute_ps(v, 0xb1)));
+  return _mm_cvtss_f32(_mm256_castps256_ps128(v));
 }
-float g53cpu_row(int ty, const uint8_t *r, int nb, const Q8 *y) {
+static float prepared_row(int ty, const uint8_t *r, int nb, const RowInput *y) {
 #define DISPATCH(T)                                                            \
   case T:                                                                      \
     return nb == 8 ? fast_row<T, 8>(r, y) : fast_row<T, 24>(r, y)
@@ -149,6 +214,13 @@ float g53cpu_row(int ty, const uint8_t *r, int nb, const Q8 *y) {
     abort();
   }
 #undef DISPATCH
+}
+float g53cpu_row(int ty, const uint8_t *r, int nb, const Q8 *y) {
+  RowInput input;
+  if (nb != 8 && nb != 24)
+    abort();
+  prepare(input, y, nb);
+  return prepared_row(ty, r, nb, &input);
 }
 size_t g53cpu_rec_bytes(int a, int b, int c, int layout) {
   if (layout || !blockbytes(a) || !blockbytes(b) || !blockbytes(c))
@@ -182,18 +254,22 @@ struct g53cpu_pool {
   g53_mufu_tabs mt;
   g53cpu_expert e[16];
   Q8 qx[D / 32], qh[16][F / 32];
+  RowInput ix, ih[16];
   float h[16][F];
   std::vector<std::thread> threads;
-  std::atomic<int> epoch{0}, next{0}, done{0};
+  alignas(64) std::atomic<int> epoch{0};
+  alignas(64) std::atomic<int> next{0};
+  alignas(64) std::atomic<int> done{0};
+  std::atomic<int> ready{0};
   bool stop = false;
   int phase = 0, k = 0;
   bool scalar = false;
 };
-static float rowfn(g53cpu_pool *p, int t, const uint8_t *r, int nb,
-                   const Q8 *y) {
+static float rowfn(g53cpu_pool *p, int t, const uint8_t *r, int nb, const Q8 *y,
+                   const RowInput *input) {
   return p->scalar
              ? row(t, r, nb, y, false, iq2xs_grid, iq3xxs_grid, kvalues_iq4nl)
-             : g53cpu_row(t, r, nb, y);
+             : prepared_row(t, r, nb, input);
 }
 static void work(g53cpu_pool *p) {
   int chunks = p->phase ? D / 32 : F / 32;
@@ -204,9 +280,10 @@ static void work(g53cpu_pool *p) {
            us = size_t(F) * 24 * blockbytes(v.tu);
     if (!p->phase) {
       for (int i = start; i < start + 32; i++) {
-        float g = rowfn(p, v.tg, v.rec + i * 24 * blockbytes(v.tg), 24, p->qx),
+        float g = rowfn(p, v.tg, v.rec + i * 24 * blockbytes(v.tg), 24, p->qx,
+                        &p->ix),
               u = rowfn(p, v.tu, v.rec + gs + i * 24 * blockbytes(v.tu), 24,
-                        p->qx);
+                        p->qx, &p->ix);
         if (v.g)
           v.g[i] = g;
         if (v.u)
@@ -219,8 +296,30 @@ static void work(g53cpu_pool *p) {
     } else
       for (int i = start; i < start + 32; i++)
         v.out[i] = rowfn(p, v.td, v.rec + gs + us + i * 8 * blockbytes(v.td), 8,
-                         p->qh[e]);
+                         p->qh[e], &p->ih[e]);
   }
+}
+// A worker can finish a short warm request without claiming a row. Prefault
+// its future kernel stack explicitly, before publishing startup completion.
+__attribute__((noinline)) static void prefault_worker_stack() {
+  volatile uint8_t pages[64 * 1024];
+  for (size_t i = 0; i < sizeof pages; i += 4096)
+    pages[i] = 0;
+  pages[sizeof pages - 1] = 0;
+}
+// Visit every row specialization on every worker, including short-request
+// workers that would otherwise reach the phase barrier without claiming work.
+__attribute__((noinline)) static void warm_worker_rows() {
+  RowInput input{};
+  uint8_t raw[24 * 136]{};
+  volatile float result;
+  result = fast_row<17, 8>(raw, &input);
+  result = fast_row<17, 24>(raw, &input);
+  result = fast_row<18, 8>(raw, &input);
+  result = fast_row<18, 24>(raw, &input);
+  result = fast_row<23, 8>(raw, &input);
+  result = fast_row<23, 24>(raw, &input);
+  (void)result;
 }
 g53cpu_pool *g53cpu_create(const g53_mufu_tabs *mt, const g53cpu_opts &o) {
   if (o.ncpu < 1 || o.ncpu > 256)
@@ -232,6 +331,8 @@ g53cpu_pool *g53cpu_create(const g53_mufu_tabs *mt, const g53cpu_opts &o) {
   memset(p->qx, 0, sizeof p->qx);
   memset(p->qh, 0, sizeof p->qh);
   memset(p->h, 0, sizeof p->h);
+  memset(&p->ix, 0, sizeof p->ix);
+  memset(p->ih, 0, sizeof p->ih);
   p->mt = *mt;
   p->scalar = getenv("G53CPU_SCALAR") != nullptr;
   for (int i = 0; i < o.ncpu; i++) {
@@ -251,6 +352,11 @@ g53cpu_pool *g53cpu_create(const g53_mufu_tabs *mt, const g53cpu_opts &o) {
       }
       int last = 0;
       auto idle = std::chrono::steady_clock::now();
+      prefault_worker_stack();
+      warm_worker_rows();
+      // FUTEX_WAIT may first write thread-local errno on an epoch race.
+      errno = 0;
+      p->ready.fetch_add(1, std::memory_order_release);
       for (;;) {
         int ep = p->epoch.load(std::memory_order_acquire);
         if (ep == last) {
@@ -275,6 +381,8 @@ g53cpu_pool *g53cpu_create(const g53_mufu_tabs *mt, const g53cpu_opts &o) {
       }
     });
   }
+  while (p->ready.load(std::memory_order_acquire) != o.ncpu)
+    _mm_pause();
   return p;
 }
 void g53cpu_destroy(g53cpu_pool *p) {
@@ -298,7 +406,11 @@ void g53cpu_submit(g53cpu_pool *p, const float *x, const g53cpu_expert *e,
   }
   for (int b = 0; b < D / 32; b++)
     quant(x + 32 * b, p->qx[b], p->mt);
+  prepare(p->ix, p->qx, 24);
   for (int phase = 0; phase < 2; phase++) {
+    if (phase)
+      for (int i = 0; i < k; ++i)
+        prepare(p->ih[i], p->qh[i], 8);
     p->phase = phase;
     p->next = 0;
     p->done = 0;

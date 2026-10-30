@@ -61,3 +61,25 @@ The inherited disk-cache unit suite checks pins, LRU, failed reads, concurrency,
 deadlines and allocation gates. If local sockets are prohibited, the integration
 suite reports the restriction and uses a compile-time pipe transport through
 the same request loop; CI exercises real TCP.
+
+Offline optimization benchmark (random grids, nonzero [-1,1] activations, zero gate;
+no external data or MUFU tables):
+
+```sh
+tools/glm53/cpu/bench.sh 8 31
+```
+
+This links the original kernel from `G53_BASELINE_REF` (default HEAD) beside the
+working kernel and alternates requests, reporting median before/after times.
+Use `G53_BENCH_CPUS=0,1,3,6,12,13,14,15` and `G53_BENCH_CALLER=8` for the
+165H's four P + four E configuration; adapt CPU IDs to the actual host.
+The dynamic 32-row queue lets faster P workers claim more tasks. Pin one worker
+per physical core, including E cores, before adding SMT or LP-E workers.
+Prepared q8 bytes, exact integer bias sums and converted half scales are reused
+across rows. IQ2/IQ4 integer scaling and the final float butterfly use SIMD; each float
+operation retains the oracle's operands/order and FTZ/NaN handling. Completion
+retains the original caller spin wait; idle workers use futexes. Startup warms
+every worker and all row specializations. Benchmark/test fixtures use prefaulted
+read-only file mappings and disable THP for that process only.
+`G53_TEST_CLOSED=1 G53_TEST_PIPE=1 python3 tools/glm53/cpu/test_server.py`
+forces closed-form fixtures and pipes for a fully offline server regression.

@@ -16,12 +16,14 @@ B = CPU / "build/server-test"
 D, F = 6144, 2048
 PIPE = False
 try:
+    if os.getenv("G53_TEST_PIPE"):
+        raise PermissionError("forced offline pipe transport")
     with socket.socket():
         pass
 except PermissionError:
     PIPE = True
     print(
-        "Local sockets forbidden: testing identical wire bytes over pipes; TCP integration remains for CI",
+        "Testing identical wire bytes over pipes; TCP integration remains for CI",
         flush=True,
     )
 TYPES = [(17, 17, 18), (18, 18, 23), (17, 17, 23), (10, 10, 11), (17, 18, 23)]
