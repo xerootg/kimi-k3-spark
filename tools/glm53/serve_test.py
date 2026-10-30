@@ -28,6 +28,10 @@ requests as above, with per-row answers: the disk rows bit-identical to check, a
 NaNs its own row; K3X_SETOUT lists every expert of the servable layers. One more run per quant with
 K3X_DISK_DEADLINE_MS=0: a disk row's first request is NaN (its read misses the deadline), resident rows in the same
 request are served, and once the read has landed (LRU hit) the row is served bit-identically.
+
+Kernel mode: UD-Q2_K_XL runs (check and serveidx) use G53X_EXACT from the environment (default 1, the CUDA-exact
+kernels, MUFU tables at G53X_MUFU, default /w/mufu via dsycl.sh); UD-Q4_K_XL always runs G53X_EXACT=0 (no exact
+kernels for its K-quants). G53X_EXACT=0 python3 serve_test.py runs every case on the fast path.
 """
 import argparse
 import json
@@ -203,6 +207,8 @@ def run_store(args, g53x, store, quant, ref, env_extra, label, disk=None):
     resident = {(L, e) for L in LAYERS for e in range(DISK_SET if disk else NE) if (L, e) != NOT_IN_SET}
     servable = {(L, e) for L in LAYERS for e in range(NE)} if disk else resident
     kind = {L: tuple(TYPE_IDS[slices("/w/data", quant)[L][w]["type"]] for w in ("gate", "up", "down")) for L in LAYERS}
+    if quant == "UD-Q4_K_XL":
+        env["G53X_EXACT"] = "0"  # Q4 regression exercises the retained non-exact path
     with open(log, "w") as lf:
         srv = subprocess.Popen([g53x, setf, store, "-", "-", "serveidx", str(port)], stderr=lf, stdout=lf, env=env)
     try:
@@ -359,11 +365,14 @@ def inner(args):
         for L in LAYERS:
             ty = [str(TYPE_IDS[sl[L][w]["type"]]) for w in ("gate", "up", "down")]
             name = f"{q}_L{L}"
-            p = subprocess.run([g53x, f"data/{name}", *ty, "check", os.path.join(dumps, name)], capture_output=True, text=True)
+            env = dict(os.environ)
+            if q == "UD-Q4_K_XL":
+                env["G53X_EXACT"] = "0"
+            p = subprocess.run([g53x, f"data/{name}", *ty, "check", os.path.join(dumps, name)], capture_output=True, text=True, env=env)
             if p.returncode:
                 raise SystemExit(f"check {name} failed:\n{p.stderr}")
             fused = [l for l in p.stderr.splitlines() if "fused" in l]
-            print(f"check {name} {' '.join(ty)}: {fused[0] if fused else ''}", flush=True)
+            print(f"check {name} exact={env.get('G53X_EXACT', '1')} {' '.join(ty)}: {fused[0] if fused else ''}", flush=True)
             xs = open(os.path.join(dumps, name + ".x"), "rb").read()
             dn = open(os.path.join(dumps, name + ".dn"), "rb").read()
             assert len(xs) == 6144 * 4 and len(dn) == NE * 6144 * 4

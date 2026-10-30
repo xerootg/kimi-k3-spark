@@ -9,6 +9,8 @@
 // Env: G53X_PROF=1 per-kernel device times; G53X_XIN=file use that x (6144 f32) instead of the seeded one;
 // G53X_HOSTW=1 weights in host USM instead of device USM.
 //
+// Default: source-derived exact IQ candidate, requires G53X_MUFU. G53X_EXACT=0 selects the old fast path.
+// The following kernel shape describes ONLY that non-exact fast path.
 // Kernel shape: 256-item work-groups = 16 sub-groups of 16 lanes, one output row per sub-group (gate and up rows
 // together); the lanes stride over the row's 32-value units (IQ: one 32-block, K-quants: 64 values). The q8_1
 // activation and the type's lookup tables (IQ2_XS grid 4 KiB, IQ3_XXS grid 1 KiB, sign masks 1 KiB, IQ4 nibble
@@ -17,6 +19,8 @@
 #include <sycl/ext/oneapi/work_group_static.hpp>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
 #include <level_zero/ze_api.h>
+#define G53EX_SYCL
+#include "g53exact.h"
 #define GGML_COMMON_DECL_SYCL
 #define GGML_COMMON_IMPL_SYCL
 #include "ggml-common.h"
@@ -132,9 +136,12 @@ template <int T, int R, int NSB> static inline void rows_dot(const uint8_t * con
     }
 }
 
-// q8_1 of r rows of n floats: one item per 32-block (amax / 127, round half away from zero). xs = d * sum(q), the
-// block sum of the quantized values (ggml-sycl stores the float sum of x instead), so the K-quant min term is exact.
+#include "g53x_exact.inc"
+
+// Exact dispatch below stores CUDA half(d), half(float butterfly sum(x)).
+// The legacy non-exact branch retains float d and d*sum(q).
 static void quantize(sycl::queue & q, const float * x, int8_t * xq, float * xd, float * xs, int nblk) {
+    if (exact_mode()) { exact_quantize(q, x, xq, xd, xs, nblk); return; }
     q.parallel_for(sycl::range<1>(nblk), [=](sycl::id<1> id) {
         const int bI = id[0]; const float * v = x + bI * 32;
         float amax = 0.f, sum = 0.f;
@@ -178,7 +185,7 @@ template <class T> static inline T * lptr(T * p) {
 }
 // gate + up rows (same sub-group) + SwiGLU -> h[e][F]
 template <int TG, int TU, int D, int F> struct GateUpK {
-    static constexpr int NARGS = 9;   // all 8 bytes
+    static constexpr int NARGS = 9, WG = SG * NSG;   // all 8 bytes
     const uint8_t * const * W; const float * xf; const int8_t * xq; const float * xd; const float * xs; float * h; float * gu;
     size_t grb, urb;   // row bytes as kernel arguments: as compile-time constants the Q5_K gate/up ran 2x slower
     [[sycl::reqd_sub_group_size(16)]] void operator()(sycl::nd_item<2> it) const {
@@ -219,7 +226,7 @@ template <int TG, int TU, int D, int F> struct GateUpK {
     }
 };
 template <int TD, int D, int F> struct DownK {
-    static constexpr int NARGS = 7;
+    static constexpr int NARGS = 7, WG = SG * NSG;
     const uint8_t * const * W; const float * hf; const int8_t * hq; const float * hd; const float * hs; float * out;
     size_t drb;
     [[sycl::reqd_sub_group_size(16)]] void operator()(sycl::nd_item<2> it) const {
@@ -285,7 +292,7 @@ template <class KT> static ze_kernel_handle_t ze_kernel(sycl::queue & q, std::ve
         // the kernels dereference the W table's pointers (host USM arena)
         if (zeKernelSetIndirectAccess(zk, ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST | ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE |
                                               ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED) != ZE_RESULT_SUCCESS ||
-            zeKernelSetGroupSize(zk, SG * NSG, 1, 1) != ZE_RESULT_SUCCESS)
+            zeKernelSetGroupSize(zk, KT::WG, 1, 1) != ZE_RESULT_SUCCESS)
             return nullptr;
         keep.push_back(kr);
         return zk;
@@ -299,20 +306,34 @@ struct Bufs { float * gu = nullptr; int8_t * xq; float * xd, * xs, * h; int8_t *
 using GateUpFn = sycl::event (*)(sycl::queue &, const uint8_t * const *, int, const float *, const int8_t *, const float *, const float *, float *, float *);
 using DownFn = sycl::event (*)(sycl::queue &, const uint8_t * const *, int, const float *, const int8_t *, const float *, const float *, float *);
 using ZeGet = ze_kernel_handle_t (*)(sycl::queue &, std::vector<sycl::kernel> &);
-struct GUPick { GateUpFn run = nullptr; ZeGet ze = nullptr; };
-struct DNPick { DownFn run = nullptr; ZeGet ze = nullptr; };
+struct GUPick { GateUpFn run = nullptr; ZeGet ze = nullptr; int rpg = 0; bool exact = false; };
+struct DNPick { DownFn run = nullptr; ZeGet ze = nullptr; int rpg = 0; bool exact = false; };
 
 #ifndef G53X_DIMS
 #define G53X_DIMS DIM(6144, 2048)   // GLM-5.3: hidden 6144, expert FFN 2048
 #endif
+// exact mode (G53X_EXACT, default): only the IQ kinds have exact kernels; others are not instantiated (fail closed, no
+// non-exact fallback). rpg: output rows per work-group (the Level Zero grid is F or D / rpg by k).
 template <int DD, int FF> static GUPick pick_gu_df(int tg, int tu) {
-#define GU(a, b) if (tg == a && tu == b) return {gateup<a, b, DD, FF>, ze_kernel<GateUpK<a, b, DD, FF>>};
+    if (exact_mode()) {
+#define GU(a) if (tg == a && tu == a) return {exact_gateup<a, a, DD, FF>, ze_kernel<ExactGateUpK<a, a, DD, FF>>, EXACT_WG, true};
+        GU(T_IQ2_XS) GU(T_IQ3_XXS)
+#undef GU
+        return {};
+    }
+#define GU(a, b) if (tg == a && tu == b) return {gateup<a, b, DD, FF>, ze_kernel<GateUpK<a, b, DD, FF>>, NSG * RG, false};
     GU(T_IQ2_XS, T_IQ2_XS) GU(T_IQ3_XXS, T_IQ3_XXS) GU(T_Q4_K, T_Q4_K) GU(T_Q5_K, T_Q5_K)
 #undef GU
     return {};
 }
 template <int DD, int FF> static DNPick pick_dn_df(int td) {
-#define DN(a) case a: return {down<a, DD, FF>, ze_kernel<DownK<a, DD, FF>>};
+    if (exact_mode()) {
+#define DN(a) case a: return {exact_down<a, DD, FF>, ze_kernel<ExactDownK<a, DD, FF>>, EXACT_WG, true};
+        switch (td) { DN(T_IQ3_XXS) DN(T_IQ4_XS) }
+#undef DN
+        return {};
+    }
+#define DN(a) case a: return {down<a, DD, FF>, ze_kernel<DownK<a, DD, FF>>, NSG * RD, false};
     switch (td) { DN(T_IQ3_XXS) DN(T_IQ4_XS) DN(T_Q5_K) DN(T_Q6_K) }
 #undef DN
     return {};
@@ -415,6 +436,7 @@ static std::unordered_map<long, std::pair<long, long>> sidecar_dims(const std::s
 enum { ZL_GU = 0, ZL_GU1 = 16, ZL_DN1 = 32, ZL_DN = 48, ZL_N = 64 };
 struct Kind {
     int tg, tu, td, D, F; GateUpFn gu; DownFn dn; size_t gsz, usz, dsz;
+    int gu_rpg = 0, dn_rpg = 0; bool exact = false;   // rows per work-group (GUPick/DNPick), exact-mode kernels
     ze_kernel_handle_t zgu = nullptr, zdn = nullptr; ze_command_list_handle_t zl[ZL_N] = {};
 };
 // disk tier: field-run repack in place while a record lands (k3disk::Cache transform, on the reader threads).
@@ -450,6 +472,8 @@ static void disk_repack(void * c, const k3disk::Record & r, uint8_t * rec, uint6
 // K3X_RT, K3X_RX_SPIN_US, K3X_MEMWARM, K3X_MEMWARM_CPU, K3X_FORCEWAKE; disk tier: K3X_DISK_TIER, K3X_DISK_STORE,
 // K3X_DISK_LRU_GB, K3X_DISK_DEADLINE_MS, K3X_DISK_THREADS, K3X_DISK_PIECE_KB. g53x: G53X_SUBMIT, G53X_NEO_TUNE,
 // G53X_ULLS, G53X_MLOCKALL, G53X_GPU_TIMEOUT_MS, G53X_WAIT, G53X_SYCL_LAUNCH (docs/glm53-kernels.md sections 9, 10).
+// Kernel mode: G53X_EXACT (default 1: the CUDA-exact kernels, IQ kinds only; MUFU tables from G53X_MUFU, loaded and
+// made resident at startup) or 0 (fast path). Resident and disk-tier rows go through the same pre-recorded lists.
 static int serve_index(const char * setp, const char * storep, const char * hidp, int port) {
     std::unique_ptr<k3disk::Store> store;
     try { store.reset(new k3disk::Store(storep)); } catch (const std::exception & e) { fprintf(stderr, "%s: %s\n", storep, e.what()); return 1; }
@@ -489,7 +513,8 @@ static int serve_index(const char * setp, const char * storep, const char * hidp
                 if (!gu.run || !dn.run) snprintf(why, sizeof why, "types %u/%u/%u at %ldx%ld not instantiated (G53X_DIMS)", r.tg, r.tu, r.td, D, F);
                 else if (grb > 16384 || urb > 16384 || drb > 16384) snprintf(why, sizeof why, "rows over 16 KiB");
                 else {
-                    kinds.push_back({(int) r.tg, (int) r.tu, (int) r.td, (int) D, (int) F, gu.run, dn.run, r.gate, r.up, r.down});
+                    kinds.push_back({(int) r.tg, (int) r.tu, (int) r.td, (int) D, (int) F, gu.run, dn.run, r.gate, r.up, r.down,
+                                     gu.rpg, dn.rpg, gu.exact});
                     ki = (int) kinds.size() - 1; kind_ze.push_back({gu.ze, dn.ze});
                 }
             }
@@ -543,6 +568,7 @@ static int serve_index(const char * setp, const char * storep, const char * hidp
     }
     if (ulls) setenv("EnableDirectSubmission", "1", 0);
     sycl::queue q{sycl::gpu_selector_v, sycl::property::queue::in_order()};
+    exact_init(q);
     fprintf(stderr, "device: %s\n", q.get_device().get_info<sycl::info::device::name>().c_str());
     struct Served { int kind; const uint8_t * p; };
     std::unordered_map<long, Served> map; map.reserve(want.size() * 2 + 16);
@@ -668,6 +694,10 @@ static int serve_index(const char * setp, const char * storep, const char * hidp
     std::vector<float> nanrows((size_t) 16 * D, NAN);
     usm.insert(usm.end(), {{sb, 4096 + (size_t) D * 4}, {rows, (size_t) 16 * D * 4}, {W, 3 * 16 * sizeof(void *)},
                            {h, (size_t) 16 * Fmax * 4}});
+    if (exact_device.g2)   // exact mode: the MUFU tables and IQ grids (exact_init, at startup), kernel arguments
+        usm.insert(usm.end(), {{(void *) exact_device.mt.rcp, (size_t) 1 << 25}, {(void *) exact_device.mt.ex2p, (size_t) 31 << 25},
+                               {(void *) exact_device.mt.ex2n, (size_t) 33 << 25}, {exact_device.g2, 4096}, {exact_device.g3, 1024},
+                               {exact_device.k4, 16}});
     // Residency. The kernels reach the weights through pointers (indirect access), which the driver does not track
     // with DisableIndirectAccess (G53X_NEO_TUNE): zeContextMakeMemoryResident keeps every buffer in every submission
     // (i915: in each execbuffer's object list) for the life of the server.
@@ -720,16 +750,29 @@ static int serve_index(const char * setp, const char * storep, const char * hidp
             return r && zeCommandListAppendLaunchKernel(l, zk, &g, sig, 0, nullptr) == ZE_RESULT_SUCCESS &&
                    zeCommandListClose(l) == ZE_RESULT_SUCCESS;
         };
+        // arguments: the functors' fields in order (GateUpK: W x xq xd xs h gu grb urb, DownK: W h hq hd hs out drb;
+        // exact: the row bytes are compile-time, the MUFU and grid tables follow instead)
+        const void * tabs[6] = {exact_device.mt.rcp, exact_device.mt.ex2p, exact_device.mt.ex2n, exact_device.g2, exact_device.g3, exact_device.k4};
         for (auto & K : kinds) for (int j = 0; ok && j < 16; j++) {
             const void * grb = (const void *) (K.gsz / K.F), * urb = (const void *) (K.usz / K.F), * drb = (const void *) (K.dsz / K.D);
-            const void * gb[9] = {W, x, nullptr, nullptr, nullptr, h, nullptr, grb, urb};
-            const void * g1[9] = {W + 3 * j, x, nullptr, nullptr, nullptr, h + (size_t) j * K.F, nullptr, grb, urb};
-            const void * d1[7] = {W + 3 * j, h + (size_t) j * K.F, nullptr, nullptr, nullptr, rows + (size_t) j * D, drb};
-            const void * db[7] = {W, h, nullptr, nullptr, nullptr, rows, drb};
-            ok = record(K.zl[ZL_GU + j], K.zgu, gu_groups(K.F), j + 1, gb, 9, nullptr) &&
-                 record(K.zl[ZL_GU1 + j], K.zgu, gu_groups(K.F), 1, g1, 9, nullptr) &&
-                 record(K.zl[ZL_DN1 + j], K.zdn, dn_groups(K.D), 1, d1, 7, zev[j]) &&
-                 record(K.zl[ZL_DN + j], K.zdn, dn_groups(K.D), j + 1, db, 7, zev[j]);
+            auto gargs = [&](const void * w, const void * hh, const void ** a) {
+                int n = 0; for (const void * v : {w, (const void *) x, (const void *) nullptr, (const void *) nullptr, (const void *) nullptr, hh, (const void *) nullptr}) a[n++] = v;
+                if (K.exact) for (const void * t : tabs) a[n++] = t; else { a[n++] = grb; a[n++] = urb; }
+                return n;
+            };
+            auto dargs = [&](const void * w, const void * hh, const void * o, const void ** a) {
+                int n = 0; for (const void * v : {w, hh, (const void *) nullptr, (const void *) nullptr, (const void *) nullptr, o}) a[n++] = v;
+                if (K.exact) for (const void * t : tabs) a[n++] = t; else a[n++] = drb;
+                return n;
+            };
+            const void * gb[16], * g1[16], * d1[16], * db[16];
+            const int ngb = gargs(W, h, gb), ng1 = gargs(W + 3 * j, h + (size_t) j * K.F, g1);
+            const int nd1 = dargs(W + 3 * j, h + (size_t) j * K.F, rows + (size_t) j * D, d1), ndb = dargs(W, h, rows, db);
+            const uint32_t ggx = (uint32_t) (K.F / K.gu_rpg), dgx = (uint32_t) (K.D / K.dn_rpg);
+            ok = record(K.zl[ZL_GU + j], K.zgu, ggx, j + 1, gb, ngb, nullptr) &&
+                 record(K.zl[ZL_GU1 + j], K.zgu, ggx, 1, g1, ng1, nullptr) &&
+                 record(K.zl[ZL_DN1 + j], K.zdn, dgx, 1, d1, nd1, zev[j]) &&
+                 record(K.zl[ZL_DN + j], K.zdn, dgx, j + 1, db, ndb, zev[j]);
         }
         if (!ok) { fprintf(stderr, "level zero command lists / events failed, falling back to SYCL launches\n"); use_ze = false; }
     }
@@ -966,6 +1009,7 @@ int main(int argc, char ** argv) {
                                   : sycl::property_list{sycl::property::queue::in_order()};
     setenv("UR_L0_USE_IMMEDIATE_COMMANDLISTS", "1", 0);   // batched lists delay submission (k3x found the same)
     sycl::queue q{sycl::gpu_selector_v, pl};
+    exact_init(q);
     fprintf(stderr, "device: %s\n", q.get_device().get_info<sycl::info::device::name>().c_str());
 
     const size_t gsz = row_bytes(tg, D) * F, usz = row_bytes(tu, D) * F, dsz = row_bytes(td, F) * D, rec = gsz + usz + dsz;
@@ -1002,7 +1046,7 @@ int main(int argc, char ** argv) {
         for (int i = 0; i < k; i++) { B.W[3 * i] = wg + (size_t) ids[i] * gsz; B.W[3 * i + 1] = wu + (size_t) ids[i] * usz; B.W[3 * i + 2] = wd + (size_t) ids[i] * dsz; }
     };
     std::vector<sycl::event> ev(4);
-    const bool fuseq = !getenv("G53X_FUSEQ") || atoi(getenv("G53X_FUSEQ"));   // check mode runs both and compares
+    bool fuseq = !getenv("G53X_FUSEQ") || atoi(getenv("G53X_FUSEQ"));   // check mode runs both and compares
     auto run = [&](int k) {
         if (fuseq) {   // two launches: q8_1 inside the matvec kernels
             ev[1] = gu(q, B.W, k, B.x, nullptr, nullptr, nullptr, B.h, B.gu);
@@ -1021,12 +1065,22 @@ int main(int argc, char ** argv) {
         B.gu = sycl::malloc_shared<float>(2 * NE * F, q);
         std::vector<float> fused;
         if (fuseq) { run(NE); fused.assign(B.out, B.out + NE * D); }
-        const bool f0 = fuseq; const_cast<bool &>(fuseq) = false; run(NE); const_cast<bool &>(fuseq) = f0;
-        if (f0) fprintf(stderr, "fused q8_1 vs separate quantize kernels: dn %s\n", memcmp(fused.data(), B.out, NE * D * 4) ? "DIFFER" : "bit-identical");
+        const bool f0 = fuseq; fuseq = false; run(NE); fuseq = f0;
+        if (f0) {
+            const bool bad=memcmp(fused.data(),B.out,NE*D*4)!=0;
+            fprintf(stderr,"fused q8_1 vs separate quantize kernels: dn %s\n",bad?"DIFFER":"bit-identical");
+            if(bad)return 2;
+        }
         auto dump = [&](const std::string & name, const void * dev, size_t n) {
             std::vector<char> v(n); q.memcpy(v.data(), dev, n).wait();
             FILE * f = fopen((std::string(argv[6]) + name).c_str(), "wb"); fwrite(v.data(), 1, n, f); fclose(f);
         };
+        if (exact_mode()) {
+            std::vector<float> v(2*NE*F), g(NE*F), u(NE*F);
+            q.memcpy(v.data(),B.gu,v.size()*4).wait();
+            for(int e=0;e<NE;e++) {memcpy(g.data()+e*F,v.data()+2*e*F,F*4);memcpy(u.data()+e*F,v.data()+(2*e+1)*F,F*4);}
+            for(int st=0;st<2;st++) {FILE*f=fopen((std::string(argv[6])+(st?".u":".g")).c_str(),"wb");if(!f)return 1;fwrite(st?u.data():g.data(),4,NE*F,f);fclose(f);}
+        }
         dump(".gu", B.gu, 2 * NE * F * 4); dump(".xq", B.xq, D); dump(".xd", B.xd, D / 32 * 4);
         dump(".hq", B.hq, NE * F); dump(".hd", B.hd, NE * F / 32 * 4);
         std::string o = argv[6];

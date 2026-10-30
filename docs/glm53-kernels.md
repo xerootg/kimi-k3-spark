@@ -353,6 +353,12 @@ Result on this laptop (93 GB RAM, swap 100 % full from other jobs):
   that mlock does not pin, and the shrinker zaps idle ones under memory pressure. Runs on a less loaded host gave 0/0.
 - Check it on the NUC (xe KMD there, and the NEO keys need `NEOReadDebugKeys` support in its driver).
 
+Exact mode (`G53X_EXACT=1`, the default since the CUDA-exact merge, `EXACT-RESULT.md`): the exact kernels are functors
+like the fast ones (`ExactGateUpK` / `ExactDownK` in `g53x_exact.inc`, the MUFU tables and IQ grids as direct
+arguments), so serveidx pre-records them the same way and resident and disk-tier rows take the same allocation-free
+path; the 2.1 GB of MUFU tables are loaded and made resident at startup. Gate after the merge: 0 allocations in both
+modes; minor faults 5 (exact, a 213 s window) and 1 (fast, 17 s), all on i915 GEM mappings as above (`MERGE-RESULT.md`).
+
 ### Throughput (this laptop, `disk_test.py bench`)
 
 Method:
