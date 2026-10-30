@@ -1,0 +1,35 @@
+attn indexer                     0.82 GB  {'Q8_0': 156, 'F32': 234}
+attn k_b                         0.52 GB  {'Q8_0': 78}
+attn kv_a_mqa                    0.29 GB  {'Q8_0': 78}
+attn kv_a_norm                   0.00 GB  {'F32': 78}
+attn norm                        0.00 GB  {'F32': 78}
+attn output                      8.34 GB  {'Q8_0': 78}
+attn q_a                         1.04 GB  {'Q8_0': 78}
+attn q_a_norm                    0.00 GB  {'F32': 78}
+attn q_b                         2.78 GB  {'Q8_0': 78}
+attn v_b                         0.70 GB  {'Q8_0': 78}
+dense ffn ffn_down               0.24 GB  {'Q8_0': 3}
+dense ffn ffn_gate               0.24 GB  {'Q8_0': 3}
+dense ffn ffn_norm               0.00 GB  {'F32': 3}
+dense ffn ffn_up                 0.24 GB  {'Q8_0': 3}
+nextn(MTP layer 78)              6.15 GB  {'Q8_0': 12, 'F32': 12, 'Q5_K': 1, 'Q4_K': 2}
+norm/other                       0.00 GB  {'F32': 75}
+output                           1.01 GB  {'Q8_0': 1}
+output_norm                      0.00 GB  {'F32': 1}
+routed ffn_down_exps           167.81 GB  {'Q5_K': 71, 'Q6_K': 4}
+routed ffn_gate_exps           136.30 GB  {'Q4_K': 74, 'Q5_K': 1}
+routed ffn_up_exps             136.30 GB  {'Q4_K': 74, 'Q5_K': 1}
+router                           0.47 GB  {'F32': 150}
+shared ffn_down_shexp            1.00 GB  {'Q8_0': 75}
+shared ffn_gate_shexp            1.00 GB  {'Q8_0': 75}
+shared ffn_up_shexp              1.00 GB  {'Q8_0': 75}
+token_embd                       1.01 GB  {'Q8_0': 1}
+TOTAL 467.27956992
+routed combos (gate,up,down): {('Q4_K', 'Q4_K', 'Q5_K'): 72, ('Q5_K', 'Q5_K', 'Q6_K'): 1, ('Q4_K', 'Q4_K', 'Q6_K'): 3}
+first layer of each combo: {"('Q4_K', 'Q4_K', 'Q5_K')": 3, "('Q5_K', 'Q5_K', 'Q6_K')": 8, "('Q4_K', 'Q4_K', 'Q6_K')": 75}
+dims [6144, 2048, 256] [2048, 6144, 256]
+per-expert bytes: min 22.81 MB max 27.62 MB avg(75) 22.94 MB
+per token: routed 8x75 = 13.763 GB; dense+shared+attn+router+output (all non-expert excl. MTP, excl. embd) = 19.716 GB; embd row 6528 B
+64 GB holds 2790 experts (2996 at GiB) = 14.5% of 19200
+32 GB holds 1395 experts (1498 at GiB) = 7.3% of 19200
+all routed experts (75 layers): 440.40192 GB

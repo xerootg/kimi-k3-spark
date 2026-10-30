@@ -158,6 +158,13 @@ Planning, to do before the cards arrive:
 
 The fork `xerootg/llama.cpp` is a research fork and will not be upstreamed. Its default branch is `kimi-k3`.
 
+## GLM-5.3
+
+- 2026-10-29 phase 1 (laptop only, `docs/glm53-kernels.md`, `tools/glm53/`): UD-Q2_K_XL experts are IQ2_XS/IQ3_XXS (not
+  Q2_K), UD-Q4_K_XL Q4_K/Q5_K; ggml-sycl already emits native DP4A; per-field row repack makes the iGPU IQ kernels
+  memory-bound: g53x 197-270 us per Q2 expert (2-3x ggml-sycl), 359-418 us per Q4 expert, exact to 1e-7; next: GLM routing
+  traces, g53x serve mode, measure on Arrow Lake.
+
 ## Cluster layout for this work
 
 | node | role |

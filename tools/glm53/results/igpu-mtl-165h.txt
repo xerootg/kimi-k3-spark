@@ -1,0 +1,48 @@
+SYCL0 UD-Q2_K_XL_L3 k=1 thr=8: p50 914 us p90 1608 us  914 us/expert  13.2 GB/s
+SYCL0 UD-Q2_K_XL_L3 k=2 thr=8: p50 1522 us p90 1625 us  761 us/expert  15.9 GB/s
+SYCL0 UD-Q2_K_XL_L3 k=4 thr=8: p50 2561 us p90 2930 us  640 us/expert  18.9 GB/s
+SYCL0 UD-Q2_K_XL_L3 k=8 thr=8: p50 4777 us p90 5513 us  597 us/expert  20.3 GB/s
+g53x UD-Q2_K_XL_L3 k=1: p50 560 us p90 711 us  560 us/expert  21.6 GB/s  [gate/up 266 us 27.3 GB/s, down 166 us 29.0 GB/s]
+g53x UD-Q2_K_XL_L3 k=2: p50 496 us p90 590 us  248 us/expert  48.8 GB/s  [gate/up 268 us 54.2 GB/s, down 161 us 59.9 GB/s]
+g53x UD-Q2_K_XL_L3 k=4: p50 851 us p90 951 us  213 us/expert  56.8 GB/s  [gate/up 482 us 60.4 GB/s, down 289 us 66.6 GB/s]
+g53x UD-Q2_K_XL_L3 k=8: p50 1574 us p90 1765 us  197 us/expert  61.5 GB/s  [gate/up 915 us 63.6 GB/s, down 554 us 69.6 GB/s]
+SYCL0 UD-Q2_K_XL_L8 k=1 thr=8: p50 891 us p90 1711 us  891 us/expert  18.3 GB/s
+SYCL0 UD-Q2_K_XL_L8 k=2 thr=8: p50 1403 us p90 1532 us  701 us/expert  23.3 GB/s
+SYCL0 UD-Q2_K_XL_L8 k=4 thr=8: p50 2335 us p90 2615 us  584 us/expert  28.0 GB/s
+SYCL0 UD-Q2_K_XL_L8 k=8 thr=8: p50 4444 us p90 4508 us  555 us/expert  29.4 GB/s
+g53x UD-Q2_K_XL_L8 k=1: p50 389 us p90 481 us  389 us/expert  41.9 GB/s  [gate/up 185 us 52.2 GB/s, down 124 us 53.7 GB/s]
+g53x UD-Q2_K_XL_L8 k=2: p50 639 us p90 734 us  319 us/expert  51.1 GB/s  [gate/up 335 us 57.6 GB/s, down 221 us 60.5 GB/s]
+g53x UD-Q2_K_XL_L8 k=4: p50 1127 us p90 1249 us  282 us/expert  57.9 GB/s  [gate/up 624 us 61.7 GB/s, down 413 us 64.7 GB/s]
+g53x UD-Q2_K_XL_L8 k=8: p50 2158 us p90 2299 us  270 us/expert  60.5 GB/s  [gate/up 1256 us 61.4 GB/s, down 797 us 67.1 GB/s]
+SYCL0 UD-Q2_K_XL_L75 k=1 thr=8: p50 886 us p90 1492 us  886 us/expert  15.8 GB/s
+SYCL0 UD-Q2_K_XL_L75 k=2 thr=8: p50 1070 us p90 1271 us  535 us/expert  26.1 GB/s
+SYCL0 UD-Q2_K_XL_L75 k=4 thr=8: p50 1935 us p90 2140 us  484 us/expert  28.9 GB/s
+SYCL0 UD-Q2_K_XL_L75 k=8 thr=8: p50 3621 us p90 3711 us  453 us/expert  30.8 GB/s
+g53x UD-Q2_K_XL_L75 k=1: p50 372 us p90 599 us  372 us/expert  37.5 GB/s  [gate/up 157 us 46.5 GB/s, down 115 us 58.0 GB/s]
+g53x UD-Q2_K_XL_L75 k=2: p50 574 us p90 624 us  287 us/expert  48.6 GB/s  [gate/up 268 us 54.2 GB/s, down 207 us 64.5 GB/s]
+g53x UD-Q2_K_XL_L75 k=4: p50 998 us p90 1070 us  250 us/expert  55.9 GB/s  [gate/up 479 us 60.7 GB/s, down 392 us 68.2 GB/s]
+g53x UD-Q2_K_XL_L75 k=8: p50 1746 us p90 1887 us  218 us/expert  64.0 GB/s  [gate/up 905 us 64.3 GB/s, down 760 us 70.4 GB/s]
+SYCL0 UD-Q4_K_XL_L3 k=1 thr=8: p50 882 us p90 1015 us  882 us/expert  25.9 GB/s
+SYCL0 UD-Q4_K_XL_L3 k=2 thr=8: p50 871 us p90 930 us  435 us/expert  52.4 GB/s
+SYCL0 UD-Q4_K_XL_L3 k=4 thr=8: p50 1573 us p90 1676 us  393 us/expert  58.0 GB/s
+SYCL0 UD-Q4_K_XL_L3 k=8 thr=8: p50 3017 us p90 3327 us  377 us/expert  60.5 GB/s
+g53x UD-Q4_K_XL_L3 k=1: p50 509 us p90 595 us  509 us/expert  44.8 GB/s  [gate/up 246 us 57.5 GB/s, down 151 us 57.1 GB/s]
+g53x UD-Q4_K_XL_L3 k=2: p50 804 us p90 912 us  402 us/expert  56.7 GB/s  [gate/up 448 us 63.1 GB/s, down 271 us 64.0 GB/s]
+g53x UD-Q4_K_XL_L3 k=4: p50 1533 us p90 1668 us  383 us/expert  59.5 GB/s  [gate/up 878 us 64.5 GB/s, down 525 us 65.9 GB/s]
+g53x UD-Q4_K_XL_L3 k=8: p50 2871 us p90 2984 us  359 us/expert  63.5 GB/s  [gate/up 1745 us 64.9 GB/s, down 1028 us 67.3 GB/s]
+SYCL0 UD-Q4_K_XL_L8 k=1 thr=8: p50 738 us p90 1176 us  738 us/expert  37.4 GB/s
+SYCL0 UD-Q4_K_XL_L8 k=2 thr=8: p50 1174 us p90 1234 us  587 us/expert  47.0 GB/s
+SYCL0 UD-Q4_K_XL_L8 k=4 thr=8: p50 2124 us p90 2213 us  531 us/expert  52.0 GB/s
+SYCL0 UD-Q4_K_XL_L8 k=8 thr=8: p50 4136 us p90 4309 us  517 us/expert  53.4 GB/s
+g53x UD-Q4_K_XL_L8 k=1: p50 517 us p90 597 us  517 us/expert  53.4 GB/s  [gate/up 271 us 63.9 GB/s, down 170 us 60.6 GB/s]
+g53x UD-Q4_K_XL_L8 k=2: p50 938 us p90 1048 us  469 us/expert  58.9 GB/s  [gate/up 519 us 66.7 GB/s, down 318 us 64.8 GB/s]
+g53x UD-Q4_K_XL_L8 k=4: p50 1714 us p90 1821 us  428 us/expert  64.5 GB/s  [gate/up 1000 us 69.2 GB/s, down 604 us 68.3 GB/s]
+g53x UD-Q4_K_XL_L8 k=8: p50 3345 us p90 3608 us  418 us/expert  66.1 GB/s  [gate/up 2011 us 68.8 GB/s, down 1192 us 69.3 GB/s]
+SYCL0 UD-Q4_K_XL_L75 k=1 thr=8: p50 889 us p90 1099 us  889 us/expert  27.5 GB/s
+SYCL0 UD-Q4_K_XL_L75 k=2 thr=8: p50 1080 us p90 1176 us  540 us/expert  45.3 GB/s
+SYCL0 UD-Q4_K_XL_L75 k=4 thr=8: p50 1927 us p90 2022 us  482 us/expert  50.8 GB/s
+SYCL0 UD-Q4_K_XL_L75 k=8 thr=8: p50 3710 us p90 3810 us  464 us/expert  52.8 GB/s
+g53x UD-Q4_K_XL_L75 k=1: p50 519 us p90 586 us  519 us/expert  47.1 GB/s  [gate/up 233 us 60.7 GB/s, down 174 us 59.2 GB/s]
+g53x UD-Q4_K_XL_L75 k=2: p50 888 us p90 954 us  444 us/expert  55.2 GB/s  [gate/up 436 us 65.0 GB/s, down 323 us 63.9 GB/s]
+g53x UD-Q4_K_XL_L75 k=4: p50 1597 us p90 1728 us  399 us/expert  61.3 GB/s  [gate/up 848 us 66.8 GB/s, down 625 us 66.0 GB/s]
+g53x UD-Q4_K_XL_L75 k=8: p50 3073 us p90 3372 us  384 us/expert  63.7 GB/s  [gate/up 1687 us 67.1 GB/s, down 1219 us 67.7 GB/s]

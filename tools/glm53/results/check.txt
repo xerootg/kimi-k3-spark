@@ -1,0 +1,38 @@
+== UD-Q2_K_XL_L3
+chk/g53x_UD-Q2_K_XL_L3                           kernel vs exact sum over its q8_1 inputs: gate 1.3e-07 up 1.2e-07 down 1e-07 (max err / row-set max)
+chk/g53c_UD-Q2_K_XL_L3                           kernel vs exact sum over its q8_1 inputs: gate 3.2e-07 up 4e-07 down 2.1e-07 (max err / row-set max)
+chk/g53x_UD-Q2_K_XL_L3                           vs fp64: maxabs 0.03302 rel 0.00695 mincos 0.9999263 (worst [32555] 0.07131 vs 0.038293) | vs chk/g53x_UD-Q2_K_XL_L3: maxabs 0 rel 0
+chk/sycl_UD-Q2_K_XL_L3                           vs fp64: maxabs 0.03239 rel 0.00681 mincos 0.9999268 (worst [40356] -0.53114 vs -0.49875) | vs chk/g53x_UD-Q2_K_XL_L3: maxabs 0.006356 rel 0.00134
+chk/cpu_UD-Q2_K_XL_L3                            vs fp64: maxabs 0.06026 rel 0.0127 mincos 0.9997892 (worst [43442] -0.59573 vs -0.65599) | vs chk/g53x_UD-Q2_K_XL_L3: maxabs 0.06454 rel 0.0136
+chk/g53c_UD-Q2_K_XL_L3                           vs fp64: maxabs 0.03302 rel 0.00695 mincos 0.9999263 (worst [32555] 0.07131 vs 0.038293) | vs chk/g53x_UD-Q2_K_XL_L3: maxabs 9.984e-07 rel 2.11e-07
+== UD-Q2_K_XL_L8
+chk/g53x_UD-Q2_K_XL_L8                           kernel vs exact sum over its q8_1 inputs: gate 1e-07 up 1.1e-07 down 1.1e-07 (max err / row-set max)
+chk/g53c_UD-Q2_K_XL_L8                           kernel vs exact sum over its q8_1 inputs: gate 3.3e-07 up 4.3e-07 down 1.2e-06 (max err / row-set max)
+chk/g53x_UD-Q2_K_XL_L8                           vs fp64: maxabs 0.08265 rel 0.0126 mincos 0.9999234 (worst [27641] 0.57352 vs 0.49087) | vs chk/g53x_UD-Q2_K_XL_L8: maxabs 0 rel 0
+chk/sycl_UD-Q2_K_XL_L8                           vs fp64: maxabs 0.08361 rel 0.0127 mincos 0.9999231 (worst [27641] 0.57448 vs 0.49087) | vs chk/g53x_UD-Q2_K_XL_L8: maxabs 0.01678 rel 0.00256
+chk/cpu_UD-Q2_K_XL_L8                            vs fp64: maxabs 0.1091 rel 0.0166 mincos 0.9997883 (worst [24800] 0.25984 vs 0.15074) | vs chk/g53x_UD-Q2_K_XL_L8: maxabs 0.1227 rel 0.0187
+chk/g53c_UD-Q2_K_XL_L8                           vs fp64: maxabs 0.08265 rel 0.0126 mincos 0.9999234 (worst [27641] 0.57352 vs 0.49087) | vs chk/g53x_UD-Q2_K_XL_L8: maxabs 4.649e-06 rel 7.1e-07
+== UD-Q2_K_XL_L75
+chk/g53x_UD-Q2_K_XL_L75                          kernel vs exact sum over its q8_1 inputs: gate 1.2e-07 up 1.3e-07 down 1e-07 (max err / row-set max)
+chk/g53c_UD-Q2_K_XL_L75                          kernel vs exact sum over its q8_1 inputs: gate 5e-07 up 3.6e-07 down 8.3e-07 (max err / row-set max)
+chk/g53x_UD-Q2_K_XL_L75                          vs fp64: maxabs 0.06261 rel 0.0131 mincos 0.9999165 (worst [49080] 0.66265 vs 0.72526) | vs chk/g53x_UD-Q2_K_XL_L75: maxabs 0 rel 0
+chk/sycl_UD-Q2_K_XL_L75                          vs fp64: maxabs 0.05965 rel 0.0125 mincos 0.9999185 (worst [49080] 0.66561 vs 0.72526) | vs chk/g53x_UD-Q2_K_XL_L75: maxabs 0.01327 rel 0.00276
+chk/cpu_UD-Q2_K_XL_L75                           vs fp64: maxabs 0.1009 rel 0.0211 mincos 0.9997800 (worst [47209] -0.031805 vs 0.069126) | vs chk/g53x_UD-Q2_K_XL_L75: maxabs 0.1007 rel 0.021
+chk/g53c_UD-Q2_K_XL_L75                          vs fp64: maxabs 0.06261 rel 0.0131 mincos 0.9999165 (worst [49080] 0.66265 vs 0.72526) | vs chk/g53x_UD-Q2_K_XL_L75: maxabs 0.001025 rel 0.000213
+== UD-Q4_K_XL_L3
+chk/g53x_UD-Q4_K_XL_L3                           kernel vs exact sum over its q8_1 inputs: gate 2e-07 up 2.2e-07 down 1.7e-07 (max err / row-set max)
+chk/g53c_UD-Q4_K_XL_L3                           kernel vs exact sum over its q8_1 inputs: gate 8.4e-07 up 1.1e-06 down 4.5e-07 (max err / row-set max)
+chk/g53x_UD-Q4_K_XL_L3                           vs fp64: maxabs 0.02816 rel 0.00606 mincos 0.9999238 (worst [36784] -0.26013 vs -0.23196) | vs chk/g53x_UD-Q4_K_XL_L3: maxabs 0 rel 0
+chk/sycl_UD-Q4_K_XL_L3                           vs fp64: maxabs 0.02898 rel 0.00624 mincos 0.9999246 (worst [46770] -0.45442 vs -0.42545) | vs chk/g53x_UD-Q4_K_XL_L3: maxabs 0.005953 rel 0.00128
+chk/cpu_UD-Q4_K_XL_L3                            vs fp64: maxabs 0.05964 rel 0.0128 mincos 0.9997915 (worst [39176] -0.24625 vs -0.18661) | vs chk/g53x_UD-Q4_K_XL_L3: maxabs 0.06108 rel 0.0132
+chk/g53c_UD-Q4_K_XL_L3                           vs fp64: maxabs 0.02816 rel 0.00606 mincos 0.9999238 (worst [36784] -0.26013 vs -0.23196) | vs chk/g53x_UD-Q4_K_XL_L3: maxabs 0.0007249 rel 0.000156
+== UD-Q4_K_XL_L8
+chk/g53x_UD-Q4_K_XL_L8                           kernel vs exact sum over its q8_1 inputs: gate 1.7e-07 up 1.8e-07 down 1e-07 (max err / row-set max)
+chk/g53x_UD-Q4_K_XL_L8                           vs fp64: maxabs 0.06971 rel 0.0106 mincos 0.9999235 (worst [25950] 2.2738 vs 2.3435) | vs chk/g53x_UD-Q4_K_XL_L8: maxabs 0 rel 0
+chk/sycl_UD-Q4_K_XL_L8                           vs fp64: maxabs 0.069 rel 0.0105 mincos 0.9999231 (worst [27065] -1.1565 vs -1.0875) | vs chk/g53x_UD-Q4_K_XL_L8: maxabs 0.0122 rel 0.00186
+chk/cpu_UD-Q4_K_XL_L8                            vs fp64: maxabs 0.1047 rel 0.0159 mincos 0.9998013 (worst [24818] 0.97001 vs 1.0747) | vs chk/g53x_UD-Q4_K_XL_L8: maxabs 0.1256 rel 0.0191
+== UD-Q4_K_XL_L75
+chk/g53x_UD-Q4_K_XL_L75                          kernel vs exact sum over its q8_1 inputs: gate 2e-07 up 2e-07 down 1.2e-07 (max err / row-set max)
+chk/g53x_UD-Q4_K_XL_L75                          vs fp64: maxabs 0.05604 rel 0.0112 mincos 0.9999150 (worst [47684] 0.22485 vs 0.16881) | vs chk/g53x_UD-Q4_K_XL_L75: maxabs 0 rel 0
+chk/sycl_UD-Q4_K_XL_L75                          vs fp64: maxabs 0.05628 rel 0.0113 mincos 0.9999137 (worst [49085] -0.27494 vs -0.33122) | vs chk/g53x_UD-Q4_K_XL_L75: maxabs 0.01269 rel 0.00253
+chk/cpu_UD-Q4_K_XL_L75                           vs fp64: maxabs 0.09625 rel 0.0193 mincos 0.9997680 (worst [25096] 1.2315 vs 1.1353) | vs chk/g53x_UD-Q4_K_XL_L75: maxabs 0.08937 rel 0.0178

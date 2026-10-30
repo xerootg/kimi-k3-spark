@@ -1,0 +1,35 @@
+attn indexer                     0.82 GB  {'Q8_0': 156, 'F32': 234}
+attn k_b                         0.52 GB  {'Q8_0': 78}
+attn kv_a_mqa                    0.29 GB  {'Q8_0': 78}
+attn kv_a_norm                   0.00 GB  {'F32': 78}
+attn norm                        0.00 GB  {'F32': 78}
+attn output                      5.41 GB  {'Q5_K': 77, 'Q6_K': 1}
+attn q_a                         0.68 GB  {'Q5_K': 77, 'Q6_K': 1}
+attn q_a_norm                    0.00 GB  {'F32': 78}
+attn q_b                         2.78 GB  {'Q8_0': 78}
+attn v_b                         0.70 GB  {'Q8_0': 78}
+dense ffn ffn_down               0.19 GB  {'Q6_K': 3}
+dense ffn ffn_gate               0.16 GB  {'Q5_K': 3}
+dense ffn ffn_norm               0.00 GB  {'F32': 3}
+dense ffn ffn_up                 0.16 GB  {'Q5_K': 3}
+nextn(MTP layer 78)              3.76 GB  {'Q8_0': 7, 'F32': 12, 'Q5_K': 4, 'Q3_K': 1, 'Q6_K': 1, 'Q2_K': 2}
+norm/other                       0.00 GB  {'F32': 75}
+output                           0.54 GB  {'Q4_K': 1}
+output_norm                      0.00 GB  {'F32': 1}
+routed ffn_down_exps            94.40 GB  {'IQ3_XXS': 71, 'IQ4_XS': 4}
+routed ffn_gate_exps            70.14 GB  {'IQ2_XS': 74, 'IQ3_XXS': 1}
+routed ffn_up_exps              70.14 GB  {'IQ2_XS': 74, 'IQ3_XXS': 1}
+router                           0.47 GB  {'F32': 150}
+shared ffn_down_shexp            0.78 GB  {'Q6_K': 74, 'Q8_0': 1}
+shared ffn_gate_shexp            0.65 GB  {'Q5_K': 74, 'Q6_K': 1}
+shared ffn_up_shexp              0.65 GB  {'Q5_K': 74, 'Q6_K': 1}
+token_embd                       0.65 GB  {'Q5_K': 1}
+TOTAL 253.868860416
+routed combos (gate,up,down): {('IQ2_XS', 'IQ2_XS', 'IQ3_XXS'): 71, ('IQ3_XXS', 'IQ3_XXS', 'IQ4_XS'): 1, ('IQ2_XS', 'IQ2_XS', 'IQ4_XS'): 3, ('Q2_K', 'Q2_K', 'Q3_K'): 1}
+first layer of each combo: {"('IQ2_XS', 'IQ2_XS', 'IQ3_XXS')": 3, "('IQ3_XXS', 'IQ3_XXS', 'IQ4_XS')": 8, "('IQ2_XS', 'IQ2_XS', 'IQ4_XS')": 75, "('Q2_K', 'Q2_K', 'Q3_K')": 78}
+dims [6144, 2048, 256] [2048, 6144, 256]
+per-expert bytes: min 12.09 MB max 16.32 MB avg(75) 12.22 MB
+per token: routed 8x75 = 7.333 GB; dense+shared+attn+router+output (all non-expert excl. MTP, excl. embd) = 14.788 GB; embd row 4224 B
+64 GB holds 5236 experts (5622 at GiB) = 27.3% of 19200
+32 GB holds 2618 experts (2811 at GiB) = 13.6% of 19200
+all routed experts (75 layers): 234.6713088 GB
