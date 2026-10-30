@@ -1131,6 +1131,12 @@ K3's speculative prefetch ported to GLM's graph (input 3: next ffn_norm of atten
 
 Engine reader for store v2 (512 KiB stride). First A/B was invalid (the cache snapshot is keyed to the store file, so the v2 leg started cold). Rerun with a v2 snapshot made by a warm-up leg: v2 4.839/4.829 (cold), v2 4.819/4.816, v1 4.907/4.870, v2 4.823/4.821, v1 4.905/4.906 tok/s; md5 9449ae5738 throughout. **v2 -1.7 %.** Unlike K3 (whose misaligned IQ2_XXS records gained ~8 %), GLM's 12091392-byte records are already 4096-aligned and the stride pads them 4 %. Reader kept (the NUC stores are v2); the Spark stays on v1. A profiled leg (`GGML_CUDA_OP_PROFILE=16`) ran in the same window: 4.75 tok/s, same md5; analysis to follow.
 
+### GLM-5.3: the per-token budget at 4.90 tok/s, and prefill (2026-10-30)
+
+**Op profile** (`GGML_CUDA_OP_PROFILE=16`, production config, 4.75 tok/s under the profiler; analysis in `docs/glm-floor-profile-2026-10-30.md`): of 204 ms per token, routed-expert host-bank MUL_MAT_ID 72.5 ms (7.33 GB of real experts, but the split GEMV runs 17 positions per layer of which 9 are zero/scratch rows, so the logical payload is 15.6 GB; 101 GB/s achieved), the spine's device matmuls 76.6 ms (Q5_K 38.8, Q8_0 24.3, Q6_K 5.8, F32 5.2; 14.8 GB per token, ~193 GB/s), host hooks 42.0 ms (of which the real-lookup wait is 28.5 ms: the remaining NVMe exposure), attention primitives 3.4 ms, the rest small. Ranked attacks: skip the dummy rows (patch 0009 in progress), Q5_K/Q6_K spine GEMV for GB10, the hook/mailbox overhead, the DSA indexer at short context.
+
+**Prefill** (ubatch legs, synthetic 2k/8k/30k-token prompts, native build): ubatch 512 24.0 tok/s, 1024 37.4, 2048 65.9 (30k tokens in 494 s against ~21 min); the production manifest now uses 2048 (MemAvailable low point 10.3 GB against the 4.3 GB valve reserve; decode md5 unchanged). Patch 0007 (miss-only staging) cut prefill bytes 39 % at ubatch 512 (3822 -> 2314 GB) but was 10 % slower (21.0 vs 24.0 tok/s): prefill is not NVMe-bound; not deployed, analysis pending. Decode after a long prompt runs 4.0-4.2 tok/s (context 8-30k).
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because
