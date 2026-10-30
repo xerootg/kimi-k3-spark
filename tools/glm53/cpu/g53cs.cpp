@@ -225,6 +225,13 @@ static void memwarm_start(double mbps) {
 }
 
 int main(int argc, char **argv) {
+  if (argc == 2 && !strcmp(argv[1], "--help")) {
+    puts("usage: g53cs IDX BIN PORT\n"
+         "IDX: gid gate_type down_type offset; BIN: K3XS store\n"
+         "K3X_CPU_CPUS and K3X_MUFU=/mufu are required for serving\n"
+         "K3X_DISK_TIER=1 enables disk reads; K3X_MAX_GB caps resident records");
+    return 0;
+  }
   if (argc < 4) {
     fprintf(stderr, "usage: g53cs IDX BIN PORT (see the head of g53cs.cpp)\n");
     return 1;

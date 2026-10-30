@@ -12,6 +12,9 @@ on:
       - "tools/bitexact/cpu/k3cs.cpp"
       - "tools/bitexact/cpu/build_k3cs.sh"
       - "tools/bitexact/expert_disk.h"
+      - "tools/bitexact/mufu/mufu_emu.h"
+      - "tools/glm53/**"
+      - "versions.env"
       - "docker/k3x-serve.Dockerfile"
       - ".github/workflows/k3x-serve.yml"
   workflow_dispatch:
@@ -43,7 +46,8 @@ jobs:
           context: .
           file: docker/k3x-serve.Dockerfile
           platforms: linux/amd64
-          push: true
+          load: true
+          push: false
           build-args: |
             LLAMA_SHA=${{ steps.v.outputs.llama_sha }}
           labels: |
@@ -51,3 +55,14 @@ jobs:
           tags: |
             ghcr.io/xerootg/k3x-serve:${{ steps.v.outputs.build }}
             ghcr.io/xerootg/k3x-serve:latest
+      - name: GLM binaries smoke (no GPU or tables)
+        run: |
+          set -euo pipefail
+          image=ghcr.io/xerootg/k3x-serve:${{ steps.v.outputs.build }}
+          docker run --rm --network none --entrypoint /opt/k3x/g53cs "$image" --help
+          docker run --rm --network none --entrypoint /opt/k3x/g53x "$image" --help
+      - name: publish tested image
+        run: |
+          set -euo pipefail
+          docker push ghcr.io/xerootg/k3x-serve:${{ steps.v.outputs.build }}
+          docker push ghcr.io/xerootg/k3x-serve:latest

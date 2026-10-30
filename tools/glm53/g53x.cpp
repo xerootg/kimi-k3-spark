@@ -1050,6 +1050,14 @@ static int serve_index(const char * setp, const char * storep, const char * hidp
 }
 
 int main(int argc, char ** argv) {
+    // Before any queue/device/table setup: usable in image CI without a GPU.
+    if (argc == 2 && !strcmp(argv[1], "--help")) {
+        puts("usage: g53x SET STORE HIDDEN - serveidx PORT\n"
+             "HIDDEN: - reads STORE.json; SET: layer expert lines, IDX or all\n"
+             "G53X_EXACT=1/2: exact IQ kernels; G53X_MUFU=/mufu\n"
+             "K3X_DISK_TIER=1 enables disk reads; K3X_MAX_GB caps resident records");
+        return 0;
+    }
     if (argc < 7) { fprintf(stderr, "usage: see source\n"); return 1; }
     if (!strcmp(argv[5], "serveidx")) return serve_index(argv[1], argv[2], argv[3], atoi(argv[6]));
     std::string pre = argv[1], mode = argv[5];
