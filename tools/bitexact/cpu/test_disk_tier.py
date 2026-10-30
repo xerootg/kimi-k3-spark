@@ -7,7 +7,8 @@ Run from any directory:
   python3 tools/bitexact/cpu/test_disk_tier.py --baseline-ref <pre-change-commit>
 
 Default baseline: the parent of the first commit adding ../expert_disk.h (HEAD
-before that file is committed). Build and fixture files use a unique /tmp directory,
+before that file is committed). Build and fixture files use a unique directory under $TMPDIR (default /tmp; it must be a block
+filesystem, not tmpfs, for the O_DIRECT cases),
 which is removed even after failures. No production files are changed.
 The only download is ggml-common.h at versions.env's LLAMA_SHA, into the
 automatically cleaned workspace; repository dependency files are not changed.
@@ -336,7 +337,7 @@ def main():
     parser.add_argument("--uring", action="store_true")
     parser.add_argument("--baseline-ref")
     args = parser.parse_args()
-    with tempfile.TemporaryDirectory(prefix="k3cs-disk-", dir="/tmp") as work:
+    with tempfile.TemporaryDirectory(prefix="k3cs-disk-") as work:
         WORK = Path(work)
         baseline = baseline_source(args.baseline_ref)
         build(args.uring, baseline)

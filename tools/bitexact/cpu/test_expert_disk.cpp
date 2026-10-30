@@ -275,7 +275,17 @@ int main(int argc, char ** argv) {
         CHECK(m.hits == 1 && m.lru == 1 && m.bytes == 4096 && m.misses == 1);
     }
     // EOF and O_DIRECT EINVAL are failures, not deadline misses; slots recover.
+    // tmpfs accepts misaligned O_DIRECT reads, so only test EINVAL where the filesystem enforces it.
+    bool enforces_align;
+    {
+        alignas(4096) static char probe[8192];
+        int fd = open(path.c_str(), O_RDONLY | O_DIRECT);
+        CHECK(fd >= 0);
+        enforces_align = pread(fd, probe + 1, 4096, 1) < 0;
+        close(fd);
+    }
     for (uint64_t offset : {uint64_t(b.size() + 4096), uint64_t(1)}) {
+        if (offset == 1 && !enforces_align) continue;
         k3disk::Cache cache(path.c_str(), 4096, 4096, 1);
         auto invalid = a; invalid.offset = offset;
         int h = cache.acquire(invalid); CHECK(!cache.wait(h, deadline())); cache.release(h);
