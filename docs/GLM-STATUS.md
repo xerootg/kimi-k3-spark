@@ -1,0 +1,93 @@
+# GLM-5.3 current state
+
+As of 2026-10-30. This page separates deployed behavior, measured experiments and estimates. The [experiment ledger](experiments.md) is the chronological record; older roadmap priorities are superseded by the results below.
+
+## What runs today
+
+The Spark serves full GLM-5.3 UD-Q2_K_XL, chosen as the smallest quant above the quality cliff of the largest model; Flash was rejected. Local K3 pods were scaled down and their files retained. The GH200 still serves K3; moving it to GLM remains the owner's decision. Sources: [roadmap and decision log](roadmap.md), [GLM bring-up ledger](experiments.md#glm-53-weights-laid-out-store-v2-ssd-tier-g53x-serveidx-2026-10-29).
+
+| Deployed setting or measured step | Value | Source |
+|---|---|---|
+| Short-prompt decode progression | 3.76 → 3.85 tok/s with cache expansion → 4.25 with byte strides → 4.90–4.93 with prediction | [Ledger: cache, byte-stride and predictive-prefetch legs](experiments.md) |
+| Expert cache / context / request slots | 80000 MiB / 65536 tokens / one slot | [Production profile configuration](glm-floor-profile-2026-10-30.md), [GH200 service trade](gh200-glm-plan.md) |
+| Cache expert slots | 6859 restored experts; distinct layout groups constrain capacity | [Prefill analysis](experimental/0007-prefill-analysis.md), [placement assumptions](../tools/glm53/PLACEMENT.md) |
+| Spark store and active knobs | Store v1; split expert GEMV, byte strides, predictive prefetch input 3, second chance, snapshot restore and memory valve | [Profile configuration](glm-floor-profile-2026-10-30.md), [patches](../patches/README.md) |
+| Greedy decode identity gate | md5 prefix `9449ae5738`; full digest `9449ae5738f2e56f99ab7ab6e9626eb5` for the standard fixture | [Ledger](experiments.md), [prefill analysis](experimental/0007-prefill-analysis.md) |
+| Prefill with larger ubatches | 512: 24.0 tok/s; 1024: 37.4; 2048: 65.9; production now uses 2048 | [Latest prefill ledger](experiments.md#glm-53-the-per-token-budget-at-490-toks-and-prefill-2026-10-30) |
+| Long-prompt qualification | 30000-token measured prompt: 493.8 s, 60.76 tok/s; decode after long prompts: about 4.0–4.2 tok/s | [Prefill analysis](experimental/0007-prefill-analysis.md), [ledger](experiments.md) |
+
+The larger ubatch amortizes repeated weight passes. The detailed prefill analysis measured the larger-ubatch legs with the experimental miss-only patch; it explicitly left the unpatched large-ubatch comparison open. The later ledger records the production setting and rejection of that patch, but does not supply a separate unpatched large-ubatch timing table. Treat the headline as the reported rollout result with that provenance caveat, rather than proof that every production prompt sustains it. Sources: [analysis](experimental/0007-prefill-analysis.md), [latest ledger](experiments.md).
+
+## Where a token's time goes, and the remaining levers
+
+The unprofiled budget is about 204 ms/token. These four large classes come from instrumented node intervals, not an exact partition of uninstrumented wall time. The profiler reduced throughput from 4.90 to 4.75 tok/s, and its class totals must not be corrected by subtracting a uniform overhead. Source: [per-token profile](glm-floor-profile-2026-10-30.md).
+
+| Large class | ms/token | Meaning | Source |
+|---|---:|---|---|
+| Spine device matmuls | 76.6 | Attention projections, shared/dense FFNs, router/indexer and head; semantic subgroups are mixed | [Profile](glm-floor-profile-2026-10-30.md) |
+| Routed expert host-bank matmuls | 72.5 | Split execution visits 17 positions per layer for 8 real experts and 9 zero/scratch positions | [Profile](glm-floor-profile-2026-10-30.md) |
+| Host hooks / slot-map handoffs | 42.0 | Includes about 28.5 ms of remaining exposed lookup wait; not pure CPU overhead | [Profile](glm-floor-profile-2026-10-30.md) |
+| Visible attention primitives | 3.4 | Flash attention, sorts and RoPE; projections are in the spine class | [Profile](glm-floor-profile-2026-10-30.md) |
+
+Other small operations and the unprinted tail account for the remainder. The old unprofiled “GPU/host floor” estimate is superseded: removing all observed lookup wait alone would leave about 175.6 ms, or 5.69 tok/s, conditional on everything else staying fixed. Neither that bound nor logical expert bytes measures physical DRAM traffic. Sources: [profile](glm-floor-profile-2026-10-30.md), [weight inventory](glm53-kernels.md).
+
+The order below follows the measured floor analysis, with the NUC integration and prefill experiments called out separately. Targets are screening estimates, overlap each other and must not be added.
+
+| Rank / lever | Status | Expected gain and next gate | Source |
+|---|---|---|---|
+| A: Skip dummy expert rows | In flight: patch 0009 reported in progress | Target 5–20 ms/token; saving is unmeasured. Preserve real-row reductions and exact zero behavior, then hardware A/B | [Profile](glm-floor-profile-2026-10-30.md), [latest ledger](experiments.md) |
+| B: GB10 Q5_K/Q6_K spine GEMV | Parked / proposed | Target 4.46–8.92 ms from improving those groups by 10–20%; Hopper results are precedent, not a GB10 result | [Profile](glm-floor-profile-2026-10-30.md) |
+| C: Real IQ host-bank kernels | Parked / proposed after dummy isolation | Target 7.25–14.49 ms for a 10–20% interval improvement; overlaps dummy-row savings | [Profile](glm-floor-profile-2026-10-30.md) |
+| D: Hook/mailbox work and CUDA graph coverage | In flight: remote audit preserves existing hook edits; general gain unmeasured | Target 0–5 ms; trace actual handoffs and graph replay before assigning a cause | [Profile](glm-floor-profile-2026-10-30.md), [remote audit](../evidence/remote-tier-result.md) |
+| E: Short-context DSA fast path | Parked / proposed | Target 1–5 ms overall; sort-only ceiling about 1.01 ms. Mask, ordering and reductions still need an exactness proof | [Profile](glm-floor-profile-2026-10-30.md) |
+| F: Better miss readiness / resident NUC service | In flight: placement tooling and engine patch under test | A 10–25% reduction of exposed wait would save 2.85–7.13 ms; no measured remote decode gain yet | [Profile](glm-floor-profile-2026-10-30.md), [placement](../tools/glm53/PLACEMENT.md), [remote audit](../evidence/remote-tier-result.md) |
+| Prefill ubatch increase | Measured; deployed setting reported | 24.0 → 65.9 tok/s at ubatch 2048; see provenance caveat above | [Ledger](experiments.md), [analysis](experimental/0007-prefill-analysis.md) |
+| Further prefill batching / direct bank path | Parked / proposed | Ubatch 4096 fit suggests about 1.5× over 2048, untried; direct-bank benefit unquantified and small cache groups constrain it | [Prefill analysis](experimental/0007-prefill-analysis.md), [ledger](experiments.md) |
+| MTP decode multiplier | Parked after measurement | No positive gain established; as-is result below supersedes optimistic study scenarios | [MTP ledger](experiments.md#glm-53-mtp-speculative-decoding-is-a-net-loss-today-and-changes-output-2026-10-30), [study](experimental/mtp/STUDY.md) |
+
+## NUC tier: components proven, production integration still open
+
+CUDA-exact means matching the CUDA implementation's float bits, including its quantization, reduction order, MUFU activation tables, FTZ and NaN behavior. The owner verified CPU reference and laptop iGPU stages against CUDA on 96 cases across representative layers; served computed rows matched too. Zero-row NaN sentinels deliberately request local fallback. The optimized CPU implementation preserves that scalar oracle's arithmetic. Sources: [exact result](../tools/glm53/EXACT-RESULT.md), [CPU result](../tools/glm53/cpu/SOL-RESULT-2.md), [kernel documentation](glm53-kernels.md).
+
+The roadmap reports a fast-exact iGPU candidate (`G53X_EXACT=2`) at about 1.5× fast-path cost and CPU math around 2 ms/expert. Its standalone `FASTEXACT-RESULT.md` is absent here, as is `NUC-DEPLOY.md`; the checked-in [exact selector](../tools/glm53/g53x_exact.inc) maps any nonzero setting to the same exact kernels. Thus the fast-exact report is owner-reported progress, not a verified distinct deployed mode in this checkout. Sources: [roadmap](roadmap.md), [remote audit](../evidence/remote-tier-result.md). Optimized CPU synthetic timings reach roughly 1.5–2.3 ms/expert with 12 workers, excluding sockets/disk and using a closed-form activation subset; they are not NUC end-to-end measurements. Source: [CPU result](../tools/glm53/cpu/SOL-RESULT-2.md).
+
+| Service / hop | Measured latency | Relation to overlap budget | Source |
+|---|---|---|---|
+| Spark → nuc2 empty RTT | p50 0.104 ms, p99 0.206 ms | Network itself is small | [Survey findings](../survey/FINDINGS.md) |
+| Spark → nuc2 resident fast, k=1 | p50 0.917 ms, p99 2.023 ms | Small resident requests look feasible; fast arithmetic is not exact | [Survey findings](../survey/FINDINGS.md) |
+| Same, k=8 | p50 3.493 ms, p99 4.613 ms | Already exceeds mean layer spacing | [Survey findings](../survey/FINDINGS.md) |
+| Spark → nuc2 resident scalar exact, k=1 | p50 11.448 ms, p99 12.720 ms | Does not fit | [Survey findings](../survey/FINDINGS.md) |
+| Spark → nuc2 cold prototype fast, k=1 | p50 7.913 ms | Synchronous read/repack/compute does not fit | [Survey findings](../survey/FINDINGS.md) |
+| Later laptop disk tier, fast, k=1 / k=8, all cold | p50 3.8 / 15.6 ms | Improved implementation, different host; still no proof of timely NUC cold rows | [Disk result](../tools/glm53/DISK-RESULT.md) |
+
+The planning window is about 2.72 ms: the mean spacing at 4.9 tok/s across 75 MoE layers. It is not a measured post-to-needed deadline. Start with a small resident request and measure the lower-tail overlap window; the engine audit proposes a 2500 µs deadline and one row, then a two-row A/B. The row cap is global across hosts. Sources: [survey](../survey/FINDINGS.md), [remote audit](../evidence/remote-tier-result.md).
+
+The disk tier is implemented: preallocated host-USM LRU, in-place reader-thread repack, resident-first compute and per-row NaN deadline fallback. Resident, cold and LRU-hit rows passed byte comparisons against the corresponding kernel reference. The request allocation counters were zero in both exact and fast merged paths. Zero faults is a separate unmet gate: the merged laptop runs had 5 minor faults in exact mode and 1 in fast mode, all in i915 GEM mappings; major faults were zero. Recheck on the NUC driver. Sources: [disk result](../tools/glm53/DISK-RESULT.md), [merge result](../tools/glm53/MERGE-RESULT.md).
+
+What remains is a real routing trace and held-out replay for ownership, exact-mode NUC latency/tails, the engine's remote-tier patch under hardware test, and the service image. Placement code currently demonstrates synthetic ownership only; its deployment script selects non-exact fast mode and cannot certify production. The audit has offline parser, deadline, NaN-hole and fallback regressions, but no CUDA build or end-to-end remote equivalence/throughput run. The image build/deployment is not established by the supplied records. Sources: [placement result](../tools/glm53/PLACEMENT-RESULT.md), [placement procedure](../tools/glm53/PLACEMENT.md), [remote audit](../evidence/remote-tier-result.md).
+
+Use unique owner-filtered supported sets, not both disk servers' all-record advertisements. The current wire protocol sends actual inputs and has no predictor weight-prefetch channel, so placing an expert on remote SSD does not make its cold record arrive early. Local fallback must remain byte-exact and available. Sources: [placement](../tools/glm53/PLACEMENT.md), [remote audit](../evidence/remote-tier-result.md).
+
+## Dead ends measured today
+
+| Experiment | Result and one-line reason | Source |
+|---|---|---|
+| Store v2 on Spark, patch 0006 | About 4.82 vs 4.90 tok/s, −1.7%: already-aligned GLM records gain no read advantage and padding adds 4% bytes; retain reader compatibility for NUC stores, keep Spark v1 | [Ledger](experiments.md), [patch README](../patches/README.md) |
+| Miss-only prefill, experimental 0007 | About 21 vs 24 tok/s at ubatch 512 despite 39% fewer logical read bytes: serialized hit copies, warming and synchronization cost more than saved reads | [Ledger](experiments.md), [analysis](experimental/0007-prefill-analysis.md), [design](experimental/0007-prefill-design.md) |
+| MTP as-is | About 90% draft acceptance yet 12–16% slower: 4.49 baseline vs 3.97 MTP and 3.76–3.87 exact-columns MTP, with different output hashes; batch verification loses prediction and changes arithmetic beyond expert matmuls | [Measured ledger](experiments.md), [study](../evidence/mtp-study.md), [exact-column scope](experimental/mtp/PATCH-0008.md) |
+
+The exact-column harness does pass singleton-equivalent expert arithmetic with its knob enabled; that is not whole-model equivalence. Attention, indexer, dense dispatch/fusions and batch prediction still need work. The archived MTP study's speed scenarios predate the measured loss. Sources: [ledger](experiments.md), [MTP archive](experimental/mtp/README.md), [study](experimental/mtp/STUDY.md).
+
+## GH200: decision pending the owner
+
+The choice is whether to reserve a reversible GLM UD-Q5_K_XL benchmark window and eventually displace K3. The plan estimates a 562.46 GB GGUF, 534.35 GB active expert store and roughly 75% expert residency with its proposed tier budgets. Estimated warm decode is roughly 4–9 tok/s with about 2 tok/s downside under less favorable routing; none is measured GLM GH200 throughput. Capacity, hit rate, indexer/KV memory and long-prefill peaks need hardware gates. Source: [GH200 plan](gh200-glm-plan.md).
+
+The service cost is losing the existing K3 backend's two 256k slots. Spark GLM currently offers one 64k slot and a different model/quant; it cannot transparently absorb those sessions. The plan recommends a benchmark window, not immediate production replacement. Its old Spark prefill comparison predates today's larger-ubatch result and should not be reused as current evidence. Keep K3 artifacts/config for rollback; no GH200 conversion is recorded. Sources: [GH200 plan](gh200-glm-plan.md), [decision log](roadmap.md), [latest prefill ledger](experiments.md).
+
+## Method and ownership
+
+Patches are opt-in knobs, not automatic speed claims. The patch series moves from mmap prefetch and the rejected mmap zero-copy path to the explicit expert store, byte-addressed cache slots, graph prediction and store-format compatibility. Experimental prefill and MTP patches remain archived outside the Dockerfile's applied patch directory. The broader byte-stride type audit establishes alignment coverage, not a new measured GLM gain. Sources: [patches 0001–0006](../patches/README.md), [byte-stride audit](experimental/0004b-byte-stride-types.md), [prefill ledger](experiments.md).
+
+Workers (sol and Copilot) draft bounded changes; the owner reviews them and the hardware gates decide. Every candidate is A/B'd from the same immutable cache snapshot, with the original greedy fixture and a byte-identical md5 gate before accepting a speed claim. A changed store needs its own equivalent warm snapshot: the first store-format comparison was invalid because its candidate started cold. Keep model, prompt, context, cache budget and output fixture matched; report any deliberate difference. Sources: [decision log](roadmap.md), [patch README](../patches/README.md), [store-format ledger](experiments.md), [profile measurement procedure](glm-floor-profile-2026-10-30.md).
+
+Exact math, allocation/fault gates and end-to-end speed are separate gates. A remote identity run must actually use remote rows, rather than merely pass through local fallback; absent, refused or late rows must fall back locally. No production offload speedup, image rollout or GH200 migration is implied by a worker report or synthetic replay. Sources: [remote audit](../evidence/remote-tier-result.md), [merge result](../tools/glm53/MERGE-RESULT.md), [placement result](../tools/glm53/PLACEMENT-RESULT.md).

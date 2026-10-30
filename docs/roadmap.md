@@ -160,35 +160,10 @@ The fork `xerootg/llama.cpp` is a research fork and will not be upstreamed. Its 
 
 ## GLM-5.3
 
-- 2026-10-29 phase 1 (laptop only, `docs/glm53-kernels.md`, `tools/glm53/`): UD-Q2_K_XL experts are IQ2_XS/IQ3_XXS (not
-  Q2_K), UD-Q4_K_XL Q4_K/Q5_K; ggml-sycl already emits native DP4A; per-field row repack makes the iGPU IQ kernels
-  memory-bound: g53x 197-270 us per Q2 expert (2-3x ggml-sycl), 359-418 us per Q4 expert, exact to 1e-7; next: GLM routing
-  traces, g53x serve mode, measure on Arrow Lake.
-- 2026-10-29 evening, **GLM-5.3 UD-Q2_K_XL is now the local pool's model** (user's choice: the smallest quant above the
-  ~2-bit cliff of the largest GLM; Flash rejected). Local K3 left the pool (Spark + nuc2 scaled to 0, files kept); the
-  GH200 still serves K3.
-  - Done: shards on the NAS (canonical) and the Spark; store v2 (512 KiB stride, 247.5 GB) built on the Spark and copied
-    to nuc2 and nuc3; k3cs SSD tier (PR #4); g53x serveidx (bit-exact, laptop). See the ledger entry of the same date.
-  - Pool shape: about 185 GB of RAM (Spark 110, nuc2 50, nuc3 24) for 238 GB of experts, so ~20-25 % stream from SSD;
-    the pool's SSDs read ~21 GB/s together (Spark 11, nuc2 5.7, nuc3 4.6). Every member holds the full store; a routing
-    table gives each expert one owner, RAM or SSD.
-  - Next, in order: (1) port the Spark engine's expert store to `glm-dsa` and get a first GLM token with a gold md5;
-    (2) routing traces from that engine, then the owner table; (3) g53x serveidx on nuc2 (Arrow Lake numbers) with an
-    SSD tier like k3cs's; (4) the routing table in the engine.
-
-- 2026-10-30: **GLM on the Spark is at 4.93 tok/s in production** (3.76 -> 3.85 cache 80000 -> 4.25 byte-stride patch 0004
-  -> 4.90 predictive prefetch patch 0005; md5 `9449ae5738` throughout). The bottleneck moved: the miss wait is mostly
-  hidden; ~168 ms per token of GPU/host work remains (never profiled; a profiled leg is in progress). Spark-alone ceiling
-  with this structure ~5.9 tok/s.
-  - NUC side: GLM expert math is **CUDA-exact** on the CPU (`tools/glm53/cpu/g53cs`, ~2 ms/expert) and on the iGPU
-    (`g53x` `G53X_EXACT=2`, ~1.5x the fast path); the iGPU server has a disk tier with an allocation gate. Latency
-    survey (`survey/FINDINGS.md`): Spark->nuc2 RTT 0.10 ms; resident k=1 0.92 ms p50 / 2.0 p99 from the Spark; k=8
-    3.5 ms; the per-layer window is ~2.72 ms, so 1-2 remote experts per layer per NUC.
-  - Next levers, ranked: (1) MTP speculative decoding with GLM's own draft head (the only path past ~6 tok/s; exactness
-    of the verify batch under study), (2) the 168 ms floor after the profile, (3) prefill for 15-45k prompts (today
-    ~20 min for 30k: the staging path re-reads every used expert per ubatch; fix in progress), (4) the NUC remote tier
-    (placement tooling in progress), (5) GLM Q5_K_XL on the GH200 (displaces K3; user's call).
-  - Store v2 in the engine (patch 0006 draft): first A/B invalid (v2 leg started cold); rerun in progress.
+See [GLM-5.3 current state](GLM-STATUS.md) for the deployed configuration, measured decode and prefill results,
+per-token budget, ranked remaining work, NUC integration gates and the pending GH200 decision.
+That page supersedes the earlier GLM priorities here; the [experiment ledger](experiments.md) retains the dated results
+and the decision log below retains the model and worker-policy decisions.
 
 ## Cluster layout for this work
 
