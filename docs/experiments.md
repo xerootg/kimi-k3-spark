@@ -1110,6 +1110,19 @@ About 2 % per 4 GB of cache; the context costs RAM, not speed. A sol analysis (`
 
 **CUDA-exact GLM expert math.** Sol derived `tools/glm53/SPEC-glm.md` from the ggml-cuda sources and wrote `glmdump` (CUDA reference dumps from the production `libggml-cuda.so`), an exact CPU path and an exact g53x mode. On the Spark, g/u/h matched CUDA bit for bit at once on L3/L8/L75 x 32 cases; dn differed only in NaN payload (CUDA 0x7fffffff, CPU 0x7fc00000) in the sigma-1000 case. Canonicalising NaN in `ftz()` made all four stages bit-identical on all 96 cases. On the laptop iGPU, g53x exact matches the CPU path, and `cuda_serve_check.py` (g53x serveidx fed the CUDA inputs) changes no computed row; only all-zero rows differ, sent as the NaN "missing" sentinel by design (the engine recomputes them locally). **But the exact path is scalar: ~24 ms per expert against 0.42-0.84 ms for the fast path**, unusable inside the ~3 ms budget. Details in `tools/glm53/EXACT-RESULT.md`.
 
+### GLM-5.3: byte-stride cache slots, +10.3 % (2026-10-30, patch 0004)
+
+The padding found in the 2026-10-29 analysis (records rounded to a multiple of 4096 and of the 74 and 98 B block sizes, 12091392 B records in 14852096 B slots) is gone: mmvq takes the bank's nb[2]/nb[3] as byte strides, so a slot is the record rounded to 4096. Native build `~/llama-k3-bs` (S2 tree + the patch), GLM-5.3, 80000 MiB, 64k context, legs from the same snapshot, 2 x 128-token runs each:
+
+| leg | `LLAMA_EXPERT_STORE_BYTE_STRIDE` | tok/s | md5 |
+|---|---|---|---|
+| BS0 | 0 | 3.831 / 3.862 | 9449ae5738 |
+| BS1 | 1 | 4.252 / 4.241 | 9449ae5738 |
+| BS0b | 0 | 3.859 / 3.856 | 9449ae5738 |
+| BS1b | 1 | 4.249 / 4.253 | 9449ae5738 |
+
++10.3 %, bit-identical, same MemAvailable (12.5 GB). Misses read under the early matmul fell from 1.80 to 1.44 per layer (6.2 -> 6.6 of 8 experts complete at the early lookup). Matches the estimate from the cache legs (~2 % per 4 GB, ~23 % more slots). K3's mixed IQ2_XXS layers were padded up to 30 % by the same rule; worth the same A/B when K3 runs again.
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because

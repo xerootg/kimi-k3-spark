@@ -589,3 +589,18 @@ read by `MUL_MAT_ID`), with these changes:
 Stats are logged every 4096 fills and at exit (hit rate, bytes read for
 decode and prefill). Patches 0001 and 0002 are untouched by this; 0001's
 prefetch hook sees the bank tensors (anonymous memory) and is a no-op there.
+
+## 0004-byte-stride-slots
+
+The MoE cache's slot stride used to be a multiple of 4096 **and** of every part's ggml block size, because mmvq turned
+the bank's nb[2] into a block stride. For GLM-5.3 UD-Q2_K_XL (IQ2_XS 74 B and IQ3_XXS 98 B blocks) that padded
+12091392-byte records to 14852096-byte slots: 22.8 % of the cache RAM. This patch passes nb[2]/nb[3] to mmvq as byte
+strides (an expert is base + slot * nb02 bytes, then the unchanged block indexing), so only the O_DIRECT 4096 rounding
+is left. Only pointer arithmetic changes; for ordinary tensors (nb02 a multiple of the type size) the pointer is the
+same. `LLAMA_EXPERT_STORE_BYTE_STRIDE=1` turns it on (default 0); the old padded rule stays for paths that cannot use
+byte addressing (the CPU split `GPU_SLOTS=0`, CPU MUL_MAT_ID, types other than IQ2_XS / IQ3_XXS / IQ4_XS).
+
+Measured on the Spark, GLM-5.3, 80000 MiB cache, 64k context, 128-token runs, legs off/on/off/on from the same cache
+snapshot: 3.83/3.86, **4.25/4.24**, 3.86/3.86, **4.25/4.25 tok/s (+10.3 %)**, md5 `9449ae5738` in every run, same
+MemAvailable. Written by a sol worker (gpt-6.1-sol) from the code; path audit in its RESULT (scratch), summary in
+docs/experiments.md (2026-10-30).
