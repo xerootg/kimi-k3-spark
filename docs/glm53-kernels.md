@@ -210,20 +210,74 @@ Q4_K_XL is the quality choice, and the Spark would stream almost twice the bytes
    K3 window: the user's call.
 2. **g53x serve mode:** the k3x wire protocol and arena (`serveidx`, host-USM records, immediate lists, forcewake,
    memwarm, trace) with hidden size 6144, types per record, and the field-run repack done at export. Then the CPU
-   split from k3x (`K3X_CPU_SPLIT`), with g53c as the CPU half and a Q6_K CPU kernel.
+   split from k3x (`K3X_CPU_SPLIT`), with g53c as the CPU half and a Q6_K CPU kernel. **Done (first part), see
+   section 9:** the repack runs once at load instead of at export; no trace, no CPU split yet.
 3. **Measure on Arrow Lake** (nuc2-class) under the k3x conditions (EPP performance, forcewake, memwarm, 8 ms gaps),
    k = 1-3 like the engine.
 4. **Upstream ggml-sycl:** the IQ2_XS / IQ3_XXS / IQ4_XS reorder with the field-run layout, measured with `glmbench`.
 5. **GH200, UD-Q5_K_XL:** 562 GB > ~537 GB of HBM + LPDDR, so it runs on the expert store with ~95 % resident. Its experts
    are Q5_K/Q6_K: test ggml CUDA's GEMV against the Q6_K TMA GEMV and the field-run layout, when K3 can spare the box.
 
+## 9. g53x serveidx: GLM experts behind the k3x protocol
+
+`g53x SET STORE HIDDEN - serveidx PORT` serves a K3XS expert store (`tools/repack-experts.py`, v1 or v2) with the
+wire protocol of k3x `serveidx`, so the Spark engine (`rrclient.c`, patch 0003) talks to either server unchanged:
+
+- Request: 17 int32 `{k, gid_1..gid_k, 0.., seq in hdr[16] when k < 16}`, then `HIDDEN` float32 x. Reply: k rows of
+  `HIDDEN` float32 in request order, each streamed when its down kernel is done (`K3X_NOSTREAM=1`: one down launch,
+  then all rows). If k is outside 1..16, the connection is closed. `gid = layer * n_expert + expert`, where n_expert
+  comes from the store header (256 for GLM, 896 for K3).
+- As in k3x: if any id is not served, k rows of NaN come back. That covers a layer not in the store, an expert not in
+  SET, a layer with unsupported types (GLM's MTP layer 78, Q2_K/Q3_K), and ids of two kinds mixed in one request. The
+  engine then computes those experts itself. An all-zero row is sent as NaN and counted (`conn N: M all-zero rows sent
+  as NaN so far` at connection close, as in k3cs). The log lines (`loaded ... host USM arena ...`, `self-check ok`,
+  `serving on PORT (busy-poll)`, `K3X_MAX_GB ... reached`) are k3x's.
+- The store is parsed by `tools/bitexact/expert_disk.h`, which now also reads v2 (per-layer stride). The tensor types
+  and the FFN size of each layer come from its index entry: FFN = gate bytes / gate row bytes, and the up and down sizes
+  are checked against it. The index stores only bytes, so the hidden size comes from `STORE.json`, the sidecar that
+  repack-experts.py writes (`HIDDEN` = `-`; the gate tensor's `dims`), or from a number. Kernels are instantiated per
+  (hidden, FFN) pair (`G53X_DIMS`, default 6144 x 2048): with a runtime row length the kernels ran about 1.5x slower.
+- SET: `layer expert` lines (the engine's `LLAMA_EXPERT_STORE_REMOTE_SET`), k3x IDX lines `gid tg td offset` (checked
+  against the store), or `all`. At startup every listed expert is read once with pread, repacked to the field-run
+  layout, and placed in 1 GiB host-USM chunks. The request slot (header, x, rows, pointer table, h) is allocated before
+  serving, so the request path allocates nothing. The kernels take a per-expert pointer table instead of slot ids.
+- Env (k3x names): `K3X_MAX_GB` (24), `K3X_SETOUT`, `K3X_KEEPCACHE`, `K3X_NOSTREAM`, `K3X_RT`, `K3X_RX_SPIN_US`,
+  `K3X_MEMWARM`, `K3X_MEMWARM_CPU`, `K3X_FORCEWAKE`. K3-only parts (SiTU, softcap, MUFU tables) do not apply. Trace,
+  `K3X_CTL` and the CPU split are not ported yet.
+
+Test: `./tools/glm53/build-sycl.sh && python3 tools/glm53/serve_test.py`. The test uses only the standard library. It
+builds four 0.3-0.6 GB stores in `$W/tmp/serve_test` from `data/`: UD-Q2_K_XL and UD-Q4_K_XL, each as v1 and as v2
+with `--stride-align 524288`. Each store holds layers 3, 8 and 75 (experts 0-7) plus a zero Q2_K/Q3_K layer 78. In the
+container it then runs `g53x ... check` for the six slices and starts one server per store. The client asserts that
+every served row is bit-identical to the check's `.dn` row for the same expert and x, at k = 1, 4, 7, 8 and 16
+(repeats), in shuffled orders. It also checks the NaN cases above, that k = 0 closes the connection, that reconnecting
+works, and that `K3X_SETOUT` lists the served set. Each store is checked streamed, and the v1 stores also with
+`K3X_NOSTREAM=1`.
+
+Per-request latency on this laptop (Core Ultra / Arc iGPU, the shared host at load average 5-6), measured by the client
+from send to the last reply byte over loopback, median of 200, k = 1/4/8 in µs. L75 has 7 served experts, so its k = 8
+repeats one.
+
+| quant | store | L3 | L8 | L75 |
+|---|---|---|---|---|
+| UD-Q2_K_XL | v1 | 591 / 1271 / 2400 | 502 / 1554 / 3899 | 867 / 2854 / 5026 |
+| UD-Q2_K_XL | v2 | 865 / 1801 / 4288 | 1074 / 2743 / 5515 | 1058 / 2779 / 4905 |
+| UD-Q4_K_XL | v1 | 680 / 2204 / 5244 | 1157 / 3787 / 7476 | 1517 / 3281 / 6166 |
+| UD-Q4_K_XL | v2 | 898 / 2363 / 5237 | 1278 / 3366 / 7488 | 1461 / 3320 / 9048 |
+
+`g53x bench` in the same session (weights in device USM, no socket) gave Q2 L3 350/931/1741, Q4 L8 588/2135/6519 µs.
+In a quieter minute it gave Q4 L8 534/1745/3382, while serveidx gave Q4 L8 655/2162/4092. Run-to-run spread on this
+shared host is up to 2x. In the bench, host-USM weights (`G53X_HOSTW=1`) cost the same as device USM. The store version
+does not change the arena: v1 and v2 differ only in where the records sit in the file. Measure the serve overhead
+proper on an idle Arrow Lake NUC (item 3 of section 8).
+
 ## Files (`tools/glm53/`)
 
 - `gguf_hdr.py URL OUT.json` (one shard's header via Range), `inventory.py HDRDIR` (classes, bytes per token, fit),
   `extract.py HDRDIR QUANT LAYERS OUTDIR` (experts 0-7 of the given layers).
 - `glmbench.cpp` + `CMakeLists.txt`: ggml baseline and `--check` dumps. `glmref.cpp`: fp64 reference and comparisons.
-- `g53x.cpp` + `g53x_ty.inc`: the iGPU kernels (`bench`, `check`; `G53X_PROF=1` per-kernel times). `bw.cpp`: iGPU
-  read roofline.
+- `g53x.cpp` + `g53x_ty.inc`: the iGPU kernels (`bench`, `check`, `serveidx`; `G53X_PROF=1` per-kernel times,
+  `G53X_HOSTW=1` bench weights in host USM). `bw.cpp`: iGPU read roofline. `serve_test.py`: serveidx test (section 9).
 - `g53c.cpp`: the CPU kernels. `bwcpu.c`: CPU read roofline.
 - `build-cpu.sh`, `build-sycl.sh`, `dsycl.sh` (run in the oneAPI container with `/dev/dri`), `all.sh gpu|cpu`
   (tables above), `check.sh` (section 5), `asmstat.sh DUMPDIR REGEX` (instruction mix of IGC `.asm` dumps).

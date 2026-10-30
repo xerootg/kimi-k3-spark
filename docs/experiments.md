@@ -1085,6 +1085,16 @@ About 1 % fewer misses: real but below A/B resolution. Built as `LLAMA_EXPERT_ST
 
 **Engine A/B: interrupted before a result.** Q WINDOW 1 (Spark, ~50 min, `kimi-k3-llama` to 0, tier on against the production nuc2:19600) started 21:41Z for 4 legs A1 B1 A2 B2 (A = `~/llama-k3-s2` old engine, B = `~/llama-k3-q` with the mmvq zero-record skip + `SPLIT_LATE=16`). The notes have no leg numbers, no "WINDOW END" and no record that production was restored or checked with the gold md5. Result not recorded. The other audit items (2, 7: bytes in flight, io_uring flags) have no measurement in the notes.
 
+### GLM-5.3: weights laid out, store v2, SSD tier, g53x serveidx (2026-10-29)
+
+The user chose full GLM-5.3 UD-Q2_K_XL (254 GB, 7 shards) as the starting point to optimise from, and dropped local K3 from the pool to free its RAM (`kimi-k3-llama` and `kimi-k3-k3x-nuc2` to 0; the GH200 K3 still serves).
+
+- **Weights.** Canonical shards on the NAS (`/nas/llamacpp/models/glm-5.3/UD-Q2_K_XL`, aria2c at ~100 MB/s from Hugging Face, SHA256 checked against the HF LFS ids), copied to the Spark's NVMe over a read-only NFS mount at ~60 MB/s (the NAS's spinning RAID is the limit), SHA256 checked again.
+- **Store.** `repack-experts.py` v2 (PR #3, 512 KiB stride): 76 MoE layers (75 + the MTP layer 78) x 256 experts, 247.50 GB (v1 would be 238.17 GB, +3.9 %). Built on the Spark in about 2 min, `--verify 64` OK. Records 12091392 B (IQ2_XS gate/up, IQ3_XXS down) to 16318464 B; the MTP layer uses Q2_K/Q3_K.
+- **Pool SSDs** (4 parallel 4 MiB O_DIRECT reads of the raw device): nuc2 TEAM TM8FGM002T ~5.7 GB/s, nuc3 same model ~4.6 GB/s, against the Spark's ~11 GB/s: about 21 GB/s across the pool. Plan: a full store copy on every member, a routing table that gives each expert one owner (RAM or that owner's SSD).
+- **SSD tier in k3cs** (PR #4): O_DIRECT reads into a preallocated LRU, io_uring or pread workers, per-request deadline answering NaN like a non-resident expert. Tests pass with pread and liburing; output byte-identical to the pre-disk server with the tier off. Not yet measured on a NUC.
+- **g53x serveidx** (Copilot CLI worker, reviewed): the GLM iGPU kernel behind the k3x wire protocol, store v1/v2 via `expert_disk.h`. Served rows bit-identical to `g53x check` on both quants, both store versions, streamed and not; `check.sh` output unchanged. Laptop (Meteor Lake 165H, shared, load 5-6) per-request latency, median of 200, k = 1/4/8: Q2 L3 591/1271/2400 us, Q4 L8 in a quiet run 655/2162/4092 us against `g53x bench` 534/1745/3382 us. Noisy; measure on nuc2 before drawing conclusions. Not ported yet: trace, the CPU split, Q2_K/Q3_K (so the MTP layer answers NaN).
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because

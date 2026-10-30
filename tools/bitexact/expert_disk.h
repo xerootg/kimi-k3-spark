@@ -1,4 +1,6 @@
 // Shared, compute-independent K3XS metadata and bounded disk residency.
+// Store format: tools/repack-experts.py. v1: a layer's experts back to back (stride = record_size, 4096 alignment);
+// v2: the index entry's last u64 is the stride (record_size rounded up to the header's power-of-two alignment).
 #pragma once
 #include <algorithm>
 #include <chrono>
@@ -25,6 +27,7 @@ using Clock = std::chrono::steady_clock;
 struct Record {
     uint64_t gid, offset, bytes, gate, up, down;
     uint32_t tg, tu, td;
+    uint64_t stride = 0;   // bytes from one expert's record to the next (v1: = bytes)
 };
 
 class Store {
@@ -33,7 +36,7 @@ class Store {
     }
     static uint64_t u64(const uint8_t * p) { return u32(p) | uint64_t(u32(p + 4)) << 32; }
 public:
-    uint32_t experts = 0;
+    uint32_t experts = 0, version = 0, align = 0;
     std::vector<Record> records;
     explicit Store(const char * path) {
         int fd = open(path, O_RDONLY);
@@ -42,8 +45,9 @@ public:
             struct stat st{};
             uint8_t h[64];
             if (fstat(fd, &st) || pread(fd, h, sizeof h, 0) != sizeof h ||
-                memcmp(h, "K3XS", 4) || u32(h + 4) != 1 || !(experts = u32(h + 12)) ||
-                u32(h + 16) != 4096 || u32(h + 20) != 64)
+                memcmp(h, "K3XS", 4) || ((version = u32(h + 4)) != 1 && version != 2) || !(experts = u32(h + 12)) ||
+                (align = u32(h + 16)) < 4096 || (align & (align - 1)) || (version == 1 && align != 4096) ||
+                u32(h + 20) != 64)
                 throw std::runtime_error("invalid K3XS header");
             const uint64_t end = st.st_size, index = u64(h + 24), data = u64(h + 32);
             const uint32_t layers = u32(h + 8);
@@ -60,15 +64,17 @@ public:
                 Record r{uint64_t(layer) * experts, u64(e + 48), u64(e + 40),
                          u64(e + 16), u64(e + 24), u64(e + 32),
                          u32(e + 4), u32(e + 8), u32(e + 12)};
-                if ((i && layer <= previous) || !r.bytes || r.bytes % 4096 || r.offset % 4096 ||
-                    r.offset < data || r.offset > end || r.bytes > (end - r.offset) / experts ||
+                r.stride = version == 2 ? u64(e + 56) : r.bytes;
+                if ((i && layer <= previous) || !r.bytes || r.bytes % 4096 || r.offset % align ||
+                    r.stride < r.bytes || r.stride % align ||
+                    r.offset < data || r.offset > end || r.stride > (end - r.offset) / experts ||
                     !r.gate || !r.up || !r.down || r.gate > r.bytes ||
                     r.up > r.bytes - r.gate || r.down > r.bytes - r.gate - r.up)
                     throw std::runtime_error("invalid K3XS layer record");
                 previous = layer;
-                ranges.emplace_back(r.offset, r.offset + r.bytes * experts);
+                ranges.emplace_back(r.offset, r.offset + r.stride * experts);
                 for (uint32_t j = 0; j < experts; ++j) {
-                    records.push_back(r); ++r.gid; r.offset += r.bytes;
+                    records.push_back(r); ++r.gid; r.offset += r.stride;
                 }
             }
             std::sort(ranges.begin(), ranges.end());
