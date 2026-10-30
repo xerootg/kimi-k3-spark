@@ -600,6 +600,12 @@ is left. Only pointer arithmetic changes; for ordinary tensors (nb02 a multiple 
 same. `LLAMA_EXPERT_STORE_BYTE_STRIDE=1` turns it on (default 0); the old padded rule stays for paths that cannot use
 byte addressing (the CPU split `GPU_SLOTS=0`, CPU MUL_MAT_ID, types other than IQ2_XS / IQ3_XXS / IQ4_XS).
 
+2026-10-30, second revision: the guard audits 19 ggml types (load widths from the CUDA vec-dots: 2-byte for IQ1_S,
+IQ2_XXS, IQ2_XS, IQ2_S, IQ3_XXS, IQ3_S, Q3_K, Q6_K, Q8_0...; 4-byte for IQ1_M, IQ4_XS, Q2_K, Q4_K, Q5_K, Q4_1, Q5_1) and
+checks every part offset at runtime, so Kimi K3's groups qualify too: its two mixed groups (IQ2_XXS/IQ1_S) lose 22.8 %
+and 29.6 % of padding, +3.2 % slots overall (GH200 65102 -> 67198 at 424000 MiB; Spark K3 7980 -> 8237). Host unit
+test in `tools/validation/`; analysis in `docs/experimental/0004b-byte-stride-types.md`. Not yet measured on K3.
+
 Measured on the Spark, GLM-5.3, 80000 MiB cache, 64k context, 128-token runs, legs off/on/off/on from the same cache
 snapshot: 3.83/3.86, **4.25/4.24**, 3.86/3.86, **4.25/4.25 tok/s (+10.3 %)**, md5 `9449ae5738` in every run, same
 MemAvailable. Written by a sol worker (gpt-6.1-sol) from the code; path audit in its RESULT (scratch), summary in
