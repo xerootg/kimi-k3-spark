@@ -164,6 +164,17 @@ The fork `xerootg/llama.cpp` is a research fork and will not be upstreamed. Its 
   Q2_K), UD-Q4_K_XL Q4_K/Q5_K; ggml-sycl already emits native DP4A; per-field row repack makes the iGPU IQ kernels
   memory-bound: g53x 197-270 us per Q2 expert (2-3x ggml-sycl), 359-418 us per Q4 expert, exact to 1e-7; next: GLM routing
   traces, g53x serve mode, measure on Arrow Lake.
+- 2026-10-29 evening, **GLM-5.3 UD-Q2_K_XL is now the local pool's model** (user's choice: the smallest quant above the
+  ~2-bit cliff of the largest GLM; Flash rejected). Local K3 left the pool (Spark + nuc2 scaled to 0, files kept); the
+  GH200 still serves K3.
+  - Done: shards on the NAS (canonical) and the Spark; store v2 (512 KiB stride, 247.5 GB) built on the Spark and copied
+    to nuc2 and nuc3; k3cs SSD tier (PR #4); g53x serveidx (bit-exact, laptop). See the ledger entry of the same date.
+  - Pool shape: about 185 GB of RAM (Spark 110, nuc2 50, nuc3 24) for 238 GB of experts, so ~20-25 % stream from SSD;
+    the pool's SSDs read ~21 GB/s together (Spark 11, nuc2 5.7, nuc3 4.6). Every member holds the full store; a routing
+    table gives each expert one owner, RAM or SSD.
+  - Next, in order: (1) port the Spark engine's expert store to `glm-dsa` and get a first GLM token with a gold md5;
+    (2) routing traces from that engine, then the owner table; (3) g53x serveidx on nuc2 (Arrow Lake numbers) with an
+    SSD tier like k3cs's; (4) the routing table in the engine.
 
 ## Cluster layout for this work
 
@@ -183,3 +194,6 @@ The fork `xerootg/llama.cpp` is a research fork and will not be upstreamed. Its 
 - 2026-10-29: hot-path audit done (docs/audit-2026-10-29.md); items 1, 2, 7, 8 go to agent Q, 4 and 10 to the pool agent.
 - 2026-10-29: plan review added the power-state/I/O tests (2b), the link options (2c) and a read-only code audit of the engine's hot path for performance left on the table.
 - 2026-10-28: the fork's default branch is `kimi-k3` (research fork, not for upstream); patch set e844a2a published as tag `kimi-k3-e844a2a`.
+- 2026-10-29: the local pool switches from K3 to GLM-5.3 UD-Q2_K_XL (user: "the smallest version of the largest model", above the 2-bit cliff; Flash rejected as a smaller, shallower model). K3 files stay on disk; the GH200 keeps serving K3.
+- 2026-10-29: shards live on the NAS (slow but reliable); every pool member gets a full store copy so expert ownership is a table, not a copy.
+- 2026-10-29: bounded, testable work goes to GitHub Copilot (coding agent for repo-only tasks, `copilot-agent` CLI for tasks that need the laptop iGPU); Claude reviews and reruns every gate before committing.
