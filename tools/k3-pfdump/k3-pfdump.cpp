@@ -22,6 +22,22 @@
 #include <string>
 #include <vector>
 
+static inline size_t prompt_chunk_size(size_t remaining, size_t n_batch) {
+    if (n_batch == 0) throw std::runtime_error("n_batch must be positive");
+    return std::min(remaining, n_batch);
+}
+
+static inline void validate_prompt_size(size_t n_prompt, int n_predict, size_t n_ctx) {
+    if (n_prompt == 0) throw std::runtime_error("prompt is empty");
+    if (n_predict < 0) throw std::runtime_error("pfdump requires a nonnegative -n");
+    // Subtract only after the prompt bound check to avoid overflow/underflow.
+    if (n_prompt > n_ctx || size_t(n_predict) > n_ctx - n_prompt) {
+        throw std::runtime_error("prompt (" + std::to_string(n_prompt) +
+            ") plus requested decode tokens (" + std::to_string(n_predict) +
+            ") exceeds ctx-size (" + std::to_string(n_ctx) + ")");
+    }
+}
+
 struct dump_state {
     FILE * f = nullptr;
     int step = -1; // -1 during the prefill: nothing is recorded
@@ -134,14 +150,24 @@ int main(int argc, char ** argv) try {
 
     std::vector<llama_token> tokens = common_tokenize(ctx, text, true, true);
     LOG_INF("prompt: %zu tokens, decoding %d\n", tokens.size(), params.n_predict);
+    validate_prompt_size(tokens.size(), params.n_predict, llama_n_ctx(ctx));
 
     st.step = -1;
-    {
-        common_batch batch = common_batch_get_one(ctx, tokens);
-        if (llama_process(ctx, LLAMA_PROCESS_TYPE_DECODE, batch.get())) {
-            LOG_ERR("prefill failed\n");
+    for (size_t offset = 0; offset < tokens.size();) {
+        const size_t count = prompt_chunk_size(tokens.size() - offset, llama_n_batch(ctx));
+        std::vector<llama_pos> positions(count);
+        std::vector<int8_t> logits(count, 0);
+        for (size_t j = 0; j < count; ++j) positions[j] = llama_pos(offset + j);
+        // Only the final prompt token feeds the first sample. All prefill callbacks
+        // remain disabled, including those in the final chunk.
+        if (offset + count == tokens.size()) logits.back() = 1;
+        llama_batch batch = {int32_t(count), tokens.data() + offset, nullptr,
+                             positions.data(), nullptr, nullptr, logits.data()};
+        if (llama_decode(ctx, batch)) {
+            LOG_ERR("prefill failed at token %zu\n", offset);
             return 1;
         }
+        offset += count;
     }
     llama_sampler * smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
     llama_sampler_chain_add(smpl, llama_sampler_init_greedy());

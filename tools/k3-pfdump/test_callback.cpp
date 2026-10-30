@@ -56,4 +56,5 @@ int main(int argc, char ** argv) {
     assert(kind_of("moe_prefetch_probs-4",il)==1 && il==4);
     assert(!kind_of("ffn_moe_topk-3junk",il));
     std::cout << "PASS predictor lookup/slot tensors are not real IDs; destination layer preserved\n";
+    return 0;
 }
