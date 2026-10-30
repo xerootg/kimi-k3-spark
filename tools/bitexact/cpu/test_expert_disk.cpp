@@ -124,7 +124,7 @@ int main(int argc, char ** argv) {
     for (unsigned layers : {1u, 2u, 5u}) for (unsigned experts : {1u, 3u, 7u}) {
         write_file(path, fixture(experts, layers));
         k3disk::Store s(path.c_str());
-        CHECK(s.experts == experts && s.records.size() == experts * layers);
+        CHECK(s.experts == experts && s.records.size() == size_t(experts) * layers);
         CHECK(s.find(2 * experts)->tg == 17);
         if (layers > 1) CHECK(s.find(7 * experts)->tg == 18);
         CHECK(!s.find(0) && !s.find(3 * experts));
