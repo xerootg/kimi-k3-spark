@@ -1,0 +1,5 @@
+# V notes (adversarial verification)
+- 07:41Z V START. Read-only on nuc2/Spark prod. nuc3: validation with CI binary g486d2b9 (~/k3-bitexact/V), test server on nuc3 port 19641 only. Holding NOTHING on nuc2.
+- 07:48Z V DONE. Held nothing on nuc2 or the Spark (no scale-downs). nuc3: vall with the CI binary g486d2b9 (GPU, VSTREAM, VCPU=2, VCPU=16) all bit-exact; negative control (one x value perturbed) is caught on GPU and CPU paths; nuc3 test server (19641, FULLCHECK 636/636 GPU + CPU) + remotecanary K=1/2/3/16 x L1/L11/L83 from the Spark: PASS; k3cpu_test rebuilt from source: GGUF + v7 bit-exact. nuc3 test server stopped, files removed except ~/k3-bitexact/V/{vall.sh,srv-V.log}.
+  Leftover found (not from this pass): nuc2 ~/k3-c/remote-standin 19601 (agent C, started 2026-10-28 20:22, pid 2923999). Kill: pkill -f "[r]emote-standin 19601".
+  Flag: M leg B (old engine + old k3x + forcewake) 2.121 tok/s, >3 ms replies 22, beat I legs c (CPU half) 2.103 tok/s, >3 ms 87-237. Engine-test the iGPU path + forcewake (g580ea49) interleaved against the CPU half before deploying the CPU half.

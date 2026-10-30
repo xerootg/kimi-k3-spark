@@ -863,6 +863,140 @@ Drive health: Gen5 x4 link, 55-60 °C, no thermal events, 0 errors, PS0, MDTS 51
 
 **Cluster:** nuc2 and nuc3 are reserved for Kimi: soft taint `kimi-k3/reserved=true:PreferNoSchedule` plus label `kimi-k3/expert-node=true`. A hard NoSchedule would stop about 15 DaemonSets that do not tolerate custom taints. The monitoring stack moved from nuc3 to nuc (argo-things 45de25b); Jellyfin moves once nuc1's render GID is known.
 
+### Spark: which experts go to the remote boxes, and the engine's first runs against a stand-in server (2026-10-28, from agent C's notes)
+
+**Choosing the set** (`tools/distributed/remoteset.py`). Replay on the 7980-slot LRU, no speculation modelled, 46 GB
+budget, trained on prose + code and evaluated on code2. "skip" leaves out the N most frequent experts, which the LRU
+keeps anyway:
+
+| skip | records | remote rows per layer (p90, max) | NVMe misses per layer |
+|---|---|---|---|
+| none (no remote set) | 0 | - | 6.80 |
+| 0 | 6946 | 6.89 (12, 16) | 4.78 |
+| 2000 | 6950 | 4.30 (7, 13) | 4.83 |
+| 4000 | 6960 | 3.38 (6, 12) | 4.93 |
+| 6000 | 6967 | 2.90 (5, 12) | 5.00 |
+| 7980 | 6969 | 2.55 (5, 13) | 5.09 |
+
+Skip 6000 chosen (misses -26 %, ~2.9 remote rows per layer; fewer remote rows means a shorter round trip and fits the
+8 late rows). The final set was retrained on all three dumps: 6967 pairs, 46.0 GB.
+
+**The note's own caveat:** `pfdump-code2` has the same tokens as `pfdump-code`, so this "eval code2" replay was
+in-sample. Redone out of domain (skip 6000, trained on prose, evaluated on code), per layer misses from 6.80:
+
+| boxes | set | NVMe misses per layer |
+|---|---|---|
+| nuc2 | 22 GB | 6.53 (-4 %) |
+| nuc2 + nuc3 | 22 + 6.5 GB | 6.44 (-5 %) |
+| nuc2, nuc3, nuc, nuc1 | + 6.5 GB each for the last two | 6.25 (-8 %) |
+
+For the three sets in turn, one box answers in 28 / 34 / 45 % of layers and two boxes in 0.0 / 0.0 / 0.3 %; mean k ~1.3-1.6, p90 2-3. The Arc's
+~24 GB USM limit at the time is what held these sets small. The deployed placement (nuc2: the first 4167, later 4390
+records, layers 1-47/1-50; nuc3: top experts of layers >= 48 within its 2.5 GB), replay on code: 6.80 -> 6.28 (nuc2) ->
+6.24 (+nuc3); on the later 4390-record set (15:03): code 6.80 -> 6.25 -> 6.24, prose 6.13 -> 5.62 -> 5.54.
+
+**Conflicts with the 2026-10-26 study (not edited there):**
+- That study's 7000-expert (46 GB) set gave 5.54 (-18.5 %) out of domain; this note's in-sample 46 GB sets give
+  4.78-5.09, which the note itself marks as in-sample. The study's "mixed" figures (5.82, 5.08) train on prose plus
+  the other code prompt; since `pfdump-code` and `pfdump-code2` are the same tokens, they may be in-sample as well.
+  The notes do not say which dump the study used for "mixed".
+- That study's 3700-expert (24 GB) set gave 6.14 (-10 %) out of domain; the note's nuc2 22 GB set gives 6.53 (-4 %).
+  The notes do not explain the difference (this set skips the 6000 hottest experts and is placed by box; the study
+  found skipping changed almost nothing, but at 7000 experts).
+
+**Engine, window 1 (2026-10-28, stand-in server on nuc2:19601, zero rows)**. Native build, production env +
+`SECOND_CHANCE=3`, snapshot copied per leg, 3 x 200-token coding runs; production scaled to 0 for the window and
+restored at 12:32:
+
+| leg | warm-up md5 | run md5s | tok/s runs 1 / 2 / 3 | notes |
+|---|---|---|---|---|
+| remote unset | b2c79009 | e801484d x3 | 1.673 / 1.858 / 1.957 | gold: graph unchanged when off; hit rate 77.3 %, real-lookup wait 1.12 ms |
+| stand-in, `SHADOW=1` | b2c79009 | e801484d x3 | 1.960 / 1.854 / 1.936 | gold; 16513 posts, 1.28 rows per post (shadow lets them go resident), RTT p50 1.42 / p90 1.94 / p99 2.77 ms, 96.5 % of replies back by the real lookup |
+| stand-in, zero rows (plumbing only) | f58b95b2 | all differ, by construction | 1.740 / 1.705 / 1.947 | 47497 of 57776 layers had candidates, 2.24 rows per post, 88550 rows placed, 3833 deadline fallbacks (8 %, 17739 rows read locally), RTT p50 1.86 / p90 2.64 / p99 2.97 ms; NVMe fill 3.7 -> 3.2 records, real-lookup local wait 1.12 -> 0.74 ms, but remote wait +0.575 ms per layer with candidates |
+
+The stand-in busy-waits 300 + 450k us and returns zero rows. From the Spark, `rrclient` to it: k=1 p50 1.47 / p90
+1.74, k=2 1.94 / 2.15, k=4 2.97 / 3.14 ms (~0.7 ms of network and wake-up over the compute). Reading: the window from
+the post to the real lookup is only ~1.3 ms, so with that compute and ~0.55 ms of network about half the layers wait
+and 8 % fall back at the 3 ms deadline; a server near 0.6 ms for k=2 would mostly fit. Partial replies (use the rows
+that arrived by the deadline, read only the rest) were built next. Production gold md5 after the window (API):
+warm-up b2c79009950e52edc8aa4fc3089fc615 at 2.07 tok/s, 200-token run e801484d2f4a053d2957005eba3a0f46 at 1.94 tok/s.
+
+### Both ends: the Arc serve path on nuc2 and nuc3, wrong rows, and what the memory limit does (2026-10-28, from agents B, C and E)
+
+**Zero rows, host USM.** Device USM weights above ~13-23 GB silently read as zeros on nuc2's Arc, so the weights went
+into host USM (same speed, A/B). At 12:29 the full 46 GB set did not work (all-zero rows once more than ~25-35 GB of
+USM was mapped: 23 GB ok, 33 and 46 GB zero rows, no error), so the server was capped (`K3X_MAX_GB`, 24 then 34, 36)
+and served the first 3500 (layers 1-38, 22.9 GB), then 4167 (layers 1-47), then 4401 of 6967 records (layers 1-50, 36
+GB cap, ~38.5 GB resident, MemAvailable ~22 GB). Kernels that read x or wrote rows in host USM were not coherent
+(zero or stale rows) until the server copied them explicitly. The 12:18 incident: a leftover 23 GB test server plus the
+46 GB one OOMed nuc2; kubelet restarted the node's DaemonSet containers, all Running again.
+
+**Silent zero rows, narrowed down (v8).** 36 GB served reliably (2/2 plus a deploy); 40-42 GB was flaky, all kernels
+returning zeros (`PROBEALL` showed 4872/4872 records zero in a failing run, while a 40 GB run minutes later worked).
+Ruled out: a kernel offset bug (every record fails together, the same records work in smaller sets), `RLIMIT_MEMLOCK`
+(the inner sudo kept the 8 GB limit in the passing 40 GB run), upload corruption (pinned staging and read-back checks
+passed). i915 `EXECBUFFER2` EFAULT was seen with `NEOReadDebugKeys=1 PrintDebugMessages=1` when the residency set is
+very large, with reliable failures right after killing another big server before i915 had released its pages; the
+runtime does not report it to SYCL. Mitigation: startup self-check, NaN for any all-zero row. The failure point
+tracked ~55-65 % of MemAvailable at start (nuc2 at ~34-42 GB + 2.5 GB of tables with ~61 GB free, nuc3 at >= 3.5 GB
+with ~11 GB free), not a fixed size. The full set needs 47.8-55 GB on the GPU plus 2.5 GB of tables, over nuc2's 50 GB
+budget, which is why the unpadded layout and packed tables were written.
+
+**Wrong rows on nuc3 (not NaN).** nuc3 = Arrow Lake-P 8086:7dd1, one memory channel, ~11 GB free, same silicon as
+nuc2's Arc. On the first runs of a fresh copy (k3x md5 eb42818a, commit 0db0246), `validate` on the L1 dumps gave g/u
+147456/12582912, h 160072, dn 172033/14680064: only the first 3 cases right, the rest huge-ulp garbage. Repeats at 8,
+32 and 96 cases, then the full 256/160/96, were all exact (L1 4096/4096 rows, L11 2560/2560, L83 1536/1536); no GPU
+reset in dmesg. The cause was not found (suspects: first JIT, first use after idle, frequency ramp). The same binary
+through `serveidx` over `experts-nuc3.bin` with the canary dumps appended answered only cases 0-2 right (L1 48/4096,
+L11 48/2560, L83 48/1536), with or without `K3X_HOSTW=1` and with the canary records loaded first, while the slot-id
+`serve` mode on the same box gave 4096/4096 exact twice. The old `serveidx` was declared unusable. New tool
+`tools/distributed/remotecanary.c` sends a dump case's activation with the dump's experts as global ids and compares the
+rows with `dn.bin` bit for bit through the real serving path; the engine only refuses NaN rows, so wrong numbers would
+have broken the md5. With k3x-v7 on nuc3 the self-check failed at `K3X_MAX_GB` 5, 4 (passed once, then failed) and 3.5,
+and passed at 1 and 2.5; canary through `serveidx` then passed (the 48 all-zero dump rows per layer come back NaN from
+the zero-row guard, which the engine reads locally). nuc3 served 231 records + 64 canary at 2.5 GB with v7, 295 records (64 canary) with v8.
+
+**nuc2 as a k8s pod (agent E, 2026-10-28 16:08-17:18 PDT).** Deployment `kimi-k3-k3x-nuc2`, image
+`k3x-serve:g6cb8674` (k3x md5 688d9bdd = v8), the same index (canary first, 4390 records), `K3X_MAX_GB=36`, taskset 0-3,
+`cpu_dma_latency` 1. The pod's self-check failed in k8s on 4 tries (exit 3, all-zero row; E's later count: 5/5) while
+the same binary passed by hand. Cause (suspected, not isolated): the pod's 46Gi memory limit also charges the GEM shmem and 36 GB of page cache
+from reading `experts.bin` (reclaim, then zero rows). Fix: request 40Gi and set no limit. A restart right after a kill
+fails the self-check once (i915 lazy free); backoff retries (~2-3 min). The wrapper refuses to start while 19600 is in use
+or MemAvailable < 42 GiB. Set file md5 ca71a8fe; canary L1 1024/1024, L11 512/512, L83 512/512 passed; RTT Spark ->
+nuc2 with real ids p50 k=1 1.00, k=2 1.24, k=3 1.42 ms. Earlier, C's restart loop had failed with "No device of
+requested type gpu": `setpriv --init-groups` dropped group `render`.
+
+**Conflicts with the 2026-10-28 section above (not edited there) and between B and E.** That section says k3x-v11 fixed
+the zero rows with, among other things, "dropping the page cache while loading". B's 6th cold start of the full set kept
+the page cache (`K3X_KEEPCACHE=1`) and also passed (6967/6967), so page-cache pressure alone does not explain the old
+failures; all old failures had the raw 2.5 GB tables (four 0.03-1.1 GB allocations) and, before 16:30, pageable
+staging. During the load of the passing run, i915 tracepoints counted 3310 `i915_gem_evict_node` and 20922
+`i915_vma_unbind`, no `i915_gem_shrink`. B advised a pod memory limit >= ~52 GB for the full set; E found that any limit
+on the 36 GB-set pod broke it and runs with 40Gi requested and no limit. The notes do not say whether a 52 GB limit
+was tried.
+
+**Kernel and round trip by build (agent B).** Kernel per token on nuc2, spin wait, p50: start of pass 2 k=1 0.88, k=2
+1.26-1.40, k=3 1.67-1.88, k=4 2.06-2.34, k=8 3.62-4.17 ms; v8: 0.72, 0.78, 0.99, 1.18, 1.93 ms. Wins: native DP4A through
+`__builtin_IB_dp4a_ss` (`dot_acc` had been emulated with 32-bit mul + mach), 4 lanes per row on a repacked layout, grid
+tables and the activation in SLM, 512-item work-groups, spin waits. Pinning the GPU minimum frequency
+(`rps_min_freq_mhz` 800 -> 2200; `gt_min_freq_mhz` stays 100, the write is refused) had a small effect (k=1 -0.07 ms wall).
+Round trip from the Spark (`rrclient`, real rows): pass 1 k=1 p50 1.44 / p90 1.62 / p99 1.90, k=2 1.82 / 1.97 / 2.10, k=3
+2.26 / 2.43 / 2.64, k=4 2.68 / 2.84 / 3.04, k=8 4.32 / 4.59 / 4.99 ms; k from the skip-6000 histogram (mean 3.1 when
+non-zero) p50 2.27-2.34 / p90 3.39-3.59 / p99 4.46-4.74 ms. With v8: k=1 1.02-1.22, k=2 1.30-1.64, k=3 1.47-1.87, k=4
+1.71-2.10, k=8 2.8-3.3 ms; histogram (mean 3.15) p50 1.62-1.77 / p90 2.36-2.53 / p99 2.96-3.31 ms. Streaming rows out
+one expert at a time versus one write: same p50 within noise (streaming gets the first rows out earlier for partial
+replies). Agent C's numbers on its own hand-started servers (real ids, 1000 iterations): nuc2 k=1 1.17 / 1.40 / 1.83, k=2
+1.55 / 1.84 / 2.04, k=3 1.75 / 2.02 / 2.29 ms; nuc3 k=1 1.28 / 1.66 / 2.06, k=2 1.76 / 2.11 / 2.40, k=3 1.92 / 2.27 /
+2.70 ms (p50 / p90 / p99); with `cpu_dma_latency` 1 held on nuc2, k=1/2/3 p50 1.02 / 1.24 / 1.59 ms.
+
+**Engine fault handling for several boxes (agent C, 2026-10-28 14:05 PDT).** The multi-box remote path (per box: client,
+thread, deadline, stats, breaker, stale-link drop at 1 s, non-blocking connect 500 ms, backoff 50 ms to 2 s, NaN rows
+refused, partial replies used) was written and syntax-checked (g++ -Wall -Wextra clean) but not built in the Spark
+tree at that time (no Spark builds before 15:45). The standalone `remote_client` test (`rctest` on nuc3 against the
+stand-in on nuc2): kill -> drop and backoff; restart -> reconnect; SIGSTOP -> breaker trips and stale drops;
+SIGCONT -> recovers. In the A/B window nuc3's server was killed mid run 3 and did not come back (its k3x-v8 self-check
+failed 3 times after the kill, i915 residency); run 3 was still gold.
+
 ### Spark + nuc2: where the remote round trip went, and four fixes (2026-10-29, workflow k3-remote-marshaling)
 
 **Measured at both ends.** Traced with `LLAMA_EXPERT_STORE_REMOTE_TRACE` and `K3X_TRACE*`, 65aaeb0. The missing ~0.8 ms was **not marshaling**:
@@ -894,6 +1028,62 @@ The CPU path has tail stalls of 50-90 ms, cause unknown: 0.18-0.5 % of replies o
 **Verification (V)** re-ran every bit-exactness check independently and all held: vall from the image binaries, remotecanary through the socket, k3cpu from source, and a one-value perturbation caught on both paths. All 56 engine runs are gold.
 
 Caveat: M's forcewake-only leg (2.121 tok/s, 22 replies over 3 ms) may beat the CPU half (2.103, 87-237 replies over 3 ms). Once the reply arrives before the real lookup, a lower median gains nothing at REMOTE_ROWS=2 and the tail decides the result. **Open: an interleaved engine A/B of the S2 engine with g580ea49 + K3X_FORCEWAKE/MEMWARM against g486d2b9 (CPU half), then deploy the winner and the S2 engine.**
+
+### nuc2 iGPU zero copy: what host USM allows (2026-10-29, agent S1, nuc3 probes)
+
+Probes on nuc3's iGPU with the bundled oneAPI 2026.1.1 runtime, before the zero-copy server of the entry above:
+- **Command lists:** the default Level Zero mode here is batched command lists, and a host-USM flag written by a kernel is never seen unless something queries an event. `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1` fixes it. The `level_zero v2` adapter gave stale host-USM data: avoided.
+- **Coherence:** host USM is coherent only at kernel boundaries (1-way: the GT L3 is not invalidated by CPU stores while a kernel runs). Even system-scope atomics in a running kernel never saw a CPU store, so a GPU spin or mailbox kernel cannot work, and a 3 s spinning kernel gave a GPU hang and a lost device. In-kernel completion flags (fence + atomic counter) gave stale rows. **Dead end:** only hand-over at command boundaries works (the CPU writes x and ids before the submit and reads rows after the event).
+- **What worked:** kernels reading x and writing rows in host USM: 0 mismatches over 3000 iterations, ~23-35 us per kernel boundary. GPU read bandwidth from host USM equals device USM (38 vs 37 GB/s on nuc3). The CPU reads host USM at malloc speed (i915 GEM mmap, write-back, 4 KiB PTEs only: no 2 MiB pages from this runtime). Limited SYCL graphs are supported (`ext_oneapi_limited_graph`), full graphs are not.
+- **Pitfall:** a pointer select in the matvec kernel made the kernels 2x slower.
+
+Server results from the same agent that the entry above only summarises (580ea49, from the Spark, `rrclient`, dist p50 / p90 ms): back to back 1.072 / 1.207 -> 0.987 / 1.133 (graph mode 0.958 / 1.046); 8 ms gap 2.025 / 2.866 -> 1.835 / 2.516; gap + forcewake 1.310 / 1.490 -> 1.283 / 1.407; gap + forcewake + `K3X_MEMWARM=4000` 1.028 / 1.226 (graph 0.997 / 1.182). Record pointers from a host-USM table made the down kernel faster (122 -> ~95 us). FULLCHECK 7031/7031 on 3/3 cold starts with the host arena; `vall` and `remotecanary` bit-exact. To deploy the keep-awake: `K3X_FORCEWAKE=/sys/kernel/debug/dri/0/i915_forcewake_user` (the pod needs debugfs mounted) and `K3X_MEMWARM=4000` (uses one of cpus 0-3 while idle).
+
+### nuc2 CPU frequency knobs for the CPU half (2026-10-29, agent I)
+
+The CPU half needs EPP `performance` on nuc2 (the result line of I's notes). Two knobs were changed during the nuc2 window and reverted, and no result was recorded for either on its own:
+- **Uncore minimum frequency** (`min_freq_khz` 400000 -> 3800000) at 05:45Z, reverted at 05:46Z: result not recorded.
+- **EPP** `balance_performance` -> `performance` on all cpus at 05:44Z, reverted at 05:59Z, set again at 06:00Z for the final-config sweep: no separate before/after number recorded; the engine legs below were run with it.
+
+The 7 engine legs of that window (c d b a b d c, all gold; nuc2 swapped between I's test server and the production pod during the tier-off legs) are summarised in the 2026-10-29 section; the per-run numbers are c 2.102 / 2.101 / 2.088 and 2.111 / 2.111 / 2.106 tok/s, b 2.052 / 2.057 / 2.054 and 2.040 / 2.052 / 2.048, a 2.047 / 2.045 / 2.040, d ~2.04. Settings the c legs needed: EPP performance on nuc2, `K3X_CPUS=0`, `K3X_CPU_CPUS=1-11`, `K3X_CPU_SPLIT=1,2`, `K3X_MEMWARM=4000`, `K3X_MEMWARM_CPU=12`.
+
+### Spark + nuc2/nuc3: the forcewake server against the CPU half, and what stalls the CPU path (2026-10-29, agent P, phase 1)
+
+The open A/B of the 2026-10-29 section. Native S2 engine (`~/llama-k3-s2`), production env, nuc2:19651, 3 x 200 tokens per leg, 6 interleaved legs (A B C A B C, ~100 min), production pods scaled to 0 for the window and restored at 21:35Z (nuc2 pod FULLCHECK 6967/6967, API gold b2c79009 / e801484d at 2.046 tok/s). All 24 runs gold.
+
+| leg | server | decode, tok/s runs | engine RTT p50 / p99 | >3 ms / short | nuc2 package W* | cabinet W (runs) |
+|---|---|---|---|---|---|---|
+| A1 | g580ea49 forcewake + memwarm, EPP balance | 2.112 / 2.111 / 2.106 | 1.30 / 1.58 ms | 32 / 29 | 21.1 | 550 |
+| B1 | g486d2b9 CPU half 1,2, EPP performance | 2.110 / 2.109 / 2.098 | 0.67 / 1.29 | 133 / 126 | 25.3 | 550 |
+| C1 | g486d2b9 split 1,1 + forcewake, EPP performance | 2.106 / 2.109 / 2.100 | 0.86 / 1.42 | 115 / 107 | 22.9 | 551 |
+| A2 | = A1 | 2.104 / 2.108 / 2.102 | 1.30 / 1.57 | 11 / 11 | 21.8 | 583 |
+| B2 | = B1 | 2.105 / 2.102 / 2.106 | 0.67 / 1.24 | 87 / 79 | 25.1 | 557 |
+| C2 | = C1 | 2.102 / 2.109 / 2.110 | 0.86 / 1.42 | 90 / 83 | 23.3 | 565 |
+
+(*RAPL package, including the Spark's load phase.) Means: A 2.107, B 2.105, C 2.106: **a tie at `REMOTE_ROWS=2`**; the reply is in before the real lookup in all three (wait 1-3 us per layer). Spark GPU power 24-27 W in all legs; the cabinet's +-20 W noise hides nuc2's delta. Q's build (21:02-21:08Z) overlapped B2's load phase only. The test servers served 7025 of 7031 records (`MAX_GB` 49.5), like I's legs. A sampler (GPU runtime PM + vmstat deltas, cpu 13, 20 ms) ran for the whole window (`sampler-w1.log`). Two stale wait loops left by earlier agents on nuc2 were killed at the start (both only sleeping).
+
+**Conflicts with the 2026-10-29 section (not edited there):**
+- That section's caveat says M's forcewake-only leg (2.121 tok/s) may beat the CPU half (2.103). In this interleaved A/B the forcewake + memwarm server (g580ea49) and the CPU half (g486d2b9) tie at 2.107 / 2.105 tok/s, and A's tail is shorter (11-32 replies over 3 ms against 87-133). M's 2.121 was not reproduced in P's legs (A 2.102-2.112); P's notes do not say why. Deploying the winner was left open: the notes record no decision.
+- That section says the CPU path's tail stalls (0.18-0.5 % of replies over 3 ms) have a cause unknown; P found one, below.
+
+**CPU stalls, cause found (nuc3, same platform, 21:21Z).** `k3cpu_test` bench (v7, k=2, 5 ms gaps, workers 1-11, caller cpu 0) plus bpftrace (off-CPU, runqueue, irq, softirq, fault, reclaim probes): 246 of 252 tokens over 3 ms coincide with a worker or the caller thread being preempted (state R) by node threads (longhorn(-manager), kubelet, containerd(-shim), runc, kworkers) for 1-24 ms. Not SMIs (turbostat SMI 0 on nuc2), not page faults (k3x minflt flat during decode), not reclaim. `K3X_CPU_RT` alone (I's c4) did not fix it because the request thread itself stayed SCHED_OTHER. Bench: base >3 ms 318/10000 (max 27 ms); caller RT only 114; caller + workers RT 1 (p50 0.805 vs 0.898 ms). The change (worktree `~/repos/k3s-p`, branch `p/k3cpu-help`): `K3X_RT=<prio>` runs the request thread SCHED_FIFO|RESET_ON_FORK and blocks in `poll()` after `K3X_RX_SPIN_US` (default 1000 with RT) so it never spins unbounded at RT; the memwarm thread is forced SCHED_OTHER. `vall` L1/L11/L83 bit-identical (GPU and CPU paths) on nuc3. nuc3 local `rrclient` (cpu 13, 5 ms gaps, 8000 requests, CPU half split 1,2), server side: no RT p50 848 / p99 2694 / p99.9 10614 / max 28330 us, >3 ms 67; `K3X_RT=50` + `K3X_CPU_RT=50` p50 698 / p99 867 / p99.9 1038 / max 1792 us, >2 ms 0. Not measured in the engine; I's window saw 50-90 ms stalls, P's bench max was 27-28 ms.
+
+**k3cs and placement replays (22:01Z).** Pushed 09d9da7: `K3X_RT` and `k3cs`, a CPU-only GGUF server (image `k3x-serve:g09d9da7`, CI building). On nuc3: FULLCHECK 636/636, `remotecanary` K=1/2/3/4/16 on L1/L11/L83 pass (container-built binary md5 25f43065). Capacity: 21 GB of records locked on nuc3 with 7 GB MemAvailable left. Placement replays on the Spark (`~/p-tools`), NVMe misses per layer at rows 2 / 3 / 4: nuc2 only 6.13 / 5.98 / 5.93; nuc2 + nuc3 (20 GB, by layer) 5.93 / 5.68 / 5.56. The coordinator also queued, after phase 1, a GB10 SM clock lock (`-lgc 3003`) A/B, a `--threads` 4/6/8/10 sweep, 1/2/3 concurrent clients with the pool on, audit item 4 (`REMOTE_ROWS` 3/4 with `K3X_CPU_SPLIT=1,2,3,4`, deadline ~1700) and audit item 10 (k3cpu re-execution of stalled chunks + `SO_BUSY_POLL`; GGUF arena if the CPU half wins). P's notes record no run or result for any of them (the notes end at 22:01Z): not measured.
+
+### Spark: zero-record skip, speculative reader knobs and plan mode (2026-10-29, agent Q, interrupted)
+
+Audit items 1, 2, 7, 8 on the Spark engine, own tree `~/llama-k3-q` (copy of `~/llama-k3-s2` = c4efdca). Built at 21:02Z-21:08Z (nice 19, -j6, no warnings) while P's window 1 was open. Edits: the mmvq zero-record skip (`op_params[8]` on the split bank views, `LLAMA_EXPERT_STORE_SPLIT_SKIP_ZERO`), `PREFETCH_CHUNK_KIB` / `PREFETCH_PAUSE`, `URING_DEFER`, `PREFETCH_PROMOTE=0` plan mode.
+
+**Replay (item 8, laptop, `tools/cachepolicy.py`, both pfdump traces, 7980 slots, second chance 3).** Predicted hits left in place against promoted, hit rate:
+
+| | window 5 | window 8 |
+|---|---|---|
+| code, left in place / promoted | 74.43 / 74.25 % | 77.64 / 77.39 % |
+| prose, left in place / promoted | 77.78 / 77.61 % | 80.49 / 80.22 % |
+
+About 1 % fewer misses: real but below A/B resolution. Built as `LLAMA_EXPERT_STORE_PREFETCH_PROMOTE=0` (the default stays 1), to be tested last if a window allowed.
+
+**Engine A/B: interrupted before a result.** Q WINDOW 1 (Spark, ~50 min, `kimi-k3-llama` to 0, tier on against the production nuc2:19600) started 21:41Z for 4 legs A1 B1 A2 B2 (A = `~/llama-k3-s2` old engine, B = `~/llama-k3-q` with the mmvq zero-record skip + `SPLIT_LATE=16`). The notes have no leg numbers, no "WINDOW END" and no record that production was restored or checked with the gold md5. Result not recorded. The other audit items (2, 7: bytes in flight, io_uring flags) have no measurement in the notes.
 
 ### Revisit when the bottleneck moves
 
