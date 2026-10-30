@@ -644,3 +644,32 @@ stores behave byte-identically. Measured on the Spark with GLM-5.3 (2026-10-30, 
 v2/v1/v2/v1): **v2 is slower, 4.82 against 4.90 tok/s**, md5 unchanged. The 512 KiB stride that made K3's reads ~8 %
 faster buys nothing here and the padded records are 4 % more bytes. Kept for compatibility (the NUCs' stores are v2);
 the Spark keeps its v1 store. Written by a sol worker.
+
+## 0009-split-skip-zero
+
+The split expert GEMV (patch 0003) runs the late matmul over 16 row positions so the graph shape never changes, and
+fills the positions that have no record with a zero "dummy" record in the host bank. The GPU reads the host bank
+uncached, so each dummy row still costs its full record read, about 28 us per id. This patch skips the dummy rows
+inside `mul_mat_vec_q` (a per-row early return keyed on the slot map's dummy marker; the accumulation order of the real
+rows and the exact zero contribution of the skipped rows are unchanged). `LLAMA_EXPERT_STORE_SPLIT_SKIP_ZERO=1` turns
+it on (default 0).
+
+Measured on the Spark, GLM-5.3, 80000 MiB cache, 64k context, 128-token runs, legs off/on/off/on from the same cache
+snapshot: 4.895/4.901, **5.123/5.136**, 4.856/4.897, **5.133/5.133 tok/s (+4.8 %)**, md5 `9449ae5738` in every run.
+Written by a sol worker (gpt-6.1-sol) from the op profile (`docs/glm-floor-profile-2026-10-30.md`); summary in
+docs/experiments.md (2026-10-30, candidate windows).
+
+## 0012-hook-lean
+
+The host-bank hooks (early lookup, real lookup, predictor post) are CUDA host nodes served by a poller thread. This
+patch trims the wake-up tax around them: 32 request threads instead of 256 for hooks with at most 32 ids, no unused
+request-counter atomic at capture, a 20 us instead of 200 us idle poller sleep, a 200 us spin in the fill worker
+after a completion before it sleeps, and a stable insertion sort for the predictor's small fills (no temporary
+allocation). No id, map value, fill order, fence or GPU wait changes. `LLAMA_EXPERT_STORE_HOOK_LEAN=1` turns it on
+(default 0). `LLAMA_EXPERT_STORE_HOOK_STATS=1` prints per-hook counts and service totals at teardown
+(`host bank hooks: early=N/Ems real=N/Rms post=N/Pms idle_sleeps=S lean=B`), zero cost when off.
+
+Measured on the Spark, GLM-5.3, same protocol as 0009 (0009 off in all four legs): 4.828/4.864, **5.111/5.122**,
+4.837/4.812, **5.137/5.118 tok/s (+5.8 %)**, md5 `9449ae5738` in every run. The stats showed early and post hooks at
+1.3-1.7 us each and the real hook at 0.55-0.60 ms: the hook bucket of the profile is the real-lookup wait, not the
+handshake. Written by a sol worker (gpt-6.1-sol); summary in docs/experiments.md (2026-10-30, candidate windows).

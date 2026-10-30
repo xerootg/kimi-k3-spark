@@ -1,0 +1,236 @@
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index cb966b3..af07dac 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -1612,6 +1612,16 @@ static std::thread              g_bank_poller;
+ static std::atomic<bool>        g_bank_poller_stop{false};
+ static std::atomic<uint64_t>    g_bank_async_requests{0};
+ 
++static bool ggml_cuda_host_bank_hook_lean() {
++    static const bool enabled = [] { const char * e = getenv("LLAMA_EXPERT_STORE_HOOK_LEAN"); return e != nullptr && strcmp(e, "1") == 0; }();
++    return enabled;
++}
++
++static bool ggml_cuda_host_bank_hook_stats() {
++    static const bool enabled = ggml_cuda_env_flag("LLAMA_EXPERT_STORE_HOOK_STATS");
++    return enabled;
++}
++
+ static bool ggml_cuda_host_bank_async_enabled() {
+ #ifdef GGML_CUDA_HOST_BANK_ASYNC_SUPPORTED
+     static const bool enabled = [] { const char * e = getenv("GGML_CUDA_HOST_BANK_ASYNC"); return !(e != nullptr && e[0] == '0'); }();
+@@ -1662,6 +1672,23 @@ static void ggml_cuda_bank_poller_pin() {
+ static void ggml_cuda_bank_poller_main() {
+     ggml_cuda_bank_poller_pin();
+     int idle = 0;
++    const bool lean = ggml_cuda_host_bank_hook_lean();
++    const bool stats = ggml_cuda_host_bank_hook_stats();
++    uint64_t calls[3] = {}, service_ns[3] = {}, sleeps = 0;
++    auto call_hook = [&](ggml_cuda_bank_mailbox * mb, int bucket) {
++        const auto t0 = stats ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
++        if (g_host_bank_hook != nullptr) {
++            g_host_bank_hook(g_host_bank_hook_ud, (const ggml_tensor *) (uintptr_t) mb->slot_map, (int) mb->kind, (const int32_t *) mb->ids, (int64_t) mb->n_ids);
++        }
++        if (stats) {
++            const auto * map = (const ggml_tensor *) (uintptr_t) mb->slot_map;
++            if (bucket == 0 && strncmp(map->name, "moe_cache.early_map-", 20) == 0) {
++                bucket = 2;
++            }
++            calls[bucket]++;
++            service_ns[bucket] += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count();
++        }
++    };
+     while (!g_bank_poller_stop.load(std::memory_order_relaxed)) {
+         bool served = false;
+         // real lookups first: the GPU is waiting on them
+@@ -1672,9 +1699,7 @@ static void ggml_cuda_bank_poller_main() {
+             }
+             mb->req = 0;
+             std::atomic_thread_fence(std::memory_order_acquire);
+-            if (g_host_bank_hook != nullptr) {
+-                g_host_bank_hook(g_host_bank_hook_ud, (const ggml_tensor *) (uintptr_t) mb->slot_map, (int) mb->kind, (const int32_t *) mb->ids, (int64_t) mb->n_ids);
+-            }
++            call_hook(mb, 0);
+             std::atomic_thread_fence(std::memory_order_seq_cst); // the fills and the slot map before the flag
+             mb->done = 1;
+             served = true;
+@@ -1692,19 +1717,26 @@ static void ggml_cuda_bank_poller_main() {
+             }
+             mb->req = 0;
+             std::atomic_thread_fence(std::memory_order_acquire);
+-            if (g_host_bank_hook != nullptr) {
+-                g_host_bank_hook(g_host_bank_hook_ud, (const ggml_tensor *) (uintptr_t) mb->slot_map, (int) mb->kind, (const int32_t *) mb->ids, (int64_t) mb->n_ids);
+-            }
++            call_hook(mb, 1);
+             served = true;
+             break; // back to the real mailboxes
+         }
+         if (served) {
+             idle = 0;
+         } else if (++idle > 200000) {
+-            // nothing for a while (no decode running): stop burning a core, wake up every 200 us
+-            std::this_thread::sleep_for(std::chrono::microseconds(200));
++            // nothing for a while (no decode running): stop burning a core, wake up every 200 us (20 us in lean mode)
++            std::this_thread::sleep_for(std::chrono::microseconds(lean ? 20 : 200));
++            if (stats) {
++                sleeps++;
++            }
+         }
+     }
++    if (stats) {
++        GGML_LOG_INFO("host bank hooks: early=%llu/%.3fms real=%llu/%.3fms post=%llu/%.3fms idle_sleeps=%llu lean=%d\n",
++            (unsigned long long) calls[2], service_ns[2]/1e6, (unsigned long long) calls[0], service_ns[0]/1e6,
++            (unsigned long long) calls[1], service_ns[1]/1e6,
++            (unsigned long long) sleeps, (int) lean);
++    }
+ }
+ 
+ void ggml_backend_cuda_set_host_bank_hook(ggml_backend_cuda_host_bank_hook_t fn, void * user_data) {
+@@ -1772,18 +1804,21 @@ static void ggml_cuda_host_bank_request_async(ggml_backend_cuda_context & ctx, c
+     cudaStream_t stream = ctx.stream();
+     const uint64_t slot_map = (uint64_t) (uintptr_t) node->src[0]; // read now: the node may be gone when the GPU gets here
+     const int kind = ggml_cuda_host_bank_kind(node);
++    const int threads = ggml_cuda_host_bank_hook_lean() && n <= 32 ? 32 : 256;
+     if (kind != GGML_CUDA_HOST_BANK_LOOKUP) {
+         // a prediction or an early post: post it and go on, nothing waits for it
+-        k_bank_request<<<1, 256, 0, stream>>>((const int32_t *) ids->data, n, &g_bank_mb_d[GGML_CUDA_MAX_STREAMS + s], slot_map, (uint32_t) kind);
++        k_bank_request<<<1, threads, 0, stream>>>((const int32_t *) ids->data, n, &g_bank_mb_d[GGML_CUDA_MAX_STREAMS + s], slot_map, (uint32_t) kind);
+         CUDA_CHECK(cudaGetLastError());
+         return;
+     }
+-    k_bank_request<<<1, 256, 0, stream>>>((const int32_t *) ids->data, n, &g_bank_mb_d[s], slot_map, (uint32_t) kind);
++    k_bank_request<<<1, threads, 0, stream>>>((const int32_t *) ids->data, n, &g_bank_mb_d[s], slot_map, (uint32_t) kind);
+     CUDA_CHECK(cudaGetLastError());
+     const CUdeviceptr done = (CUdeviceptr) (uintptr_t) &g_bank_mb_d[s].done;
+     CU_CHECK(cuStreamWaitValue32((CUstream) stream, done, 1, CU_STREAM_WAIT_VALUE_EQ));
+     CU_CHECK(cuStreamWriteValue32((CUstream) stream, done, 0, CU_STREAM_WRITE_VALUE_DEFAULT));
+-    g_bank_async_requests++;
++    if (!ggml_cuda_host_bank_hook_lean()) {
++        g_bank_async_requests++;
++    }
+ }
+ #endif
+ 
+@@ -1924,6 +1959,11 @@ static void ggml_cuda_op_profile_end(ggml_backend_cuda_context & ctx, const ggml
+             key += " n_tok=" + std::to_string(node->src[1] ? node->src[1]->ne[2] : 0);
+         }
+     }
++    if (ggml_cuda_host_bank_hook_stats() && node->op == GGML_OP_GET_ROWS) {
++        key += strncmp(node->name, "moe_early-", 10) == 0 ? " early" :
++               strncmp(node->name, "moe_nowait", 10) == 0 ? " merge" :
++               ggml_cuda_host_bank_kind(node) != GGML_CUDA_HOST_BANK_LOOKUP ? " post" : " real";
++    }
+     g_op_prof_pending.push_back({ key, g_op_prof_cur_beg, end });
+     g_op_prof_cur_beg = nullptr;
+ }
+@@ -1953,7 +1993,7 @@ static void ggml_cuda_op_profile_flush(ggml_backend_cuda_context & ctx) {
+         total += r.second.first;
+     }
+     GGML_LOG_INFO("op profile over %d graphs: %.1f ms of node time per graph\n", g_op_prof_graphs, total/g_op_prof_graphs);
+-    for (size_t k = 0; k < rows.size() && k < 24; ++k) {
++    for (size_t k = 0; k < rows.size() && (ggml_cuda_host_bank_hook_stats() || k < 24); ++k) {
+         GGML_LOG_INFO("  %6.2f ms/graph %5.1f%%  %7.1f us/call  %6lld calls/graph  %s\n",
+             rows[k].second.first/g_op_prof_graphs, 100.0*rows[k].second.first/total,
+             1000.0*rows[k].second.first/rows[k].second.second, (long long) (rows[k].second.second/g_op_prof_graphs), rows[k].first.c_str());
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index 5a03a43..2642b8f 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -58,6 +58,11 @@
+ 
+ namespace {
+ 
++static bool store_hook_lean() {
++    static const bool enabled = [] { const char * e = getenv("LLAMA_EXPERT_STORE_HOOK_LEAN"); return e != nullptr && strcmp(e, "1") == 0; }();
++    return enabled;
++}
++
+ // kimi-k3-spark patch 0003: LLAMA_EXPERT_STORE_CPUS=<cpu list, e.g. 0-9 or 0,2,4-7>: the store's I/O workers, the
+ // speculative reader, the fill thread and the CUDA host-bank poller (its own copy of this parser, in ggml-cuda.cu)
+ // run on these CPUs. The GB10 has 10 X925 and 10 A725 cores and the scheduler is free to put a reader on a little
+@@ -2030,9 +2035,16 @@ struct llama_moe_cache::impl {
+         std::atomic<bool>        failed{false};
+         bool                     stop = false;
+         io_pool *                pool = nullptr;
++        bool                     lean = false;
++        bool                     hook_stats = false;
++        std::chrono::steady_clock::time_point queued_at{};
++        uint64_t                 dispatch_ns = 0, dispatches = 0; // fill thread only, read after join
+ 
+         void start_thread(io_pool * p) {
+             pool = p;
++            lean = store_hook_lean();
++            const char * e = getenv("LLAMA_EXPERT_STORE_HOOK_STATS");
++            hook_stats = e != nullptr && strcmp(e, "1") == 0;
+             th = std::thread([this] { main(); });
+         }
+         void main() {
+@@ -2045,12 +2057,25 @@ struct llama_moe_cache::impl {
+                         return;
+                     }
+                     state.store(2);
++                    if (hook_stats) {
++                        dispatch_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - queued_at).count();
++                        dispatches++;
++                    }
+                 }
+                 const bool ok = pool->run(fd, jobs);
+                 if (!ok) {
+                     failed.store(true);
+                 }
+                 state.store(0, std::memory_order_release);
++                if (lean) {
++                    // A short spin can catch the next fill before the worker parks.
++                    const auto until = std::chrono::steady_clock::now() + std::chrono::microseconds(200);
++                    while (state.load(std::memory_order_acquire) == 0 && std::chrono::steady_clock::now() < until) {
++                        for (int i = 0; i < 64; ++i) {
++                            io_pool::cpu_relax();
++                        }
++                    }
++                }
+             }
+         }
+         void submit(int fd_, const std::vector<io_pool::job> & in) {
+@@ -2059,6 +2084,9 @@ struct llama_moe_cache::impl {
+                 std::lock_guard<std::mutex> lock(m);
+                 fd   = fd_;
+                 jobs = in;
++                if (hook_stats) {
++                    queued_at = std::chrono::steady_clock::now();
++                }
+                 state.store(1);
+             }
+             cv.notify_one();
+@@ -2081,6 +2109,10 @@ struct llama_moe_cache::impl {
+                 }
+                 cv.notify_all();
+                 th.join();
++                if (hook_stats) {
++                    LLAMA_LOG_INFO("expert store fill dispatch: calls=%llu queue_ms=%.3f lean=%d\n",
++                        (unsigned long long) dispatches, dispatch_ns/1e6, (int) lean);
++                }
+             }
+         }
+     } filler;
+@@ -4582,7 +4614,20 @@ struct llama_moe_cache::impl {
+             }
+             return n_ids;
+         };
+-        std::stable_sort(fills.begin(), fills.end(), [&](const moe_cache_lru::fill & a, const moe_cache_lru::fill & b) { return rank(a.expert) < rank(b.expert); });
++        if (store_hook_lean() && fills.size() <= 8) {
++            // Keep the same stable order without stable_sort's temporary allocation.
++            for (size_t i = 1; i < fills.size(); ++i) {
++                const auto f = fills[i];
++                size_t j = i;
++                while (j > 0 && rank(f.expert) < rank(fills[j - 1].expert)) {
++                    fills[j] = fills[j - 1];
++                    --j;
++                }
++                fills[j] = f;
++            }
++        } else {
++            std::stable_sort(fills.begin(), fills.end(), [&](const moe_cache_lru::fill & a, const moe_cache_lru::fill & b) { return rank(a.expert) < rank(b.expert); });
++        }
+         while (fills.size() > (size_t) spec_max) {
+             const moe_cache_lru::fill & f = fills.back();
+             g.lru.slot_map[il][f.expert] = -1;
