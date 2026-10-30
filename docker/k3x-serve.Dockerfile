@@ -30,9 +30,9 @@ RUN cd /w/cpu && OUT=/w/cpu/k3cs bash build_k3cs.sh
 # GLM: preserve the source layout for relative CPU includes/build.sh. Copy only
 # sources/headers, never model records or the 2.2 GB runtime MUFU tables.
 COPY tools/glm53/g53x.cpp tools/glm53/g53x_ty.inc tools/glm53/g53x_exact.inc \
-     tools/glm53/g53exact.h /src/tools/glm53/
+     tools/glm53/g53x_parallel.inc tools/glm53/g53parallel.h tools/glm53/g53exact.h /src/tools/glm53/
 COPY tools/glm53/ref/ggml-common.h /src/tools/glm53/ref/
-COPY tools/glm53/cpu/g53cpu.h tools/glm53/cpu/g53cpu.cpp \
+COPY tools/glm53/cpu/g53cpu.h tools/glm53/cpu/g53cpu.cpp tools/glm53/cpu/alloc_test.h \
      tools/glm53/cpu/g53cs.cpp tools/glm53/cpu/build.sh /src/tools/glm53/cpu/
 COPY tools/bitexact/expert_disk.h /src/tools/bitexact/
 COPY tools/bitexact/mufu/mufu_emu.h /src/tools/bitexact/mufu/
