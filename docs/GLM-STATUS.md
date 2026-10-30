@@ -91,3 +91,45 @@ Patches are opt-in knobs, not automatic speed claims. The patch series moves fro
 Workers (sol and Copilot) draft bounded changes; the owner reviews them and the hardware gates decide. Every candidate is A/B'd from the same immutable cache snapshot, with the original greedy fixture and a byte-identical md5 gate before accepting a speed claim. A changed store needs its own equivalent warm snapshot: the first store-format comparison was invalid because its candidate started cold. Keep model, prompt, context, cache budget and output fixture matched; report any deliberate difference. Sources: [decision log](roadmap.md), [patch README](../patches/README.md), [store-format ledger](experiments.md), [profile measurement procedure](glm-floor-profile-2026-10-30.md).
 
 Exact math, allocation/fault gates and end-to-end speed are separate gates. A remote identity run must actually use remote rows, rather than merely pass through local fallback; absent, refused or late rows must fall back locally. No production offload speedup, image rollout or GH200 migration is implied by a worker report or synthetic replay. Sources: [remote audit](../evidence/remote-tier-result.md), [merge result](../tools/glm53/MERGE-RESULT.md), [placement result](../tools/glm53/PLACEMENT-RESULT.md).
+
+## energy
+
+[`tools/tokwatt.py`](../tools/tokwatt.py) uses `PROM_URL` (or `--prom-url`)
+to query `homeassistant_sensor_power_w{entity="sensor.server_cabinet_power"}`
+at 10 s resolution. Supply `--start EPOCH --end EPOCH --tokens N`, or
+`--legs-log FILE` containing `LEG name start=<epoch> end=<epoch> tokens=N`.
+Epoch seconds may be fractional; tokens must be actual decoded output counts.
+`python3 tools/tokwatt.py --demo` runs a synthetic self-test without network.
+
+For duration T and output N: throughput = N/T; cabinet watts W = mean of
+finite nonnegative samples in [start,end); baseline B = median in
+[start−120,start); incremental watts ΔW = W−B. Tokens per incremental joule
+= N/(T×ΔW) = (tokens/s)/ΔW, also tokens/s per watt. Whole-cabinet tokens/kWh
+= N×3,600,000/(T×W). Energy is estimated from the sampled mean over the full
+window, not an integral across missing intervals. Nonpositive ΔW gives NA
+for incremental efficiency. Missing samples are omitted, counts and partial
+coverage flags are printed, and an empty interval gives NA for its metrics.
+Partial-window figures assume the remaining samples are representative.
+The query rejects samples older than 20 s to limit Prometheus lookback filling;
+repeated Home Assistant readings can still hide an upstream sensor outage.
+
+Optional owner leg pattern: run `TOKWATT=1 bash evidence/glm-legs-v2b.sh`
+on the Spark and retain stdout. The opt-in addition prints one LEG marker per
+measured request (r1/r2), using `timings.predicted_n`, `predicted_ms`, and local
+response receipt time. Warmup r0 is omitted. Start is estimated as receipt minus
+decode duration, excluding prefill approximately; Python startup and response
+transport shift both boundaries. For precise windows, capture absolute decode
+start/end in the server with a synchronized clock. Relative server timestamps
+alone cannot place historical runs on the Prometheus timeline. Preserve LEG
+lines when using spark-windows.sh wrappers: their tail/grep filters can drop them.
+
+The Fort Collins cabinet contains roughly ten machines, including the Spark.
+Reported ~468 W idle-ish and 538 W peak are context, not fixed baselines or
+new measurements. Other machines, UPS losses and baseline drift affect the
+meter; compare otherwise quiet, matched runs. The preceding two minutes can
+include warmup or another decode (especially back-to-back legs), biasing the
+baseline upward. Arrange a quiet two-minute interval before each measured
+window for clean attribution. The 10 s sensor cadence limits short decode
+accuracy; longer windows and clock synchronization help. Incremental watts
+understate a dedicated box's draw because idle power is subtracted; do not
+present incremental efficiency as the Spark's total wall-power efficiency.
