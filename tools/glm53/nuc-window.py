@@ -64,18 +64,19 @@ def terminate(w, name):
 def stage(a, w):
     if owned(w, 'nuc'):
         raise RuntimeError('stop this harness before staging')
-    env = dict(os.environ, LD_LIBRARY_PATH=f'{BUNDLE}:{w}/lib')
-    result = run('ldd', str(w / 'g53x'), env=env, capture_output=True, text=True)
-    print(result.stdout, end='')
-    if 'not found' in result.stdout:
-        raise RuntimeError('unresolved runtime libraries; repair bundle/compiler image')
-    # UR/Level Zero adapters are dlopened: ldd(g53x) alone cannot gate them.
-    for directory in (Path(BUNDLE), w / 'lib'):
-        for lib in sorted(directory.glob('*.so*')):
-            if lib.name.startswith(('libsycl', 'libur_', 'libze_')):
-                dep = run('ldd', str(lib), env=env, capture_output=True, text=True)
-                if 'not found' in dep.stdout:
-                    raise RuntimeError(f'unresolved adapter runtime {lib}: {dep.stdout}')
+    if not getattr(a, 'skip_runtime', False):
+        env = dict(os.environ, LD_LIBRARY_PATH=f'{BUNDLE}:{w}/lib')
+        result = run('ldd', str(w / 'g53x'), env=env, capture_output=True, text=True)
+        print(result.stdout, end='')
+        if 'not found' in result.stdout:
+            raise RuntimeError('unresolved runtime libraries; repair bundle/compiler image')
+        # UR/Level Zero adapters are dlopened: ldd(g53x) alone cannot gate them.
+        for directory in (Path(BUNDLE), w / 'lib'):
+            for lib in sorted(directory.glob('*.so*')):
+                if lib.name.startswith(('libsycl', 'libur_', 'libze_')):
+                    dep = run('ldd', str(lib), env=env, capture_output=True, text=True)
+                    if 'not found' in dep.stdout:
+                        raise RuntimeError(f'unresolved adapter runtime {lib}: {dep.stdout}')
     for name in ('rcp', 'ex2p', 'ex2n'):
         assert Path(MUFU, name + '.bin').is_file(), f'missing MUFU {name}'
     # Metadata only; never copy the model over WAN. Resident bytes are g+u+d,
@@ -106,13 +107,21 @@ def stage(a, w):
     for p in candidates:
         if p not in sizes:
             raise RuntimeError(f'invalid placement pair {p}')
-        if used + sizes[p] > 44_000_000_000:
+        if used + sizes[p] > getattr(a, 'max_gb', 44) * 1_000_000_000:
             break
         selected.append(p)
         used += sizes[p]
     assert selected, 'empty resident selection'
     write_set(w / 'resident.set', selected)
-    print(f'{rule}; N={len(selected)} resident bytes={used}; K3X_MAX_GB=44')
+    print(f'{rule}; N={len(selected)} resident bytes={used}; K3X_MAX_GB={getattr(a, "max_gb", 44)}')
+
+def ready_set(a, w):
+    resident = pairs(w / 'resident.set')
+    served = set(pairs(a.served))
+    assert resident and set(resident) <= served, 'resident set rejected by server'
+    write_set(w / 'remote.set', resident)
+    print(f'K3X_SETOUT served={len(served)}; resident owners={len(resident)}')
+
 
 def start(a, w):
     if not owned(w, 'nuc'):
@@ -301,12 +310,15 @@ def ab(a, w):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('command', choices=['stage', 'start', 'launch', 'stopped', 'stop', 'probe', 'build', 'ab'])
+    ap.add_argument('command', choices=['stage', 'start', 'launch', 'stopped', 'stop', 'probe', 'build', 'ab', 'ready-set'])
     ap.add_argument('--work', required=True)
     ap.add_argument('--port', type=int, default=19600)
     ap.add_argument('--ip', default='192.168.4.249')
     ap.add_argument('--rows', type=int, choices=[1, 2], default=1)
     ap.add_argument('--placement', default='/srv/glm-5.3/placement/nuc2-ram.set')
+    ap.add_argument('--skip-runtime', action='store_true')
+    ap.add_argument('--max-gb', type=int, choices=[18, 44], default=44)
+    ap.add_argument('--served', default='/srv/glm-5.3/served/nuc2.served.set')
     a = ap.parse_args()
     if a.command == 'ab':
         def interrupted(signum, frame):
@@ -322,6 +334,8 @@ def main():
         elif a.command == 'stop':
             terminate(w, 'nuc')
             print('owned NUC server stopped (or already absent)')
+        elif a.command == 'ready-set':
+            ready_set(a, w)
         elif a.command == 'build':
             build(w)
         else:

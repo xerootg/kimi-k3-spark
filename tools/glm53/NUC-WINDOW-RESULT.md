@@ -1,3 +1,6 @@
+Kubernetes follow-up: see ../../RESULT.md for current usage and validation.
+The native-mode notes below describe the original implementation.
+
 Implemented tools/glm53/nuc-window.sh, its remote stdlib driver nuc-window.py,
 and test_nuc_window.py. No network, commits, pushes or hardware runs performed.
 

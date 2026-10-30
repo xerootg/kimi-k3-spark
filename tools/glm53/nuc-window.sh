@@ -18,7 +18,50 @@ install_helper() {
   scp -q -o BatchMode=yes "$HERE/nuc-window.py" "$1:$2/driver.py"
 }
 nuc() { remote "$NUC" python3 "$WORK/driver.py" "$@" --work "$WORK" --port "$PORT"; }
-case ${1:-help} in
+K8S=0
+if [[ ${1:-} == --k8s ]]; then K8S=1; shift; fi
+COMMAND=${1:-help}
+shift "$(( $# > 0 ? 1 : 0 ))"
+LEG_LOG=${1:-${LEG_LOG:-}}
+[[ $# -le 1 && ( $# == 0 || $COMMAND == status ) ]] || { echo "Unexpected arguments" >&2; exit 2; }
+NUC_NODE=${NUC_NODE:-nuc2}
+DEPLOY=${DEPLOY:-glm-$NUC_NODE}
+NAMESPACE=${NAMESPACE:-kimi-k3}
+K8S_PLACEMENT=${K8S_PLACEMENT:-/srv/glm-5.3/placement/$NUC_NODE-ram.set}
+K8S_SERVED=${K8S_SERVED:-/srv/glm-5.3/served/$NUC_NODE.served.set}
+READY_TIMEOUT=${READY_TIMEOUT:-1800s}
+kube() { kubectl -n "$NAMESPACE" "$@"; }
+server_logs() { kube logs "deploy/$DEPLOY" --all-containers=true --tail=-1; }
+if [[ $K8S == 1 ]]; then
+  case $COMMAND in
+  stage)
+    install_helper "$NUC" "$WORK"
+    # The Deployment must be parked while its mounted placement is replaced.
+    [[ $(kube get deploy "$DEPLOY" -o jsonpath='{.spec.replicas}') == 0 ]] || {
+      echo "Scale $DEPLOY to zero before staging" >&2; exit 1;
+    }
+    kube rollout status "deploy/$DEPLOY" --timeout="$READY_TIMEOUT"
+    placement=${PLACEMENT:-/srv/glm-5.3/placement/$NUC_NODE-ram.set}
+    remote "$SPARK" scp -q -o BatchMode=yes "$placement" "$NUC:$WORK/placement.set"
+    budget=44
+    [[ $NUC_NODE != nuc3 ]] || budget=18
+    nuc stage --placement "$WORK/placement.set" --skip-runtime --max-gb "${MAX_GB:-$budget}"
+    remote "$NUC" cp "$WORK/resident.set" "$K8S_PLACEMENT"
+    exit ;;
+  start)
+    kube scale deploy "$DEPLOY" --replicas=1
+    kube rollout status "deploy/$DEPLOY" --timeout="$READY_TIMEOUT"
+    log=$(server_logs)
+    # g53x/g53cs report the resident served count in their startup load line.
+    loaded=$(printf '%s\n' "$log" | sed -nE 's/.*loaded ([0-9]+) of ([0-9]+) records.*/served resident records=\1 (requested \2)/p' | tail -n 1)
+    [[ -n $loaded ]] || { echo "Ready pod has no served count in log" >&2; exit 1; }
+    printf '%s\n' "$loaded"
+    nuc ready-set --served "$K8S_SERVED"
+    exit ;;
+  stop) kube scale deploy "$DEPLOY" --replicas=0; exit ;;
+  esac
+fi
+case $COMMAND in
 stage)
   [[ -f $G53X ]] || { echo "Build first: tools/glm53/build-sycl.sh (missing $G53X)" >&2; exit 1; }
   install_helper "$NUC" "$WORK"
@@ -57,13 +100,25 @@ stage)
   fi
   nuc stage --placement "$placement"
   ;;
+status)
+  kube get pods -l "app.kubernetes.io/name=glm53-remote,kimi-k3/node=$NUC_NODE" -o wide
+  if [[ $K8S == 1 ]]; then
+    log=$(server_logs) || log='No current pod log available'
+  else
+    log=$(remote "$NUC" cat "$WORK/server.log") || log='No native server log available'
+  fi
+  printf '%s\n' "$log" | awk '/loaded [0-9]+ of [0-9]+ records/ {load=$0} /disk:|stats/ {stats=$0} END {if(load) print load; if(stats) print stats; else print "No server stats line yet"}'
+  if [[ -n $LEG_LOG ]]; then
+    remote "$SPARK" python3 -c 'import pathlib,sys; print("\n".join(s for s in pathlib.Path(sys.argv[1]).read_text(errors="replace").splitlines() if "remote layer" in s))' "$LEG_LOG"
+  fi
+  ;;
 start) nuc start ;;
 stop) nuc stop ;;
 probe|ab)
   install_helper "$SPARK" "$SPWORK"
   # Fetch only the supported resident ownership set over the LAN, from Spark.
   remote "$SPARK" scp -q -o BatchMode=yes "$NUC:$WORK/remote.set" "$SPWORK/remote.set"
-  if [[ $1 == probe ]]; then
+  if [[ $COMMAND == probe ]]; then
     remote "$SPARK" python3 "$SPWORK/driver.py" probe --work "$SPWORK" --ip "$NUC_IP" --port "$PORT"
     exit
   fi
@@ -82,11 +137,16 @@ probe|ab)
   remote "$SPARK" python3 "$SPWORK/driver.py" ab --work "$SPWORK" --ip "$NUC_IP" --port "$PORT" --rows "${ROWS:-1}"
   ;;
 *) cat <<'USAGE'
-Usage: tools/glm53/nuc-window.sh stage|start|probe|ab|stop
+Usage: tools/glm53/nuc-window.sh [--k8s] stage|start|probe|ab|stop|status [Spark-leg-log]
 Run on laptop: stage; start; probe; REMOTE_PATCH=/path/0013.patch ... ab; stop
 Then ROWS=2 ... ab. Patch optional only if source is already patched.
 Overrides: G53X IMAGE SPARK NUC NUC_IP PORT WORK SPWORK PLACEMENT ROWS.
-Defaults use nuc2 only (44 GB); nuc3 is intentionally not started.
+Kubernetes: --k8s stage; --k8s start; --k8s probe; --k8s ab; --k8s stop.
+Run ak first if kubectl needs cluster authentication. Image/deploy must exist.
+K8s overrides: DEPLOY (glm-nuc2), NAMESPACE (kimi-k3), NUC_NODE (nuc2),
+K8S_PLACEMENT K8S_SERVED READY_TIMEOUT MAX_GB (44 on nuc2, 18 on nuc3).
+status [Spark-leg-log] (or LEG_LOG) shows pods, server stats, remote layer lines.
+For nuc3 also override NUC, NUC_IP, WORK and DEPLOY to match that node.
 USAGE
 ;;
 esac
