@@ -1141,6 +1141,25 @@ Engine reader for store v2 (512 KiB stride). First A/B was invalid (the cache sn
 
 GLM-5.3 ships an MTP head (blk.78) and upstream llama-server has `--spec-type draft-mtp`. Sol's study (`docs/experimental/mtp/STUDY.md`): the 2-4 column verify batch takes a different mmvq path (one warp per token, no 4-warp partials) so its per-column arithmetic differs from batch 1; patch 0008 (`GGML_CUDA_MMVQ_EXACT_COLS=1`, archived there with the `batchdump` harness) dispatches the batch-1 kernel per column. **Harness on the Spark:** with the knob off, batch 2..4 columns differ from the singleton on every layer type (IQ2_XS, IQ3_XXS, IQ4_XS, Q2_K/Q3_K); with it on, bit-identical on all of them. **Decode legs** (Sol's launcher: ctx 32k, cache 76000, so the baseline is 4.49 tok/s here, 256 tokens, 2 runs each): baseline 4.488/4.488 and 4.495/4.475 (md5 15e1fbcf60); draft-mtp 3.967/3.973 (md5 e969a6a282, 120 of 134 drafts accepted); draft-mtp + exact columns 3.871/3.757 (md5 d8fe1a07a3). So: 90 % acceptance, yet 12-16 % slower, and the output changes even with exact expert columns (the attention tile choice, the DSA indexer and the predictor's batch-1 guard differ for a verify batch, as the study listed). To make MTP pay it would need the predictor for verify batches, a one-pass union read, and batch-1-equivalent attention/indexer variants: a large project with an uncertain payoff. Parked.
 
+### GLM-5.3: the candidate windows, first pass (2026-10-30, afternoon)
+
+Each window stops the production pod, builds one candidate into the native `~/llama-k3-bs` tree (0001-0006 + 0008 +
+0009, candidates applied cumulatively, all off by default), runs A/B legs from the same frozen cache snapshot
+(standard 128-token request, 2 timed runs, md5 gate `9449ae5738`), and restores the pod. Results, in run order:
+
+| window | candidate | result |
+|---|---|---|
+| d | 0009 split dummy-row skip (`LLAMA_EXPERT_STORE_SPLIT_SKIP_ZERO=1`) | off 4.895/4.901, on 5.123/5.136; repeat off 4.856/4.897, on 5.133/5.133 tok/s; md5 gold in all 8. **+4.8 %, adopted.** |
+| e | GB10 GEMV bench + `GGML_CUDA_GRAPH_STATS` | the bench did not compile standalone (`#include "../evidence/ggml-common.h"`); re-issued to Sol. Graph stats: 126 of 129 graphs reused per request, 1 realloc (changed size) per request, so graph capture is not a lever. |
+| f | 0010 host-bank prefill (`LLAMA_EXPERT_STORE_PREFILL_BANK=1`, pb tree, ubatch 2048) | prefill 72.2 -> 102.6 tok/s (2k prompt), 70.9 -> 98.7 (8k), long-prompt decode bytes identical; but decode -8 % in every leg (4.05 -> 3.74, 4.79 -> 4.36) because the 10344 MiB of landing slots are carved from the 80000 MiB cache (hit rate 92.1 -> 84.0 %), and the standard short request decodes different bytes (`9a76bcc98b`). **Not adopted**; two fixes re-issued to Sol. |
+| g | 0011 DSA short-context identity-index skip (`LLAMA_DSA_SHORT_CTX_SKIP=1`) | off 4.894/4.901; on: server aborts on the first decode token, `ggml-backend.cpp:345: GGML_ASSERT(buffer) failed` right after the first graph realloc (an unallocated index tensor). 8192-token prompt with the skip off: decode md5 `25d4133dc7`, 64.0 pp tok/s. **Crash re-issued to Sol.** |
+| h | 0012 host-hook lean (`LLAMA_EXPERT_STORE_HOOK_LEAN=1`) | off 4.828/4.864, on 5.111/5.122; repeat off 4.837/4.812, on 5.137/5.118; md5 gold in all 8. **+5.8 %, adopted.** `HOOK_STATS`: early hooks 1.3 us, post hooks 1.7 us, real hooks 0.55-0.60 ms each (28875 hooks, 15.8-17.5 s): the whole 42 ms/token "host hooks" bucket is the real-lookup wait, not handshake. Lean makes the real hook longer and the token faster (the poller no longer sleeps across the gap: idle_sleeps 124k -> 350k). |
+| c | GLM routing trace with `llama-k3-pfdump` (2048 decode tokens) | `common.cpp:2249: get_sub_batch: failed to add token 76474 at index 2048 (error -1, n = 3107)`: the 3107-token prompt exceeds `--batch-size 2048` and pfdump does not chunk. No trace, so `place.py` had nothing; rerun queued with `--batch-size 4096`. |
+| j | 0014 MTP spec-exact iteration 1 (pb tree) | the patch does not apply on the pb tree (`llama-moe-cache.cpp:3694`, 0010 moved the predictor site), so the legs ran upstream `draft-mtp` only: BASE 4.508/4.518 tok/s md5 `15e1fbcf60` (256 tokens), MTP 3.996/3.998 md5 `d8fe1a07a3`, 121 of 133 drafts accepted. Same -11 % and changed bytes as before; rebase re-issued to Sol. |
+
+0009 and 0012 were measured separately (each against a baseline with the other off). A combined window (both on
+versus both off) is queued before they go into the image and manifest.
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because
