@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the Kimi K3 expert store from a (split) GGUF.
+"""Build an expert store from a (split) GGUF.
 
 The store puts the three routed-expert matrices of one expert (gate, up, down)
 back to back in ONE record, so an engine that streams experts from NVMe reads
@@ -11,10 +11,10 @@ Layout (little-endian, all offsets absolute in the store file):
 
   header, 64 bytes at offset 0
     char[4] magic = "K3XS"
-    u32     version = 1
+    u32     version = 1 or 2
     u32     n_records        number of MoE layers in the store
     u32     n_expert         experts per layer
-    u32     align            record alignment (4096)
+    u32     align            slot alignment (4096 in v1, requested in v2)
     u32     entry_size       bytes per index entry (64)
     u64     index_offset     (4096)
     u64     records_offset   first record
@@ -22,19 +22,22 @@ Layout (little-endian, all offsets absolute in the store file):
   index: n_records entries of 64 bytes at index_offset, ascending layer
     u32 layer, u32 gate_type, u32 up_type, u32 down_type   (ggml type ids)
     u64 gate_size, u64 up_size, u64 down_size              (bytes per expert)
-    u64 record_size                                        (padded to align)
+    u64 record_size                                        (padded to 4096)
     u64 base_offset                                        (record of expert 0)
-    u8[8] reserved
-  records: expert e of a layer is at base_offset + e * record_size and holds
+    u8[8] reserved in v1; u64 stride in v2
+  records: expert e of a layer is at base_offset + e * record_size in v1 or
+    base_offset + e * stride in v2. The v2 stride rounds record_size up to
+    align; all layer base offsets are align-aligned.
     gate bytes at 0, up bytes at gate_size, down bytes at gate_size + up_size,
-    zero padding to record_size. Rows are packed exactly as in the GGUF.
+      zero padding to record_size, then (in v2) zero padding to stride. Rows
+      are packed exactly as in the GGUF.
 
 Only stdlib: the Spark has no numpy. Reads the shards with preadv straight
 into a page-aligned buffer and writes records with O_DIRECT, so a 545 GB
 repack does not churn the page cache of a box that is serving the model.
 
 usage: repack-experts.py --gguf <first shard> --out <store> [--index-only]
-                         [--verify N] [--layers A-B]
+                         [--verify N] [--layers A-B] [--stride-align BYTES]
 """
 import argparse
 import json
@@ -61,10 +64,27 @@ TYPE_NAMES = {0: "F32", 1: "F16", 8: "Q8_0", 12: "Q4_K", 13: "Q5_K", 14: "Q6_K",
 
 HEADER = struct.Struct("<4sIIIIIQQ24x")
 ENTRY = struct.Struct("<IIIIQQQQQ8x")
+ENTRY_V2 = struct.Struct("<IIIIQQQQQQ")
 assert HEADER.size == 64 and ENTRY.size == 64
+assert ENTRY_V2.size == 64
 MAGIC = b"K3XS"
 ALIGN = 4096
 EXPS = re.compile(r"^blk\.(\d+)\.ffn_(gate|up|down)_exps\.weight$")
+
+
+def stride_alignment(value):
+    try:
+        value = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be an integer")
+    if value < ALIGN or value & (value - 1):
+        raise argparse.ArgumentTypeError(
+            f"must be a power of two and at least {ALIGN} bytes")
+    return value
+
+
+def round_up(value, alignment):
+    return (value + alignment - 1) // alignment * alignment
 
 
 def rd(f, fmt):
@@ -135,7 +155,7 @@ def shards_of(first):
     return [f"{base}-{i:05d}-of-{total}.gguf" for i in range(1, int(total) + 1)]
 
 
-def build_index(shards):
+def build_index(shards, stride_align=ALIGN):
     tensors = {}
     for sp in shards:
         for name, dims, ty, off, nb in parse_shard(sp):
@@ -161,35 +181,43 @@ def build_index(shards):
             if t[w][4] % n_expert:
                 raise SystemExit(f"layer {il} {w}: bytes not divisible by n_expert")
         total = sizes["gate"] + sizes["up"] + sizes["down"]
-        record = (total + ALIGN - 1) // ALIGN * ALIGN
+        record = round_up(total, ALIGN)
         entries.append({
             "layer": il, "n_expert": n_expert,
             "gate": t["gate"], "up": t["up"], "down": t["down"],
             "gate_size": sizes["gate"], "up_size": sizes["up"], "down_size": sizes["down"],
             "record_size": record,
         })
+        if stride_align > ALIGN:
+            entries[-1]["stride"] = round_up(record, stride_align)
     if not entries:
         raise SystemExit("no ffn_*_exps tensors found")
     n_expert = {e["n_expert"] for e in entries}
     if len(n_expert) != 1:
         raise SystemExit(f"expert count differs across layers: {n_expert}")
     index_offset = ALIGN
-    records_offset = (index_offset + len(entries) * ENTRY.size + ALIGN - 1) // ALIGN * ALIGN
+    records_offset = round_up(index_offset + len(entries) * ENTRY.size, stride_align)
     off = records_offset
     for e in entries:
         e["base_offset"] = off
-        off += e["record_size"] * e["n_expert"]
+        off += e.get("stride", e["record_size"]) * e["n_expert"]
     return entries, n_expert.pop(), index_offset, records_offset, off
 
 
-def write_header_index(fd, entries, n_expert, index_offset, records_offset):
+def write_header_index(fd, entries, n_expert, index_offset, records_offset, stride_align):
     buf = mmap.mmap(-1, records_offset)
-    buf[0:HEADER.size] = HEADER.pack(MAGIC, 1, len(entries), n_expert, ALIGN, ENTRY.size, index_offset, records_offset)
+    version = 2 if stride_align > ALIGN else 1
+    buf[0:HEADER.size] = HEADER.pack(MAGIC, version, len(entries), n_expert, stride_align, ENTRY.size,
+                                    index_offset, records_offset)
     for i, e in enumerate(entries):
         p = index_offset + i * ENTRY.size
-        buf[p:p + ENTRY.size] = ENTRY.pack(e["layer"], e["gate"][2], e["up"][2], e["down"][2],
-                                           e["gate_size"], e["up_size"], e["down_size"],
-                                           e["record_size"], e["base_offset"])
+        fields = (e["layer"], e["gate"][2], e["up"][2], e["down"][2],
+                  e["gate_size"], e["up_size"], e["down_size"],
+                  e["record_size"], e["base_offset"])
+        if version == 2:
+            buf[p:p + ENTRY.size] = ENTRY_V2.pack(*fields, e["stride"])
+        else:
+            buf[p:p + ENTRY.size] = ENTRY.pack(*fields)
     os.pwrite(fd, buf, 0)
     buf.close()
 
@@ -201,19 +229,24 @@ def main():
     ap.add_argument("--index-only", action="store_true", help="print the plan, write nothing")
     ap.add_argument("--verify", type=int, default=0, help="after writing, compare N random records with the GGUF")
     ap.add_argument("--layers", default=None, help="A-B: only (re)write these layers' records (resume)")
+    ap.add_argument("--stride-align", type=stride_alignment, default=ALIGN, metavar="BYTES",
+                    help="power-of-two slot alignment, at least 4096 (default: 4096)")
     args = ap.parse_args()
 
     shards = shards_of(args.gguf)
     for s in shards:
         if not os.path.exists(s):
             raise SystemExit(f"missing shard {s}")
-    entries, n_expert, index_offset, records_offset, total = build_index(shards)
+    entries, n_expert, index_offset, records_offset, total = build_index(shards, args.stride_align)
     print(f"{len(entries)} MoE layers x {n_expert} experts, store = {total/1e9:.2f} GB, "
           f"records {entries[0]['record_size']}..{max(e['record_size'] for e in entries)} bytes")
     for e in entries[:3] + entries[-1:]:
+        stride = e.get("stride", e["record_size"])
+        stride_text = f", stride {stride} B" if stride != e["record_size"] else ""
         print(f"  blk.{e['layer']:2d}: gate {TYPE_NAMES.get(e['gate'][2], e['gate'][2])} {e['gate_size']} B, "
               f"up {TYPE_NAMES.get(e['up'][2], e['up'][2])} {e['up_size']} B, "
-              f"down {TYPE_NAMES.get(e['down'][2], e['down'][2])} {e['down_size']} B -> record {e['record_size']} B")
+              f"down {TYPE_NAMES.get(e['down'][2], e['down'][2])} {e['down_size']} B -> record {e['record_size']} B"
+              f"{stride_text}")
     with open(args.out + ".json", "w") as f:
         json.dump({"n_expert": n_expert, "records_offset": records_offset, "total_bytes": total,
                    "layers": [{k: (v if not isinstance(v, tuple) else {"shard": os.path.basename(v[0]), "dims": v[1], "type": v[2], "offset": v[3], "n_bytes": v[4]})
@@ -230,8 +263,8 @@ def main():
     out = os.open(args.out, os.O_WRONLY | os.O_CREAT | os.O_DIRECT, 0o644)
     if sel is None:
         os.ftruncate(out, total)
-        write_header_index(out, entries, n_expert, index_offset, records_offset)
-    max_rec = max(e["record_size"] for e in entries)
+        write_header_index(out, entries, n_expert, index_offset, records_offset, args.stride_align)
+    max_rec = max(e.get("stride", e["record_size"]) for e in entries)
     buf = mmap.mmap(-1, max_rec)
     mv = memoryview(buf)
     t0 = time.time()
@@ -241,20 +274,22 @@ def main():
             continue
         g, u, d = e["gate"], e["up"], e["down"]
         gs, us, ds, rs = e["gate_size"], e["up_size"], e["down_size"], e["record_size"]
+        stride = e.get("stride", rs)
         mv[gs + us + ds:rs] = b"\0" * (rs - gs - us - ds)
+        mv[rs:stride] = b"\0" * (stride - rs)
         tl = time.time()
         for x in range(n_expert):
             os.preadv(fds[g[0]], [mv[0:gs]], g[3] + x * gs)
             os.preadv(fds[u[0]], [mv[gs:gs + us]], u[3] + x * us)
             os.preadv(fds[d[0]], [mv[gs + us:gs + us + ds]], d[3] + x * ds)
-            n = os.pwrite(out, mv[0:rs], e["base_offset"] + x * rs)
-            if n != rs:
-                raise SystemExit(f"short write {n} != {rs} at layer {e['layer']} expert {x}")
+            n = os.pwrite(out, mv[0:stride], e["base_offset"] + x * stride)
+            if n != stride:
+                raise SystemExit(f"short write {n} != {stride} at layer {e['layer']} expert {x}")
         for fd in fds.values():
             os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
-        done += rs * n_expert
+        done += stride * n_expert
         dt = time.time() - tl
-        print(f"blk.{e['layer']:2d} done: {rs*n_expert/1e9:.2f} GB in {dt:.0f} s ({rs*n_expert/1e9/dt:.2f} GB/s), "
+        print(f"blk.{e['layer']:2d} done: {stride*n_expert/1e9:.2f} GB in {dt:.0f} s ({stride*n_expert/1e9/dt:.2f} GB/s), "
               f"total {done/1e9:.0f} GB, elapsed {(time.time()-t0)/60:.0f} min", flush=True)
     os.fsync(out)
     os.close(out)
@@ -268,7 +303,8 @@ def main():
         for _ in range(args.verify):
             e = random.choice(entries)
             x = random.randrange(n_expert)
-            rec = os.pread(sfd, e["record_size"], e["base_offset"] + x * e["record_size"])
+            stride = e.get("stride", e["record_size"])
+            rec = os.pread(sfd, stride, e["base_offset"] + x * stride)
             pos = 0
             for w in ("gate", "up", "down"):
                 t = e[w]
