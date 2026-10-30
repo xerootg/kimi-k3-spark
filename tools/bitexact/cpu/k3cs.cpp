@@ -8,6 +8,11 @@
 // Environment (k3x names where the meaning is the same):
 //   K3X_MUFU=<dir>          MUFU tables (rcp/ex2p/ex2n/tanh.bin)
 //   K3X_MAX_GB=<GB>         stop loading at this many GB of records (default 24); later ids answer NaN
+//   K3X_DISK_TIER=1         serve nonresident records from a full K3XS store (default off)
+//   K3X_DISK_STORE=<file>   full store path (default BIN); IDX/BIN still select the startup RAM records
+//   K3X_DISK_LRU_GB=<GB>    preallocated disk cache (decimal GB, default 1), rounded down to whole slots
+//   K3X_DISK_THREADS=<n>    parallel readers (default 4); optional liburing, else O_DIRECT pread
+//   K3X_DISK_DEADLINE_MS=n  disk budget per received request (default 20); late/missing rows answer NaN
 //   K3X_SETOUT=<file>       write the served "layer expert" list (the engine's LLAMA_EXPERT_STORE_REMOTE_SET)
 //   K3X_FULLCHECK=1         every served record: one token through the serving kernels vs the scalar host reference
 //                           (k3x_math.h, the same reference k3x's FULLCHECK uses), bit for bit; exit 6 on any difference
@@ -23,6 +28,7 @@
 // The arena is anonymous memory in 1 GiB chunks with transparent huge pages, locked (mlockall) after loading, so the
 // serving path never page-faults. A record whose row comes back all zero (never a real expert row) is sent as NaN.
 #include "k3cpu.h"
+#include "../expert_disk.h"
 #include "../sycl/k3x_act.h"
 #include <algorithm>
 #include <atomic>
@@ -33,6 +39,7 @@
 #include <cstring>
 #include <ctime>
 #include <string>
+#include <memory>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -68,6 +75,11 @@ static std::vector<int> parse_cpus(const char * s) {
 
 // ---- scalar host reference (k3x_math.h; identical to k3cpu_test.cpp's and k3x's host_ref)
 static size_t rowb(int t, int k) { return (size_t) (k / 256) * (t == 19 ? 50 : 66); }
+static bool supported(const k3disk::Record & r) {
+    return (r.tg == 16 || r.tg == 19) && (r.tu == 16 || r.tu == 19) &&
+           (r.td == 16 || r.td == 19) && r.gate == rowb(r.tg, D) * F &&
+           r.up == rowb(r.tu, D) * F && r.down == rowb(r.td, F) * D;
+}
 static float ref_row(int t, const uint8_t * row, int nb, const k3_q8_1 * q8) {
     float p[128];
     for (int i = 0; i < 128; i++) {
@@ -141,7 +153,7 @@ static bool rd(int fd, void * p, size_t n, uint64_t * first = nullptr) {
     }
     return true;
 }
-static bool wr(int fd, const void * p, size_t n) { const char * c = (const char *) p; while (n) { ssize_t r = send(fd, c, n, 0); if (r <= 0) return false; c += r; n -= r; } return true; }
+static bool wr(int fd, const void * p, size_t n) { const char * c = (const char *) p; while (n) { ssize_t r = send(fd, c, n, MSG_NOSIGNAL); if (r <= 0) return false; c += r; n -= r; } return true; }
 
 // ---- memwarm (as k3x)
 static std::atomic<int> g_warm_on{0};
@@ -168,18 +180,46 @@ int main(int argc, char ** argv) {
     const char * idxp = argv[1], * binp = argv[2]; const int port = atoi(argv[3]);
     struct R { long gid; int tg, td; size_t off; };
     std::vector<R> idx; { FILE * f = fopen(idxp, "r"); if (!f) { perror(idxp); return 1; } R r; while (fscanf(f, "%ld %d %d %zu", &r.gid, &r.tg, &r.td, &r.off) == 4) idx.push_back(r); fclose(f); }
+    const bool disk_on = getenv("K3X_DISK_TIER") && atoi(getenv("K3X_DISK_TIER")) != 0;
+    std::unique_ptr<k3disk::Store> store;
+    std::unique_ptr<k3disk::Cache> disk;
+    double disk_deadline_ms = 0;
+    if (disk_on) {
+        const char * path = getenv("K3X_DISK_STORE") ? getenv("K3X_DISK_STORE") : binp;
+        const double gb = getenv("K3X_DISK_LRU_GB") ? atof(getenv("K3X_DISK_LRU_GB")) : 1.0;
+        disk_deadline_ms = getenv("K3X_DISK_DEADLINE_MS") ? atof(getenv("K3X_DISK_DEADLINE_MS")) : 20.0;
+        const int threads = getenv("K3X_DISK_THREADS") ? atoi(getenv("K3X_DISK_THREADS")) : 4;
+        if (!std::isfinite(gb) || gb <= 0 || gb * 1e9 >= double(SIZE_MAX) ||
+            !std::isfinite(disk_deadline_ms) || disk_deadline_ms < 0 || disk_deadline_ms > 3600000 ||
+            threads < 1 || threads > 64) {
+            fprintf(stderr, "k3cs: invalid disk tier configuration\n"); return 1;
+        }
+        try {
+            store.reset(new k3disk::Store(path));
+            size_t largest = 0;
+            for (const auto & r : store->records) largest = std::max(largest, size_t(r.bytes));
+            disk.reset(new k3disk::Cache(path, size_t(gb * 1e9), largest, threads));
+        } catch (const std::exception & e) {
+            fprintf(stderr, "k3cs: disk tier: %s\n", e.what()); return 1;
+        }
+        fprintf(stderr, "K3X_DISK_TIER: %zu records, %u experts/layer, %.3f GB LRU, %d readers, %.3f ms deadline\n",
+                store->records.size(), store->experts, gb, threads, disk_deadline_ms);
+    }
     const char * cs = getenv("K3X_CPU_CPUS");
     if (!cs || !*cs) { fprintf(stderr, "k3cs: K3X_CPU_CPUS is required\n"); return 1; }
     const double max_gb = getenv("K3X_MAX_GB") ? atof(getenv("K3X_MAX_GB")) : 24.0;
     // load: GGUF records verbatim into 1 GiB THP chunks
     const size_t CH = (size_t) 1 << 30; uint8_t * chunk = nullptr; size_t used = CH, tot = 0;
-    struct Rec { const uint8_t * p; int tg, td; };
+    struct Rec { const uint8_t * p; int tg, tu, td; };
     std::unordered_map<long, Rec> map;
     std::vector<const R *> served;
     const uint64_t t0 = ns_raw();
     int fd = open(binp, O_RDONLY); if (fd < 0) { perror(binp); return 1; }
     for (auto & r : idx) {
-        const size_t rec = k3cpu_rec_bytes(r.tg, r.tg, r.td);
+        const auto * meta = store ? store->find(r.gid) : nullptr;
+        if (store && (!meta || !supported(*meta))) continue;
+        const int tg = meta ? meta->tg : r.tg, tu = meta ? meta->tu : r.tg, td = meta ? meta->td : r.td;
+        const size_t rec = k3cpu_rec_bytes(tg, tu, td);
         if ((tot + rec) / 1e9 > max_gb) { fprintf(stderr, "K3X_MAX_GB %.1f reached: serving %zu of %zu records\n", max_gb, map.size(), idx.size()); break; }
         if (used + rec > CH) {
             chunk = (uint8_t *) mmap(nullptr, CH, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -190,7 +230,7 @@ int main(int argc, char ** argv) {
         size_t got = 0;
         while (got < rec) { ssize_t n = pread(fd, chunk + used + got, rec - got, (off_t) (r.off + got)); if (n <= 0) { fprintf(stderr, "short read gid %ld\n", r.gid); return 1; } got += n; }
         posix_fadvise(fd, (off_t) r.off, (off_t) rec, POSIX_FADV_DONTNEED);
-        map[r.gid] = {chunk + used, r.tg, r.td}; served.push_back(&r);
+        map[r.gid] = {chunk + used, tg, tu, td}; served.push_back(&r);
         used += rec; tot += rec;
     }
     close(fd);
@@ -212,7 +252,13 @@ int main(int argc, char ** argv) {
     float * rows = (float *) aligned_alloc(4096, (size_t) 16 * D * 4);
     if (const char * so = getenv("K3X_SETOUT")) {
         FILE * f = fopen(so, "w"); if (!f) { perror(so); return 1; }
-        for (auto * r : served) fprintf(f, "%ld %ld\n", r->gid / 896, r->gid % 896);
+        if (store) {
+            for (const auto & r : store->records) if (supported(r))
+                fprintf(f, "%llu %llu\n", (unsigned long long) (r.gid / store->experts),
+                        (unsigned long long) (r.gid % store->experts));
+        } else {
+            for (auto * r : served) fprintf(f, "%ld %ld\n", r->gid / 896, r->gid % 896);
+        }
         fclose(f);
     }
     std::vector<float> xin(D); for (int i = 0; i < D; i++) xin[i] = 0.03f * (float) ((i * 53) % 67 - 33);
@@ -222,7 +268,7 @@ int main(int argc, char ** argv) {
         std::vector<float> got(ns * D);
         for (size_t s = 0; s < ns; s++) {
             const Rec & r = map[served[s]->gid];
-            k3cpu_expert e{r.p, r.tg, r.tg, r.td, &got[s * D], nullptr, nullptr, nullptr, K3CPU_GGUF};
+            k3cpu_expert e{r.p, r.tg, r.tu, r.td, &got[s * D], nullptr, nullptr, nullptr, K3CPU_GGUF};
             k3cpu_run(P, xin.data(), &e, 1);
         }
         const double t_srv = (ns_raw() - tc) / 1e9;
@@ -231,7 +277,7 @@ int main(int argc, char ** argv) {
             std::vector<float> ref(D);
             for (size_t s; (s = next++) < ns;) {
                 const Rec & r = map.at(served[s]->gid);
-                ref_expert(r.p, r.tg, r.tg, r.td, xin.data(), mt, ref.data());
+                ref_expert(r.p, r.tg, r.tu, r.td, xin.data(), mt, ref.data());
                 long bv = 0, nz = 0; for (int i = 0; i < D; i++) { bv += fbits(ref[i]) != fbits(got[s * D + i]); nz += got[s * D + i] != 0.0f; }
                 if (bv) { bad++; badval += bv; }
                 if (!nz) zero++;
@@ -295,13 +341,64 @@ int main(int argc, char ** argv) {
             if (tr) { tr->t_rx = ns_raw(); tr->k = k; tr->conn = nconn; tr->seq = k >= 1 && k < 16 ? hdr[16] : -1; }
             if (k < 1 || k > 16) break;
             k3cpu_expert e[16]; bool ok = true;
+            int handles[16], computed[16], count = 0;
+            std::fill(handles, handles + 16, -1);
+            const auto deadline = k3disk::Clock::now() +
+                std::chrono::microseconds((int64_t) (disk_deadline_ms * 1000));
+            if (disk) {
+                // Queue all misses before waiting, so one request uses every reader.
+                for (int i = 0; i < k; ++i) if (map.find(hdr[1 + i]) == map.end()) {
+                    const auto * r = store->find(uint32_t(hdr[1 + i]));
+                    // Storage is type-agnostic; never reinterpret an unsupported model as IQ2_XXS.
+                    if (r && supported(*r))
+                        handles[i] = disk->acquire(*r);
+                }
+            }
             for (int i = 0; i < k; i++) {
                 auto it = map.find(hdr[1 + i]);
-                if (it == map.end()) { ok = false; break; }
-                e[i] = k3cpu_expert{it->second.p, it->second.tg, it->second.tg, it->second.td, rows + (size_t) i * D, nullptr, nullptr, nullptr, K3CPU_GGUF};
+                if (!disk) {
+                    if (it == map.end()) { ok = false; break; }
+                    e[i] = k3cpu_expert{it->second.p, it->second.tg, it->second.tu, it->second.td, rows + (size_t) i * D, nullptr, nullptr, nullptr, K3CPU_GGUF};
+                } else {
+                    computed[i] = -1;
+                    const uint8_t * p = nullptr; int tg = 0, tu = 0, td = 0;
+                    if (it != map.end()) {
+                        p = it->second.p; tg = it->second.tg; tu = it->second.tu; td = it->second.td;
+                    } else if (handles[i] >= 0) {
+                        p = disk->wait(handles[i], deadline);
+                        const auto * r = store->find(uint32_t(hdr[1 + i]));
+                        tg = r->tg; tu = r->tu; td = r->td;
+                    } else if (const auto * r = store->find(uint32_t(hdr[1 + i])); r && supported(*r)) {
+                        disk->wait(-1, deadline);
+                    }
+                    if (p) {
+                        computed[i] = count;
+                        e[count++] = k3cpu_expert{p, tg, tu, td, rows + (size_t) i * D, nullptr, nullptr, nullptr, K3CPU_GGUF};
+                    }
+                }
             }
             bool okw = true;
-            if (!ok) okw = wr(c, nanrows.data(), (size_t) k * D * 4);
+            if (disk) {
+                if (tr) tr->t_x = ns_raw();
+                if (count) k3cpu_submit(P, x.data(), e, count);
+                for (int j = 0; j < k && okw; ++j) {
+                    const float * r = nanrows.data();
+                    if (computed[j] >= 0) {
+                        k3cpu_wait(P, computed[j]);
+                        r = rows + (size_t) j * D;
+                        bool nz = false;
+                        for (int i = 0; i < D && !nz; ++i) nz = r[i] != 0.0f;
+                        if (!nz) { ++zero_rows; r = nanrows.data(); }
+                    }
+                    if (tr && j < 4) tr->t_row[j] = ns_raw();
+                    okw = wr(c, r, (size_t) D * 4);
+                    if (tr && j < 4) tr->t_sent[j] = ns_raw();
+                }
+                // Even a disconnected client must not allow eviction of weights still in use.
+                if (count) k3cpu_wait_all(P);
+                for (int i = 0; i < k; ++i) disk->release(handles[i]);
+            }
+            else if (!ok) okw = wr(c, nanrows.data(), (size_t) k * D * 4);
             else {
                 if (tr) tr->t_x = ns_raw();
                 k3cpu_submit(P, x.data(), e, k);
@@ -321,6 +418,7 @@ int main(int argc, char ** argv) {
         }
         close(c);
         if (zero_rows) fprintf(stderr, "conn %d: %ld all-zero rows sent as NaN so far\n", nconn, zero_rows);
+        if (disk) disk->stats(stderr);
         tr_dump();
     }
 }

@@ -23,6 +23,7 @@ COPY tools/bitexact/cpu/k3cpu.h tools/bitexact/cpu/k3cpu.cpp /w/cpu/
 RUN bash /w/sycl/build.sh
 # k3cs: the CPU-only server (k3cpu on GGUF records, no SYCL), static, built with the same g++ flags as k3cpu
 COPY tools/bitexact/cpu/k3cs.cpp tools/bitexact/cpu/build_k3cs.sh /w/cpu/
+COPY tools/bitexact/expert_disk.h /w/
 RUN cd /w/cpu && OUT=/w/cpu/k3cs bash build_k3cs.sh
 # User-mode GPU driver stack, pinned (same URLs as tools/distributed/bundle.sh).
 ADD https://github.com/oneapi-src/level-zero/releases/download/v1.28.2/level-zero_1.28.2%2Bu24.04_amd64.deb \
