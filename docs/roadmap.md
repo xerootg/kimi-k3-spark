@@ -160,13 +160,18 @@ The fork `xerootg/llama.cpp` is a research fork and will not be upstreamed. Its 
 
 ## GLM-5.3
 
-As of **2026-10-31, through the third pass (night)**. Sources: [experiment ledger](experiments.md#glm-53-the-candidate-windows-third-pass-2026-10-31-night),
+As of **2026-10-31 afternoon, after the prefill-bank rollout**. Sources: [experiment ledger](experiments.md#glm-53-the-candidate-windows-third-pass-2026-10-31-night),
 [GLM status](GLM-STATUS.md), [NUC decode verdict](remote-tier-2026-10-31.md),
 [NUC prefill study](nuc-prefill-offload-2026-10-31.md),
 [host-bank GEMV plan](experimental/host-bank-gemv-plan.md) and [THP plan](experimental/thp-bank-plan.md).
 
-**Spark production: 5.20 cold / 5.75 warm tok/s, cache 84000 MiB with LFU, gold md5 `9449ae5738`**,
-argo-things `60335ee` (owner's live check, superseding the ledger/status pages' pending-rollout wording).
+**Spark production (2026-10-31): image `g72518b8`, cache 84000 MiB with LFU and prefill bank**
+(`LLAMA_EXPERT_STORE_PREFILL_BANK=1`; argo-things `5df13e2`). Public checks gave **5.254 cold / 5.755 warm tok/s**,
+gold md5 `9449ae5738`; 2048-token prefill **108.7 / 109.2 tok/s**, versus ~72 previously.
+The server tokenised the windows' generator text with `cache_prompt: false`; the next 32 tokens decoded at
+2.65 / 3.52 tok/s in cold context, md5 `aa6d55b8e3` both passes. This exact fixture has no prior reference;
+x3 on the same binary matched the long-prompt golds. Valve minimum 6.90 GB against 4.29 GB reserve, 0 releases.
+Sources: [public decode](../evidence/prodcheck4.txt), [public prefill](../evidence/prefillcheck1.txt), [ledger](experiments.md).
 Patches 0009 (split dummy-row skip), 0012 (hook lean) and 0018 v2 (LFU) remain on;
 predictor input 3 and prefetch top-8 stay. Combined 0009/0012 measured +13.1 %, LFU +5.49 %,
 and the capacity window +2.7 %; these are separate A/Bs, not additive gains.
@@ -176,7 +181,7 @@ and the capacity window +2.7 %; these are separate A/Bs, not additive gains.
 | candidate | measured result / decision |
 |---|---|
 | cap: 80000 → 84000 MiB with LFU | CAP80 5.637/5.697, CAP84 5.793/5.858, CAP80b 5.630/5.713 tok/s; observed timed passes gold, +2.7 %. Hit rate 92.9 → 93.6 %; lowest MemAvailable 8.74 GB (CAP84), 8.68 GB (CAP84b), against 4.29 GB reserve. CAP84b timings absent from named evidence. Adopted. |
-| x: 0010 prefill bank v3 | On pb2, without 0009/0012/0018: 2k prefill 72.5 → 106.3, 8k 70.7 → 102.0 tok/s, about +45 %. Standard decode ~4.9 tok/s unchanged; long decode 4.03 → 4.02 / 4.10 → 4.07, bytes unchanged. Shared landing replaces staging; decode cache budget unchanged. Accepted pending clean-tree x3 and image. Supersedes v1's −8 % decode and changed short-request bytes. |
+| x / x3: 0010 prefill bank v3 (production patch 0020) | Clean-tree x3 with LFU, 84000 MiB: 2k prefill 72.15 → 106.21, 8k 70.55 → 104.40 tok/s (+47 % / +48 %), decode and gold bytes unchanged; memory headroom improves as shared landing replaces staging. Adopted 2026-10-31 in g72518b8; public 2k prefill 108.7 / 109.2 tok/s. |
 | o2: 0021 prefill order independence | At 16k / ubatch 2048, stock and patched each gave the same md5 `546cda4032` across three cold passes, prefill 68.4–68.7 tok/s. No layout variation reproduced on either clean tree; model-free stock FAIL / patched PASS remains the demonstrated distinction. Candidate for a prefill-testability guarantee, not urgent adoption; runner log lost, per-pass results retained. |
 | i2 / i4: NUC decode hedge | i2 −2.8 %, gold: reader-backend override regressed io_uring to pread. Fixed in 0013c; i4 still ~−1 %, gold, at ~1.8 ms RTT. Pending-row wait and posting/collector overhead outweigh wins against the local tail; parked, off for throughput. |
 | NUC prefill offload | Not viable with today's kernels. Decode GEMVs do not reuse weights across tokens; exact batched arithmetic and a Spark prefill-MMQ oracle must precede any integration. Conditional study scenarios are not measured gains. |
@@ -188,16 +193,21 @@ and the capacity window +2.7 %; these are separate A/Bs, not additive gains.
 | 0012c wider prediction | −1.5 %, gold, useful predictions ~67 → 41 %; dead for adoption. Wait-split instrumentation retained off by default. |
 | hb: 0024 hostalloc bank | Neutral at 72000 MiB (~5.1 tok/s), gold; disables memory valve. Dead for adoption despite standalone bank-read bandwidth; write-combined leg skipped as unsafe. |
 | MTP | As-is −11 % and changed bytes despite high acceptance; dead for current adoption. Exact patch did not apply in j; y failed to link, so no new timed exact result. |
-| gv / gm / bg: GEMV schedules | Dense standalone bench: 1232 matches, zero mismatches; synthetic inventory 66.04 → 59.16 ms/token (~6.9 ms potential). gm and bg ran only gold OFF controls before faulty init-log gates aborted; ON schedules unmeasured, gates fixed and reruns queued. |
-| thp: 0026 bank-only huge pages | Inconclusive: sampled-record checker fails even OFF controls after gold responses. Checker fix and rerun queued; no demonstrated bank corruption or gain from this window. |
+| gv / gm / bg: GEMV schedules | 2026-10-31: gm activation proven, neutral to −0.5 %; not adopted. bg −60 % (about 5.36 → 2.14 tok/s), gold; 0028 rejected. Standalone gains did not survive in the engine; scheduling levers closed. |
+| dma: device landing/rings | 2026-10-31: single copy engine 58.5 GB/s, 0.207 ms/record; ring 0.233–0.249 ms vs direct registered-bank 0.076 ms at 160 GB/s, all md5 MATCH. Synthetic bench; DMA ring closed, 3x slower. |
+| z: late-GEMV ready flags | 2026-10-31: c4 completed, −7 %, gold. GPU spinning costs more than it hides; rejected, idea closed. |
+| thp: 0026 bank-only huge pages | 2026-10-31: fixed checker, OFF 5.36850 → ON 5.44175 tok/s (+1.36 %), gold; 100 % huge backing, no record mismatch. Fill-side gain; GPU bank reads remain ~160 GB/s. Next: pending `LLAMA_EXPERT_STORE_THP_BANK=1` production flip, expected +1.3 %. |
 
-**Open questions:** the corrected nsys short-context budget ranks the next decode levers:
-**(1) dense-spine GEMV ~68 ms/token, (2) host-bank expert GEMV ~56 ms/token at ~132 GB/s,
-(3) read waits ~40 ms/token**. Dense schedules have ~6.9 ms/token standalone potential;
-bank schedules have a **10–19 ms/token ideal ceiling**, not a measured engine gain.
+**Decode conclusion (2026-10-31):** bg scheduling (−60 %), dma (single copy engine ~58 GB/s,
+ring 3x slower), gm (neutral) and hb allocation (neutral) close the tested host-bank levers.
+The corrected nsys buckets remain dense spine ~68 ms/token, host-bank GEMV ~56 ms at ~132 GB/s,
+and read waits ~40 ms; these overlap and are not an exact partition of unprofiled wall time.
 The old 124 ms / 59 GB/s bank attribution mixed dense and routed MMVQ and is superseded.
-These captured-token durations (clean tree, LFU off) are not an exact partition of unprofiled production
-wall time; short capture includes prefill. Host API time overlaps GPU work and is not an additive savings budget.
+The [host-bank plan outcome](experimental/host-bank-gemv-plan.md#outcome-2026-10-31) concludes
+Spark GLM-5.3 Q2 decode is near its architectural floor at **~5.8 tok/s warm** for this workload,
+with no demonstrated large scheduling win left. A material change needs fewer bytes per expert
+(a smaller quant), read parallelism (a second NVMe if misses expose more fill time), or the GH200;
+quality and gains require separate measurements. **Next is the huge-page bank env flip, +1.3 % expected**.
 
 Record latency has a **1.1 ms isolated floor**, rising to **1.5–3.5 ms in the engine** under
 **~129 records/token** of mostly speculative traffic; about half the early-issued records are incomplete
@@ -210,9 +220,13 @@ NUC decode stays parked unless RTT/selection economics change; NUC prefill needs
 The ctx sweep found no context cliff: decode ~4.2 tok/s from 2k through 32k; the earlier cached-prompt
 stall was not reproduced and remains unexplained. Earlier trees showed layout-dependent prefill;
 o2's stable clean-tree results do not establish that every dispatch/layout is invariant.
-Prefill v3 must repeat on the committed stack before production adoption.
-THP must demonstrate retained huge backing, exact bytes, safe pressure/regrow and a net win after
-padding's capacity cost; the [plan](experimental/thp-bank-plan.md) does not prove a NaN root cause.
+Prefill v3 passed clean-tree x3 and is deployed. THP passed the fixed checker; its production env flip
+is pending, with pressure/regrow and the capacity tradeoff still relevant.
+
+**Stack fix (2026-10-31):** GH200-only 0004b (CPU-slot-map guard) entered `patches/` in GH200 prep
+`aa52f22`, and was included in production image `ge4e4290` and subsequent images and the window trees' stack checks.
+It shifted the prefill-bank patch context; `72518b8` moved it to `tools/gh200/`.
+Spark uses GPU slot maps, so the patch changes nothing there and the measurements stand.
 
 The **GH200 still serves K3**. The [decision memo](gh200-decision-2026-10-30.md) options stand:
 uninterrupted K3, a reversible K3 byte-stride window, or a GLM UD-Q5_K_XL benchmark.
@@ -224,11 +238,7 @@ slots still require an owner decision; the memo's GLM speed estimates remain unm
 
 | window | work | decision / gate |
 |---|---|---|
-| gm | 0027 dense GEMV schedules | Fixed init-log gate; measure ON versus OFF on the engine with gold bytes. ~6.9 ms/token standalone potential is not an engine result. |
-| bg | 0028 bank GEMV schedules | Fixed init-log gate; test real/dummy rows, exact arithmetic and engine speed. 10–19 ms/token is an ideal bandwidth ceiling; preserve accumulation order. |
-| thp | 0026 bank-only huge pages | Fix false-positive checker; require retained huge backing, record/output identity, safe valve pressure/regrow and net speed after capacity loss. Keep staging and hostalloc separate. |
-| z | 0020 late GEMV ready flags | Compile fix queued after undefined `__assertfail`; prove overlap, gold bytes and safe composed reader/GPU teardown. Still unmeasured. |
-| x3 | Prefill bank v3 on the clean committed tree | Confirm pb2's +45 % prefill, unchanged decode/bytes and bounded landing reservations; then decide production image adoption. |
+| thp | 0026 bank-only huge pages | Measured +1.3 %, gold; next step is the pending production env flip `LLAMA_EXPERT_STORE_THP_BANK=1`. |
 | i5 (later, conditional) | Age-limited NUC hedge | Only if RTT/selection economics change; unstarted/young-read selection is unproved. Require a repeatable positive gold A/B with local fallback intact. |
 
 Source review and standalone benches do not certify engine gains. Use matched frozen snapshots,
@@ -266,3 +276,9 @@ standard greedy md5 gates and measured A/Bs before adoption.
 - 2026-10-31: accept prefill bank v3 pending clean-tree x3 and image: pb2 measured about +45 % prefill with decode and bytes unchanged; shared landing replaces staging without taking decode cache.
 - 2026-10-31: park NUC decode tier: hedge −2.8 % with reader-backend regression, then ~−1 % after the fix. At ~1.8 ms RTT, pending-row wait and overhead outweigh wins against the local tail; exposed-wait counters are not additive delay. Revisit age-limited i5 only if economics change. Today's kernels also make NUC prefill offload unviable.
 - 2026-10-31: rank remaining levers dense-spine GEMV (~68 ms/token, gm ~6.9 ms potential), bank GEMV (~56 ms at ~132 GB/s, bg 10–19 ms ceiling), then read waits (~40 ms). Queue gm/bg/thp/z/x3; neutral affinity/top-k/demand readers/shared reorder stay off, 0012c/0024 hostalloc/MTP stay rejected. GH200 remains K3; byte-stride is +3.2 % capacity only.
+- 2026-10-31: prefill bank adopted after clean-tree x3 (+47 % / +48 %, unchanged decode/golds); deployed g72518b8, production patch 0020 (ledger 0010), argo-things 5df13e2, 84000 MiB LFU. Public decode 5.254 cold / 5.755 warm tok/s, md5 9449ae5738; 2k prefill 108.7 / 109.2 tok/s (previous ~72), following 32-token decode 2.65 / 3.52 tok/s, md5 aa6d55b8e3 both passes (no prior reference for this fixture; x3 matched long-prompt golds). Valve minimum 6.90 GB vs 4.29 GB reserve, 0 releases.
+- 2026-10-31: close host-bank levers: bg −60 %, dma single copy engine ~58 GB/s and ring 3x slower than direct bank reads, gm neutral to −0.5 %, hb neutral. Preserve stock scheduling; standalone bandwidth gains are not engine gains.
+- 2026-10-31: THP passed the fixed checker, +1.36 % from the fill side with gold output; next step is the pending huge-page bank env flip (`LLAMA_EXPERT_STORE_THP_BANK=1`), +1.3 % expected.
+- 2026-10-31: ready flags z c4 measured −7 %, gold; spinning GPU blocks cost more than the host wait they hide. Rejected; idea closed.
+- 2026-10-31: fix the stack: GH200-only 0004b CPU-slot-map guard entered patches/ in aa52f22, was included in ge4e4290 and subsequent production images/window stack checks, and shifted prefill-bank context. Move to tools/gh200/ in 72518b8; Spark GPU slot maps are unaffected, measurements stand.
+- 2026-10-31: the host-bank plan outcome supersedes the earlier queued-lever ranking: Spark GLM-5.3 Q2 is near its architectural floor at ~5.8 tok/s warm for this workload. Material changes need a smaller quant per expert, read parallelism, or GH200; none has a quantified gain here.

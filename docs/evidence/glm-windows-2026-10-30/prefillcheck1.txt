@@ -1,0 +1,2 @@
+PREFILLCHECK r0 prompt_n=2048 prompt_ms=18844 pp=108.7 tok/s decode=2.65 tok/s md5=aa6d55b8e3 wall=30.7s
+PREFILLCHECK r1 prompt_n=2048 prompt_ms=18761 pp=109.2 tok/s decode=3.52 tok/s md5=aa6d55b8e3 wall=27.8s
