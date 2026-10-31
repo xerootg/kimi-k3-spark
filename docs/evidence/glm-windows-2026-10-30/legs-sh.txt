@@ -1,0 +1,162 @@
+build22=0
+SE0 SHARED_EARLY=0 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+SE0 r1 5.413 tok/s md5 9449ae5738
+SE0 r2 5.402 tok/s md5 9449ae5738
+1.09.199.092 I ggml_backend_cuda_set_host_bank_hook: host bank hook: asynchronous (GPU-side wait on a mapped mailbox, CUDA graphs stay on)
+1.16.905.465 I sched_reserve: graph (pp bs=512, tg bs=1): nodes = 7073 / 10699, splits = 224 / 2, input objects = 4 / 4, input tensors = 11 / 11
+1.18.351.853 I sched_graph_realloc: graph reallocation: nodes = 7838 (changed = 1), splits = 2, n_same = 0, n_diff = 1
+1.29.149.502 I fill_late: expert store: 35483 lookups, hit rate 92.1%, 34.3 GB read for decode, 0.0 GB for prefill
+1.29.149.516 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.27 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.39.110.792 I fill_late: expert store: 68251 lookups, hit rate 92.9%, 59.9 GB read for decode, 0.0 GB for prefill
+1.39.110.803 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.42.987.460 I slot print_timing: id  0 | task 0 |    graphs reused =        126
+1.42.987.460 I slot print_timing: id  0 | task 0 |   graph reallocs =          0    /     1        (same size) / (changed size)
+1.51.085.408 I fill_late: expert store: 103733 lookups, hit rate 91.7%, 106.2 GB read for decode, 0.0 GB for prefill
+1.51.085.418 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+1.57.179.279 I ggml_backend_cuda_graph_compute: graphs 200: 195 through CUDA graphs (2 captures), 200 with >1000 nodes, last n_nodes 10697
+2.00.616.829 I fill_late: expert store: 136501 lookups, hit rate 92.4%, 127.6 GB read for decode, 0.0 GB for prefill
+2.00.616.838 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.30 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.08.161.714 I slot print_timing: id  0 | task 129 |    graphs reused =        252
+2.08.161.715 I slot print_timing: id  0 | task 129 |   graph reallocs =          0    /     1        (same size) / (changed size)
+2.12.943.571 I fill_late: expert store: 171983 lookups, hit rate 91.6%, 177.9 GB read for decode, 0.0 GB for prefill
+2.12.943.582 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.22.498.947 I fill_late: expert store: 204751 lookups, hit rate 92.1%, 199.1 GB read for decode, 0.0 GB for prefill
+2.22.498.959 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.32.893.591 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 228.7 GB read for decode, 0.0 GB for prefill
+2.32.893.602 I fill_late: expert store: split GEMV: 28376 early lookups, 6.7 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.33.408.984 I slot print_timing: id  0 | task 258 |    graphs reused =        378
+2.33.408.984 I slot print_timing: id  0 | task 258 |   graph reallocs =          0    /     1        (same size) / (changed size)
+2.33.558.641 I llama_moe_cache: ubatch <= 8: hits = 214283, misses = 14942, hit rate = 93.48%, uploaded = 175658.91 MiB
+2.33.558.646 I llama_moe_cache: ubatch  > 8: hits = 6164, misses = 3754, hit rate = 62.15%, uploaded = 43810.31 MiB
+2.33.558.656 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.7 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at th
+2.33.833.109 I host bank hooks: early=28579/40.839ms real=28875/19962.777ms post=28268/327.019ms idle_sleeps=262684 lean=1
+2.33.834.121 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14454 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.33.834.123 I host bank real bucket: a_ready_latency=14347/19431.518ms
+2.33.834.124 I host bank real bucket: b_early_read=10263/13923.530ms
+2.33.834.124 I host bank real bucket: b_predict_read=6750/2038.536ms
+2.33.834.125 I host bank real bucket: c_real_read=222/3462.045ms
+2.33.834.125 I host bank real bucket: d_lock=28859/0.903ms
+2.33.834.125 I host bank real bucket: e_other=28875/535.900ms
+2.33.834.130 I host bank real histogram: ready_p50/p90/p99=0.000/1.880/5.480ms abc_p50/p90/p99=0.000/3.760/10.950ms (a overlaps b+c; overflow is lower bound)
+SE0 MemAvailable 121161 MiB
+SE1 SHARED_EARLY=1 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+SE1 r1 5.357 tok/s md5 9449ae5738
+SE1 r2 5.406 tok/s md5 9449ae5738
+1.03.867.200 I ggml_backend_cuda_set_host_bank_hook: host bank hook: asynchronous (GPU-side wait on a mapped mailbox, CUDA graphs stay on)
+1.11.483.022 I sched_reserve: graph (pp bs=512, tg bs=1): nodes = 7073 / 10699, splits = 224 / 2, input objects = 4 / 4, input tensors = 11 / 11
+1.13.397.016 I sched_graph_realloc: graph reallocation: nodes = 7838 (changed = 1), splits = 2, n_same = 0, n_diff = 1
+1.24.156.405 I fill_late: expert store: 35483 lookups, hit rate 92.1%, 34.4 GB read for decode, 0.0 GB for prefill
+1.24.156.420 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.34.094.911 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.2 GB read for decode, 0.0 GB for prefill
+1.34.094.923 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.37.972.896 I slot print_timing: id  0 | task 0 |    graphs reused =        126
+1.37.972.897 I slot print_timing: id  0 | task 0 |   graph reallocs =          0    /     1        (same size) / (changed size)
+1.46.079.394 I fill_late: expert store: 103733 lookups, hit rate 91.6%, 106.7 GB read for decode, 0.0 GB for prefill
+1.46.079.406 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+1.52.254.823 I ggml_backend_cuda_graph_compute: graphs 200: 195 through CUDA graphs (2 captures), 200 with >1000 nodes, last n_nodes 10697
+1.55.754.932 I fill_late: expert store: 136501 lookups, hit rate 92.3%, 128.6 GB read for decode, 0.0 GB for prefill
+1.55.754.944 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.31 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.03.395.734 I slot print_timing: id  0 | task 129 |    graphs reused =        252
+2.03.395.735 I slot print_timing: id  0 | task 129 |   graph reallocs =          0    /     1        (same size) / (changed size)
+2.08.218.984 I fill_late: expert store: 171983 lookups, hit rate 91.5%, 179.4 GB read for decode, 0.0 GB for prefill
+2.08.218.996 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.17.761.959 I fill_late: expert store: 204751 lookups, hit rate 92.0%, 200.8 GB read for decode, 0.0 GB for prefill
+2.17.761.970 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.34 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.28.116.316 I fill_late: expert store: 237519 lookups, hit rate 92.1%, 230.5 GB read for decode, 0.0 GB for prefill
+2.28.116.327 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.28.632.646 I slot print_timing: id  0 | task 258 |    graphs reused =        378
+2.28.632.647 I slot print_timing: id  0 | task 258 |   graph reallocs =          0    /     1        (same size) / (changed size)
+2.28.797.972 I llama_moe_cache: ubatch <= 8: hits = 214132, misses = 15093, hit rate = 93.42%, uploaded = 177455.06 MiB
+2.28.797.977 I llama_moe_cache: ubatch  > 8: hits = 6166, misses = 3752, hit rate = 62.17%, uploaded = 43779.19 MiB
+2.28.798.055 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at th
+2.28.990.617 I host bank hooks: early=28579/34.646ms real=28875/20332.370ms post=28268/319.857ms idle_sleeps=264196 lean=1
+2.28.991.915 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14317 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.28.991.918 I host bank real bucket: a_ready_latency=14484/19671.990ms
+2.28.991.918 I host bank real bucket: b_early_read=10298/13881.504ms
+2.28.991.919 I host bank real bucket: b_predict_read=7105/2299.807ms
+2.28.991.919 I host bank real bucket: c_real_read=222/3483.314ms
+2.28.991.920 I host bank real bucket: d_lock=28870/0.894ms
+2.28.991.920 I host bank real bucket: e_other=28875/664.943ms
+2.28.991.924 I host bank real histogram: ready_p50/p90/p99=0.010/1.990/5.480ms abc_p50/p90/p99=0.020/3.970/10.950ms (a overlaps b+c; overflow is lower bound)
+SE1 MemAvailable 121179 MiB
+SE0b SHARED_EARLY=0 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+SE0b r1 5.397 tok/s md5 9449ae5738
+SE0b r2 5.37 tok/s md5 9449ae5738
+1.03.616.394 I ggml_backend_cuda_set_host_bank_hook: host bank hook: asynchronous (GPU-side wait on a mapped mailbox, CUDA graphs stay on)
+1.11.065.291 I sched_reserve: graph (pp bs=512, tg bs=1): nodes = 7073 / 10699, splits = 224 / 2, input objects = 4 / 4, input tensors = 11 / 11
+1.12.442.217 I sched_graph_realloc: graph reallocation: nodes = 7838 (changed = 1), splits = 2, n_same = 0, n_diff = 1
+1.23.207.493 I fill_late: expert store: 35483 lookups, hit rate 92.1%, 34.4 GB read for decode, 0.0 GB for prefill
+1.23.207.506 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.27 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.33.189.055 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.1 GB read for decode, 0.0 GB for prefill
+1.33.189.065 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.37.060.395 I slot print_timing: id  0 | task 0 |    graphs reused =        126
+1.37.060.396 I slot print_timing: id  0 | task 0 |   graph reallocs =          0    /     1        (same size) / (changed size)
+1.45.160.707 I fill_late: expert store: 103733 lookups, hit rate 91.7%, 106.4 GB read for decode, 0.0 GB for prefill
+1.45.160.719 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+1.51.260.638 I ggml_backend_cuda_graph_compute: graphs 200: 195 through CUDA graphs (2 captures), 200 with >1000 nodes, last n_nodes 10697
+1.54.710.613 I fill_late: expert store: 136501 lookups, hit rate 92.4%, 127.7 GB read for decode, 0.0 GB for prefill
+1.54.710.623 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.30 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.02.310.159 I slot print_timing: id  0 | task 129 |    graphs reused =        252
+2.02.310.159 I slot print_timing: id  0 | task 129 |   graph reallocs =          0    /     1        (same size) / (changed size)
+2.07.103.205 I fill_late: expert store: 171983 lookups, hit rate 91.6%, 178.3 GB read for decode, 0.0 GB for prefill
+2.07.103.215 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.16.732.112 I fill_late: expert store: 204751 lookups, hit rate 92.1%, 199.7 GB read for decode, 0.0 GB for prefill
+2.16.732.124 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.27.166.275 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 229.4 GB read for decode, 0.0 GB for prefill
+2.27.166.285 I fill_late: expert store: split GEMV: 28376 early lookups, 6.7 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.27.689.627 I slot print_timing: id  0 | task 258 |    graphs reused =        378
+2.27.689.628 I slot print_timing: id  0 | task 258 |   graph reallocs =          0    /     1        (same size) / (changed size)
+2.27.838.620 I llama_moe_cache: ubatch <= 8: hits = 214228, misses = 14997, hit rate = 93.46%, uploaded = 176301.66 MiB
+2.27.838.625 I llama_moe_cache: ubatch  > 8: hits = 6163, misses = 3755, hit rate = 62.14%, uploaded = 43817.81 MiB
+2.27.838.705 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.7 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at th
+2.28.067.629 I host bank hooks: early=28579/36.044ms real=28875/20288.044ms post=28268/323.971ms idle_sleeps=256087 lean=1
+2.28.069.308 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14402 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.28.069.311 I host bank real bucket: a_ready_latency=14399/19608.882ms
+2.28.069.311 I host bank real bucket: b_early_read=10279/14081.522ms
+2.28.069.311 I host bank real bucket: b_predict_read=6771/2058.331ms
+2.28.069.312 I host bank real bucket: c_real_read=222/3461.597ms
+2.28.069.313 I host bank real bucket: d_lock=28861/0.904ms
+2.28.069.314 I host bank real bucket: e_other=28875/683.774ms
+2.28.069.317 I host bank real histogram: ready_p50/p90/p99=0.000/1.920/5.450ms abc_p50/p90/p99=0.000/3.840/10.900ms (a overlaps b+c; overflow is lower bound)
+SE0b MemAvailable 121163 MiB
+SE1b SHARED_EARLY=1 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+SE1b r1 5.417 tok/s md5 9449ae5738
+SE1b r2 5.416 tok/s md5 9449ae5738
+1.10.544.217 I ggml_backend_cuda_set_host_bank_hook: host bank hook: asynchronous (GPU-side wait on a mapped mailbox, CUDA graphs stay on)
+1.18.235.402 I sched_reserve: graph (pp bs=512, tg bs=1): nodes = 7073 / 10699, splits = 224 / 2, input objects = 4 / 4, input tensors = 11 / 11
+1.19.430.719 I sched_graph_realloc: graph reallocation: nodes = 7838 (changed = 1), splits = 2, n_same = 0, n_diff = 1
+1.30.205.162 I fill_late: expert store: 35483 lookups, hit rate 92.1%, 34.4 GB read for decode, 0.0 GB for prefill
+1.30.205.177 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.40.141.185 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.1 GB read for decode, 0.0 GB for prefill
+1.40.141.196 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.44.008.862 I slot print_timing: id  0 | task 0 |    graphs reused =        126
+1.44.008.862 I slot print_timing: id  0 | task 0 |   graph reallocs =          0    /     1        (same size) / (changed size)
+1.52.086.659 I fill_late: expert store: 103733 lookups, hit rate 91.7%, 106.3 GB read for decode, 0.0 GB for prefill
+1.52.086.670 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+1.58.167.914 I ggml_backend_cuda_graph_compute: graphs 200: 195 through CUDA graphs (2 captures), 200 with >1000 nodes, last n_nodes 10697
+2.01.615.830 I fill_late: expert store: 136501 lookups, hit rate 92.4%, 127.6 GB read for decode, 0.0 GB for prefill
+2.01.615.840 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.31 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.09.165.638 I slot print_timing: id  0 | task 129 |    graphs reused =        252
+2.09.165.638 I slot print_timing: id  0 | task 129 |   graph reallocs =          0    /     1        (same size) / (changed size)
+2.13.920.805 I fill_late: expert store: 171983 lookups, hit rate 91.6%, 178.1 GB read for decode, 0.0 GB for prefill
+2.13.920.816 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.23.440.287 I fill_late: expert store: 204751 lookups, hit rate 92.1%, 199.2 GB read for decode, 0.0 GB for prefill
+2.23.440.298 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.34 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.33.823.830 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 228.9 GB read for decode, 0.0 GB for prefill
+2.33.823.840 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.34.334.261 I slot print_timing: id  0 | task 258 |    graphs reused =        378
+2.34.334.262 I slot print_timing: id  0 | task 258 |   graph reallocs =          0    /     1        (same size) / (changed size)
+2.34.491.266 I llama_moe_cache: ubatch <= 8: hits = 214260, misses = 14965, hit rate = 93.47%, uploaded = 175895.44 MiB
+2.34.491.270 I llama_moe_cache: ubatch  > 8: hits = 6163, misses = 3755, hit rate = 62.14%, uploaded = 43817.81 MiB
+2.34.491.334 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at th
+2.34.669.731 I host bank hooks: early=28579/35.133ms real=28875/19925.013ms post=28268/325.608ms idle_sleeps=256504 lean=1
+2.34.671.102 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14417 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.34.671.104 I host bank real bucket: a_ready_latency=14384/19337.235ms
+2.34.671.104 I host bank real bucket: b_early_read=10270/13700.749ms
+2.34.671.104 I host bank real bucket: b_predict_read=7051/2170.278ms
+2.34.671.105 I host bank real bucket: c_real_read=222/3459.382ms
+2.34.671.106 I host bank real bucket: d_lock=28862/0.903ms
+2.34.671.106 I host bank real bucket: e_other=28875/591.569ms
+2.34.671.110 I host bank real histogram: ready_p50/p90/p99=0.000/1.900/5.450ms abc_p50/p90/p99=0.000/3.790/10.890ms (a overlaps b+c; overflow is lower bound)
+SE1b MemAvailable 121163 MiB
+WIN2SH-DONE

@@ -1,0 +1,7 @@
+=== window af 23:33
+build23=0
+expert store: affinity: big cores = 19 (capacity, fallback max frequency; allowed CPUs)
+expert store: affinity: spec = detect
+ABORT-WINDOW need at least three detected allowed big cores
+pod restored: Running
+ALL-WINDOWS-DONE
