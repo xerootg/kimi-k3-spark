@@ -1,0 +1,36 @@
+=== window ctx 22:43
+LONG1 START ubatch=2048 snapshot=/home/xero/win2/WIN2CTX-LONG1-22637-1596047.k3sn
+LONG1 N=2048 pass=1 START utc=2026-10-31T05:44:34Z log_line=504
+LONG1 N=2048 pass=1 prompt_n=2048 prompt_ms=30673.25 pp=66.77 tok/s predicted_n=64 predicted_ms=16616.88 decode=3.85 tok/s md5=f829d4b57ac8aa040941ce6d532df0ba wall_ms=47291.42 unaccounted_ms=1.29 END utc=2026-10-31T05:45:22Z
+LONG1 N=2048 pass=1 LOG lines_after=503 matches=23 showing_last=12
+LONG1 N=2048 pass=2 START utc=2026-10-31T05:45:22Z log_line=532
+LONG1 N=2048 pass=2 prompt_n=2048 prompt_ms=30745.20 pp=66.61 tok/s predicted_n=64 predicted_ms=15014.15 decode=4.26 tok/s md5=f829d4b57ac8aa040941ce6d532df0ba wall_ms=45760.63 unaccounted_ms=1.28 END utc=2026-10-31T05:46:07Z
+LONG1 N=2048 pass=2 LOG lines_after=531 matches=23 showing_last=12
+LONG1 N=8192 pass=1 START utc=2026-10-31T05:46:07Z log_line=560
+LONG1 N=8192 pass=1 prompt_n=8192 prompt_ms=127258.03 pp=64.37 tok/s predicted_n=64 predicted_ms=16268.40 decode=3.93 tok/s md5=a7ef3ae68cd232a5516f9fac9eac655f wall_ms=143528.86 unaccounted_ms=2.42 END utc=2026-10-31T05:48:31Z
+LONG1 N=8192 pass=1 LOG lines_after=559 matches=29 showing_last=12
+LONG1 N=8192 pass=2 START utc=2026-10-31T05:48:31Z log_line=596
+LONG1 N=8192 pass=2 prompt_n=8192 prompt_ms=126558.87 pp=64.73 tok/s predicted_n=64 predicted_ms=14954.28 decode=4.28 tok/s md5=e5cff73a77890c9754b0b462f5d6ffd9 wall_ms=141515.96 unaccounted_ms=2.81 END utc=2026-10-31T05:50:52Z
+LONG1 N=8192 pass=2 LOG lines_after=595 matches=30 showing_last=12
+LONG1 N=16384 pass=1 START utc=2026-10-31T05:50:52Z log_line=633
+LONG1 N=16384 pass=1 prompt_n=16384 prompt_ms=261413.65 pp=62.67 tok/s predicted_n=64 predicted_ms=15352.40 decode=4.17 tok/s md5=a98fb6e14adca9dbb38d76550cbb79d0 wall_ms=276770.31 unaccounted_ms=4.27 END utc=2026-10-31T05:55:29Z
+LONG1 N=16384 pass=1 LOG lines_after=632 matches=37 showing_last=12
+LONG1 N=16384 pass=2 START utc=2026-10-31T05:55:29Z log_line=681
+LONG1 N=16384 pass=2 prompt_n=16384 prompt_ms=261637.54 pp=62.62 tok/s predicted_n=64 predicted_ms=15306.55 decode=4.18 tok/s md5=cd8e47b2bea578b02dabd8ef7533c3f2 wall_ms=276948.25 unaccounted_ms=4.16 END utc=2026-10-31T06:00:06Z
+LONG1 N=16384 pass=2 LOG lines_after=680 matches=38 showing_last=12
+LONG1 N=32768 pass=1 START utc=2026-10-31T06:00:06Z log_line=730
+LONG1 N=32768 pass=1 prompt_n=32768 prompt_ms=524130.79 pp=62.52 tok/s predicted_n=64 predicted_ms=15575.60 decode=4.11 tok/s md5=3e8d468ecaf389d7fb869c9f1a71b739 wall_ms=539713.54 unaccounted_ms=7.16 END utc=2026-10-31T06:09:06Z
+LONG1 N=32768 pass=1 LOG lines_after=729 matches=62 showing_last=12
+LONG1 N=16384 pass=3 START utc=2026-10-31T06:09:06Z log_line=811
+LONG1 N=16384 pass=3 prompt_n=16384 prompt_ms=259866.62 pp=63.05 tok/s predicted_n=64 predicted_ms=15291.20 decode=4.19 tok/s md5=a98fb6e14adca9dbb38d76550cbb79d0 wall_ms=275163.78 unaccounted_ms=5.96 END utc=2026-10-31T06:13:41Z
+LONG1 N=16384 pass=3 LOG lines_after=810 matches=37 showing_last=12
+ABORT-WINDOW port 18080 occupied
+CTX 2048: pp=66.77 decode=3.85 tok/s leg=LONG1 pass=1
+CTX 2048: pp=66.61 decode=4.26 tok/s leg=LONG1 pass=2
+CTX 8192: pp=64.37 decode=3.93 tok/s leg=LONG1 pass=1
+CTX 8192: pp=64.73 decode=4.28 tok/s leg=LONG1 pass=2
+CTX 16384: pp=62.67 decode=4.17 tok/s leg=LONG1 pass=1
+CTX 16384: pp=62.62 decode=4.18 tok/s leg=LONG1 pass=2
+CTX 32768: pp=62.52 decode=4.11 tok/s leg=LONG1 pass=1
+CTX 16384: pp=63.05 decode=4.19 tok/s leg=LONG1 pass=3
+WIN2CTX-DONE
