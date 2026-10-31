@@ -698,7 +698,7 @@ was absent from the committed stack, so its corrected guard and executing-layer 
 The CUDA hook call is re-contexted without the unadopted 0012b timing instrumentation. This patch applies after
 0001-0006, 0009 and 0012 on pinned llama.cpp `547208d`; it does not require 0012b or 0012c.
 
-## 0010-prefill-bank
+## 0020-prefill-bank (the ledger's "0010": numbered 0020 in this directory because it applies after 0018)
 
 Opt-in direct bank prefill (`LLAMA_EXPERT_STORE_PREFILL_BANK=1`, default off).
 Batches over 32 tokens read resident expert records directly on CUDA and read
