@@ -1,0 +1,21 @@
+=== window o 21:49
+build21=0
+ORDER-CHECK stock last: tools/validation/prefill-order/t512-c1-s37-p0.0.raw tools/validation/prefill-order/t512-c1-s37-p1.0.raw differ: byte 1, line 1
+ORDER-CHECK patched last: PASS: raw and rank-summed bytes match across permutations and repeats
+ORDER-CHECK stock=FAIL patched=PASS
+O-std r0 decode=5.382 tok/s md5=9449ae5738
+O-std r1 decode=5.390 tok/s md5=9449ae5738
+O-std r2 decode=5.371 tok/s md5=9449ae5738
+O-2k-a fixture generated_tokens=4068 retained_tokens=2048 seed=2
+O-2k-a r0 prompt_n=2048 cache_n=0 prompt_ms=83897.314 pp=24.411 tok/s md5=de5778fb0a178741a25d68ded6871e99 wall=92.4s
+O-2k-a r1 prompt_n=2048 cache_n=0 prompt_ms=83757.434 pp=24.452 tok/s md5=de5778fb0a178741a25d68ded6871e99 wall=90.0s
+O-2k-b r0 prompt_n=2048 cache_n=0 prompt_ms=83913.829 pp=24.406 tok/s md5=de5778fb0a178741a25d68ded6871e99 wall=92.4s
+O-2k-b r1 prompt_n=2048 cache_n=0 prompt_ms=83688.928 pp=24.472 tok/s md5=de5778fb0a178741a25d68ded6871e99 wall=90.0s
+S-2k r0 prompt_n=2048 cache_n=0 prompt_ms=83652.980 pp=24.482 tok/s md5=de5778fb0a178741a25d68ded6871e99 wall=92.1s
+S-2k r1 prompt_n=2048 cache_n=0 prompt_ms=83562.565 pp=24.509 tok/s md5=de5778fb0a178741a25d68ded6871e99 wall=89.9s
+LAYOUT-INDEPENDENT=yes
+S-2k VARIES=no
+PP stock=24.495 patched=24.435 tok/s (total prompt tokens / total prompt seconds)
+pod restored: Running
+./spark-windows2.sh: line 51: unexpected EOF while looking for matching `"'
+ALL-WINDOWS-DONE (appended by hand: the runner died on a script edit after window o completed)
