@@ -45,8 +45,8 @@ s = s.replace(block, '''            // CPU GET_ROWS reads I32 slot IDs only; CUD
 ''')
 # Small contexts apply after 0004, independently of later hook additions.
 diff = 'diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp\n' + ''.join(difflib.unified_diff(old.splitlines(True), s.splitlines(True), fromfile='a/src/llama-moe-cache.cpp', tofile='b/src/llama-moe-cache.cpp', n=3))
-(root/'patches/0004b-byte-stride-k3-types.patch').write_text(diff)
-subprocess.run(['patch', '--dry-run', '-p1', '-i', str(root/'patches/0004b-byte-stride-k3-types.patch')], cwd=tree, check=True)
-subprocess.run(['patch', '-p1', '-i', str(root/'patches/0004b-byte-stride-k3-types.patch')], cwd=tree, check=True)
+(root/'tools/gh200/0004b-byte-stride-k3-types.patch').write_text(diff)
+subprocess.run(['patch', '--dry-run', '-p1', '-i', str(root/'tools/gh200/0004b-byte-stride-k3-types.patch')], cwd=tree, check=True)
+subprocess.run(['patch', '-p1', '-i', str(root/'tools/gh200/0004b-byte-stride-k3-types.patch')], cwd=tree, check=True)
 subprocess.run(['c++','-std=c++17','-fsyntax-only','-pthread','-D_GNU_SOURCE','-Iinclude','-Isrc','-Isrc/models','-Iggml/include','-Iggml/src','-Iggml/src/ggml-cpu','src/llama-moe-cache.cpp'],cwd=tree,check=True)
 print('PASS: 0004b applies to local reference with current 0004 guard; cache C++ -fsyntax-only')
