@@ -1180,6 +1180,7 @@ Results, in run order:
 | t (20:01) | 0005b bounded wait on active speculative reads (no knob; applied after 0018) | `build5b=0`. SB1 and SB2 are two servers with the patch: SB1 4.884/4.887, SB2 4.891/4.882 tok/s; md5 `9449ae5738` in all four timed passes. Comparison on the same tree without 0005b: window r's POL0 4.889/4.84, POL0b 4.884/4.887 tok/s, all gold. Same within leg noise; lossless in the timed passes. **Kept, neutral; no knob.** |
 | c (20:09) | routing trace rerun with `llama-k3-pfdump`, then `place.py` | 2048 decode tokens, `--batch-size 4096` after the chunking fix (the supplied script still says 2048). Last per-layer predictor lines: `layer 76 real=2048 predictor=2048 pairs=2048 precision=81.006% (13272/16384)`; `layer 77 real=2048 predictor=2048 pairs=2048 precision=74.469% (12201/16384)`. Total: `steps=2048 layers=75 pairs=151552 precision=80.367% (974386/1212416)`. Other per-layer precision lines: not in the window output. `place=0`; `placement-report.json` has `source: trace`, counts spark / nuc2-ram / nuc2-ssd / nuc3-ram / nuc3-ssd = 6859 / 3588 / 3640 / 1471 / 3642. The replay model reported zero waits (`wait_ms_per_token: 0.0` in each scenario); this is a service-scenario model, not a measurement. **First real-trace placement for the NUC tier; window i's remote-tier A/B against nuc2 is queued on it.** |
 | u (20:23) | 0009 split dummy-row skip + 0012 hook lean (`LLAMA_EXPERT_STORE_SPLIT_SKIP_ZERO` and `LLAMA_EXPERT_STORE_HOOK_LEAN` both 0/1) | Production tree `~/llama-k3-bs` with the patches applied; same frozen snapshot per leg. CB0 (both off) r1/r2 4.797/4.696, CB1 (both on) 5.429/5.409; repeat CB0b 4.841/4.858, CB1b 5.433/5.436 tok/s; md5 `9449ae5738` in all eight timed passes. Four-pass means: off 4.80, on 5.43 tok/s; **+13.1 %** (`(on mean / off mean - 1) × 100`). Last off/on `HOOK_STATS` summaries: real hooks 28875 each, total 15757.192/17463.834 ms; idle_sleeps 124406/349994 (lean 0/1). Real-hook time rises while decode gets faster. Evidence: [runner output](evidence/glm-windows-2026-10-30/runner2-u.txt), [leg script](evidence/glm-windows-2026-10-30/win2u.sh). **Adopted together: image ge0ba4b3 with both knobs on in the manifest** (argo-things 07f7100). |
+| v | Clean-tree baseline + 0011 v2 DSA short-context skip (`LLAMA_DSA_SHORT_CTX_SKIP=0/1`) | `buildc=0`: clean measurement tree `~/llama-k3-c`, pinned base `547208d` + committed patches 0001–0006 + 0009 + 0012 + 0011 v2 + 0012b + 0012c. Standard request, SZ=1 / HL=1: DS0/DS0b 5.41–5.42 tok/s (the production number), DS1/DS1b 5.37–5.44 tok/s, md5 `9449ae5738` in all eight timed passes; 0011 v2 no longer crashes. After an 8192-token prompt, L0/L1 decode 4.09/4.13 tok/s, md5 `25d4133dc7` both, prefill 71 tok/s. Evidence: [full Spark output](evidence/glm-windows-2026-10-30/legs-v.out), [leg script](evidence/glm-windows-2026-10-30/win2v.sh). **0011 v2 lossless and neutral; kept off; v3 (allocation-free identity index) staged.** |
 
 **Review rounds before the windows.** Two adversarial rounds by a second worker reviewed the candidates before Spark time
 (`docs/evidence/glm-windows-2026-10-30/RESULT-REVIEW2.md`, `docs/evidence/glm-windows-2026-10-30/RESULT-REVIEW3.md`). Round 2 found that 0012c's 12 speculative reservations
@@ -1190,6 +1191,10 @@ path and 0020's per-launch capability query. All four fixes are folded into wind
 The earlier 0011 v2 allocation finding remains, quoted exactly from round 2:
 "- P2 dsa/src/llama-graph.cpp:647: per-decode identity vector allocates; fix: own/populate identity storage during graph construction and upload after each allocation."
 These reviews establish source-level findings and fixes; they do not certify GPU bytes or timings.
+
+**GB10 kernel benches (window v).** The [Spark output](evidence/glm-windows-2026-10-30/legs-v.out) records successful GEMV and bank-read builds. The GEMV bench timed only the stock kernel of one shape (`attn_q_a`); its identity CHECK covered 19 variants × 4 seeds (76 MATCH, 0 mismatch), so no variant speed was measured. The profile gives the dense spine at Q5_K 38.8 ms/token versus 28.1 ideal and Q8_0 24.3 versus 18.8 (72–77 % of 270 GB/s): ~16 ms/token of bandwidth headroom. Iteration 2, a 3-stage `cp.async` variant, is queued as window gv. The bank-read bench reads `cudaHostAlloc` memory at 203 GB/s (cached) / 210 (write-combined), versus 162 GB/s for the engine's current mmap + `cudaHostRegister` bank, with identical bytes: the host bank could read 25 % faster. The DMA-ring variants mismatched (bench bug, ignored). Patch 0024 (bank via `cudaHostAlloc`) is queued as window hb; estimated +8 % at 5.4 tok/s, not an engine measurement.
+
+**Shared expert under the wait (0022 study).** A worker found that the shared expert's FFN already overlaps the real-lookup wait with predictive prefetch input 3 enabled, through patch 0005's `moe_overlap` path. The perf-hunt list's “+6 %” item is already spent. Window sh is queued only to confirm: a reorder-only patch with bytes provably unchanged.
 
 ### Revisit when the bottleneck moves
 
@@ -1230,9 +1235,11 @@ something else dominated at the time. Re-test them after any change that shifts 
   only known after it runs. The oracle replay (2.39 records in the self-prefetch fill vs 3.9) is the ceiling.
   Window p measured inputs 4 and 5 slower than production input 3; input 5 increases candidate recall but
   reads many more unused predictions. A new predictor needs to improve useful reads as well as recall.
-- **The rest of the Spark perf-hunt list.** Shared expert and routed_down under the I/O wait (self-prefetch with
-  the real ids, est. +6 %), poller falling asleep inside the GPU gap (+2 %), I/O and poller threads on the X925
-  cores (+2 %). The reads now run at the drive's ceiling, so more overlap is the remaining lever on the read side.
+- **The rest of the Spark perf-hunt list.** ~~Shared expert and routed_down under the I/O wait (self-prefetch with
+  the real ids, est. +6 %)~~: the 0022 study found the shared FFN already overlaps the real-lookup wait through
+  0005's `moe_overlap` with predictive prefetch input 3; that estimate is already spent (window sh is confirmation only).
+  The poller falling asleep inside the GPU gap was patch 0012 (hook lean, adopted). Still open: I/O and poller threads on the X925 cores (+2 %, patch 0023 queued as window af).
+  The reads now run at the drive's ceiling, so more overlap is the remaining lever on the read side.
 - **Why THP on the host regions gives NaN on the GB10.** Fixing it would bring back hugepage destinations
   (3.9 vs 4.5 ms per fill), but only if the pages also survive the load's reclaim.
 - **Frequency-aware eviction for the host cache.** The routing skew that makes the HBM tier work should also

@@ -1,0 +1,138 @@
+gemv-build=0
+dense_down                   Q6_K K=12288 N=6144 C=1 count=3 NW=8 R=1 bytes=61931520
+indexer_k_projection         Q8_0 K=6144 N=128 C=1 count=78 NW=8 R=1 bytes=835584
+indexer_q_b_projection       Q8_0 K=2048 N=4096 C=1 count=78 NW=8 R=1 bytes=8912896
+head_Q4_control              Q4_K K=6144 N=154880 C=1 count=1 NW=4 R=1 bytes=535265280
+inventory Q5_K 7.586709504 GB/token 28.098924 ms@270GB/s
+inventory Q6_K 1.063157760 GB/token 3.937621 ms@270GB/s
+inventory Q8_0 5.064474624 GB/token 18.757313 ms@270GB/s
+inventory Q4_K 0.535265280 GB/token 1.982464 ms@270GB/s
+gemv-run=0
+device=NVIDIA GB10 cc=12.1 SM=48 L2=25165824 shared/SM=102400 shared/CTA=101376
+profile Q5_K=38.819 ms/token ideal=28.099; Q8_0=24.280 ideal=18.757 @270GB/s
+shape=attn_q_a Q5_K K=6144 N=2048 C=1 count=77 NW=4 stockR=1 weights=8650752 pool=544997376 iters=128
+CHECK attn_q_a stock seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a bulk-R1-B2 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a async.cg-R1-B2 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a bulk-R1-B4 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a async.cg-R1-B4 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a bulk-R1-B8 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a async.cg-R1-B8 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a bulk-R2-B2 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a async.cg-R2-B2 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a bulk-R2-B4 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a async.cg-R2-B4 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a bulk-R2-B8 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a async.cg-R2-B8 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a bulk-R4-B2 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a async.cg-R4-B2 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a bulk-R4-B4 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a async.cg-R4-B4 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a bulk-R4-B8 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a async.cg-R4-B8 seed=0 md5=0829f71740aab1ab98b33eae21dee122 stock_md5=0829f71740aab1ab98b33eae21dee122 MATCH
+CHECK attn_q_a stock seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a bulk-R1-B2 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a async.cg-R1-B2 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a bulk-R1-B4 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a async.cg-R1-B4 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a bulk-R1-B8 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a async.cg-R1-B8 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a bulk-R2-B2 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a async.cg-R2-B2 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a bulk-R2-B4 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a async.cg-R2-B4 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a bulk-R2-B8 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a async.cg-R2-B8 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a bulk-R4-B2 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a async.cg-R4-B2 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a bulk-R4-B4 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a async.cg-R4-B4 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a bulk-R4-B8 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a async.cg-R4-B8 seed=1 md5=abab412080decbf28284c9851fdf4cb5 stock_md5=abab412080decbf28284c9851fdf4cb5 MATCH
+CHECK attn_q_a stock seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a bulk-R1-B2 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a async.cg-R1-B2 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a bulk-R1-B4 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a async.cg-R1-B4 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a bulk-R1-B8 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a async.cg-R1-B8 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a bulk-R2-B2 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a async.cg-R2-B2 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a bulk-R2-B4 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a async.cg-R2-B4 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a bulk-R2-B8 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a async.cg-R2-B8 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a bulk-R4-B2 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a async.cg-R4-B2 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a bulk-R4-B4 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a async.cg-R4-B4 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a bulk-R4-B8 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a async.cg-R4-B8 seed=2 md5=a0e1b8fdb49f801e0dab16bfa77bb955 stock_md5=a0e1b8fdb49f801e0dab16bfa77bb955 MATCH
+CHECK attn_q_a stock seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a bulk-R1-B2 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a async.cg-R1-B2 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a bulk-R1-B4 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a async.cg-R1-B4 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a bulk-R1-B8 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a async.cg-R1-B8 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a bulk-R2-B2 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a async.cg-R2-B2 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a bulk-R2-B4 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a async.cg-R2-B4 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a bulk-R2-B8 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a async.cg-R2-B8 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a bulk-R4-B2 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a async.cg-R4-B2 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a bulk-R4-B4 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a async.cg-R4-B4 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a bulk-R4-B8 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+CHECK attn_q_a async.cg-R4-B8 seed=3 md5=1f2c855942250226ae55ff5528201697 stock_md5=1f2c855942250226ae55ff5528201697 MATCH
+  stock              us=   41.702 GB/s= 207.44 ms/token=   3.2111 speedup=1.000 bitident=yes activeCTA/SM=10 shared=0 grid=2048x1
+bankread-build=0
+bankread-run=1
+device=NVIDIA GB10 cc=12.1 SM=48 L2=25165824 canMapHostMemory=1 hostNativeAtomicSupported=1 pageableMemoryAccess=1 unifiedAddressing=1 asyncEngineCount=1
+payload=96731136 bytes/layer; repeated 8-record working set, L2=25165824; no cache flush; useful weight GB/s (DMA traffic extra).
+B device stock           ms/layer=0.438668 GB/s=220.511 md5=4886caf147345f985622537f1e657392 MATCH vs B speedups valid=yes
+A malloc+register        ms/layer=0.597296 GB/s=161.948 md5=4886caf147345f985622537f1e657392 MATCH vs B speedups valid=yes
+C DMA ring2              ms/layer=2.014244 GB/s=48.024 md5=dc8889560109fb82b2858480c6a05117 MISMATCH vs B speedups valid=NO
+C DMA ring3              ms/layer=1.997747 GB/s=48.420 md5=dc8889560109fb82b2858480c6a05117 MISMATCH vs B speedups valid=NO
+A hostalloc cached       ms/layer=0.476483 GB/s=203.011 md5=4886caf147345f985622537f1e657392 MATCH vs B speedups valid=yes
+E hostalloc WC           ms/layer=0.460701 GB/s=209.965 md5=4886caf147345f985622537f1e657392 MATCH vs B speedups valid=yes
+E registered node0       ms/layer=0.603288 GB/s=160.340 md5=4886caf147345f985622537f1e657392 MATCH vs B speedups valid=yes
+F managed prefetched     ms/layer=0.601980 GB/s=160.688 md5=4886caf147345f985622537f1e657392 MATCH vs B speedups valid=yes
+device=NVIDIA GB10 cc=12.1 SM=48 L2=25165824 canMapHostMemory=1 hostNativeAtomicSupported=1 pageableMemoryAccess=1 unifiedAddressing=1 asyncEngineCount=1
+payload=96731136 bytes/layer; repeated 8-record working set, L2=25165824; no cache flush; useful weight GB/s (DMA traffic extra).
+D probe: aligned 1D bulk global->shared; host-mapped support is runtime-tested, not assumed from cc.
+D bulk registered-host   ms/layer=0.630083 GB/s=153.521 md5=4886caf147345f985622537f1e657392 MATCH vs B speedups valid=yes
+SUMMARY all outputs MATCH; synthetic raw GEMVs, not an end-to-end engine result
+SUMMARY failure/unsupported variant; inspect above; synthetic raw GEMVs, not an end-to-end engine result
+Note: switching to '9ec55d89d56989e568163bae3309c61a16742fd9'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+applied-ok
+buildc=0 21:41
+DS0 r1 5.417 tok/s md5 9449ae5738
+DS0 r2 5.412 tok/s md5 9449ae5738
+DS1 r1 5.435 tok/s md5 9449ae5738
+DS1 r2 5.369 tok/s md5 9449ae5738
+DS0b r1 5.406 tok/s md5 9449ae5738
+DS0b r2 5.416 tok/s md5 9449ae5738
+DS1b r1 5.436 tok/s md5 9449ae5738
+DS1b r2 5.411 tok/s md5 9449ae5738
+L0 8192-token prompt: decode 4.09 tok/s md5 25d4133dc7 71.1 pp tok/s
+L1 8192-token prompt: decode 4.129 tok/s md5 25d4133dc7 71.0 pp tok/s
+WIN2V-DONE
