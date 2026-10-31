@@ -1,0 +1,51 @@
+=== window i 22:22
+PRECONDITION placement: c2 routing trace may still be queued; checking report source
+PRECONDITION placement source: trace (routing trace)
+PRECONDITION remote supported owner rows: 7228
+PRECONDITION no llama-server -m process; port 18080 free
+PRECONDITION baseline ~/llama-k3-c: expected 0001-0006 + 0009 + 0012 + 0011 v2 + 0012b + 0012c (uncommitted stack retained by cp -a)
+PRECONDITION baseline compatibility OK; patch lineage must be established by earlier windows, not git clean (stack is uncommitted).
+PRECONDITION NUC: laptop must scale glm53-nuc2 to 1 first; Spark never invokes kubectl.
+PRECONDITION nuc2:19600 (192.168.4.249) k3x NaN sentinel health OK
+PRECONDITION frozen snapshot, local store and model OK; stores are read only inputs
+build13=0
+R0 remote deadline_us=0 SZ=1 HL=1
+R0 r0 5.397 tok/s md5 9449ae5738
+R0 r1 5.388 tok/s md5 9449ae5738
+R0 r2 5.397 tok/s md5 9449ae5738
+2.25.933.165 I llama_moe_cache: ubatch  > 8: hits = 5862, misses = 4056, hit rate = 59.10%, uploaded = 47335.69 MiB
+R0 remote served_rows=0 late_unsent_rows=0 NaN_Inf_rejects=0 candidate_rows=0 late_rate=NA fallback_rate=NA
+R1 remote deadline_us=2500 SZ=1 HL=1
+R1 r0 4.997 tok/s md5 9449ae5738
+R1 r1 5.027 tok/s md5 9449ae5738
+R1 r2 4.974 tok/s md5 9449ae5738
+2.31.970.611 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19600, up): 13669 posts, 1.00 rows per post, 9642 rows placed, 4027 requests short (4027 rows read locally, 0 partial replies, 3979 NaN rows), 0 unsent, 4 breaker trips; RTT p50 1.57 p90 2.03 p99 2.26 ms (13624 replies); 1 connects, 0 drops (0 stale)
+2.31.970.215 I llama_moe_cache: expert store: remote experts: 13669 layers with candidates, 4027 of them read some locally; wait at the real lookup 0.792 ms per layer with candidates
+2.31.970.205 I llama_moe_cache: ubatch  > 8: hits = 5944, misses = 3974, hit rate = 59.93%, uploaded = 46401.28 MiB
+R1 remote served_rows=9642 late_unsent_rows=48 NaN_Inf_rejects=3979 candidate_rows=13669 late_rate=0.003511595581242227 fallback_rate=0.29460823761796767
+R0b remote deadline_us=0 SZ=1 HL=1
+R0b r0 5.393 tok/s md5 9449ae5738
+R0b r1 5.39 tok/s md5 9449ae5738
+R0b r2 5.398 tok/s md5 9449ae5738
+2.26.133.695 I llama_moe_cache: ubatch  > 8: hits = 5864, misses = 4054, hit rate = 59.12%, uploaded = 47308.59 MiB
+R0b remote served_rows=0 late_unsent_rows=0 NaN_Inf_rejects=0 candidate_rows=0 late_rate=NA fallback_rate=NA
+R1b remote deadline_us=2500 SZ=1 HL=1
+R1b r0 5.037 tok/s md5 9449ae5738
+R1b r1 5.12 tok/s md5 9449ae5738
+R1b r2 4.969 tok/s md5 9449ae5738
+2.33.979.515 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19600, up): 10418 posts, 1.00 rows per post, 7240 rows placed, 3178 requests short (3178 rows read locally, 0 partial replies, 3156 NaN rows), 0 unsent, 12 breaker trips; RTT p50 1.57 p90 2.02 p99 2.23 ms (10398 replies); 1 connects, 0 drops (0 stale)
+2.33.979.169 I llama_moe_cache: expert store: remote experts: 10418 layers with candidates, 3178 of them read some locally; wait at the real lookup 0.798 ms per layer with candidates
+2.33.979.159 I llama_moe_cache: ubatch  > 8: hits = 5937, misses = 3981, hit rate = 59.86%, uploaded = 46482.00 MiB
+R1b remote served_rows=7240 late_unsent_rows=22 NaN_Inf_rejects=3156 candidate_rows=10418 late_rate=0.0021117296985985793 fallback_rate=0.30504895373392205
+R1d remote deadline_us=1500 SZ=1 HL=1
+R1d r0 5.194 tok/s md5 9449ae5738
+R1d r1 5.201 tok/s md5 9449ae5738
+R1d r2 5.125 tok/s md5 9449ae5738
+2.31.859.242 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19600, up): 46 posts, 1.00 rows per post, 0 rows placed, 46 requests short (46 rows read locally, 0 partial replies, 18 NaN rows), 0 unsent, 39 breaker trips; RTT p50 0.58 p90 1.94 p99 2.33 ms (25 replies); 1 connects, 0 drops (0 stale)
+2.31.859.217 I llama_moe_cache: expert store: remote experts: 46 layers with candidates, 46 of them read some locally; wait at the real lookup 1.403 ms per layer with candidates
+2.31.859.137 I llama_moe_cache: ubatch  > 8: hits = 5917, misses = 4001, hit rate = 59.66%, uploaded = 46701.00 MiB
+R1d remote served_rows=0 late_unsent_rows=28 NaN_Inf_rejects=18 candidate_rows=46 late_rate=0.6086956521739131 fallback_rate=1.0
+R1d remote GATE-FAIL: served rows must be > 0; hash alone does not prove offload
+WIN2I-DONE
+pod restored: Running
+ALL-WINDOWS-DONE

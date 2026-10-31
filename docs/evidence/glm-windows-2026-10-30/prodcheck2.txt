@@ -1,0 +1,2 @@
+PRODCHECK r0 5.114 tok/s md5 9449ae5738 image ghcr.io/xerootg/llamacpp-spark:547208dca250-ge4e4290
+PRODCHECK r1 5.584 tok/s md5 9449ae5738 image ghcr.io/xerootg/llamacpp-spark:547208dca250-ge4e4290

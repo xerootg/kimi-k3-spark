@@ -68,7 +68,10 @@ For CPU service the equivalent is `K3X_CPU_CPUS=<available cores> K3X_MAX_GB=44
 K3X_SETOUT=served.set g53cs nuc2-ram.idx STORE 19653`; use 18 on nuc3. CPU
 latencies are unmeasured here; the simulator's GPU timing model does not apply.
 Both servers may reject unsupported records. Deploy fetches `K3X_SETOUT` after
-load: ONLY those actual served sets go in the engine env, in host-list order.
+load: remote.set = that host's `*-ram.set` intersected with its fresh served.set.
+ONLY these RAM-only intersections go in REMOTE_SET, in host-list order; never
+use RAM+SSD ownership or the full disk-enabled SETOUT advertisement. Confirm
+the selected RAM records actually loaded (window i: 3588 resident records).
 SETOUT precedes socket listen; verify server.log/listener before starting engine.
 The script refuses an existing listener or served file; stop old servers and
 archive their served files before a deliberate redeployment. SSH/scp are
