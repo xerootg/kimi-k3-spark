@@ -1161,6 +1161,22 @@ Each window stops the production pod, builds one candidate into the native `~/ll
 0009 and 0012 were measured separately (each against a baseline with the other off). A combined window (both on
 versus both off) is queued before they go into the image and manifest.
 
+### GLM-5.3: the candidate windows, second pass (2026-10-30, evening)
+
+Windows p/q/r/s started at 16:45/17:01/17:43/17:55, in that order. Scripts and captured output are in
+`evidence/`: `win2p.sh` through `win2s.sh`, `runner-p-q-r-s.txt`, `legs-pi.out`, and `legs-pol.out`.
+The measurement tree is native `~/llama-k3-bs`; p and r use the same frozen expert-cache snapshot per leg,
+an 80000 MiB cache, context 65536, ubatch 512, a warm request then two timed 128-token requests, with
+split dummy-row skip off. q uses ubatch 2048 and prompt caching, with a different prompt B between A1 and A2.
+Results, in run order:
+
+| window | candidate | result |
+|---|---|---|
+| p | 0017 predictor inputs 4 and 5 (`LLAMA_EXPERT_STORE_PREFETCH_INPUT=3/4/5`) | PI3 4.893/4.878, PI4 4.771/4.748, PI5 4.762/4.727; repeat PI3b 4.848/4.881, PI4b 4.734/4.749 tok/s; md5 `9449ae5738` in every timed pass. Predicted misses read / used by the real fill: PI3 42539/28793 (67.7%), PI4 42747/27995 (65.5%), PI5 77544/32491 (41.9%); PI3b 42540/28673 (67.4%), PI4b 42750/27990 (65.5%). Final summaries: PI3 42892/29033 (67.7%), PI4 43111/28232 (65.5%), PI5 78179/32769 (41.9%). Input 5 reads far more and uses a smaller share. Per-layer lines (layers 75/76/77, 381 pairs each): input 4 top-8 precision 90.94/88.78/80.71%, candidate recall 90.94/88.78/80.71%, no-share precision 0.00% (0 pairs); input 5 top-8 precision 90.29/88.45/80.77%, candidate recall 98.43/98.10/90.72%, no-share precision 83.37/83.46/79.04% (381 pairs each). Input 3 per-layer precision/recall: not in the window output; aggregate top-k matched 190866/223944 (85.2%), versus input 4 191499/223944 (85.5%) and input 5 210503/335916 (62.7%), each over 27993 single-token pairs. **Inputs 4 and 5 slower; production input 3 stays.** |
+| q | prompt-cache reuse, no patch (`--cache-ram 0` vs `8192`, two rounds each) | The generated A prompt is 16268 tokens (about 16k, despite the script's 8192-token comment). Below, A entries give wall / prompt_n / cache_n / pp seconds / md5. Round 1, cache-ram 0: A1 272.4 s / 16268 / 0 / 264.0 s / `b525499b`; B wall 69.7 s; A2 268.2 s / 16251 / 17 / 261.2 s / `bf747563`. Round 1, cache-ram 8192: A1 271.3 s / 16268 / 0 / 262.8 s / `e1a66612`; B wall 71.5 s; A2 7.6 s / 1 / 16267 / 0.3 s / `f3154bd3`. Round 2, cache-ram 0: A1 270.6 s / 16268 / 0 / 262.2 s / `f90172c2`; B wall 68.9 s; A2 267.5 s / 16251 / 17 / 260.4 s / `601367da`. Round 2, cache-ram 8192: A1 269.9 s / 16268 / 0 / 261.6 s / `b525499b`; B wall 69.0 s; A2 162.8 s / 1 / 16267 / 16.0 s / `b525499b`. B prompt_n/cache_n, pp seconds and md5 for every pass: not in the window output. With cache-ram 8192 the repeated A reuses 16267 tokens and takes 7.6 s instead of about 270 s in round 1, but round 2 takes 162.8 s with pp 16.0 s: decode after the cached prompt was slow. This is unexplained; look at the server log before anyone relies on the number. Cold A md5 varies (`b525499b`, `e1a66612`, `f90172c2`) with the same snapshot: the prefill layout-dependence problem (0021 study). **Reuse demonstrated, hot-pass timing unresolved; long-prompt md5s cannot gate prefill changes yet.** |
+| r | 0018 LFU eviction (`LLAMA_EXPERT_STORE_POLICY=lfu`, `LLAMA_EXPERT_STORE_LFU_HALF_LIFE=262144`; POL0 leaves policy unset) | POL0 4.889/4.84, POL0b 4.884/4.887 tok/s, md5 `9449ae5738` in all timed baseline passes. POL0/POL0b: 237519 lookups each, hit rate 92.2%, decode reads 229.2/228.6 GB, prefill reads 0.0 GB. POL1 and POL1b each have two `JSONDecodeError: Expecting value: line 1 column 1 (char 0)` tracebacks instead of timed results; their tok/s and md5 are not in the window output. Their partial logs each show 68251 lookups, hit rate 91.7%, 70.1 GB decode reads, 0.0 GB prefill reads. A separate ubatch line reports 5870 hits, 4048 misses, hit rate 59.19%, uploaded 47231.34 MiB; it is not the decode hit-rate comparison. The server logs (`legs/POL1.log`, `POL1b.log`) show why: the native server crashed during the first request in both LFU legs, after `expert store: LFU eviction, half-life 262144 planned ids; volatile frequency state`; the crash handler's gdb backtrace has no symbols (stripped Release build), so the site is unknown. This is not a neutral comparison at the same hit rate. **LFU crashes; keep off, crash re-issued to Sol with the logs.** |
+| s | 0019 SIGTERM fast exit (`LLAMA_EXPERT_STORE_FAST_EXIT`) | Did not run. `git apply --check` failed on the measurement tree: `error: patch failed: src/llama-moe-cache.cpp:20`, because window r had already applied 0018 to that tree. The filtered runner stops at the window header; the apply failure and rebase status are supplied with this ledger request. Exit timings and snapshot results are not in the window output. A rebased patch is in progress and the window is queued again. **Unmeasured; rerun after rebase.** |
+
 ### Revisit when the bottleneck moves
 
 Neutral is not dead: these are lossless and stay in the engine behind a flag, but measured neutral only because
@@ -1185,7 +1201,9 @@ something else dominated at the time. Re-test them after any change that shifts 
 - **Prefill numerics that do not depend on the cache layout.** See the GH200 prefill section: the same prompt gives
   a different (equivalent) text depending on which slots hold the experts. Pin down the kernel (suspect: MMQ
   stream-k over the slot-ordered expert list) and, if cheap, make it order-independent, which would make every
-  prefill change testable bit for bit.
+  prefill change testable bit for bit. Window q reproduces this on the Spark with the same snapshot
+  (0021 study); long-prompt md5s cannot gate prefill changes yet. Its cached round 2 also needs a server-log
+  check for the unexplained slow decode before using the prompt-cache timing.
 - **The misses' matmuls as their records land.** The split expert GEMV (2026-10-22) hides the resident experts'
   matmuls under the fill; the misses' still run after the last record. A per-id wait inside `mul_mat_vec_q`
   (each block spinning on its record's ready flag, set by the reader after the DMA) would hide all but the last
@@ -1196,13 +1214,17 @@ something else dominated at the time. Re-test them after any change that shifts 
   the late matmul keep 16 rows without the synchronous excess.
 - **A more precise predictor still.** Input 2 has precision 0.675; the rest is the next layer's attention, which is
   only known after it runs. The oracle replay (2.39 records in the self-prefetch fill vs 3.9) is the ceiling.
+  Window p measured inputs 4 and 5 slower than production input 3; input 5 increases candidate recall but
+  reads many more unused predictions. A new predictor needs to improve useful reads as well as recall.
 - **The rest of the Spark perf-hunt list.** Shared expert and routed_down under the I/O wait (self-prefetch with
   the real ids, est. +6 %), poller falling asleep inside the GPU gap (+2 %), I/O and poller threads on the X925
   cores (+2 %). The reads now run at the drive's ceiling, so more overlap is the remaining lever on the read side.
 - **Why THP on the host regions gives NaN on the GB10.** Fixing it would bring back hugepage destinations
   (3.9 vs 4.5 ms per fill), but only if the pages also survive the load's reclaim.
 - **Frequency-aware eviction for the host cache.** The routing skew that makes the HBM tier work should also
-  help a policy like LFU or ARC beat plain LRU, which matters most on the Spark's 10 % cache.
+  help a policy like LFU or ARC beat plain LRU, which matters most on the Spark's 10 % cache. Window r
+  attempted LFU (0018), but both LFU legs lacked valid timed responses; investigate and rerun before
+  drawing a performance conclusion.
 - **Q6_K GEMV for Hopper.** The TMA kernel (kept, +2 % end to end) brought the big shapes to 2.8-3.4 TB/s; what
   is left is the fused shared-expert gate/up (still stock, the TMA version measured slower in the server) and the
   small shapes (attn_q_a, kv_a_mqa, ssm_f_a at 0.2-1.5 TB/s, launch-bound). Each variant listed in the 2026-10-26
