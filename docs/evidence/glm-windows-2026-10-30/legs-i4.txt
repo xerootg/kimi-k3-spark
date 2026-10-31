@@ -1,0 +1,1363 @@
+PRECONDITION placement: c2 routing trace may still be queued; checking report source
+place.py writes owners.csv, spark.set, nuc{2,3}-{ram,ssd}.set, report.json, engine.env/yaml, deploy.sh; with --store also nuc{2,3}-ram.idx.
+NUC g53x needs nuc2-ram.set; g53cs needs nuc2-ram.idx from its identical v2 store. Both need store/sidecar and verified MUFU tables; startup emits served.set.
+Spark uses owner-filtered RAM-only nuc2 sets intersected with actual nuc2.served.set, never engine.env or all-record advertisements.
+PRECONDITION placement source: trace (routing trace)
+PRECONDITION RAM-only supported owner rows: 3588
+PRECONDITION no llama-server -m process; port 18080 free
+PRECONDITION baseline ~/llama-k3-c: expected 0001-0006 + 0009 + 0012 + 0011 v2 + 0012b + 0012c (uncommitted stack retained by cp -a)
+PRECONDITION baseline compatibility OK; patch lineage must be established by earlier windows, not git clean (stack is uncommitted).
+PRECONDITION exact attestation supplied; NaN health probe proves protocol only; every K1 response still must pass md5 9449ae5738
+PRECONDITION NUC: laptop must scale glm53-nuc2 to 1 first; Spark never invokes kubectl.
+PRECONDITION nuc2:19600 (192.168.4.249) k3x NaN sentinel health OK
+PRECONDITION frozen snapshot, local store and model OK; stores are read only inputs
+build13c=0
+K0 remote deadline_us=0 SZ=1 HL=1
+K0 r0 5.397 tok/s md5 9449ae5738
+K0 r1 5.385 tok/s md5 9449ae5738
+K0 r2 5.382 tok/s md5 9449ae5738
+2.34.693.155 I llama_moe_cache: ubatch  > 8: hits = 6168, misses = 3750, hit rate = 62.19%, uploaded = 43764.19 MiB
+1.29.919.208 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.39.992.200 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.54 ms, 0 early lookups without a real one
+1.52.113.808 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.58 ms, 0 early lookups without a real one
+2.01.682.104 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.31 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+2.13.966.441 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.58 ms, 0 early lookups without a real one
+2.23.522.930 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.34.006.891 I fill_late: expert store: split GEMV: 28376 early lookups, 6.7 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+2.34.693.165 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+2.35.185.787 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14369 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.35.185.789 I host bank real bucket: a_ready_latency=14432/19864.889ms
+2.35.185.790 I host bank real bucket: b_early_read=10330/14245.381ms
+2.35.185.791 I host bank real bucket: b_predict_read=6722/2133.113ms
+2.35.185.791 I host bank real bucket: c_real_read=222/3479.490ms
+2.35.185.792 I host bank real bucket: d_lock=28865/0.901ms
+2.35.185.792 I host bank real bucket: e_other=28875/994.566ms
+2.35.185.796 I host bank real histogram: ready_p50/p90/p99=0.000/1.970/5.510ms abc_p50/p90/p99=0.000/3.940/11.020ms (a overlaps b+c; overflow is lower bound)
+2.44.431.671 I expert store fill dispatch: calls=10333 queue_ms=59.269 lean=1
+K0 hedge counters posts/hedged/remote_wins/local_wins/late_remote/NaN: 0 0 0 0 0 0
+K0 MemAvailable 121136 MiB
+K1 remote deadline_us=2500 SZ=1 HL=1
+K1 r0 5.362 tok/s md5 9449ae5738
+K1 r1 5.324 tok/s md5 9449ae5738
+K1 r2 5.336 tok/s md5 9449ae5738
+2.31.402.064 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19600, up): 6963 posts, 1.22 rows per post, 2131 rows placed, 235 requests short (0 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 0 breaker trips; RTT p50 1.79 p90 2.45 p99 3.42 ms (3059 replies); 1 connects, 0 drops (0 stale)
+2.31.401.876 I llama_moe_cache: expert store: remote experts: 6963 layers with candidates, 5455 of them read some locally; wait at the real lookup 0.151 ms per layer with candidates
+2.31.401.864 I llama_moe_cache: ubatch  > 8: hits = 6167, misses = 3751, hit rate = 62.18%, uploaded = 43771.69 MiB
+1.26.024.101 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.002 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+1.26.024.104 I fill_late: hedge per token tokens=54 posts=16.000 wins=4.333 exposed_remote_wait_ms=2.283290
+1.26.024.104 I fill_late: hedge drain calls=864 wait_ms=3.993 (next plan, outside real-hook buckets)
+1.26.024.106 I fill_late: hedge total layer=3 posts=28 hedged=49 remote_wins=21 local_wins=28 late_remote=12 NaN=0
+1.26.024.107 I fill_late: hedge total layer=4 posts=28 hedged=39 remote_wins=10 local_wins=29 late_remote=4 NaN=0
+1.26.024.107 I fill_late: hedge total layer=5 posts=22 hedged=26 remote_wins=13 local_wins=13 late_remote=1 NaN=0
+1.26.024.108 I fill_late: hedge total layer=6 posts=13 hedged=13 remote_wins=3 local_wins=10 late_remote=0 NaN=0
+1.26.024.109 I fill_late: hedge total layer=7 posts=19 hedged=29 remote_wins=12 local_wins=17 late_remote=0 NaN=0
+1.26.024.110 I fill_late: hedge total layer=8 posts=16 hedged=20 remote_wins=11 local_wins=9 late_remote=0 NaN=0
+1.26.024.110 I fill_late: hedge total layer=9 posts=19 hedged=28 remote_wins=10 local_wins=18 late_remote=2 NaN=0
+1.26.024.112 I fill_late: hedge total layer=10 posts=16 hedged=20 remote_wins=9 local_wins=11 late_remote=1 NaN=0
+1.26.024.112 I fill_late: hedge total layer=11 posts=16 hedged=16 remote_wins=4 local_wins=12 late_remote=0 NaN=0
+1.26.024.113 I fill_late: hedge total layer=12 posts=9 hedged=12 remote_wins=0 local_wins=12 late_remote=0 NaN=0
+1.26.024.114 I fill_late: hedge total layer=13 posts=16 hedged=18 remote_wins=4 local_wins=14 late_remote=1 NaN=0
+1.26.024.114 I fill_late: hedge total layer=14 posts=11 hedged=12 remote_wins=2 local_wins=10 late_remote=0 NaN=0
+1.26.024.115 I fill_late: hedge total layer=15 posts=12 hedged=15 remote_wins=2 local_wins=13 late_remote=0 NaN=0
+1.26.024.116 I fill_late: hedge total layer=16 posts=12 hedged=15 remote_wins=3 local_wins=12 late_remote=0 NaN=0
+1.26.024.117 I fill_late: hedge total layer=17 posts=3 hedged=3 remote_wins=1 local_wins=2 late_remote=0 NaN=0
+1.26.024.117 I fill_late: hedge total layer=18 posts=12 hedged=14 remote_wins=4 local_wins=10 late_remote=1 NaN=0
+1.26.024.118 I fill_late: hedge total layer=19 posts=4 hedged=4 remote_wins=1 local_wins=3 late_remote=0 NaN=0
+1.26.024.119 I fill_late: hedge total layer=20 posts=7 hedged=8 remote_wins=2 local_wins=6 late_remote=0 NaN=0
+1.26.024.119 I fill_late: hedge total layer=21 posts=4 hedged=5 remote_wins=0 local_wins=5 late_remote=0 NaN=0
+1.26.024.120 I fill_late: hedge total layer=22 posts=13 hedged=13 remote_wins=3 local_wins=10 late_remote=0 NaN=0
+1.26.024.121 I fill_late: hedge total layer=23 posts=13 hedged=13 remote_wins=2 local_wins=11 late_remote=0 NaN=0
+1.26.024.121 I fill_late: hedge total layer=24 posts=17 hedged=24 remote_wins=4 local_wins=20 late_remote=1 NaN=0
+1.26.024.122 I fill_late: hedge total layer=25 posts=18 hedged=20 remote_wins=5 local_wins=15 late_remote=0 NaN=0
+1.26.024.122 I fill_late: hedge total layer=26 posts=11 hedged=13 remote_wins=5 local_wins=8 late_remote=0 NaN=0
+1.26.024.123 I fill_late: hedge total layer=27 posts=15 hedged=18 remote_wins=2 local_wins=16 late_remote=0 NaN=0
+1.26.024.123 I fill_late: hedge total layer=28 posts=13 hedged=14 remote_wins=2 local_wins=11 late_remote=0 NaN=0
+1.26.024.124 I fill_late: hedge total layer=29 posts=11 hedged=12 remote_wins=5 local_wins=7 late_remote=0 NaN=0
+1.26.024.125 I fill_late: hedge total layer=30 posts=8 hedged=9 remote_wins=2 local_wins=7 late_remote=0 NaN=0
+1.26.024.125 I fill_late: hedge total layer=31 posts=10 hedged=10 remote_wins=1 local_wins=9 late_remote=0 NaN=0
+1.26.024.126 I fill_late: hedge total layer=32 posts=2 hedged=2 remote_wins=0 local_wins=2 late_remote=0 NaN=0
+1.26.024.126 I fill_late: hedge total layer=33 posts=7 hedged=8 remote_wins=1 local_wins=7 late_remote=0 NaN=0
+1.26.024.127 I fill_late: hedge total layer=34 posts=8 hedged=8 remote_wins=3 local_wins=5 late_remote=0 NaN=0
+1.26.024.128 I fill_late: hedge total layer=35 posts=8 hedged=9 remote_wins=2 local_wins=7 late_remote=0 NaN=0
+1.26.024.128 I fill_late: hedge total layer=36 posts=10 hedged=14 remote_wins=2 local_wins=12 late_remote=0 NaN=0
+1.26.024.129 I fill_late: hedge total layer=37 posts=10 hedged=12 remote_wins=1 local_wins=11 late_remote=0 NaN=0
+1.26.024.129 I fill_late: hedge total layer=38 posts=15 hedged=20 remote_wins=2 local_wins=18 late_remote=1 NaN=0
+1.26.024.130 I fill_late: hedge total layer=39 posts=14 hedged=16 remote_wins=1 local_wins=15 late_remote=1 NaN=0
+1.26.024.131 I fill_late: hedge total layer=40 posts=7 hedged=7 remote_wins=4 local_wins=3 late_remote=0 NaN=0
+1.26.024.131 I fill_late: hedge total layer=41 posts=4 hedged=4 remote_wins=1 local_wins=3 late_remote=0 NaN=0
+1.26.024.132 I fill_late: hedge total layer=42 posts=10 hedged=11 remote_wins=0 local_wins=11 late_remote=0 NaN=0
+1.26.024.132 I fill_late: hedge total layer=43 posts=8 hedged=11 remote_wins=2 local_wins=9 late_remote=1 NaN=0
+1.26.024.133 I fill_late: hedge total layer=44 posts=17 hedged=18 remote_wins=8 local_wins=10 late_remote=0 NaN=0
+1.26.024.134 I fill_late: hedge total layer=45 posts=9 hedged=11 remote_wins=2 local_wins=9 late_remote=1 NaN=0
+1.26.024.134 I fill_late: hedge total layer=46 posts=13 hedged=14 remote_wins=3 local_wins=11 late_remote=0 NaN=0
+1.26.024.135 I fill_late: hedge total layer=47 posts=14 hedged=18 remote_wins=4 local_wins=14 late_remote=0 NaN=0
+1.26.024.135 I fill_late: hedge total layer=48 posts=4 hedged=4 remote_wins=0 local_wins=4 late_remote=0 NaN=0
+1.26.024.136 I fill_late: hedge total layer=49 posts=11 hedged=12 remote_wins=2 local_wins=10 late_remote=0 NaN=0
+1.26.024.136 I fill_late: hedge total layer=50 posts=8 hedged=11 remote_wins=0 local_wins=11 late_remote=1 NaN=0
+1.26.024.137 I fill_late: hedge total layer=51 posts=9 hedged=9 remote_wins=2 local_wins=7 late_remote=0 NaN=0
+1.26.024.138 I fill_late: hedge total layer=52 posts=7 hedged=7 remote_wins=1 local_wins=6 late_remote=0 NaN=0
+1.26.024.138 I fill_late: hedge total layer=53 posts=10 hedged=12 remote_wins=1 local_wins=11 late_remote=1 NaN=0
+1.26.024.139 I fill_late: hedge total layer=54 posts=8 hedged=8 remote_wins=1 local_wins=7 late_remote=0 NaN=0
+1.26.024.139 I fill_late: hedge total layer=55 posts=13 hedged=13 remote_wins=2 local_wins=11 late_remote=0 NaN=0
+1.26.024.140 I fill_late: hedge total layer=56 posts=7 hedged=7 remote_wins=2 local_wins=5 late_remote=0 NaN=0
+1.26.024.140 I fill_late: hedge total layer=57 posts=8 hedged=9 remote_wins=2 local_wins=7 late_remote=0 NaN=0
+1.26.024.141 I fill_late: hedge total layer=58 posts=8 hedged=9 remote_wins=3 local_wins=6 late_remote=0 NaN=0
+1.26.024.141 I fill_late: hedge total layer=59 posts=12 hedged=13 remote_wins=2 local_wins=11 late_remote=0 NaN=0
+1.26.024.142 I fill_late: hedge total layer=60 posts=10 hedged=10 remote_wins=1 local_wins=9 late_remote=0 NaN=0
+1.26.024.143 I fill_late: hedge total layer=61 posts=10 hedged=12 remote_wins=2 local_wins=10 late_remote=0 NaN=0
+1.26.024.143 I fill_late: hedge total layer=62 posts=8 hedged=10 remote_wins=0 local_wins=10 late_remote=0 NaN=0
+1.26.024.144 I fill_late: hedge total layer=63 posts=10 hedged=13 remote_wins=2 local_wins=11 late_remote=1 NaN=0
+1.26.024.144 I fill_late: hedge total layer=64 posts=14 hedged=16 remote_wins=0 local_wins=16 late_remote=0 NaN=0
+1.26.024.145 I fill_late: hedge total layer=65 posts=16 hedged=19 remote_wins=4 local_wins=15 late_remote=0 NaN=0
+1.26.024.145 I fill_late: hedge total layer=66 posts=9 hedged=11 remote_wins=3 local_wins=8 late_remote=1 NaN=0
+1.26.024.146 I fill_late: hedge total layer=67 posts=12 hedged=12 remote_wins=2 local_wins=10 late_remote=0 NaN=0
+1.26.024.146 I fill_late: hedge total layer=68 posts=13 hedged=18 remote_wins=2 local_wins=16 late_remote=0 NaN=0
+1.26.024.147 I fill_late: hedge total layer=69 posts=16 hedged=16 remote_wins=3 local_wins=13 late_remote=0 NaN=0
+1.26.024.148 I fill_late: hedge total layer=70 posts=11 hedged=14 remote_wins=4 local_wins=10 late_remote=1 NaN=0
+1.26.024.149 I fill_late: hedge total layer=71 posts=4 hedged=4 remote_wins=1 local_wins=3 late_remote=0 NaN=0
+1.26.024.149 I fill_late: hedge total layer=72 posts=9 hedged=9 remote_wins=0 local_wins=9 late_remote=0 NaN=0
+1.26.024.150 I fill_late: hedge total layer=73 posts=8 hedged=9 remote_wins=2 local_wins=7 late_remote=0 NaN=0
+1.26.024.150 I fill_late: hedge total layer=74 posts=12 hedged=13 remote_wins=3 local_wins=10 late_remote=0 NaN=0
+1.26.024.151 I fill_late: hedge total layer=75 posts=15 hedged=16 remote_wins=1 local_wins=15 late_remote=0 NaN=0
+1.26.024.151 I fill_late: hedge total layer=76 posts=15 hedged=15 remote_wins=4 local_wins=11 late_remote=0 NaN=0
+1.26.024.152 I fill_late: hedge total layer=77 posts=15 hedged=22 remote_wins=3 local_wins=19 late_remote=1 NaN=0
+1.26.024.153 I fill_late: hedge breaker box=0 failures=25 transport=0 deadline=25 streak=0 trips=0 unsent=0 transport_drops=0
+1.36.118.507 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.54 ms, 0 early lookups without a real one
+1.36.118.508 I fill_late: hedge per token tokens=109 posts=16.972 wins=4.890 exposed_remote_wait_ms=2.484742
+1.36.118.509 I fill_late: hedge drain calls=1850 wait_ms=11.021 (next plan, outside real-hook buckets)
+1.36.118.510 I fill_late: hedge total layer=3 posts=71 hedged=128 remote_wins=63 local_wins=65 late_remote=26 NaN=0
+1.36.118.510 I fill_late: hedge total layer=4 posts=59 hedged=86 remote_wins=27 local_wins=59 late_remote=9 NaN=0
+1.36.118.511 I fill_late: hedge total layer=5 posts=51 hedged=65 remote_wins=30 local_wins=35 late_remote=2 NaN=0
+1.36.118.512 I fill_late: hedge total layer=6 posts=34 hedged=38 remote_wins=15 local_wins=23 late_remote=0 NaN=0
+1.36.118.512 I fill_late: hedge total layer=7 posts=44 hedged=62 remote_wins=23 local_wins=39 late_remote=0 NaN=0
+1.36.118.513 I fill_late: hedge total layer=8 posts=43 hedged=67 remote_wins=24 local_wins=43 late_remote=9 NaN=0
+1.36.118.513 I fill_late: hedge total layer=9 posts=50 hedged=71 remote_wins=22 local_wins=49 late_remote=6 NaN=0
+1.36.118.514 I fill_late: hedge total layer=10 posts=39 hedged=57 remote_wins=18 local_wins=39 late_remote=3 NaN=0
+1.36.118.515 I fill_late: hedge total layer=11 posts=34 hedged=35 remote_wins=10 local_wins=25 late_remote=0 NaN=0
+1.36.118.515 I fill_late: hedge total layer=12 posts=23 hedged=30 remote_wins=3 local_wins=26 late_remote=1 NaN=0
+1.36.118.516 I fill_late: hedge total layer=13 posts=35 hedged=43 remote_wins=10 local_wins=33 late_remote=2 NaN=0
+1.36.118.517 I fill_late: hedge total layer=14 posts=27 hedged=28 remote_wins=4 local_wins=24 late_remote=0 NaN=0
+1.36.118.517 I fill_late: hedge total layer=15 posts=24 hedged=32 remote_wins=4 local_wins=28 late_remote=0 NaN=0
+1.36.118.518 I fill_late: hedge total layer=16 posts=24 hedged=28 remote_wins=5 local_wins=23 late_remote=0 NaN=0
+1.36.118.519 I fill_late: hedge total layer=17 posts=16 hedged=18 remote_wins=7 local_wins=11 late_remote=0 NaN=0
+1.36.118.519 I fill_late: hedge total layer=18 posts=21 hedged=24 remote_wins=5 local_wins=19 late_remote=1 NaN=0
+1.36.118.520 I fill_late: hedge total layer=19 posts=10 hedged=11 remote_wins=2 local_wins=9 late_remote=0 NaN=0
+1.36.118.521 I fill_late: hedge total layer=20 posts=12 hedged=16 remote_wins=5 local_wins=11 late_remote=0 NaN=0
+1.36.118.521 I fill_late: hedge total layer=21 posts=12 hedged=13 remote_wins=2 local_wins=11 late_remote=0 NaN=0
+1.36.118.522 I fill_late: hedge total layer=22 posts=28 hedged=30 remote_wins=6 local_wins=24 late_remote=1 NaN=0
+1.36.118.523 I fill_late: hedge total layer=23 posts=29 hedged=36 remote_wins=5 local_wins=31 late_remote=2 NaN=0
+1.36.118.523 I fill_late: hedge total layer=24 posts=35 hedged=46 remote_wins=14 local_wins=32 late_remote=1 NaN=0
+1.36.118.524 I fill_late: hedge total layer=25 posts=37 hedged=43 remote_wins=10 local_wins=33 late_remote=2 NaN=0
+1.36.118.525 I fill_late: hedge total layer=26 posts=25 hedged=29 remote_wins=11 local_wins=18 late_remote=1 NaN=0
+1.36.118.525 I fill_late: hedge total layer=27 posts=32 hedged=41 remote_wins=6 local_wins=35 late_remote=0 NaN=0
+1.36.118.526 I fill_late: hedge total layer=28 posts=24 hedged=27 remote_wins=7 local_wins=19 late_remote=0 NaN=0
+1.36.118.527 I fill_late: hedge total layer=29 posts=24 hedged=27 remote_wins=12 local_wins=15 late_remote=0 NaN=0
+1.36.118.528 I fill_late: hedge total layer=30 posts=16 hedged=18 remote_wins=2 local_wins=16 late_remote=0 NaN=0
+1.36.118.529 I fill_late: hedge total layer=31 posts=18 hedged=18 remote_wins=1 local_wins=17 late_remote=0 NaN=0
+1.36.118.530 I fill_late: hedge total layer=32 posts=4 hedged=4 remote_wins=1 local_wins=3 late_remote=0 NaN=0
+1.36.118.531 I fill_late: hedge total layer=33 posts=17 hedged=18 remote_wins=1 local_wins=17 late_remote=0 NaN=0
+1.36.118.531 I fill_late: hedge total layer=34 posts=17 hedged=17 remote_wins=4 local_wins=13 late_remote=0 NaN=0
+1.36.118.532 I fill_late: hedge total layer=35 posts=19 hedged=21 remote_wins=4 local_wins=17 late_remote=0 NaN=0
+1.36.118.533 I fill_late: hedge total layer=36 posts=18 hedged=23 remote_wins=6 local_wins=17 late_remote=0 NaN=0
+1.36.118.533 I fill_late: hedge total layer=37 posts=24 hedged=28 remote_wins=3 local_wins=25 late_remote=0 NaN=0
+1.36.118.534 I fill_late: hedge total layer=38 posts=28 hedged=38 remote_wins=5 local_wins=33 late_remote=2 NaN=0
+1.36.118.534 I fill_late: hedge total layer=39 posts=22 hedged=25 remote_wins=4 local_wins=21 late_remote=1 NaN=0
+1.36.118.535 I fill_late: hedge total layer=40 posts=12 hedged=13 remote_wins=5 local_wins=8 late_remote=0 NaN=0
+1.36.118.536 I fill_late: hedge total layer=41 posts=11 hedged=12 remote_wins=1 local_wins=11 late_remote=0 NaN=0
+1.36.118.536 I fill_late: hedge total layer=42 posts=17 hedged=18 remote_wins=0 local_wins=18 late_remote=0 NaN=0
+1.36.118.537 I fill_late: hedge total layer=43 posts=19 hedged=22 remote_wins=5 local_wins=17 late_remote=1 NaN=0
+1.36.118.537 I fill_late: hedge total layer=44 posts=25 hedged=27 remote_wins=9 local_wins=18 late_remote=0 NaN=0
+1.36.118.538 I fill_late: hedge total layer=45 posts=17 hedged=19 remote_wins=4 local_wins=15 late_remote=1 NaN=0
+1.36.118.538 I fill_late: hedge total layer=46 posts=25 hedged=29 remote_wins=4 local_wins=25 late_remote=1 NaN=0
+1.36.118.539 I fill_late: hedge total layer=47 posts=26 hedged=32 remote_wins=6 local_wins=26 late_remote=0 NaN=0
+1.36.118.539 I fill_late: hedge total layer=48 posts=16 hedged=17 remote_wins=2 local_wins=15 late_remote=0 NaN=0
+1.36.118.540 I fill_late: hedge total layer=49 posts=27 hedged=30 remote_wins=8 local_wins=22 late_remote=0 NaN=0
+1.36.118.541 I fill_late: hedge total layer=50 posts=17 hedged=21 remote_wins=2 local_wins=19 late_remote=1 NaN=0
+1.36.118.541 I fill_late: hedge total layer=51 posts=25 hedged=25 remote_wins=5 local_wins=20 late_remote=0 NaN=0
+1.36.118.542 I fill_late: hedge total layer=52 posts=19 hedged=21 remote_wins=3 local_wins=18 late_remote=0 NaN=0
+1.36.118.543 I fill_late: hedge total layer=53 posts=22 hedged=27 remote_wins=3 local_wins=24 late_remote=1 NaN=0
+1.36.118.543 I fill_late: hedge total layer=54 posts=19 hedged=19 remote_wins=4 local_wins=15 late_remote=0 NaN=0
+1.36.118.544 I fill_late: hedge total layer=55 posts=24 hedged=24 remote_wins=4 local_wins=20 late_remote=0 NaN=0
+1.36.118.544 I fill_late: hedge total layer=56 posts=15 hedged=15 remote_wins=3 local_wins=12 late_remote=0 NaN=0
+1.36.118.545 I fill_late: hedge total layer=57 posts=17 hedged=18 remote_wins=4 local_wins=14 late_remote=0 NaN=0
+1.36.118.545 I fill_late: hedge total layer=58 posts=16 hedged=17 remote_wins=3 local_wins=14 late_remote=0 NaN=0
+1.36.118.546 I fill_late: hedge total layer=59 posts=25 hedged=28 remote_wins=3 local_wins=25 late_remote=2 NaN=0
+1.36.118.547 I fill_late: hedge total layer=60 posts=18 hedged=18 remote_wins=1 local_wins=17 late_remote=0 NaN=0
+1.36.118.547 I fill_late: hedge total layer=61 posts=19 hedged=21 remote_wins=2 local_wins=18 late_remote=0 NaN=0
+1.36.118.548 I fill_late: hedge total layer=62 posts=14 hedged=17 remote_wins=2 local_wins=15 late_remote=0 NaN=0
+1.36.118.548 I fill_late: hedge total layer=63 posts=19 hedged=22 remote_wins=3 local_wins=19 late_remote=1 NaN=0
+1.36.118.549 I fill_late: hedge total layer=64 posts=30 hedged=34 remote_wins=2 local_wins=32 late_remote=0 NaN=0
+1.36.118.550 I fill_late: hedge total layer=65 posts=31 hedged=35 remote_wins=7 local_wins=28 late_remote=0 NaN=0
+1.36.118.550 I fill_late: hedge total layer=66 posts=17 hedged=19 remote_wins=3 local_wins=16 late_remote=1 NaN=0
+1.36.118.551 I fill_late: hedge total layer=67 posts=25 hedged=28 remote_wins=3 local_wins=25 late_remote=0 NaN=0
+1.36.118.551 I fill_late: hedge total layer=68 posts=23 hedged=29 remote_wins=4 local_wins=25 late_remote=0 NaN=0
+1.36.118.552 I fill_late: hedge total layer=69 posts=26 hedged=32 remote_wins=5 local_wins=27 late_remote=2 NaN=0
+1.36.118.552 I fill_late: hedge total layer=70 posts=18 hedged=21 remote_wins=4 local_wins=17 late_remote=1 NaN=0
+1.36.118.553 I fill_late: hedge total layer=71 posts=13 hedged=14 remote_wins=2 local_wins=12 late_remote=0 NaN=0
+1.36.118.554 I fill_late: hedge total layer=72 posts=18 hedged=19 remote_wins=2 local_wins=17 late_remote=0 NaN=0
+1.36.118.554 I fill_late: hedge total layer=73 posts=19 hedged=20 remote_wins=3 local_wins=17 late_remote=0 NaN=0
+1.36.118.555 I fill_late: hedge total layer=74 posts=25 hedged=27 remote_wins=6 local_wins=21 late_remote=0 NaN=0
+1.36.118.556 I fill_late: hedge total layer=75 posts=37 hedged=41 remote_wins=8 local_wins=32 late_remote=1 NaN=0
+1.36.118.556 I fill_late: hedge total layer=76 posts=29 hedged=32 remote_wins=5 local_wins=27 late_remote=1 NaN=0
+1.36.118.557 I fill_late: hedge total layer=77 posts=29 hedged=37 remote_wins=12 local_wins=25 late_remote=1 NaN=0
+1.36.118.558 I fill_late: hedge breaker box=0 failures=64 transport=0 deadline=64 streak=0 trips=0 unsent=0 transport_drops=0
+1.48.309.122 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.58 ms, 0 early lookups without a real one
+1.48.309.123 I fill_late: hedge per token tokens=163 posts=18.098 wins=5.436 exposed_remote_wait_ms=2.733216
+1.48.309.124 I fill_late: hedge drain calls=2950 wait_ms=18.507 (next plan, outside real-hook buckets)
+1.48.309.125 I fill_late: hedge total layer=3 posts=110 hedged=206 remote_wins=90 local_wins=116 late_remote=50 NaN=0
+1.48.309.126 I fill_late: hedge total layer=4 posts=92 hedged=138 remote_wins=45 local_wins=93 late_remote=12 NaN=0
+1.48.309.127 I fill_late: hedge total layer=5 posts=79 hedged=99 remote_wins=51 local_wins=48 late_remote=2 NaN=0
+1.48.309.127 I fill_late: hedge total layer=6 posts=55 hedged=68 remote_wins=29 local_wins=39 late_remote=4 NaN=0
+1.48.309.128 I fill_late: hedge total layer=7 posts=81 hedged=119 remote_wins=39 local_wins=80 late_remote=4 NaN=0
+1.48.309.128 I fill_late: hedge total layer=8 posts=68 hedged=99 remote_wins=38 local_wins=61 late_remote=10 NaN=0
+1.48.309.129 I fill_late: hedge total layer=9 posts=73 hedged=101 remote_wins=33 local_wins=68 late_remote=6 NaN=0
+1.48.309.129 I fill_late: hedge total layer=10 posts=68 hedged=92 remote_wins=31 local_wins=61 late_remote=4 NaN=0
+1.48.309.130 I fill_late: hedge total layer=11 posts=54 hedged=57 remote_wins=19 local_wins=38 late_remote=0 NaN=0
+1.48.309.130 I fill_late: hedge total layer=12 posts=41 hedged=51 remote_wins=7 local_wins=43 late_remote=1 NaN=0
+1.48.309.131 I fill_late: hedge total layer=13 posts=60 hedged=75 remote_wins=19 local_wins=56 late_remote=3 NaN=0
+1.48.309.132 I fill_late: hedge total layer=14 posts=44 hedged=46 remote_wins=8 local_wins=38 late_remote=0 NaN=0
+1.48.309.132 I fill_late: hedge total layer=15 posts=37 hedged=48 remote_wins=9 local_wins=39 late_remote=0 NaN=0
+1.48.309.133 I fill_late: hedge total layer=16 posts=38 hedged=47 remote_wins=8 local_wins=39 late_remote=1 NaN=0
+1.48.309.134 I fill_late: hedge total layer=17 posts=24 hedged=27 remote_wins=9 local_wins=18 late_remote=0 NaN=0
+1.48.309.135 I fill_late: hedge total layer=18 posts=35 hedged=38 remote_wins=7 local_wins=31 late_remote=1 NaN=0
+1.48.309.135 I fill_late: hedge total layer=19 posts=14 hedged=16 remote_wins=4 local_wins=12 late_remote=0 NaN=0
+1.48.309.136 I fill_late: hedge total layer=20 posts=24 hedged=30 remote_wins=8 local_wins=22 late_remote=0 NaN=0
+1.48.309.136 I fill_late: hedge total layer=21 posts=24 hedged=27 remote_wins=5 local_wins=22 late_remote=0 NaN=0
+1.48.309.137 I fill_late: hedge total layer=22 posts=40 hedged=42 remote_wins=8 local_wins=34 late_remote=1 NaN=0
+1.48.309.138 I fill_late: hedge total layer=23 posts=47 hedged=57 remote_wins=12 local_wins=45 late_remote=2 NaN=0
+1.48.309.138 I fill_late: hedge total layer=24 posts=53 hedged=73 remote_wins=20 local_wins=53 late_remote=2 NaN=0
+1.48.309.139 I fill_late: hedge total layer=25 posts=56 hedged=73 remote_wins=20 local_wins=53 late_remote=5 NaN=0
+1.48.309.140 I fill_late: hedge total layer=26 posts=41 hedged=47 remote_wins=19 local_wins=28 late_remote=1 NaN=0
+1.48.309.140 I fill_late: hedge total layer=27 posts=45 hedged=59 remote_wins=11 local_wins=48 late_remote=1 NaN=0
+1.48.309.141 I fill_late: hedge total layer=28 posts=39 hedged=42 remote_wins=10 local_wins=31 late_remote=0 NaN=0
+1.48.309.141 I fill_late: hedge total layer=29 posts=38 hedged=43 remote_wins=20 local_wins=23 late_remote=0 NaN=0
+1.48.309.142 I fill_late: hedge total layer=30 posts=28 hedged=34 remote_wins=6 local_wins=28 late_remote=2 NaN=0
+1.48.309.142 I fill_late: hedge total layer=31 posts=27 hedged=27 remote_wins=4 local_wins=23 late_remote=0 NaN=0
+1.48.309.143 I fill_late: hedge total layer=32 posts=11 hedged=11 remote_wins=3 local_wins=8 late_remote=0 NaN=0
+1.48.309.143 I fill_late: hedge total layer=33 posts=29 hedged=31 remote_wins=5 local_wins=26 late_remote=2 NaN=0
+1.48.309.144 I fill_late: hedge total layer=34 posts=30 hedged=31 remote_wins=6 local_wins=25 late_remote=0 NaN=0
+1.48.309.145 I fill_late: hedge total layer=35 posts=32 hedged=38 remote_wins=9 local_wins=29 late_remote=0 NaN=0
+1.48.309.145 I fill_late: hedge total layer=36 posts=28 hedged=35 remote_wins=7 local_wins=28 late_remote=0 NaN=0
+1.48.309.146 I fill_late: hedge total layer=37 posts=35 hedged=41 remote_wins=4 local_wins=37 late_remote=0 NaN=0
+1.48.309.146 I fill_late: hedge total layer=38 posts=45 hedged=57 remote_wins=7 local_wins=50 late_remote=2 NaN=0
+1.48.309.147 I fill_late: hedge total layer=39 posts=38 hedged=43 remote_wins=5 local_wins=38 late_remote=1 NaN=0
+1.48.309.148 I fill_late: hedge total layer=40 posts=22 hedged=23 remote_wins=9 local_wins=14 late_remote=0 NaN=0
+1.48.309.148 I fill_late: hedge total layer=41 posts=17 hedged=18 remote_wins=3 local_wins=15 late_remote=0 NaN=0
+1.48.309.149 I fill_late: hedge total layer=42 posts=26 hedged=30 remote_wins=3 local_wins=27 late_remote=0 NaN=0
+1.48.309.149 I fill_late: hedge total layer=43 posts=28 hedged=35 remote_wins=6 local_wins=28 late_remote=2 NaN=0
+1.48.309.150 I fill_late: hedge total layer=44 posts=45 hedged=47 remote_wins=14 local_wins=33 late_remote=0 NaN=0
+1.48.309.150 I fill_late: hedge total layer=45 posts=26 hedged=28 remote_wins=6 local_wins=22 late_remote=1 NaN=0
+1.48.309.151 I fill_late: hedge total layer=46 posts=38 hedged=43 remote_wins=7 local_wins=36 late_remote=1 NaN=0
+1.48.309.151 I fill_late: hedge total layer=47 posts=38 hedged=47 remote_wins=9 local_wins=38 late_remote=0 NaN=0
+1.48.309.152 I fill_late: hedge total layer=48 posts=21 hedged=22 remote_wins=3 local_wins=19 late_remote=0 NaN=0
+1.48.309.152 I fill_late: hedge total layer=49 posts=41 hedged=45 remote_wins=10 local_wins=35 late_remote=0 NaN=0
+1.48.309.153 I fill_late: hedge total layer=50 posts=29 hedged=36 remote_wins=5 local_wins=31 late_remote=1 NaN=0
+1.48.309.153 I fill_late: hedge total layer=51 posts=42 hedged=44 remote_wins=9 local_wins=35 late_remote=0 NaN=0
+1.48.309.154 I fill_late: hedge total layer=52 posts=27 hedged=30 remote_wins=6 local_wins=24 late_remote=0 NaN=0
+1.48.309.155 I fill_late: hedge total layer=53 posts=33 hedged=39 remote_wins=5 local_wins=34 late_remote=2 NaN=0
+1.48.309.155 I fill_late: hedge total layer=54 posts=32 hedged=32 remote_wins=6 local_wins=26 late_remote=0 NaN=0
+1.48.309.156 I fill_late: hedge total layer=55 posts=36 hedged=38 remote_wins=8 local_wins=30 late_remote=0 NaN=0
+1.48.309.156 I fill_late: hedge total layer=56 posts=24 hedged=24 remote_wins=5 local_wins=19 late_remote=0 NaN=0
+1.48.309.157 I fill_late: hedge total layer=57 posts=29 hedged=31 remote_wins=6 local_wins=25 late_remote=0 NaN=0
+1.48.309.157 I fill_late: hedge total layer=58 posts=29 hedged=31 remote_wins=7 local_wins=24 late_remote=0 NaN=0
+1.48.309.158 I fill_late: hedge total layer=59 posts=40 hedged=45 remote_wins=4 local_wins=41 late_remote=2 NaN=0
+1.48.309.159 I fill_late: hedge total layer=60 posts=29 hedged=29 remote_wins=2 local_wins=27 late_remote=0 NaN=0
+1.48.309.159 I fill_late: hedge total layer=61 posts=35 hedged=40 remote_wins=5 local_wins=34 late_remote=0 NaN=0
+1.48.309.160 I fill_late: hedge total layer=62 posts=16 hedged=19 remote_wins=2 local_wins=17 late_remote=0 NaN=0
+1.48.309.160 I fill_late: hedge total layer=63 posts=30 hedged=36 remote_wins=4 local_wins=32 late_remote=2 NaN=0
+1.48.309.161 I fill_late: hedge total layer=64 posts=41 hedged=46 remote_wins=4 local_wins=42 late_remote=0 NaN=0
+1.48.309.161 I fill_late: hedge total layer=65 posts=49 hedged=56 remote_wins=9 local_wins=47 late_remote=0 NaN=0
+1.48.309.162 I fill_late: hedge total layer=66 posts=28 hedged=31 remote_wins=6 local_wins=25 late_remote=1 NaN=0
+1.48.309.162 I fill_late: hedge total layer=67 posts=35 hedged=39 remote_wins=6 local_wins=33 late_remote=0 NaN=0
+1.48.309.163 I fill_late: hedge total layer=68 posts=34 hedged=43 remote_wins=4 local_wins=39 late_remote=1 NaN=0
+1.48.309.163 I fill_late: hedge total layer=69 posts=43 hedged=50 remote_wins=8 local_wins=42 late_remote=2 NaN=0
+1.48.309.164 I fill_late: hedge total layer=70 posts=29 hedged=34 remote_wins=6 local_wins=28 late_remote=1 NaN=0
+1.48.309.165 I fill_late: hedge total layer=71 posts=26 hedged=27 remote_wins=4 local_wins=23 late_remote=0 NaN=0
+1.48.309.165 I fill_late: hedge total layer=72 posts=31 hedged=33 remote_wins=3 local_wins=30 late_remote=0 NaN=0
+1.48.309.166 I fill_late: hedge total layer=73 posts=28 hedged=30 remote_wins=5 local_wins=25 late_remote=0 NaN=0
+1.48.309.166 I fill_late: hedge total layer=74 posts=36 hedged=40 remote_wins=8 local_wins=32 late_remote=0 NaN=0
+1.48.309.167 I fill_late: hedge total layer=75 posts=56 hedged=64 remote_wins=14 local_wins=49 late_remote=2 NaN=0
+1.48.309.167 I fill_late: hedge total layer=76 posts=46 hedged=51 remote_wins=9 local_wins=42 late_remote=1 NaN=0
+1.48.309.168 I fill_late: hedge total layer=77 posts=52 hedged=64 remote_wins=21 local_wins=43 late_remote=1 NaN=0
+1.48.309.169 I fill_late: hedge breaker box=0 failures=102 transport=0 deadline=102 streak=0 trips=0 unsent=0 transport_drops=0
+1.58.020.678 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.31 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.58.020.681 I fill_late: hedge per token tokens=218 posts=17.422 wins=5.161 exposed_remote_wait_ms=2.607345
+1.58.020.681 I fill_late: hedge drain calls=3798 wait_ms=21.746 (next plan, outside real-hook buckets)
+1.58.020.683 I fill_late: hedge total layer=3 posts=145 hedged=272 remote_wins=118 local_wins=154 late_remote=67 NaN=0
+1.58.020.683 I fill_late: hedge total layer=4 posts=117 hedged=174 remote_wins=58 local_wins=116 late_remote=16 NaN=0
+1.58.020.684 I fill_late: hedge total layer=5 posts=101 hedged=131 remote_wins=60 local_wins=71 late_remote=4 NaN=0
+1.58.020.685 I fill_late: hedge total layer=6 posts=73 hedged=88 remote_wins=38 local_wins=50 late_remote=4 NaN=0
+1.58.020.686 I fill_late: hedge total layer=7 posts=105 hedged=154 remote_wins=51 local_wins=103 late_remote=4 NaN=0
+1.58.020.687 I fill_late: hedge total layer=8 posts=92 hedged=140 remote_wins=50 local_wins=90 late_remote=22 NaN=0
+1.58.020.687 I fill_late: hedge total layer=9 posts=100 hedged=139 remote_wins=44 local_wins=95 late_remote=10 NaN=0
+1.58.020.688 I fill_late: hedge total layer=10 posts=87 hedged=121 remote_wins=41 local_wins=80 late_remote=4 NaN=0
+1.58.020.688 I fill_late: hedge total layer=11 posts=68 hedged=71 remote_wins=25 local_wins=46 late_remote=0 NaN=0
+1.58.020.689 I fill_late: hedge total layer=12 posts=54 hedged=67 remote_wins=11 local_wins=55 late_remote=1 NaN=0
+1.58.020.690 I fill_late: hedge total layer=13 posts=73 hedged=93 remote_wins=23 local_wins=70 late_remote=4 NaN=0
+1.58.020.690 I fill_late: hedge total layer=14 posts=56 hedged=58 remote_wins=9 local_wins=48 late_remote=0 NaN=0
+1.58.020.691 I fill_late: hedge total layer=15 posts=50 hedged=63 remote_wins=12 local_wins=51 late_remote=0 NaN=0
+1.58.020.691 I fill_late: hedge total layer=16 posts=48 hedged=58 remote_wins=12 local_wins=46 late_remote=1 NaN=0
+1.58.020.692 I fill_late: hedge total layer=17 posts=32 hedged=36 remote_wins=11 local_wins=25 late_remote=0 NaN=0
+1.58.020.693 I fill_late: hedge total layer=18 posts=43 hedged=49 remote_wins=8 local_wins=41 late_remote=3 NaN=0
+1.58.020.693 I fill_late: hedge total layer=19 posts=20 hedged=23 remote_wins=5 local_wins=18 late_remote=0 NaN=0
+1.58.020.694 I fill_late: hedge total layer=20 posts=28 hedged=36 remote_wins=10 local_wins=26 late_remote=0 NaN=0
+1.58.020.694 I fill_late: hedge total layer=21 posts=28 hedged=31 remote_wins=5 local_wins=26 late_remote=0 NaN=0
+1.58.020.695 I fill_late: hedge total layer=22 posts=51 hedged=55 remote_wins=9 local_wins=46 late_remote=1 NaN=0
+1.58.020.695 I fill_late: hedge total layer=23 posts=56 hedged=69 remote_wins=15 local_wins=54 late_remote=3 NaN=0
+1.58.020.696 I fill_late: hedge total layer=24 posts=67 hedged=91 remote_wins=26 local_wins=64 late_remote=3 NaN=0
+1.58.020.697 I fill_late: hedge total layer=25 posts=71 hedged=91 remote_wins=22 local_wins=69 late_remote=7 NaN=0
+1.58.020.697 I fill_late: hedge total layer=26 posts=56 hedged=65 remote_wins=26 local_wins=39 late_remote=1 NaN=0
+1.58.020.698 I fill_late: hedge total layer=27 posts=63 hedged=83 remote_wins=15 local_wins=68 late_remote=1 NaN=0
+1.58.020.698 I fill_late: hedge total layer=28 posts=51 hedged=54 remote_wins=12 local_wins=41 late_remote=0 NaN=0
+1.58.020.699 I fill_late: hedge total layer=29 posts=47 hedged=53 remote_wins=23 local_wins=30 late_remote=0 NaN=0
+1.58.020.699 I fill_late: hedge total layer=30 posts=35 hedged=41 remote_wins=6 local_wins=35 late_remote=2 NaN=0
+1.58.020.700 I fill_late: hedge total layer=31 posts=34 hedged=34 remote_wins=5 local_wins=29 late_remote=0 NaN=0
+1.58.020.701 I fill_late: hedge total layer=32 posts=12 hedged=12 remote_wins=4 local_wins=8 late_remote=0 NaN=0
+1.58.020.701 I fill_late: hedge total layer=33 posts=39 hedged=42 remote_wins=7 local_wins=35 late_remote=2 NaN=0
+1.58.020.702 I fill_late: hedge total layer=34 posts=39 hedged=40 remote_wins=10 local_wins=30 late_remote=0 NaN=0
+1.58.020.702 I fill_late: hedge total layer=35 posts=41 hedged=47 remote_wins=9 local_wins=38 late_remote=0 NaN=0
+1.58.020.703 I fill_late: hedge total layer=36 posts=37 hedged=48 remote_wins=10 local_wins=38 late_remote=0 NaN=0
+1.58.020.703 I fill_late: hedge total layer=37 posts=49 hedged=57 remote_wins=6 local_wins=51 late_remote=0 NaN=0
+1.58.020.704 I fill_late: hedge total layer=38 posts=56 hedged=72 remote_wins=8 local_wins=64 late_remote=4 NaN=0
+1.58.020.705 I fill_late: hedge total layer=39 posts=47 hedged=53 remote_wins=6 local_wins=47 late_remote=1 NaN=0
+1.58.020.705 I fill_late: hedge total layer=40 posts=27 hedged=28 remote_wins=10 local_wins=18 late_remote=0 NaN=0
+1.58.020.706 I fill_late: hedge total layer=41 posts=23 hedged=25 remote_wins=3 local_wins=22 late_remote=0 NaN=0
+1.58.020.707 I fill_late: hedge total layer=42 posts=32 hedged=36 remote_wins=3 local_wins=33 late_remote=0 NaN=0
+1.58.020.707 I fill_late: hedge total layer=43 posts=35 hedged=42 remote_wins=8 local_wins=33 late_remote=2 NaN=0
+1.58.020.708 I fill_late: hedge total layer=44 posts=54 hedged=57 remote_wins=15 local_wins=42 late_remote=0 NaN=0
+1.58.020.708 I fill_late: hedge total layer=45 posts=36 hedged=38 remote_wins=8 local_wins=30 late_remote=1 NaN=0
+1.58.020.709 I fill_late: hedge total layer=46 posts=51 hedged=58 remote_wins=10 local_wins=48 late_remote=1 NaN=0
+1.58.020.710 I fill_late: hedge total layer=47 posts=49 hedged=61 remote_wins=11 local_wins=50 late_remote=0 NaN=0
+1.58.020.710 I fill_late: hedge total layer=48 posts=28 hedged=29 remote_wins=5 local_wins=24 late_remote=0 NaN=0
+1.58.020.711 I fill_late: hedge total layer=49 posts=55 hedged=60 remote_wins=12 local_wins=48 late_remote=0 NaN=0
+1.58.020.711 I fill_late: hedge total layer=50 posts=35 hedged=42 remote_wins=5 local_wins=37 late_remote=1 NaN=0
+1.58.020.712 I fill_late: hedge total layer=51 posts=51 hedged=53 remote_wins=9 local_wins=44 late_remote=0 NaN=0
+1.58.020.712 I fill_late: hedge total layer=52 posts=37 hedged=41 remote_wins=8 local_wins=33 late_remote=0 NaN=0
+1.58.020.713 I fill_late: hedge total layer=53 posts=43 hedged=52 remote_wins=7 local_wins=45 late_remote=2 NaN=0
+1.58.020.714 I fill_late: hedge total layer=54 posts=41 hedged=41 remote_wins=9 local_wins=32 late_remote=0 NaN=0
+1.58.020.714 I fill_late: hedge total layer=55 posts=41 hedged=43 remote_wins=10 local_wins=33 late_remote=0 NaN=0
+1.58.020.715 I fill_late: hedge total layer=56 posts=31 hedged=31 remote_wins=7 local_wins=24 late_remote=0 NaN=0
+1.58.020.715 I fill_late: hedge total layer=57 posts=37 hedged=39 remote_wins=6 local_wins=33 late_remote=0 NaN=0
+1.58.020.716 I fill_late: hedge total layer=58 posts=33 hedged=35 remote_wins=7 local_wins=28 late_remote=0 NaN=0
+1.58.020.716 I fill_late: hedge total layer=59 posts=53 hedged=58 remote_wins=5 local_wins=53 late_remote=2 NaN=0
+1.58.020.717 I fill_late: hedge total layer=60 posts=37 hedged=37 remote_wins=3 local_wins=34 late_remote=0 NaN=0
+1.58.020.717 I fill_late: hedge total layer=61 posts=42 hedged=47 remote_wins=5 local_wins=41 late_remote=0 NaN=0
+1.58.020.718 I fill_late: hedge total layer=62 posts=24 hedged=27 remote_wins=5 local_wins=22 late_remote=0 NaN=0
+1.58.020.718 I fill_late: hedge total layer=63 posts=41 hedged=47 remote_wins=7 local_wins=40 late_remote=2 NaN=0
+1.58.020.719 I fill_late: hedge total layer=64 posts=53 hedged=61 remote_wins=5 local_wins=56 late_remote=0 NaN=0
+1.58.020.719 I fill_late: hedge total layer=65 posts=64 hedged=71 remote_wins=12 local_wins=59 late_remote=0 NaN=0
+1.58.020.720 I fill_late: hedge total layer=66 posts=33 hedged=36 remote_wins=6 local_wins=30 late_remote=1 NaN=0
+1.58.020.721 I fill_late: hedge total layer=67 posts=46 hedged=51 remote_wins=6 local_wins=45 late_remote=0 NaN=0
+1.58.020.721 I fill_late: hedge total layer=68 posts=45 hedged=56 remote_wins=8 local_wins=48 late_remote=1 NaN=0
+1.58.020.722 I fill_late: hedge total layer=69 posts=58 hedged=71 remote_wins=12 local_wins=59 late_remote=3 NaN=0
+1.58.020.722 I fill_late: hedge total layer=70 posts=38 hedged=45 remote_wins=10 local_wins=35 late_remote=1 NaN=0
+1.58.020.723 I fill_late: hedge total layer=71 posts=32 hedged=34 remote_wins=4 local_wins=30 late_remote=0 NaN=0
+1.58.020.723 I fill_late: hedge total layer=72 posts=39 hedged=43 remote_wins=5 local_wins=38 late_remote=0 NaN=0
+1.58.020.724 I fill_late: hedge total layer=73 posts=37 hedged=40 remote_wins=5 local_wins=35 late_remote=0 NaN=0
+1.58.020.724 I fill_late: hedge total layer=74 posts=47 hedged=53 remote_wins=11 local_wins=42 late_remote=0 NaN=0
+1.58.020.725 I fill_late: hedge total layer=75 posts=74 hedged=83 remote_wins=17 local_wins=65 late_remote=3 NaN=0
+1.58.020.725 I fill_late: hedge total layer=76 posts=62 hedged=70 remote_wins=10 local_wins=60 late_remote=4 NaN=0
+1.58.020.726 I fill_late: hedge total layer=77 posts=63 hedged=77 remote_wins=26 local_wins=51 late_remote=1 NaN=0
+1.58.020.727 I fill_late: hedge breaker box=0 failures=137 transport=0 deadline=137 streak=1 trips=0 unsent=0 transport_drops=0
+2.10.513.143 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.59 ms, 0 early lookups without a real one
+2.10.513.144 I fill_late: hedge per token tokens=273 posts=18.110 wins=5.571 exposed_remote_wait_ms=2.772547
+2.10.513.145 I fill_late: hedge drain calls=4944 wait_ms=27.896 (next plan, outside real-hook buckets)
+2.10.513.147 I fill_late: hedge total layer=3 posts=190 hedged=363 remote_wins=153 local_wins=210 late_remote=93 NaN=0
+2.10.513.147 I fill_late: hedge total layer=4 posts=149 hedged=227 remote_wins=77 local_wins=150 late_remote=22 NaN=0
+2.10.513.148 I fill_late: hedge total layer=5 posts=133 hedged=172 remote_wins=82 local_wins=90 late_remote=4 NaN=0
+2.10.513.149 I fill_late: hedge total layer=6 posts=94 hedged=118 remote_wins=51 local_wins=67 late_remote=6 NaN=0
+2.10.513.149 I fill_late: hedge total layer=7 posts=139 hedged=207 remote_wins=66 local_wins=141 late_remote=7 NaN=0
+2.10.513.150 I fill_late: hedge total layer=8 posts=122 hedged=183 remote_wins=68 local_wins=115 late_remote=25 NaN=0
+2.10.513.151 I fill_late: hedge total layer=9 posts=124 hedged=170 remote_wins=57 local_wins=113 late_remote=10 NaN=0
+2.10.513.151 I fill_late: hedge total layer=10 posts=115 hedged=157 remote_wins=56 local_wins=101 late_remote=4 NaN=0
+2.10.513.152 I fill_late: hedge total layer=11 posts=90 hedged=96 remote_wins=31 local_wins=65 late_remote=0 NaN=0
+2.10.513.153 I fill_late: hedge total layer=12 posts=71 hedged=89 remote_wins=17 local_wins=71 late_remote=1 NaN=0
+2.10.513.154 I fill_late: hedge total layer=13 posts=99 hedged=122 remote_wins=31 local_wins=91 late_remote=4 NaN=0
+2.10.513.154 I fill_late: hedge total layer=14 posts=74 hedged=78 remote_wins=14 local_wins=63 late_remote=0 NaN=0
+2.10.513.155 I fill_late: hedge total layer=15 posts=62 hedged=81 remote_wins=17 local_wins=64 late_remote=0 NaN=0
+2.10.513.156 I fill_late: hedge total layer=16 posts=67 hedged=82 remote_wins=20 local_wins=62 late_remote=2 NaN=0
+2.10.513.156 I fill_late: hedge total layer=17 posts=42 hedged=47 remote_wins=14 local_wins=33 late_remote=0 NaN=0
+2.10.513.157 I fill_late: hedge total layer=18 posts=53 hedged=59 remote_wins=11 local_wins=48 late_remote=3 NaN=0
+2.10.513.158 I fill_late: hedge total layer=19 posts=26 hedged=30 remote_wins=7 local_wins=23 late_remote=0 NaN=0
+2.10.513.159 I fill_late: hedge total layer=20 posts=43 hedged=55 remote_wins=16 local_wins=39 late_remote=0 NaN=0
+2.10.513.159 I fill_late: hedge total layer=21 posts=40 hedged=43 remote_wins=7 local_wins=36 late_remote=0 NaN=0
+2.10.513.160 I fill_late: hedge total layer=22 posts=65 hedged=69 remote_wins=13 local_wins=56 late_remote=1 NaN=0
+2.10.513.161 I fill_late: hedge total layer=23 posts=76 hedged=95 remote_wins=21 local_wins=74 late_remote=4 NaN=0
+2.10.513.161 I fill_late: hedge total layer=24 posts=85 hedged=117 remote_wins=37 local_wins=79 late_remote=3 NaN=0
+2.10.513.162 I fill_late: hedge total layer=25 posts=93 hedged=122 remote_wins=36 local_wins=86 late_remote=11 NaN=0
+2.10.513.162 I fill_late: hedge total layer=26 posts=72 hedged=84 remote_wins=33 local_wins=51 late_remote=1 NaN=0
+2.10.513.163 I fill_late: hedge total layer=27 posts=78 hedged=104 remote_wins=20 local_wins=84 late_remote=2 NaN=0
+2.10.513.163 I fill_late: hedge total layer=28 posts=65 hedged=71 remote_wins=19 local_wins=51 late_remote=0 NaN=0
+2.10.513.164 I fill_late: hedge total layer=29 posts=59 hedged=67 remote_wins=30 local_wins=37 late_remote=0 NaN=0
+2.10.513.164 I fill_late: hedge total layer=30 posts=45 hedged=53 remote_wins=11 local_wins=41 late_remote=2 NaN=0
+2.10.513.165 I fill_late: hedge total layer=31 posts=43 hedged=43 remote_wins=8 local_wins=35 late_remote=0 NaN=0
+2.10.513.166 I fill_late: hedge total layer=32 posts=18 hedged=18 remote_wins=5 local_wins=13 late_remote=0 NaN=0
+2.10.513.166 I fill_late: hedge total layer=33 posts=50 hedged=54 remote_wins=11 local_wins=43 late_remote=2 NaN=0
+2.10.513.167 I fill_late: hedge total layer=34 posts=51 hedged=53 remote_wins=11 local_wins=42 late_remote=0 NaN=0
+2.10.513.167 I fill_late: hedge total layer=35 posts=53 hedged=62 remote_wins=12 local_wins=50 late_remote=1 NaN=0
+2.10.513.168 I fill_late: hedge total layer=36 posts=45 hedged=56 remote_wins=12 local_wins=44 late_remote=0 NaN=0
+2.10.513.169 I fill_late: hedge total layer=37 posts=60 hedged=70 remote_wins=8 local_wins=62 late_remote=0 NaN=0
+2.10.513.170 I fill_late: hedge total layer=38 posts=71 hedged=93 remote_wins=9 local_wins=84 late_remote=5 NaN=0
+2.10.513.170 I fill_late: hedge total layer=39 posts=61 hedged=67 remote_wins=7 local_wins=60 late_remote=1 NaN=0
+2.10.513.171 I fill_late: hedge total layer=40 posts=37 hedged=39 remote_wins=12 local_wins=27 late_remote=0 NaN=0
+2.10.513.171 I fill_late: hedge total layer=41 posts=29 hedged=31 remote_wins=4 local_wins=27 late_remote=0 NaN=0
+2.10.513.172 I fill_late: hedge total layer=42 posts=40 hedged=47 remote_wins=4 local_wins=43 late_remote=1 NaN=0
+2.10.513.172 I fill_late: hedge total layer=43 posts=49 hedged=59 remote_wins=9 local_wins=48 late_remote=3 NaN=0
+2.10.513.173 I fill_late: hedge total layer=44 posts=73 hedged=77 remote_wins=21 local_wins=56 late_remote=0 NaN=0
+2.10.513.173 I fill_late: hedge total layer=45 posts=44 hedged=46 remote_wins=10 local_wins=36 late_remote=1 NaN=0
+2.10.513.174 I fill_late: hedge total layer=46 posts=69 hedged=78 remote_wins=12 local_wins=66 late_remote=2 NaN=0
+2.10.513.174 I fill_late: hedge total layer=47 posts=62 hedged=76 remote_wins=14 local_wins=62 late_remote=0 NaN=0
+2.10.513.175 I fill_late: hedge total layer=48 posts=37 hedged=38 remote_wins=6 local_wins=32 late_remote=0 NaN=0
+2.10.513.176 I fill_late: hedge total layer=49 posts=71 hedged=78 remote_wins=19 local_wins=59 late_remote=0 NaN=0
+2.10.513.176 I fill_late: hedge total layer=50 posts=46 hedged=54 remote_wins=8 local_wins=46 late_remote=1 NaN=0
+2.10.513.177 I fill_late: hedge total layer=51 posts=72 hedged=76 remote_wins=16 local_wins=60 late_remote=0 NaN=0
+2.10.513.177 I fill_late: hedge total layer=52 posts=49 hedged=55 remote_wins=11 local_wins=44 late_remote=0 NaN=0
+2.10.513.178 I fill_late: hedge total layer=53 posts=54 hedged=64 remote_wins=10 local_wins=54 late_remote=2 NaN=0
+2.10.513.179 I fill_late: hedge total layer=54 posts=51 hedged=51 remote_wins=10 local_wins=41 late_remote=0 NaN=0
+2.10.513.179 I fill_late: hedge total layer=55 posts=53 hedged=55 remote_wins=13 local_wins=42 late_remote=0 NaN=0
+2.10.513.180 I fill_late: hedge total layer=56 posts=39 hedged=39 remote_wins=8 local_wins=31 late_remote=0 NaN=0
+2.10.513.180 I fill_late: hedge total layer=57 posts=48 hedged=52 remote_wins=7 local_wins=44 late_remote=0 NaN=0
+2.10.513.181 I fill_late: hedge total layer=58 posts=49 hedged=51 remote_wins=10 local_wins=41 late_remote=0 NaN=0
+2.10.513.181 I fill_late: hedge total layer=59 posts=65 hedged=73 remote_wins=7 local_wins=66 late_remote=3 NaN=0
+2.10.513.182 I fill_late: hedge total layer=60 posts=50 hedged=50 remote_wins=5 local_wins=45 late_remote=0 NaN=0
+2.10.513.183 I fill_late: hedge total layer=61 posts=55 hedged=62 remote_wins=6 local_wins=55 late_remote=1 NaN=0
+2.10.513.183 I fill_late: hedge total layer=62 posts=30 hedged=34 remote_wins=5 local_wins=29 late_remote=0 NaN=0
+2.10.513.184 I fill_late: hedge total layer=63 posts=48 hedged=57 remote_wins=8 local_wins=49 late_remote=3 NaN=0
+2.10.513.184 I fill_late: hedge total layer=64 posts=69 hedged=78 remote_wins=8 local_wins=70 late_remote=0 NaN=0
+2.10.513.185 I fill_late: hedge total layer=65 posts=86 hedged=97 remote_wins=15 local_wins=82 late_remote=0 NaN=0
+2.10.513.186 I fill_late: hedge total layer=66 posts=45 hedged=50 remote_wins=8 local_wins=42 late_remote=1 NaN=0
+2.10.513.186 I fill_late: hedge total layer=67 posts=58 hedged=66 remote_wins=9 local_wins=57 late_remote=0 NaN=0
+2.10.513.187 I fill_late: hedge total layer=68 posts=56 hedged=69 remote_wins=10 local_wins=59 late_remote=2 NaN=0
+2.10.513.187 I fill_late: hedge total layer=69 posts=73 hedged=86 remote_wins=15 local_wins=71 late_remote=3 NaN=0
+2.10.513.188 I fill_late: hedge total layer=70 posts=45 hedged=54 remote_wins=11 local_wins=43 late_remote=1 NaN=0
+2.10.513.189 I fill_late: hedge total layer=71 posts=45 hedged=47 remote_wins=8 local_wins=39 late_remote=0 NaN=0
+2.10.513.189 I fill_late: hedge total layer=72 posts=49 hedged=54 remote_wins=6 local_wins=48 late_remote=0 NaN=0
+2.10.513.190 I fill_late: hedge total layer=73 posts=51 hedged=54 remote_wins=8 local_wins=46 late_remote=0 NaN=0
+2.10.513.190 I fill_late: hedge total layer=74 posts=62 hedged=70 remote_wins=15 local_wins=55 late_remote=0 NaN=0
+2.10.513.191 I fill_late: hedge total layer=75 posts=99 hedged=114 remote_wins=25 local_wins=88 late_remote=3 NaN=0
+2.10.513.191 I fill_late: hedge total layer=76 posts=79 hedged=89 remote_wins=14 local_wins=75 late_remote=4 NaN=0
+2.10.513.192 I fill_late: hedge total layer=77 posts=84 hedged=100 remote_wins=36 local_wins=64 late_remote=1 NaN=0
+2.10.513.193 I fill_late: hedge breaker box=0 failures=176 transport=0 deadline=176 streak=0 trips=0 unsent=0 transport_drops=0
+2.20.184.248 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.34 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+2.20.184.249 I fill_late: hedge per token tokens=327 posts=17.725 wins=5.333 exposed_remote_wait_ms=2.673176
+2.20.184.249 I fill_late: hedge drain calls=5796 wait_ms=29.737 (next plan, outside real-hook buckets)
+2.20.184.251 I fill_late: hedge total layer=3 posts=221 hedged=419 remote_wins=175 local_wins=244 late_remote=106 NaN=0
+2.20.184.252 I fill_late: hedge total layer=4 posts=179 hedged=272 remote_wins=95 local_wins=177 late_remote=24 NaN=0
+2.20.184.252 I fill_late: hedge total layer=5 posts=155 hedged=201 remote_wins=94 local_wins=107 late_remote=5 NaN=0
+2.20.184.253 I fill_late: hedge total layer=6 posts=110 hedged=137 remote_wins=59 local_wins=78 late_remote=6 NaN=0
+2.20.184.254 I fill_late: hedge total layer=7 posts=164 hedged=239 remote_wins=75 local_wins=164 late_remote=8 NaN=0
+2.20.184.254 I fill_late: hedge total layer=8 posts=141 hedged=215 remote_wins=80 local_wins=135 late_remote=31 NaN=0
+2.20.184.256 I fill_late: hedge total layer=9 posts=149 hedged=203 remote_wins=68 local_wins=135 late_remote=11 NaN=0
+2.20.184.257 I fill_late: hedge total layer=10 posts=134 hedged=184 remote_wins=68 local_wins=116 late_remote=5 NaN=0
+2.20.184.258 I fill_late: hedge total layer=11 posts=103 hedged=109 remote_wins=38 local_wins=71 late_remote=0 NaN=0
+2.20.184.258 I fill_late: hedge total layer=12 posts=83 hedged=104 remote_wins=19 local_wins=84 late_remote=1 NaN=0
+2.20.184.259 I fill_late: hedge total layer=13 posts=114 hedged=139 remote_wins=36 local_wins=103 late_remote=4 NaN=0
+2.20.184.260 I fill_late: hedge total layer=14 posts=89 hedged=93 remote_wins=17 local_wins=75 late_remote=0 NaN=0
+2.20.184.260 I fill_late: hedge total layer=15 posts=76 hedged=97 remote_wins=17 local_wins=80 late_remote=0 NaN=0
+2.20.184.261 I fill_late: hedge total layer=16 posts=79 hedged=97 remote_wins=25 local_wins=72 late_remote=2 NaN=0
+2.20.184.262 I fill_late: hedge total layer=17 posts=50 hedged=55 remote_wins=16 local_wins=39 late_remote=0 NaN=0
+2.20.184.262 I fill_late: hedge total layer=18 posts=64 hedged=73 remote_wins=14 local_wins=59 late_remote=5 NaN=0
+2.20.184.263 I fill_late: hedge total layer=19 posts=30 hedged=34 remote_wins=7 local_wins=27 late_remote=0 NaN=0
+2.20.184.263 I fill_late: hedge total layer=20 posts=48 hedged=61 remote_wins=17 local_wins=44 late_remote=0 NaN=0
+2.20.184.264 I fill_late: hedge total layer=21 posts=47 hedged=52 remote_wins=7 local_wins=45 late_remote=0 NaN=0
+2.20.184.265 I fill_late: hedge total layer=22 posts=75 hedged=80 remote_wins=13 local_wins=67 late_remote=1 NaN=0
+2.20.184.265 I fill_late: hedge total layer=23 posts=89 hedged=110 remote_wins=23 local_wins=87 late_remote=4 NaN=0
+2.20.184.266 I fill_late: hedge total layer=24 posts=98 hedged=134 remote_wins=41 local_wins=92 late_remote=4 NaN=0
+2.20.184.266 I fill_late: hedge total layer=25 posts=108 hedged=141 remote_wins=37 local_wins=104 late_remote=13 NaN=0
+2.20.184.267 I fill_late: hedge total layer=26 posts=87 hedged=101 remote_wins=39 local_wins=62 late_remote=1 NaN=0
+2.20.184.267 I fill_late: hedge total layer=27 posts=95 hedged=124 remote_wins=21 local_wins=103 late_remote=2 NaN=0
+2.20.184.268 I fill_late: hedge total layer=28 posts=75 hedged=81 remote_wins=19 local_wins=61 late_remote=0 NaN=0
+2.20.184.269 I fill_late: hedge total layer=29 posts=69 hedged=78 remote_wins=32 local_wins=46 late_remote=0 NaN=0
+2.20.184.269 I fill_late: hedge total layer=30 posts=52 hedged=61 remote_wins=11 local_wins=49 late_remote=2 NaN=0
+2.20.184.270 I fill_late: hedge total layer=31 posts=51 hedged=51 remote_wins=9 local_wins=42 late_remote=0 NaN=0
+2.20.184.270 I fill_late: hedge total layer=32 posts=20 hedged=20 remote_wins=5 local_wins=15 late_remote=0 NaN=0
+2.20.184.271 I fill_late: hedge total layer=33 posts=61 hedged=66 remote_wins=15 local_wins=51 late_remote=2 NaN=0
+2.20.184.271 I fill_late: hedge total layer=34 posts=59 hedged=61 remote_wins=13 local_wins=48 late_remote=0 NaN=0
+2.20.184.272 I fill_late: hedge total layer=35 posts=62 hedged=72 remote_wins=12 local_wins=60 late_remote=1 NaN=0
+2.20.184.272 I fill_late: hedge total layer=36 posts=57 hedged=72 remote_wins=14 local_wins=58 late_remote=0 NaN=0
+2.20.184.273 I fill_late: hedge total layer=37 posts=73 hedged=84 remote_wins=8 local_wins=76 late_remote=0 NaN=0
+2.20.184.274 I fill_late: hedge total layer=38 posts=82 hedged=107 remote_wins=14 local_wins=93 late_remote=6 NaN=0
+2.20.184.274 I fill_late: hedge total layer=39 posts=74 hedged=82 remote_wins=8 local_wins=74 late_remote=1 NaN=0
+2.20.184.275 I fill_late: hedge total layer=40 posts=42 hedged=44 remote_wins=14 local_wins=30 late_remote=0 NaN=0
+2.20.184.275 I fill_late: hedge total layer=41 posts=34 hedged=36 remote_wins=5 local_wins=31 late_remote=0 NaN=0
+2.20.184.276 I fill_late: hedge total layer=42 posts=46 hedged=53 remote_wins=4 local_wins=49 late_remote=1 NaN=0
+2.20.184.277 I fill_late: hedge total layer=43 posts=59 hedged=70 remote_wins=12 local_wins=56 late_remote=3 NaN=0
+2.20.184.277 I fill_late: hedge total layer=44 posts=87 hedged=92 remote_wins=24 local_wins=68 late_remote=0 NaN=0
+2.20.184.278 I fill_late: hedge total layer=45 posts=52 hedged=54 remote_wins=12 local_wins=42 late_remote=1 NaN=0
+2.20.184.278 I fill_late: hedge total layer=46 posts=81 hedged=92 remote_wins=13 local_wins=79 late_remote=2 NaN=0
+2.20.184.279 I fill_late: hedge total layer=47 posts=73 hedged=92 remote_wins=15 local_wins=77 late_remote=0 NaN=0
+2.20.184.280 I fill_late: hedge total layer=48 posts=43 hedged=44 remote_wins=8 local_wins=36 late_remote=0 NaN=0
+2.20.184.280 I fill_late: hedge total layer=49 posts=82 hedged=91 remote_wins=21 local_wins=70 late_remote=0 NaN=0
+2.20.184.281 I fill_late: hedge total layer=50 posts=53 hedged=63 remote_wins=9 local_wins=54 late_remote=1 NaN=0
+2.20.184.281 I fill_late: hedge total layer=51 posts=76 hedged=80 remote_wins=16 local_wins=64 late_remote=0 NaN=0
+2.20.184.282 I fill_late: hedge total layer=52 posts=57 hedged=64 remote_wins=12 local_wins=52 late_remote=0 NaN=0
+2.20.184.282 I fill_late: hedge total layer=53 posts=61 hedged=71 remote_wins=11 local_wins=60 late_remote=2 NaN=0
+2.20.184.283 I fill_late: hedge total layer=54 posts=60 hedged=60 remote_wins=11 local_wins=49 late_remote=0 NaN=0
+2.20.184.283 I fill_late: hedge total layer=55 posts=64 hedged=67 remote_wins=14 local_wins=53 late_remote=1 NaN=0
+2.20.184.284 I fill_late: hedge total layer=56 posts=47 hedged=47 remote_wins=9 local_wins=38 late_remote=0 NaN=0
+2.20.184.285 I fill_late: hedge total layer=57 posts=57 hedged=61 remote_wins=8 local_wins=52 late_remote=0 NaN=0
+2.20.184.285 I fill_late: hedge total layer=58 posts=52 hedged=54 remote_wins=11 local_wins=43 late_remote=0 NaN=0
+2.20.184.286 I fill_late: hedge total layer=59 posts=78 hedged=87 remote_wins=10 local_wins=77 late_remote=3 NaN=0
+2.20.184.286 I fill_late: hedge total layer=60 posts=58 hedged=59 remote_wins=7 local_wins=52 late_remote=0 NaN=0
+2.20.184.287 I fill_late: hedge total layer=61 posts=64 hedged=72 remote_wins=6 local_wins=65 late_remote=1 NaN=0
+2.20.184.287 I fill_late: hedge total layer=62 posts=35 hedged=39 remote_wins=6 local_wins=33 late_remote=0 NaN=0
+2.20.184.288 I fill_late: hedge total layer=63 posts=58 hedged=67 remote_wins=10 local_wins=57 late_remote=3 NaN=0
+2.20.184.289 I fill_late: hedge total layer=64 posts=80 hedged=91 remote_wins=9 local_wins=82 late_remote=0 NaN=0
+2.20.184.289 I fill_late: hedge total layer=65 posts=101 hedged=112 remote_wins=17 local_wins=95 late_remote=0 NaN=0
+2.20.184.290 I fill_late: hedge total layer=66 posts=50 hedged=55 remote_wins=9 local_wins=46 late_remote=1 NaN=0
+2.20.184.290 I fill_late: hedge total layer=67 posts=66 hedged=75 remote_wins=10 local_wins=65 late_remote=0 NaN=0
+2.20.184.291 I fill_late: hedge total layer=68 posts=67 hedged=83 remote_wins=11 local_wins=72 late_remote=2 NaN=0
+2.20.184.291 I fill_late: hedge total layer=69 posts=88 hedged=103 remote_wins=18 local_wins=85 late_remote=3 NaN=0
+2.20.184.292 I fill_late: hedge total layer=70 posts=59 hedged=71 remote_wins=14 local_wins=57 late_remote=2 NaN=0
+2.20.184.293 I fill_late: hedge total layer=71 posts=49 hedged=51 remote_wins=8 local_wins=43 late_remote=0 NaN=0
+2.20.184.293 I fill_late: hedge total layer=72 posts=58 hedged=64 remote_wins=7 local_wins=57 late_remote=0 NaN=0
+2.20.184.294 I fill_late: hedge total layer=73 posts=59 hedged=63 remote_wins=9 local_wins=54 late_remote=0 NaN=0
+2.20.184.294 I fill_late: hedge total layer=74 posts=73 hedged=82 remote_wins=16 local_wins=66 late_remote=0 NaN=0
+2.20.184.295 I fill_late: hedge total layer=75 posts=113 hedged=129 remote_wins=27 local_wins=101 late_remote=4 NaN=0
+2.20.184.295 I fill_late: hedge total layer=76 posts=94 hedged=106 remote_wins=18 local_wins=87 late_remote=5 NaN=0
+2.20.184.296 I fill_late: hedge total layer=77 posts=97 hedged=118 remote_wins=42 local_wins=76 late_remote=1 NaN=0
+2.20.184.297 I fill_late: hedge breaker box=0 failures=201 transport=0 deadline=201 streak=0 trips=0 unsent=0 transport_drops=0
+2.30.704.075 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.58 ms, 0 early lookups without a real one
+2.30.704.077 I fill_late: hedge per token tokens=382 posts=18.092 wins=5.547 exposed_remote_wait_ms=2.735614
+2.30.704.078 I fill_late: hedge drain calls=6911 wait_ms=36.592 (next plan, outside real-hook buckets)
+2.30.704.080 I fill_late: hedge total layer=3 posts=265 hedged=510 remote_wins=212 local_wins=298 late_remote=134 NaN=0
+2.30.704.080 I fill_late: hedge total layer=4 posts=209 hedged=322 remote_wins=114 local_wins=208 late_remote=29 NaN=0
+2.30.704.081 I fill_late: hedge total layer=5 posts=187 hedged=243 remote_wins=115 local_wins=128 late_remote=8 NaN=0
+2.30.704.082 I fill_late: hedge total layer=6 posts=134 hedged=168 remote_wins=71 local_wins=96 late_remote=8 NaN=0
+2.30.704.082 I fill_late: hedge total layer=7 posts=196 hedged=289 remote_wins=87 local_wins=202 late_remote=8 NaN=0
+2.30.704.083 I fill_late: hedge total layer=8 posts=174 hedged=264 remote_wins=105 local_wins=159 late_remote=32 NaN=0
+2.30.704.084 I fill_late: hedge total layer=9 posts=181 hedged=248 remote_wins=89 local_wins=159 late_remote=11 NaN=0
+2.30.704.085 I fill_late: hedge total layer=10 posts=163 hedged=225 remote_wins=85 local_wins=139 late_remote=5 NaN=0
+2.30.704.086 I fill_late: hedge total layer=11 posts=121 hedged=128 remote_wins=44 local_wins=84 late_remote=0 NaN=0
+2.30.704.087 I fill_late: hedge total layer=12 posts=100 hedged=123 remote_wins=26 local_wins=96 late_remote=1 NaN=0
+2.30.704.087 I fill_late: hedge total layer=13 posts=140 hedged=172 remote_wins=42 local_wins=130 late_remote=6 NaN=0
+2.30.704.088 I fill_late: hedge total layer=14 posts=104 hedged=110 remote_wins=19 local_wins=90 late_remote=0 NaN=0
+2.30.704.089 I fill_late: hedge total layer=15 posts=89 hedged=115 remote_wins=21 local_wins=94 late_remote=0 NaN=0
+2.30.704.090 I fill_late: hedge total layer=16 posts=94 hedged=116 remote_wins=30 local_wins=86 late_remote=3 NaN=0
+2.30.704.091 I fill_late: hedge total layer=17 posts=64 hedged=71 remote_wins=21 local_wins=50 late_remote=0 NaN=0
+2.30.704.091 I fill_late: hedge total layer=18 posts=75 hedged=84 remote_wins=15 local_wins=69 late_remote=5 NaN=0
+2.30.704.092 I fill_late: hedge total layer=19 posts=38 hedged=44 remote_wins=9 local_wins=35 late_remote=0 NaN=0
+2.30.704.093 I fill_late: hedge total layer=20 posts=58 hedged=75 remote_wins=21 local_wins=54 late_remote=0 NaN=0
+2.30.704.093 I fill_late: hedge total layer=21 posts=58 hedged=63 remote_wins=10 local_wins=53 late_remote=0 NaN=0
+2.30.704.094 I fill_late: hedge total layer=22 posts=91 hedged=97 remote_wins=19 local_wins=78 late_remote=1 NaN=0
+2.30.704.094 I fill_late: hedge total layer=23 posts=110 hedged=138 remote_wins=28 local_wins=110 late_remote=7 NaN=0
+2.30.704.095 I fill_late: hedge total layer=24 posts=118 hedged=158 remote_wins=53 local_wins=104 late_remote=4 NaN=0
+2.30.704.096 I fill_late: hedge total layer=25 posts=132 hedged=173 remote_wins=47 local_wins=126 late_remote=15 NaN=0
+2.30.704.096 I fill_late: hedge total layer=26 posts=101 hedged=117 remote_wins=44 local_wins=73 late_remote=1 NaN=0
+2.30.704.097 I fill_late: hedge total layer=27 posts=114 hedged=151 remote_wins=28 local_wins=123 late_remote=2 NaN=0
+2.30.704.097 I fill_late: hedge total layer=28 posts=91 hedged=99 remote_wins=26 local_wins=72 late_remote=0 NaN=0
+2.30.704.098 I fill_late: hedge total layer=29 posts=85 hedged=97 remote_wins=40 local_wins=57 late_remote=0 NaN=0
+2.30.704.099 I fill_late: hedge total layer=30 posts=63 hedged=74 remote_wins=16 local_wins=57 late_remote=2 NaN=0
+2.30.704.099 I fill_late: hedge total layer=31 posts=59 hedged=59 remote_wins=10 local_wins=49 late_remote=0 NaN=0
+2.30.704.100 I fill_late: hedge total layer=32 posts=25 hedged=25 remote_wins=7 local_wins=18 late_remote=0 NaN=0
+2.30.704.100 I fill_late: hedge total layer=33 posts=70 hedged=75 remote_wins=18 local_wins=57 late_remote=2 NaN=0
+2.30.704.101 I fill_late: hedge total layer=34 posts=73 hedged=76 remote_wins=13 local_wins=63 late_remote=0 NaN=0
+2.30.704.101 I fill_late: hedge total layer=35 posts=71 hedged=83 remote_wins=15 local_wins=68 late_remote=1 NaN=0
+2.30.704.102 I fill_late: hedge total layer=36 posts=65 hedged=82 remote_wins=19 local_wins=63 late_remote=0 NaN=0
+2.30.704.102 I fill_late: hedge total layer=37 posts=86 hedged=98 remote_wins=9 local_wins=89 late_remote=0 NaN=0
+2.30.704.103 I fill_late: hedge total layer=38 posts=99 hedged=129 remote_wins=16 local_wins=113 late_remote=6 NaN=0
+2.30.704.104 I fill_late: hedge total layer=39 posts=85 hedged=94 remote_wins=10 local_wins=84 late_remote=1 NaN=0
+2.30.704.104 I fill_late: hedge total layer=40 posts=50 hedged=53 remote_wins=16 local_wins=37 late_remote=0 NaN=0
+2.30.704.105 I fill_late: hedge total layer=41 posts=41 hedged=44 remote_wins=5 local_wins=39 late_remote=0 NaN=0
+2.30.704.105 I fill_late: hedge total layer=42 posts=54 hedged=63 remote_wins=6 local_wins=57 late_remote=1 NaN=0
+2.30.704.106 I fill_late: hedge total layer=43 posts=70 hedged=82 remote_wins=13 local_wins=67 late_remote=3 NaN=0
+2.30.704.106 I fill_late: hedge total layer=44 posts=99 hedged=105 remote_wins=26 local_wins=79 late_remote=0 NaN=0
+2.30.704.107 I fill_late: hedge total layer=45 posts=60 hedged=62 remote_wins=13 local_wins=49 late_remote=1 NaN=0
+2.30.704.107 I fill_late: hedge total layer=46 posts=95 hedged=109 remote_wins=15 local_wins=93 late_remote=3 NaN=0
+2.30.704.108 I fill_late: hedge total layer=47 posts=87 hedged=108 remote_wins=16 local_wins=92 late_remote=0 NaN=0
+2.30.704.108 I fill_late: hedge total layer=48 posts=54 hedged=55 remote_wins=12 local_wins=43 late_remote=0 NaN=0
+2.30.704.109 I fill_late: hedge total layer=49 posts=97 hedged=107 remote_wins=25 local_wins=82 late_remote=0 NaN=0
+2.30.704.110 I fill_late: hedge total layer=50 posts=61 hedged=72 remote_wins=10 local_wins=62 late_remote=1 NaN=0
+2.30.704.110 I fill_late: hedge total layer=51 posts=97 hedged=103 remote_wins=23 local_wins=80 late_remote=0 NaN=0
+2.30.704.111 I fill_late: hedge total layer=52 posts=70 hedged=79 remote_wins=14 local_wins=65 late_remote=0 NaN=0
+2.30.704.111 I fill_late: hedge total layer=53 posts=72 hedged=85 remote_wins=13 local_wins=72 late_remote=2 NaN=0
+2.30.704.112 I fill_late: hedge total layer=54 posts=72 hedged=72 remote_wins=13 local_wins=59 late_remote=0 NaN=0
+2.30.704.112 I fill_late: hedge total layer=55 posts=78 hedged=81 remote_wins=19 local_wins=62 late_remote=1 NaN=0
+2.30.704.113 I fill_late: hedge total layer=56 posts=56 hedged=56 remote_wins=11 local_wins=45 late_remote=0 NaN=0
+2.30.704.113 I fill_late: hedge total layer=57 posts=67 hedged=73 remote_wins=9 local_wins=63 late_remote=0 NaN=0
+2.30.704.114 I fill_late: hedge total layer=58 posts=62 hedged=64 remote_wins=14 local_wins=50 late_remote=0 NaN=0
+2.30.704.114 I fill_late: hedge total layer=59 posts=90 hedged=101 remote_wins=10 local_wins=91 late_remote=5 NaN=0
+2.30.704.115 I fill_late: hedge total layer=60 posts=68 hedged=69 remote_wins=7 local_wins=62 late_remote=0 NaN=0
+2.30.704.116 I fill_late: hedge total layer=61 posts=75 hedged=84 remote_wins=6 local_wins=77 late_remote=1 NaN=0
+2.30.704.116 I fill_late: hedge total layer=62 posts=41 hedged=45 remote_wins=6 local_wins=39 late_remote=0 NaN=0
+2.30.704.117 I fill_late: hedge total layer=63 posts=67 hedged=76 remote_wins=11 local_wins=65 late_remote=3 NaN=0
+2.30.704.117 I fill_late: hedge total layer=64 posts=95 hedged=107 remote_wins=11 local_wins=96 late_remote=0 NaN=0
+2.30.704.118 I fill_late: hedge total layer=65 posts=115 hedged=128 remote_wins=21 local_wins=107 late_remote=0 NaN=0
+2.30.704.118 I fill_late: hedge total layer=66 posts=60 hedged=65 remote_wins=10 local_wins=55 late_remote=1 NaN=0
+2.30.704.119 I fill_late: hedge total layer=67 posts=79 hedged=91 remote_wins=11 local_wins=80 late_remote=0 NaN=0
+2.30.704.119 I fill_late: hedge total layer=68 posts=76 hedged=92 remote_wins=14 local_wins=78 late_remote=2 NaN=0
+2.30.704.120 I fill_late: hedge total layer=69 posts=103 hedged=124 remote_wins=21 local_wins=103 late_remote=4 NaN=0
+2.30.704.121 I fill_late: hedge total layer=70 posts=66 hedged=78 remote_wins=14 local_wins=64 late_remote=2 NaN=0
+2.30.704.121 I fill_late: hedge total layer=71 posts=62 hedged=65 remote_wins=10 local_wins=55 late_remote=0 NaN=0
+2.30.704.122 I fill_late: hedge total layer=72 posts=67 hedged=74 remote_wins=8 local_wins=65 late_remote=0 NaN=0
+2.30.704.122 I fill_late: hedge total layer=73 posts=71 hedged=76 remote_wins=11 local_wins=65 late_remote=0 NaN=0
+2.30.704.123 I fill_late: hedge total layer=74 posts=87 hedged=97 remote_wins=20 local_wins=76 late_remote=0 NaN=0
+2.30.704.123 I fill_late: hedge total layer=75 posts=136 hedged=156 remote_wins=32 local_wins=123 late_remote=4 NaN=0
+2.30.704.124 I fill_late: hedge total layer=76 posts=108 hedged=123 remote_wins=20 local_wins=102 late_remote=6 NaN=0
+2.30.704.125 I fill_late: hedge total layer=77 posts=115 hedged=138 remote_wins=49 local_wins=89 late_remote=1 NaN=0
+2.30.704.126 I fill_late: hedge breaker box=0 failures=235 transport=0 deadline=235 streak=0 trips=0 unsent=0 transport_drops=0
+2.31.401.873 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.58 ms, 0 early lookups without a real one
+2.31.401.875 I llama_moe_cache: hedge per token tokens=385 posts=18.086 wins=5.535 exposed_remote_wait_ms=2.731741
+2.31.401.875 I llama_moe_cache: hedge drain calls=6963 wait_ms=37.656 (next plan, outside real-hook buckets)
+2.31.401.877 I llama_moe_cache: hedge total layer=3 posts=267 hedged=512 remote_wins=213 local_wins=299 late_remote=134 NaN=0
+2.31.401.878 I llama_moe_cache: hedge total layer=4 posts=210 hedged=324 remote_wins=116 local_wins=208 late_remote=29 NaN=0
+2.31.401.878 I llama_moe_cache: hedge total layer=5 posts=188 hedged=244 remote_wins=115 local_wins=129 late_remote=8 NaN=0
+2.31.401.879 I llama_moe_cache: hedge total layer=6 posts=135 hedged=170 remote_wins=72 local_wins=97 late_remote=8 NaN=0
+2.31.401.879 I llama_moe_cache: hedge total layer=7 posts=197 hedged=290 remote_wins=87 local_wins=203 late_remote=8 NaN=0
+2.31.401.880 I llama_moe_cache: hedge total layer=8 posts=174 hedged=264 remote_wins=105 local_wins=159 late_remote=32 NaN=0
+2.31.401.881 I llama_moe_cache: hedge total layer=9 posts=181 hedged=248 remote_wins=89 local_wins=159 late_remote=11 NaN=0
+2.31.401.882 I llama_moe_cache: hedge total layer=10 posts=164 hedged=226 remote_wins=85 local_wins=140 late_remote=5 NaN=0
+2.31.401.882 I llama_moe_cache: hedge total layer=11 posts=122 hedged=129 remote_wins=45 local_wins=84 late_remote=0 NaN=0
+2.31.401.883 I llama_moe_cache: hedge total layer=12 posts=101 hedged=124 remote_wins=27 local_wins=96 late_remote=1 NaN=0
+2.31.401.884 I llama_moe_cache: hedge total layer=13 posts=140 hedged=172 remote_wins=42 local_wins=130 late_remote=6 NaN=0
+2.31.401.884 I llama_moe_cache: hedge total layer=14 posts=105 hedged=111 remote_wins=19 local_wins=91 late_remote=0 NaN=0
+2.31.401.885 I llama_moe_cache: hedge total layer=15 posts=90 hedged=116 remote_wins=21 local_wins=95 late_remote=0 NaN=0
+2.31.401.885 I llama_moe_cache: hedge total layer=16 posts=94 hedged=116 remote_wins=30 local_wins=86 late_remote=3 NaN=0
+2.31.401.886 I llama_moe_cache: hedge total layer=17 posts=64 hedged=71 remote_wins=21 local_wins=50 late_remote=0 NaN=0
+2.31.401.887 I llama_moe_cache: hedge total layer=18 posts=75 hedged=84 remote_wins=15 local_wins=69 late_remote=5 NaN=0
+2.31.401.888 I llama_moe_cache: hedge total layer=19 posts=38 hedged=44 remote_wins=9 local_wins=35 late_remote=0 NaN=0
+2.31.401.888 I llama_moe_cache: hedge total layer=20 posts=59 hedged=76 remote_wins=21 local_wins=55 late_remote=0 NaN=0
+2.31.401.889 I llama_moe_cache: hedge total layer=21 posts=59 hedged=64 remote_wins=10 local_wins=54 late_remote=0 NaN=0
+2.31.401.890 I llama_moe_cache: hedge total layer=22 posts=92 hedged=98 remote_wins=19 local_wins=79 late_remote=1 NaN=0
+2.31.401.890 I llama_moe_cache: hedge total layer=23 posts=110 hedged=138 remote_wins=28 local_wins=110 late_remote=7 NaN=0
+2.31.401.891 I llama_moe_cache: hedge total layer=24 posts=118 hedged=158 remote_wins=53 local_wins=104 late_remote=4 NaN=0
+2.31.401.891 I llama_moe_cache: hedge total layer=25 posts=133 hedged=174 remote_wins=48 local_wins=126 late_remote=15 NaN=0
+2.31.401.892 I llama_moe_cache: hedge total layer=26 posts=103 hedged=119 remote_wins=44 local_wins=75 late_remote=1 NaN=0
+2.31.401.893 I llama_moe_cache: hedge total layer=27 posts=115 hedged=153 remote_wins=28 local_wins=125 late_remote=2 NaN=0
+2.31.401.893 I llama_moe_cache: hedge total layer=28 posts=93 hedged=101 remote_wins=26 local_wins=74 late_remote=0 NaN=0
+2.31.401.894 I llama_moe_cache: hedge total layer=29 posts=85 hedged=97 remote_wins=40 local_wins=57 late_remote=0 NaN=0
+2.31.401.895 I llama_moe_cache: hedge total layer=30 posts=63 hedged=74 remote_wins=16 local_wins=57 late_remote=2 NaN=0
+2.31.401.895 I llama_moe_cache: hedge total layer=31 posts=60 hedged=60 remote_wins=10 local_wins=50 late_remote=0 NaN=0
+2.31.401.896 I llama_moe_cache: hedge total layer=32 posts=25 hedged=25 remote_wins=7 local_wins=18 late_remote=0 NaN=0
+2.31.401.896 I llama_moe_cache: hedge total layer=33 posts=71 hedged=76 remote_wins=18 local_wins=58 late_remote=2 NaN=0
+2.31.401.897 I llama_moe_cache: hedge total layer=34 posts=73 hedged=76 remote_wins=13 local_wins=63 late_remote=0 NaN=0
+2.31.401.897 I llama_moe_cache: hedge total layer=35 posts=72 hedged=84 remote_wins=15 local_wins=69 late_remote=1 NaN=0
+2.31.401.898 I llama_moe_cache: hedge total layer=36 posts=66 hedged=83 remote_wins=19 local_wins=64 late_remote=0 NaN=0
+2.31.401.899 I llama_moe_cache: hedge total layer=37 posts=86 hedged=98 remote_wins=9 local_wins=89 late_remote=0 NaN=0
+2.31.401.899 I llama_moe_cache: hedge total layer=38 posts=99 hedged=129 remote_wins=16 local_wins=113 late_remote=6 NaN=0
+2.31.401.900 I llama_moe_cache: hedge total layer=39 posts=86 hedged=95 remote_wins=10 local_wins=85 late_remote=1 NaN=0
+2.31.401.901 I llama_moe_cache: hedge total layer=40 posts=50 hedged=53 remote_wins=16 local_wins=37 late_remote=0 NaN=0
+2.31.401.901 I llama_moe_cache: hedge total layer=41 posts=42 hedged=45 remote_wins=6 local_wins=39 late_remote=0 NaN=0
+2.31.401.902 I llama_moe_cache: hedge total layer=42 posts=54 hedged=63 remote_wins=6 local_wins=57 late_remote=1 NaN=0
+2.31.401.902 I llama_moe_cache: hedge total layer=43 posts=70 hedged=82 remote_wins=13 local_wins=67 late_remote=3 NaN=0
+2.31.401.903 I llama_moe_cache: hedge total layer=44 posts=101 hedged=107 remote_wins=27 local_wins=80 late_remote=0 NaN=0
+2.31.401.904 I llama_moe_cache: hedge total layer=45 posts=60 hedged=62 remote_wins=13 local_wins=49 late_remote=1 NaN=0
+2.31.401.904 I llama_moe_cache: hedge total layer=46 posts=96 hedged=110 remote_wins=15 local_wins=94 late_remote=3 NaN=0
+2.31.401.905 I llama_moe_cache: hedge total layer=47 posts=87 hedged=108 remote_wins=16 local_wins=92 late_remote=0 NaN=0
+2.31.401.906 I llama_moe_cache: hedge total layer=48 posts=55 hedged=56 remote_wins=12 local_wins=44 late_remote=0 NaN=0
+2.31.401.906 I llama_moe_cache: hedge total layer=49 posts=98 hedged=108 remote_wins=25 local_wins=83 late_remote=0 NaN=0
+2.31.401.907 I llama_moe_cache: hedge total layer=50 posts=63 hedged=74 remote_wins=10 local_wins=64 late_remote=1 NaN=0
+2.31.401.907 I llama_moe_cache: hedge total layer=51 posts=98 hedged=104 remote_wins=23 local_wins=81 late_remote=0 NaN=0
+2.31.401.908 I llama_moe_cache: hedge total layer=52 posts=70 hedged=79 remote_wins=14 local_wins=65 late_remote=0 NaN=0
+2.31.401.909 I llama_moe_cache: hedge total layer=53 posts=73 hedged=86 remote_wins=13 local_wins=73 late_remote=2 NaN=0
+2.31.401.909 I llama_moe_cache: hedge total layer=54 posts=72 hedged=72 remote_wins=13 local_wins=59 late_remote=0 NaN=0
+2.31.401.909 I llama_moe_cache: hedge total layer=55 posts=78 hedged=81 remote_wins=19 local_wins=62 late_remote=1 NaN=0
+2.31.401.910 I llama_moe_cache: hedge total layer=56 posts=56 hedged=56 remote_wins=11 local_wins=45 late_remote=0 NaN=0
+2.31.401.911 I llama_moe_cache: hedge total layer=57 posts=69 hedged=75 remote_wins=9 local_wins=65 late_remote=0 NaN=0
+2.31.401.911 I llama_moe_cache: hedge total layer=58 posts=63 hedged=65 remote_wins=15 local_wins=50 late_remote=0 NaN=0
+2.31.401.912 I llama_moe_cache: hedge total layer=59 posts=92 hedged=103 remote_wins=11 local_wins=92 late_remote=5 NaN=0
+2.31.401.912 I llama_moe_cache: hedge total layer=60 posts=68 hedged=69 remote_wins=7 local_wins=62 late_remote=0 NaN=0
+2.31.401.913 I llama_moe_cache: hedge total layer=61 posts=75 hedged=84 remote_wins=6 local_wins=77 late_remote=1 NaN=0
+2.31.401.914 I llama_moe_cache: hedge total layer=62 posts=41 hedged=45 remote_wins=6 local_wins=39 late_remote=0 NaN=0
+2.31.401.914 I llama_moe_cache: hedge total layer=63 posts=67 hedged=76 remote_wins=11 local_wins=65 late_remote=3 NaN=0
+2.31.401.915 I llama_moe_cache: hedge total layer=64 posts=96 hedged=108 remote_wins=11 local_wins=97 late_remote=0 NaN=0
+2.31.401.915 I llama_moe_cache: hedge total layer=65 posts=117 hedged=130 remote_wins=21 local_wins=109 late_remote=0 NaN=0
+2.31.401.916 I llama_moe_cache: hedge total layer=66 posts=60 hedged=65 remote_wins=10 local_wins=55 late_remote=1 NaN=0
+2.31.401.917 I llama_moe_cache: hedge total layer=67 posts=80 hedged=92 remote_wins=11 local_wins=81 late_remote=0 NaN=0
+2.31.401.917 I llama_moe_cache: hedge total layer=68 posts=76 hedged=92 remote_wins=14 local_wins=78 late_remote=2 NaN=0
+2.31.401.918 I llama_moe_cache: hedge total layer=69 posts=103 hedged=124 remote_wins=21 local_wins=103 late_remote=4 NaN=0
+2.31.401.919 I llama_moe_cache: hedge total layer=70 posts=66 hedged=78 remote_wins=14 local_wins=64 late_remote=2 NaN=0
+2.31.401.919 I llama_moe_cache: hedge total layer=71 posts=62 hedged=65 remote_wins=10 local_wins=55 late_remote=0 NaN=0
+2.31.401.920 I llama_moe_cache: hedge total layer=72 posts=69 hedged=76 remote_wins=8 local_wins=67 late_remote=0 NaN=0
+2.31.401.921 I llama_moe_cache: hedge total layer=73 posts=71 hedged=76 remote_wins=11 local_wins=65 late_remote=0 NaN=0
+2.31.401.921 I llama_moe_cache: hedge total layer=74 posts=89 hedged=100 remote_wins=20 local_wins=79 late_remote=0 NaN=0
+2.31.401.922 I llama_moe_cache: hedge total layer=75 posts=138 hedged=158 remote_wins=33 local_wins=124 late_remote=4 NaN=0
+2.31.401.923 I llama_moe_cache: hedge total layer=76 posts=109 hedged=124 remote_wins=20 local_wins=103 late_remote=6 NaN=0
+2.31.401.923 I llama_moe_cache: hedge total layer=77 posts=116 hedged=139 remote_wins=49 local_wins=90 late_remote=1 NaN=0
+2.31.401.924 I llama_moe_cache: hedge breaker box=0 failures=235 transport=0 deadline=235 streak=0 trips=0 unsent=0 transport_drops=0
+2.31.805.078 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14377 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.31.805.082 I host bank real bucket: a_ready_latency=14424/20189.762ms
+2.31.805.082 I host bank real bucket: b_early_read=10363/9261.255ms
+2.31.805.083 I host bank real bucket: b_predict_read=6924/2088.508ms
+2.31.805.083 I host bank real bucket: c_real_read=222/3605.647ms
+2.31.805.084 I host bank real bucket: d_lock=28859/0.901ms
+2.31.805.084 I host bank real bucket: e_other=28875/6123.336ms
+2.31.805.088 I host bank real histogram: ready_p50/p90/p99=0.000/1.850/5.720ms abc_p50/p90/p99=0.000/3.250/8.540ms (a overlaps b+c; overflow is lower bound)
+2.41.232.977 I expert store fill dispatch: calls=10370 queue_ms=59.760 lean=1
+K1 hedge counters posts/hedged/remote_wins/local_wins/late_remote/NaN: 6963 8513 2131 6366 333 0
+K1 MemAvailable 121166 MiB
+K0b remote deadline_us=0 SZ=1 HL=1
+K0b r0 5.428 tok/s md5 9449ae5738
+K0b r1 5.394 tok/s md5 9449ae5738
+K0b r2 5.391 tok/s md5 9449ae5738
+2.33.726.240 I llama_moe_cache: ubatch  > 8: hits = 6162, misses = 3756, hit rate = 62.13%, uploaded = 43829.34 MiB
+1.29.208.667 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.39.174.064 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+1.51.144.383 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.00.719.760 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.31 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.53 ms, 0 early lookups without a real one
+2.13.054.850 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+2.22.621.043 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+2.33.053.593 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.33.726.325 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.33.822.045 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14424 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.33.822.048 I host bank real bucket: a_ready_latency=14377/19566.583ms
+2.33.822.049 I host bank real bucket: b_early_read=10260/14075.504ms
+2.33.822.049 I host bank real bucket: b_predict_read=6692/2020.354ms
+2.33.822.050 I host bank real bucket: c_real_read=222/3463.510ms
+2.33.822.051 I host bank real bucket: d_lock=28865/0.885ms
+2.33.822.051 I host bank real bucket: e_other=28875/936.360ms
+2.33.822.055 I host bank real histogram: ready_p50/p90/p99=0.000/1.910/5.460ms abc_p50/p90/p99=0.000/3.810/10.910ms (a overlaps b+c; overflow is lower bound)
+2.43.105.485 I expert store fill dispatch: calls=10270 queue_ms=64.902 lean=1
+K0b hedge counters posts/hedged/remote_wins/local_wins/late_remote/NaN: 0 0 0 0 0 0
+K0b MemAvailable 121141 MiB
+K1b remote deadline_us=2500 SZ=1 HL=1
+K1b r0 5.36 tok/s md5 9449ae5738
+K1b r1 5.35 tok/s md5 9449ae5738
+K1b r2 5.311 tok/s md5 9449ae5738
+2.29.774.554 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19600, up): 6942 posts, 1.22 rows per post, 2196 rows placed, 246 requests short (0 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 0 breaker trips; RTT p50 1.79 p90 2.45 p99 3.29 ms (3138 replies); 1 connects, 0 drops (0 stale)
+2.29.774.422 I llama_moe_cache: expert store: remote experts: 6942 layers with candidates, 5380 of them read some locally; wait at the real lookup 0.151 ms per layer with candidates
+2.29.774.340 I llama_moe_cache: ubatch  > 8: hits = 6166, misses = 3752, hit rate = 62.17%, uploaded = 43783.22 MiB
+1.24.365.825 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+1.24.365.828 I fill_late: hedge per token tokens=54 posts=15.926 wins=4.630 exposed_remote_wait_ms=2.275627
+1.24.365.828 I fill_late: hedge drain calls=860 wait_ms=4.999 (next plan, outside real-hook buckets)
+1.24.365.830 I fill_late: hedge total layer=3 posts=28 hedged=49 remote_wins=24 local_wins=25 late_remote=9 NaN=0
+1.24.365.831 I fill_late: hedge total layer=4 posts=27 hedged=38 remote_wins=13 local_wins=25 late_remote=4 NaN=0
+1.24.365.832 I fill_late: hedge total layer=5 posts=22 hedged=26 remote_wins=13 local_wins=13 late_remote=2 NaN=0
+1.24.365.832 I fill_late: hedge total layer=6 posts=13 hedged=14 remote_wins=4 local_wins=10 late_remote=0 NaN=0
+1.24.365.833 I fill_late: hedge total layer=7 posts=19 hedged=30 remote_wins=11 local_wins=19 late_remote=1 NaN=0
+1.24.365.834 I fill_late: hedge total layer=8 posts=16 hedged=21 remote_wins=7 local_wins=14 late_remote=3 NaN=0
+1.24.365.835 I fill_late: hedge total layer=9 posts=18 hedged=27 remote_wins=10 local_wins=17 late_remote=2 NaN=0
+1.24.365.835 I fill_late: hedge total layer=10 posts=17 hedged=20 remote_wins=10 local_wins=10 late_remote=0 NaN=0
+1.24.365.836 I fill_late: hedge total layer=11 posts=16 hedged=16 remote_wins=4 local_wins=12 late_remote=0 NaN=0
+1.24.365.837 I fill_late: hedge total layer=12 posts=9 hedged=12 remote_wins=1 local_wins=11 late_remote=0 NaN=0
+1.24.365.837 I fill_late: hedge total layer=13 posts=16 hedged=18 remote_wins=4 local_wins=14 late_remote=1 NaN=0
+1.24.365.838 I fill_late: hedge total layer=14 posts=11 hedged=12 remote_wins=2 local_wins=10 late_remote=0 NaN=0
+1.24.365.839 I fill_late: hedge total layer=15 posts=12 hedged=15 remote_wins=3 local_wins=12 late_remote=0 NaN=0
+1.24.365.839 I fill_late: hedge total layer=16 posts=12 hedged=15 remote_wins=2 local_wins=13 late_remote=0 NaN=0
+1.24.365.840 I fill_late: hedge total layer=17 posts=3 hedged=3 remote_wins=1 local_wins=2 late_remote=0 NaN=0
+1.24.365.841 I fill_late: hedge total layer=18 posts=12 hedged=14 remote_wins=5 local_wins=9 late_remote=1 NaN=0
+1.24.365.841 I fill_late: hedge total layer=19 posts=4 hedged=4 remote_wins=1 local_wins=3 late_remote=0 NaN=0
+1.24.365.842 I fill_late: hedge total layer=20 posts=7 hedged=8 remote_wins=2 local_wins=6 late_remote=0 NaN=0
+1.24.365.842 I fill_late: hedge total layer=21 posts=4 hedged=5 remote_wins=0 local_wins=5 late_remote=0 NaN=0
+1.24.365.843 I fill_late: hedge total layer=22 posts=13 hedged=13 remote_wins=3 local_wins=10 late_remote=0 NaN=0
+1.24.365.843 I fill_late: hedge total layer=23 posts=13 hedged=13 remote_wins=2 local_wins=11 late_remote=0 NaN=0
+1.24.365.844 I fill_late: hedge total layer=24 posts=16 hedged=23 remote_wins=6 local_wins=17 late_remote=2 NaN=0
+1.24.365.845 I fill_late: hedge total layer=25 posts=18 hedged=20 remote_wins=3 local_wins=17 late_remote=0 NaN=0
+1.24.365.845 I fill_late: hedge total layer=26 posts=11 hedged=13 remote_wins=5 local_wins=8 late_remote=0 NaN=0
+1.24.365.846 I fill_late: hedge total layer=27 posts=14 hedged=17 remote_wins=1 local_wins=16 late_remote=1 NaN=0
+1.24.365.846 I fill_late: hedge total layer=28 posts=13 hedged=14 remote_wins=1 local_wins=13 late_remote=0 NaN=0
+1.24.365.847 I fill_late: hedge total layer=29 posts=11 hedged=12 remote_wins=6 local_wins=6 late_remote=0 NaN=0
+1.24.365.847 I fill_late: hedge total layer=30 posts=8 hedged=8 remote_wins=2 local_wins=6 late_remote=0 NaN=0
+1.24.365.848 I fill_late: hedge total layer=31 posts=10 hedged=10 remote_wins=1 local_wins=9 late_remote=0 NaN=0
+1.24.365.848 I fill_late: hedge total layer=32 posts=2 hedged=2 remote_wins=0 local_wins=2 late_remote=0 NaN=0
+1.24.365.849 I fill_late: hedge total layer=33 posts=7 hedged=8 remote_wins=1 local_wins=7 late_remote=0 NaN=0
+1.24.365.850 I fill_late: hedge total layer=34 posts=8 hedged=8 remote_wins=1 local_wins=7 late_remote=0 NaN=0
+1.24.365.850 I fill_late: hedge total layer=35 posts=8 hedged=9 remote_wins=2 local_wins=7 late_remote=0 NaN=0
+1.24.365.851 I fill_late: hedge total layer=36 posts=9 hedged=13 remote_wins=2 local_wins=11 late_remote=0 NaN=0
+1.24.365.851 I fill_late: hedge total layer=37 posts=10 hedged=12 remote_wins=1 local_wins=11 late_remote=0 NaN=0
+1.24.365.852 I fill_late: hedge total layer=38 posts=15 hedged=20 remote_wins=2 local_wins=18 late_remote=2 NaN=0
+1.24.365.853 I fill_late: hedge total layer=39 posts=14 hedged=16 remote_wins=2 local_wins=14 late_remote=0 NaN=0
+1.24.365.853 I fill_late: hedge total layer=40 posts=7 hedged=7 remote_wins=2 local_wins=5 late_remote=0 NaN=0
+1.24.365.854 I fill_late: hedge total layer=41 posts=4 hedged=4 remote_wins=1 local_wins=3 late_remote=0 NaN=0
+1.24.365.854 I fill_late: hedge total layer=42 posts=10 hedged=11 remote_wins=0 local_wins=11 late_remote=0 NaN=0
+1.24.365.855 I fill_late: hedge total layer=43 posts=8 hedged=11 remote_wins=3 local_wins=8 late_remote=1 NaN=0
+1.24.365.855 I fill_late: hedge total layer=44 posts=17 hedged=18 remote_wins=7 local_wins=11 late_remote=0 NaN=0
+1.24.365.856 I fill_late: hedge total layer=45 posts=9 hedged=11 remote_wins=5 local_wins=6 late_remote=0 NaN=0
+1.24.365.857 I fill_late: hedge total layer=46 posts=12 hedged=13 remote_wins=4 local_wins=9 late_remote=0 NaN=0
+1.24.365.857 I fill_late: hedge total layer=47 posts=14 hedged=18 remote_wins=4 local_wins=14 late_remote=0 NaN=0
+1.24.365.858 I fill_late: hedge total layer=48 posts=4 hedged=4 remote_wins=0 local_wins=4 late_remote=0 NaN=0
+1.24.365.858 I fill_late: hedge total layer=49 posts=11 hedged=12 remote_wins=1 local_wins=11 late_remote=0 NaN=0
+1.24.365.859 I fill_late: hedge total layer=50 posts=7 hedged=10 remote_wins=0 local_wins=10 late_remote=2 NaN=0
+1.24.365.859 I fill_late: hedge total layer=51 posts=8 hedged=8 remote_wins=2 local_wins=6 late_remote=0 NaN=0
+1.24.365.860 I fill_late: hedge total layer=52 posts=7 hedged=7 remote_wins=0 local_wins=7 late_remote=0 NaN=0
+1.24.365.861 I fill_late: hedge total layer=53 posts=10 hedged=12 remote_wins=3 local_wins=9 late_remote=1 NaN=0
+1.24.365.861 I fill_late: hedge total layer=54 posts=7 hedged=7 remote_wins=2 local_wins=5 late_remote=0 NaN=0
+1.24.365.862 I fill_late: hedge total layer=55 posts=13 hedged=13 remote_wins=1 local_wins=12 late_remote=0 NaN=0
+1.24.365.864 I fill_late: hedge total layer=56 posts=7 hedged=7 remote_wins=1 local_wins=6 late_remote=0 NaN=0
+1.24.365.864 I fill_late: hedge total layer=57 posts=9 hedged=10 remote_wins=1 local_wins=9 late_remote=0 NaN=0
+1.24.365.865 I fill_late: hedge total layer=58 posts=9 hedged=9 remote_wins=5 local_wins=4 late_remote=0 NaN=0
+1.24.365.865 I fill_late: hedge total layer=59 posts=12 hedged=13 remote_wins=3 local_wins=10 late_remote=0 NaN=0
+1.24.365.866 I fill_late: hedge total layer=60 posts=10 hedged=10 remote_wins=3 local_wins=7 late_remote=0 NaN=0
+1.24.365.867 I fill_late: hedge total layer=61 posts=9 hedged=11 remote_wins=3 local_wins=8 late_remote=0 NaN=0
+1.24.365.867 I fill_late: hedge total layer=62 posts=8 hedged=9 remote_wins=1 local_wins=8 late_remote=0 NaN=0
+1.24.365.868 I fill_late: hedge total layer=63 posts=9 hedged=12 remote_wins=1 local_wins=11 late_remote=1 NaN=0
+1.24.365.868 I fill_late: hedge total layer=64 posts=15 hedged=16 remote_wins=1 local_wins=15 late_remote=0 NaN=0
+1.24.365.869 I fill_late: hedge total layer=65 posts=16 hedged=19 remote_wins=3 local_wins=16 late_remote=0 NaN=0
+1.24.365.869 I fill_late: hedge total layer=66 posts=8 hedged=10 remote_wins=4 local_wins=6 late_remote=1 NaN=0
+1.24.365.870 I fill_late: hedge total layer=67 posts=12 hedged=12 remote_wins=2 local_wins=10 late_remote=0 NaN=0
+1.24.365.870 I fill_late: hedge total layer=68 posts=14 hedged=18 remote_wins=2 local_wins=16 late_remote=0 NaN=0
+1.24.365.871 I fill_late: hedge total layer=69 posts=17 hedged=17 remote_wins=2 local_wins=15 late_remote=0 NaN=0
+1.24.365.872 I fill_late: hedge total layer=70 posts=13 hedged=16 remote_wins=4 local_wins=12 late_remote=2 NaN=0
+1.24.365.872 I fill_late: hedge total layer=71 posts=4 hedged=4 remote_wins=1 local_wins=3 late_remote=0 NaN=0
+1.24.365.873 I fill_late: hedge total layer=72 posts=8 hedged=8 remote_wins=3 local_wins=5 late_remote=0 NaN=0
+1.24.365.873 I fill_late: hedge total layer=73 posts=8 hedged=9 remote_wins=1 local_wins=8 late_remote=0 NaN=0
+1.24.365.874 I fill_late: hedge total layer=74 posts=11 hedged=11 remote_wins=4 local_wins=7 late_remote=0 NaN=0
+1.24.365.874 I fill_late: hedge total layer=75 posts=16 hedged=17 remote_wins=1 local_wins=16 late_remote=0 NaN=0
+1.24.365.875 I fill_late: hedge total layer=76 posts=16 hedged=16 remote_wins=5 local_wins=11 late_remote=0 NaN=0
+1.24.365.876 I fill_late: hedge total layer=77 posts=15 hedged=21 remote_wins=6 local_wins=15 late_remote=0 NaN=0
+1.24.365.876 I fill_late: hedge breaker box=0 failures=26 transport=0 deadline=26 streak=0 trips=0 unsent=0 transport_drops=0
+1.34.489.648 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.54 ms, 0 early lookups without a real one
+1.34.489.649 I fill_late: hedge per token tokens=109 posts=16.908 wins=5.248 exposed_remote_wait_ms=2.494816
+1.34.489.649 I fill_late: hedge drain calls=1843 wait_ms=12.118 (next plan, outside real-hook buckets)
+1.34.489.651 I fill_late: hedge total layer=3 posts=71 hedged=128 remote_wins=61 local_wins=67 late_remote=26 NaN=0
+1.34.489.652 I fill_late: hedge total layer=4 posts=58 hedged=85 remote_wins=31 local_wins=54 late_remote=9 NaN=0
+1.34.489.653 I fill_late: hedge total layer=5 posts=51 hedged=66 remote_wins=33 local_wins=33 late_remote=3 NaN=0
+1.34.489.654 I fill_late: hedge total layer=6 posts=33 hedged=37 remote_wins=15 local_wins=22 late_remote=0 NaN=0
+1.34.489.654 I fill_late: hedge total layer=7 posts=44 hedged=63 remote_wins=21 local_wins=42 late_remote=1 NaN=0
+1.34.489.655 I fill_late: hedge total layer=8 posts=43 hedged=67 remote_wins=25 local_wins=42 late_remote=11 NaN=0
+1.34.489.656 I fill_late: hedge total layer=9 posts=50 hedged=70 remote_wins=26 local_wins=44 late_remote=4 NaN=0
+1.34.489.657 I fill_late: hedge total layer=10 posts=39 hedged=56 remote_wins=25 local_wins=31 late_remote=2 NaN=0
+1.34.489.658 I fill_late: hedge total layer=11 posts=35 hedged=36 remote_wins=10 local_wins=26 late_remote=0 NaN=0
+1.34.489.658 I fill_late: hedge total layer=12 posts=23 hedged=29 remote_wins=5 local_wins=24 late_remote=0 NaN=0
+1.34.489.659 I fill_late: hedge total layer=13 posts=35 hedged=43 remote_wins=12 local_wins=31 late_remote=2 NaN=0
+1.34.489.660 I fill_late: hedge total layer=14 posts=28 hedged=29 remote_wins=6 local_wins=23 late_remote=0 NaN=0
+1.34.489.660 I fill_late: hedge total layer=15 posts=23 hedged=31 remote_wins=6 local_wins=25 late_remote=0 NaN=0
+1.34.489.661 I fill_late: hedge total layer=16 posts=24 hedged=28 remote_wins=4 local_wins=24 late_remote=0 NaN=0
+1.34.489.662 I fill_late: hedge total layer=17 posts=16 hedged=18 remote_wins=10 local_wins=8 late_remote=0 NaN=0
+1.34.489.662 I fill_late: hedge total layer=18 posts=21 hedged=24 remote_wins=6 local_wins=18 late_remote=1 NaN=0
+1.34.489.663 I fill_late: hedge total layer=19 posts=10 hedged=11 remote_wins=2 local_wins=9 late_remote=0 NaN=0
+1.34.489.664 I fill_late: hedge total layer=20 posts=12 hedged=16 remote_wins=4 local_wins=12 late_remote=0 NaN=0
+1.34.489.664 I fill_late: hedge total layer=21 posts=12 hedged=13 remote_wins=0 local_wins=13 late_remote=0 NaN=0
+1.34.489.665 I fill_late: hedge total layer=22 posts=28 hedged=30 remote_wins=6 local_wins=24 late_remote=0 NaN=0
+1.34.489.666 I fill_late: hedge total layer=23 posts=29 hedged=36 remote_wins=6 local_wins=30 late_remote=4 NaN=0
+1.34.489.666 I fill_late: hedge total layer=24 posts=34 hedged=45 remote_wins=16 local_wins=29 late_remote=2 NaN=0
+1.34.489.667 I fill_late: hedge total layer=25 posts=37 hedged=43 remote_wins=8 local_wins=35 late_remote=2 NaN=0
+1.34.489.668 I fill_late: hedge total layer=26 posts=25 hedged=29 remote_wins=10 local_wins=19 late_remote=0 NaN=0
+1.34.489.668 I fill_late: hedge total layer=27 posts=31 hedged=40 remote_wins=5 local_wins=35 late_remote=1 NaN=0
+1.34.489.669 I fill_late: hedge total layer=28 posts=24 hedged=27 remote_wins=6 local_wins=21 late_remote=0 NaN=0
+1.34.489.669 I fill_late: hedge total layer=29 posts=24 hedged=27 remote_wins=12 local_wins=15 late_remote=0 NaN=0
+1.34.489.670 I fill_late: hedge total layer=30 posts=16 hedged=17 remote_wins=2 local_wins=15 late_remote=0 NaN=0
+1.34.489.670 I fill_late: hedge total layer=31 posts=20 hedged=20 remote_wins=1 local_wins=19 late_remote=0 NaN=0
+1.34.489.671 I fill_late: hedge total layer=32 posts=4 hedged=4 remote_wins=1 local_wins=3 late_remote=0 NaN=0
+1.34.489.672 I fill_late: hedge total layer=33 posts=17 hedged=18 remote_wins=1 local_wins=17 late_remote=0 NaN=0
+1.34.489.672 I fill_late: hedge total layer=34 posts=18 hedged=18 remote_wins=2 local_wins=16 late_remote=0 NaN=0
+1.34.489.673 I fill_late: hedge total layer=35 posts=19 hedged=21 remote_wins=3 local_wins=18 late_remote=0 NaN=0
+1.34.489.673 I fill_late: hedge total layer=36 posts=17 hedged=22 remote_wins=6 local_wins=16 late_remote=0 NaN=0
+1.34.489.674 I fill_late: hedge total layer=37 posts=24 hedged=28 remote_wins=3 local_wins=25 late_remote=0 NaN=0
+1.34.489.675 I fill_late: hedge total layer=38 posts=27 hedged=37 remote_wins=4 local_wins=33 late_remote=2 NaN=0
+1.34.489.675 I fill_late: hedge total layer=39 posts=22 hedged=25 remote_wins=5 local_wins=20 late_remote=0 NaN=0
+1.34.489.676 I fill_late: hedge total layer=40 posts=12 hedged=13 remote_wins=3 local_wins=10 late_remote=0 NaN=0
+1.34.489.676 I fill_late: hedge total layer=41 posts=11 hedged=12 remote_wins=1 local_wins=11 late_remote=0 NaN=0
+1.34.489.677 I fill_late: hedge total layer=42 posts=18 hedged=19 remote_wins=0 local_wins=19 late_remote=0 NaN=0
+1.34.489.677 I fill_late: hedge total layer=43 posts=19 hedged=22 remote_wins=5 local_wins=17 late_remote=1 NaN=0
+1.34.489.678 I fill_late: hedge total layer=44 posts=25 hedged=27 remote_wins=8 local_wins=19 late_remote=0 NaN=0
+1.34.489.679 I fill_late: hedge total layer=45 posts=18 hedged=20 remote_wins=7 local_wins=13 late_remote=0 NaN=0
+1.34.489.679 I fill_late: hedge total layer=46 posts=24 hedged=28 remote_wins=6 local_wins=21 late_remote=0 NaN=0
+1.34.489.680 I fill_late: hedge total layer=47 posts=26 hedged=32 remote_wins=6 local_wins=26 late_remote=0 NaN=0
+1.34.489.680 I fill_late: hedge total layer=48 posts=15 hedged=15 remote_wins=4 local_wins=11 late_remote=0 NaN=0
+1.34.489.681 I fill_late: hedge total layer=49 posts=27 hedged=30 remote_wins=6 local_wins=24 late_remote=1 NaN=0
+1.34.489.681 I fill_late: hedge total layer=50 posts=15 hedged=19 remote_wins=2 local_wins=17 late_remote=2 NaN=0
+1.34.489.682 I fill_late: hedge total layer=51 posts=24 hedged=24 remote_wins=5 local_wins=19 late_remote=0 NaN=0
+1.34.489.682 I fill_late: hedge total layer=52 posts=19 hedged=21 remote_wins=2 local_wins=19 late_remote=0 NaN=0
+1.34.489.683 I fill_late: hedge total layer=53 posts=21 hedged=26 remote_wins=6 local_wins=20 late_remote=1 NaN=0
+1.34.489.683 I fill_late: hedge total layer=54 posts=16 hedged=16 remote_wins=4 local_wins=12 late_remote=0 NaN=0
+1.34.489.684 I fill_late: hedge total layer=55 posts=24 hedged=24 remote_wins=1 local_wins=23 late_remote=0 NaN=0
+1.34.489.684 I fill_late: hedge total layer=56 posts=15 hedged=15 remote_wins=4 local_wins=11 late_remote=0 NaN=0
+1.34.489.685 I fill_late: hedge total layer=57 posts=18 hedged=20 remote_wins=2 local_wins=18 late_remote=0 NaN=0
+1.34.489.685 I fill_late: hedge total layer=58 posts=17 hedged=17 remote_wins=5 local_wins=12 late_remote=0 NaN=0
+1.34.489.686 I fill_late: hedge total layer=59 posts=25 hedged=28 remote_wins=5 local_wins=23 late_remote=1 NaN=0
+1.34.489.687 I fill_late: hedge total layer=60 posts=18 hedged=18 remote_wins=3 local_wins=15 late_remote=0 NaN=0
+1.34.489.687 I fill_late: hedge total layer=61 posts=17 hedged=19 remote_wins=3 local_wins=16 late_remote=0 NaN=0
+1.34.489.688 I fill_late: hedge total layer=62 posts=15 hedged=17 remote_wins=2 local_wins=15 late_remote=0 NaN=0
+1.34.489.688 I fill_late: hedge total layer=63 posts=18 hedged=21 remote_wins=3 local_wins=18 late_remote=1 NaN=0
+1.34.489.689 I fill_late: hedge total layer=64 posts=31 hedged=34 remote_wins=3 local_wins=31 late_remote=0 NaN=0
+1.34.489.690 I fill_late: hedge total layer=65 posts=31 hedged=35 remote_wins=6 local_wins=29 late_remote=0 NaN=0
+1.34.489.690 I fill_late: hedge total layer=66 posts=15 hedged=17 remote_wins=5 local_wins=12 late_remote=1 NaN=0
+1.34.489.691 I fill_late: hedge total layer=67 posts=25 hedged=28 remote_wins=4 local_wins=24 late_remote=0 NaN=0
+1.34.489.691 I fill_late: hedge total layer=68 posts=23 hedged=28 remote_wins=4 local_wins=24 late_remote=0 NaN=0
+1.34.489.692 I fill_late: hedge total layer=69 posts=29 hedged=35 remote_wins=6 local_wins=29 late_remote=1 NaN=0
+1.34.489.693 I fill_late: hedge total layer=70 posts=21 hedged=25 remote_wins=5 local_wins=20 late_remote=2 NaN=0
+1.34.489.693 I fill_late: hedge total layer=71 posts=12 hedged=13 remote_wins=2 local_wins=11 late_remote=0 NaN=0
+1.34.489.694 I fill_late: hedge total layer=72 posts=17 hedged=18 remote_wins=5 local_wins=13 late_remote=0 NaN=0
+1.34.489.695 I fill_late: hedge total layer=73 posts=17 hedged=18 remote_wins=2 local_wins=16 late_remote=0 NaN=0
+1.34.489.695 I fill_late: hedge total layer=74 posts=23 hedged=24 remote_wins=7 local_wins=17 late_remote=0 NaN=0
+1.34.489.696 I fill_late: hedge total layer=75 posts=38 hedged=42 remote_wins=7 local_wins=35 late_remote=0 NaN=0
+1.34.489.696 I fill_late: hedge total layer=76 posts=30 hedged=32 remote_wins=7 local_wins=25 late_remote=0 NaN=0
+1.34.489.697 I fill_late: hedge total layer=77 posts=30 hedged=37 remote_wins=17 local_wins=20 late_remote=0 NaN=0
+1.34.489.698 I fill_late: hedge breaker box=0 failures=59 transport=0 deadline=59 streak=0 trips=0 unsent=0 transport_drops=0
+1.46.614.552 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.58 ms, 0 early lookups without a real one
+1.46.614.553 I fill_late: hedge per token tokens=163 posts=17.951 wins=5.558 exposed_remote_wait_ms=2.719884
+1.46.614.553 I fill_late: hedge drain calls=2926 wait_ms=17.912 (next plan, outside real-hook buckets)
+1.46.614.555 I fill_late: hedge total layer=3 posts=110 hedged=207 remote_wins=91 local_wins=116 late_remote=51 NaN=0
+1.46.614.556 I fill_late: hedge total layer=4 posts=90 hedged=135 remote_wins=46 local_wins=89 late_remote=13 NaN=0
+1.46.614.557 I fill_late: hedge total layer=5 posts=80 hedged=100 remote_wins=51 local_wins=49 late_remote=3 NaN=0
+1.46.614.558 I fill_late: hedge total layer=6 posts=52 hedged=66 remote_wins=27 local_wins=39 late_remote=2 NaN=0
+1.46.614.558 I fill_late: hedge total layer=7 posts=81 hedged=119 remote_wins=35 local_wins=84 late_remote=4 NaN=0
+1.46.614.559 I fill_late: hedge total layer=8 posts=67 hedged=101 remote_wins=40 local_wins=61 late_remote=14 NaN=0
+1.46.614.560 I fill_late: hedge total layer=9 posts=73 hedged=100 remote_wins=35 local_wins=65 late_remote=4 NaN=0
+1.46.614.560 I fill_late: hedge total layer=10 posts=69 hedged=92 remote_wins=41 local_wins=51 late_remote=2 NaN=0
+1.46.614.561 I fill_late: hedge total layer=11 posts=55 hedged=58 remote_wins=19 local_wins=39 late_remote=0 NaN=0
+1.46.614.562 I fill_late: hedge total layer=12 posts=41 hedged=50 remote_wins=10 local_wins=40 late_remote=0 NaN=0
+1.46.614.562 I fill_late: hedge total layer=13 posts=60 hedged=75 remote_wins=19 local_wins=56 late_remote=3 NaN=0
+1.46.614.563 I fill_late: hedge total layer=14 posts=46 hedged=49 remote_wins=12 local_wins=37 late_remote=0 NaN=0
+1.46.614.563 I fill_late: hedge total layer=15 posts=35 hedged=46 remote_wins=9 local_wins=37 late_remote=0 NaN=0
+1.46.614.564 I fill_late: hedge total layer=16 posts=39 hedged=48 remote_wins=7 local_wins=41 late_remote=1 NaN=0
+1.46.614.565 I fill_late: hedge total layer=17 posts=25 hedged=28 remote_wins=13 local_wins=15 late_remote=0 NaN=0
+1.46.614.565 I fill_late: hedge total layer=18 posts=33 hedged=36 remote_wins=9 local_wins=27 late_remote=1 NaN=0
+1.46.614.566 I fill_late: hedge total layer=19 posts=14 hedged=16 remote_wins=4 local_wins=12 late_remote=0 NaN=0
+1.46.614.566 I fill_late: hedge total layer=20 posts=25 hedged=31 remote_wins=9 local_wins=22 late_remote=0 NaN=0
+1.46.614.567 I fill_late: hedge total layer=21 posts=24 hedged=27 remote_wins=2 local_wins=25 late_remote=0 NaN=0
+1.46.614.567 I fill_late: hedge total layer=22 posts=39 hedged=41 remote_wins=8 local_wins=33 late_remote=0 NaN=0
+1.46.614.568 I fill_late: hedge total layer=23 posts=44 hedged=54 remote_wins=13 local_wins=41 late_remote=4 NaN=0
+1.46.614.568 I fill_late: hedge total layer=24 posts=52 hedged=72 remote_wins=21 local_wins=51 late_remote=3 NaN=0
+1.46.614.569 I fill_late: hedge total layer=25 posts=56 hedged=73 remote_wins=16 local_wins=57 late_remote=7 NaN=0
+1.46.614.570 I fill_late: hedge total layer=26 posts=40 hedged=47 remote_wins=18 local_wins=29 late_remote=0 NaN=0
+1.46.614.570 I fill_late: hedge total layer=27 posts=45 hedged=59 remote_wins=10 local_wins=49 late_remote=2 NaN=0
+1.46.614.571 I fill_late: hedge total layer=28 posts=39 hedged=42 remote_wins=8 local_wins=34 late_remote=0 NaN=0
+1.46.614.571 I fill_late: hedge total layer=29 posts=38 hedged=43 remote_wins=20 local_wins=23 late_remote=0 NaN=0
+1.46.614.572 I fill_late: hedge total layer=30 posts=27 hedged=31 remote_wins=4 local_wins=27 late_remote=2 NaN=0
+1.46.614.573 I fill_late: hedge total layer=31 posts=29 hedged=29 remote_wins=2 local_wins=27 late_remote=0 NaN=0
+1.46.614.573 I fill_late: hedge total layer=32 posts=10 hedged=10 remote_wins=2 local_wins=8 late_remote=0 NaN=0
+1.46.614.574 I fill_late: hedge total layer=33 posts=29 hedged=31 remote_wins=8 local_wins=23 late_remote=0 NaN=0
+1.46.614.574 I fill_late: hedge total layer=34 posts=30 hedged=31 remote_wins=3 local_wins=28 late_remote=0 NaN=0
+1.46.614.576 I fill_late: hedge total layer=35 posts=31 hedged=37 remote_wins=8 local_wins=29 late_remote=0 NaN=0
+1.46.614.580 I fill_late: hedge total layer=36 posts=27 hedged=35 remote_wins=9 local_wins=26 late_remote=0 NaN=0
+1.46.614.580 I fill_late: hedge total layer=37 posts=35 hedged=41 remote_wins=4 local_wins=37 late_remote=0 NaN=0
+1.46.614.580 I fill_late: hedge total layer=38 posts=43 hedged=55 remote_wins=6 local_wins=49 late_remote=2 NaN=0
+1.46.614.581 I fill_late: hedge total layer=39 posts=39 hedged=44 remote_wins=5 local_wins=39 late_remote=1 NaN=0
+1.46.614.582 I fill_late: hedge total layer=40 posts=22 hedged=23 remote_wins=4 local_wins=19 late_remote=0 NaN=0
+1.46.614.582 I fill_late: hedge total layer=41 posts=17 hedged=18 remote_wins=3 local_wins=15 late_remote=0 NaN=0
+1.46.614.583 I fill_late: hedge total layer=42 posts=27 hedged=31 remote_wins=2 local_wins=29 late_remote=0 NaN=0
+1.46.614.583 I fill_late: hedge total layer=43 posts=28 hedged=35 remote_wins=6 local_wins=29 late_remote=2 NaN=0
+1.46.614.584 I fill_late: hedge total layer=44 posts=46 hedged=48 remote_wins=12 local_wins=36 late_remote=0 NaN=0
+1.46.614.584 I fill_late: hedge total layer=45 posts=25 hedged=27 remote_wins=10 local_wins=17 late_remote=0 NaN=0
+1.46.614.585 I fill_late: hedge total layer=46 posts=41 hedged=46 remote_wins=8 local_wins=36 late_remote=0 NaN=0
+1.46.614.586 I fill_late: hedge total layer=47 posts=37 hedged=46 remote_wins=9 local_wins=37 late_remote=0 NaN=0
+1.46.614.586 I fill_late: hedge total layer=48 posts=20 hedged=20 remote_wins=5 local_wins=15 late_remote=0 NaN=0
+1.46.614.587 I fill_late: hedge total layer=49 posts=42 hedged=46 remote_wins=11 local_wins=35 late_remote=1 NaN=0
+1.46.614.588 I fill_late: hedge total layer=50 posts=27 hedged=33 remote_wins=5 local_wins=27 late_remote=2 NaN=0
+1.46.614.588 I fill_late: hedge total layer=51 posts=41 hedged=43 remote_wins=9 local_wins=34 late_remote=0 NaN=0
+1.46.614.589 I fill_late: hedge total layer=52 posts=28 hedged=31 remote_wins=3 local_wins=28 late_remote=0 NaN=0
+1.46.614.589 I fill_late: hedge total layer=53 posts=32 hedged=38 remote_wins=8 local_wins=30 late_remote=2 NaN=0
+1.46.614.590 I fill_late: hedge total layer=54 posts=29 hedged=29 remote_wins=6 local_wins=23 late_remote=0 NaN=0
+1.46.614.590 I fill_late: hedge total layer=55 posts=37 hedged=39 remote_wins=3 local_wins=36 late_remote=1 NaN=0
+1.46.614.591 I fill_late: hedge total layer=56 posts=24 hedged=24 remote_wins=6 local_wins=18 late_remote=0 NaN=0
+1.46.614.592 I fill_late: hedge total layer=57 posts=30 hedged=33 remote_wins=3 local_wins=30 late_remote=0 NaN=0
+1.46.614.592 I fill_late: hedge total layer=58 posts=28 hedged=28 remote_wins=10 local_wins=18 late_remote=0 NaN=0
+1.46.614.593 I fill_late: hedge total layer=59 posts=39 hedged=44 remote_wins=6 local_wins=38 late_remote=1 NaN=0
+1.46.614.593 I fill_late: hedge total layer=60 posts=29 hedged=29 remote_wins=5 local_wins=24 late_remote=0 NaN=0
+1.46.614.594 I fill_late: hedge total layer=61 posts=33 hedged=37 remote_wins=4 local_wins=33 late_remote=1 NaN=0
+1.46.614.595 I fill_late: hedge total layer=62 posts=17 hedged=19 remote_wins=2 local_wins=17 late_remote=0 NaN=0
+1.46.614.595 I fill_late: hedge total layer=63 posts=29 hedged=35 remote_wins=4 local_wins=31 late_remote=2 NaN=0
+1.46.614.596 I fill_late: hedge total layer=64 posts=40 hedged=44 remote_wins=4 local_wins=40 late_remote=0 NaN=0
+1.46.614.596 I fill_late: hedge total layer=65 posts=47 hedged=54 remote_wins=7 local_wins=47 late_remote=0 NaN=0
+1.46.614.597 I fill_late: hedge total layer=66 posts=26 hedged=29 remote_wins=9 local_wins=20 late_remote=1 NaN=0
+1.46.614.597 I fill_late: hedge total layer=67 posts=34 hedged=38 remote_wins=5 local_wins=33 late_remote=0 NaN=0
+1.46.614.598 I fill_late: hedge total layer=68 posts=32 hedged=40 remote_wins=5 local_wins=35 late_remote=1 NaN=0
+1.46.614.598 I fill_late: hedge total layer=69 posts=46 hedged=53 remote_wins=10 local_wins=43 late_remote=1 NaN=0
+1.46.614.599 I fill_late: hedge total layer=70 posts=32 hedged=38 remote_wins=5 local_wins=33 late_remote=2 NaN=0
+1.46.614.600 I fill_late: hedge total layer=71 posts=23 hedged=24 remote_wins=5 local_wins=19 late_remote=0 NaN=0
+1.46.614.600 I fill_late: hedge total layer=72 posts=29 hedged=31 remote_wins=5 local_wins=26 late_remote=0 NaN=0
+1.46.614.601 I fill_late: hedge total layer=73 posts=26 hedged=28 remote_wins=5 local_wins=23 late_remote=0 NaN=0
+1.46.614.601 I fill_late: hedge total layer=74 posts=36 hedged=39 remote_wins=9 local_wins=30 late_remote=0 NaN=0
+1.46.614.602 I fill_late: hedge total layer=75 posts=57 hedged=65 remote_wins=12 local_wins=53 late_remote=0 NaN=0
+1.46.614.602 I fill_late: hedge total layer=76 posts=46 hedged=50 remote_wins=11 local_wins=39 late_remote=0 NaN=0
+1.46.614.603 I fill_late: hedge total layer=77 posts=52 hedged=63 remote_wins=26 local_wins=37 late_remote=0 NaN=0
+1.46.614.604 I fill_late: hedge breaker box=0 failures=98 transport=0 deadline=98 streak=0 trips=0 unsent=0 transport_drops=0
+1.56.268.936 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.31 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.56.268.937 I fill_late: hedge per token tokens=218 posts=17.312 wins=5.271 exposed_remote_wait_ms=2.570179
+1.56.268.938 I fill_late: hedge drain calls=3774 wait_ms=19.507 (next plan, outside real-hook buckets)
+1.56.268.940 I fill_late: hedge total layer=3 posts=145 hedged=273 remote_wins=119 local_wins=154 late_remote=67 NaN=0
+1.56.268.940 I fill_late: hedge total layer=4 posts=114 hedged=170 remote_wins=59 local_wins=111 late_remote=16 NaN=0
+1.56.268.941 I fill_late: hedge total layer=5 posts=103 hedged=133 remote_wins=59 local_wins=74 late_remote=5 NaN=0
+1.56.268.942 I fill_late: hedge total layer=6 posts=70 hedged=86 remote_wins=37 local_wins=49 late_remote=2 NaN=0
+1.56.268.942 I fill_late: hedge total layer=7 posts=105 hedged=153 remote_wins=49 local_wins=104 late_remote=4 NaN=0
+1.56.268.943 I fill_late: hedge total layer=8 posts=90 hedged=141 remote_wins=57 local_wins=84 late_remote=20 NaN=0
+1.56.268.944 I fill_late: hedge total layer=9 posts=99 hedged=137 remote_wins=47 local_wins=90 late_remote=8 NaN=0
+1.56.268.944 I fill_late: hedge total layer=10 posts=88 hedged=121 remote_wins=50 local_wins=71 late_remote=4 NaN=0
+1.56.268.945 I fill_late: hedge total layer=11 posts=69 hedged=72 remote_wins=26 local_wins=46 late_remote=0 NaN=0
+1.56.268.946 I fill_late: hedge total layer=12 posts=53 hedged=66 remote_wins=15 local_wins=51 late_remote=0 NaN=0
+1.56.268.946 I fill_late: hedge total layer=13 posts=73 hedged=94 remote_wins=23 local_wins=71 late_remote=4 NaN=0
+1.56.268.947 I fill_late: hedge total layer=14 posts=58 hedged=61 remote_wins=15 local_wins=46 late_remote=0 NaN=0
+1.56.268.948 I fill_late: hedge total layer=15 posts=48 hedged=61 remote_wins=13 local_wins=48 late_remote=0 NaN=0
+1.56.268.948 I fill_late: hedge total layer=16 posts=49 hedged=59 remote_wins=10 local_wins=49 late_remote=1 NaN=0
+1.56.268.949 I fill_late: hedge total layer=17 posts=33 hedged=37 remote_wins=15 local_wins=22 late_remote=0 NaN=0
+1.56.268.949 I fill_late: hedge total layer=18 posts=41 hedged=47 remote_wins=11 local_wins=36 late_remote=2 NaN=0
+1.56.268.950 I fill_late: hedge total layer=19 posts=20 hedged=23 remote_wins=4 local_wins=19 late_remote=0 NaN=0
+1.56.268.951 I fill_late: hedge total layer=20 posts=29 hedged=37 remote_wins=12 local_wins=25 late_remote=0 NaN=0
+1.56.268.951 I fill_late: hedge total layer=21 posts=28 hedged=31 remote_wins=2 local_wins=29 late_remote=0 NaN=0
+1.56.268.952 I fill_late: hedge total layer=22 posts=50 hedged=54 remote_wins=10 local_wins=44 late_remote=0 NaN=0
+1.56.268.952 I fill_late: hedge total layer=23 posts=53 hedged=65 remote_wins=18 local_wins=47 late_remote=4 NaN=0
+1.56.268.953 I fill_late: hedge total layer=24 posts=67 hedged=91 remote_wins=27 local_wins=64 late_remote=4 NaN=0
+1.56.268.953 I fill_late: hedge total layer=25 posts=71 hedged=91 remote_wins=17 local_wins=74 late_remote=9 NaN=0
+1.56.268.954 I fill_late: hedge total layer=26 posts=55 hedged=65 remote_wins=26 local_wins=39 late_remote=0 NaN=0
+1.56.268.955 I fill_late: hedge total layer=27 posts=63 hedged=83 remote_wins=12 local_wins=71 late_remote=2 NaN=0
+1.56.268.955 I fill_late: hedge total layer=28 posts=51 hedged=54 remote_wins=9 local_wins=45 late_remote=0 NaN=0
+1.56.268.956 I fill_late: hedge total layer=29 posts=47 hedged=53 remote_wins=24 local_wins=29 late_remote=0 NaN=0
+1.56.268.956 I fill_late: hedge total layer=30 posts=34 hedged=38 remote_wins=6 local_wins=32 late_remote=2 NaN=0
+1.56.268.957 I fill_late: hedge total layer=31 posts=36 hedged=36 remote_wins=2 local_wins=34 late_remote=0 NaN=0
+1.56.268.957 I fill_late: hedge total layer=32 posts=11 hedged=11 remote_wins=3 local_wins=8 late_remote=0 NaN=0
+1.56.268.958 I fill_late: hedge total layer=33 posts=40 hedged=43 remote_wins=9 local_wins=34 late_remote=0 NaN=0
+1.56.268.958 I fill_late: hedge total layer=34 posts=40 hedged=41 remote_wins=4 local_wins=37 late_remote=0 NaN=0
+1.56.268.959 I fill_late: hedge total layer=35 posts=40 hedged=46 remote_wins=8 local_wins=38 late_remote=0 NaN=0
+1.56.268.960 I fill_late: hedge total layer=36 posts=36 hedged=48 remote_wins=12 local_wins=36 late_remote=0 NaN=0
+1.56.268.960 I fill_late: hedge total layer=37 posts=49 hedged=56 remote_wins=5 local_wins=51 late_remote=0 NaN=0
+1.56.268.961 I fill_late: hedge total layer=38 posts=54 hedged=69 remote_wins=8 local_wins=61 late_remote=3 NaN=0
+1.56.268.961 I fill_late: hedge total layer=39 posts=49 hedged=55 remote_wins=6 local_wins=49 late_remote=1 NaN=0
+1.56.268.962 I fill_late: hedge total layer=40 posts=26 hedged=27 remote_wins=5 local_wins=22 late_remote=0 NaN=0
+1.56.268.963 I fill_late: hedge total layer=41 posts=23 hedged=24 remote_wins=3 local_wins=21 late_remote=0 NaN=0
+1.56.268.963 I fill_late: hedge total layer=42 posts=33 hedged=37 remote_wins=2 local_wins=35 late_remote=0 NaN=0
+1.56.268.964 I fill_late: hedge total layer=43 posts=36 hedged=43 remote_wins=8 local_wins=35 late_remote=2 NaN=0
+1.56.268.965 I fill_late: hedge total layer=44 posts=55 hedged=58 remote_wins=14 local_wins=44 late_remote=0 NaN=0
+1.56.268.965 I fill_late: hedge total layer=45 posts=35 hedged=37 remote_wins=11 local_wins=26 late_remote=0 NaN=0
+1.56.268.966 I fill_late: hedge total layer=46 posts=56 hedged=63 remote_wins=9 local_wins=52 late_remote=0 NaN=0
+1.56.268.966 I fill_late: hedge total layer=47 posts=48 hedged=60 remote_wins=11 local_wins=49 late_remote=0 NaN=0
+1.56.268.967 I fill_late: hedge total layer=48 posts=27 hedged=27 remote_wins=6 local_wins=21 late_remote=0 NaN=0
+1.56.268.967 I fill_late: hedge total layer=49 posts=56 hedged=61 remote_wins=12 local_wins=49 late_remote=1 NaN=0
+1.56.268.968 I fill_late: hedge total layer=50 posts=31 hedged=37 remote_wins=5 local_wins=31 late_remote=2 NaN=0
+1.56.268.968 I fill_late: hedge total layer=51 posts=50 hedged=52 remote_wins=9 local_wins=43 late_remote=0 NaN=0
+1.56.268.969 I fill_late: hedge total layer=52 posts=38 hedged=42 remote_wins=5 local_wins=37 late_remote=0 NaN=0
+1.56.268.970 I fill_late: hedge total layer=53 posts=43 hedged=51 remote_wins=11 local_wins=40 late_remote=2 NaN=0
+1.56.268.970 I fill_late: hedge total layer=54 posts=39 hedged=39 remote_wins=8 local_wins=31 late_remote=0 NaN=0
+1.56.268.971 I fill_late: hedge total layer=55 posts=42 hedged=44 remote_wins=4 local_wins=40 late_remote=1 NaN=0
+1.56.268.971 I fill_late: hedge total layer=56 posts=31 hedged=31 remote_wins=7 local_wins=24 late_remote=0 NaN=0
+1.56.268.972 I fill_late: hedge total layer=57 posts=38 hedged=41 remote_wins=4 local_wins=37 late_remote=0 NaN=0
+1.56.268.972 I fill_late: hedge total layer=58 posts=32 hedged=32 remote_wins=10 local_wins=22 late_remote=0 NaN=0
+1.56.268.973 I fill_late: hedge total layer=59 posts=51 hedged=56 remote_wins=6 local_wins=50 late_remote=1 NaN=0
+1.56.268.974 I fill_late: hedge total layer=60 posts=36 hedged=37 remote_wins=7 local_wins=30 late_remote=0 NaN=0
+1.56.268.974 I fill_late: hedge total layer=61 posts=40 hedged=44 remote_wins=4 local_wins=40 late_remote=1 NaN=0
+1.56.268.975 I fill_late: hedge total layer=62 posts=24 hedged=26 remote_wins=4 local_wins=22 late_remote=0 NaN=0
+1.56.268.975 I fill_late: hedge total layer=63 posts=40 hedged=46 remote_wins=7 local_wins=39 late_remote=2 NaN=0
+1.56.268.976 I fill_late: hedge total layer=64 posts=52 hedged=59 remote_wins=4 local_wins=55 late_remote=0 NaN=0
+1.56.268.976 I fill_late: hedge total layer=65 posts=61 hedged=68 remote_wins=10 local_wins=58 late_remote=0 NaN=0
+1.56.268.977 I fill_late: hedge total layer=66 posts=31 hedged=34 remote_wins=9 local_wins=25 late_remote=1 NaN=0
+1.56.268.977 I fill_late: hedge total layer=67 posts=45 hedged=50 remote_wins=6 local_wins=44 late_remote=0 NaN=0
+1.56.268.978 I fill_late: hedge total layer=68 posts=43 hedged=53 remote_wins=7 local_wins=46 late_remote=1 NaN=0
+1.56.268.979 I fill_late: hedge total layer=69 posts=60 hedged=73 remote_wins=14 local_wins=59 late_remote=2 NaN=0
+1.56.268.979 I fill_late: hedge total layer=70 posts=42 hedged=50 remote_wins=8 local_wins=42 late_remote=2 NaN=0
+1.56.268.980 I fill_late: hedge total layer=71 posts=29 hedged=31 remote_wins=5 local_wins=26 late_remote=0 NaN=0
+1.56.268.980 I fill_late: hedge total layer=72 posts=38 hedged=42 remote_wins=6 local_wins=36 late_remote=0 NaN=0
+1.56.268.981 I fill_late: hedge total layer=73 posts=34 hedged=37 remote_wins=5 local_wins=32 late_remote=0 NaN=0
+1.56.268.981 I fill_late: hedge total layer=74 posts=47 hedged=52 remote_wins=13 local_wins=39 late_remote=0 NaN=0
+1.56.268.982 I fill_late: hedge total layer=75 posts=75 hedged=84 remote_wins=15 local_wins=68 late_remote=1 NaN=0
+1.56.268.982 I fill_late: hedge total layer=76 posts=63 hedged=69 remote_wins=15 local_wins=54 late_remote=1 NaN=0
+1.56.268.983 I fill_late: hedge total layer=77 posts=63 hedged=76 remote_wins=31 local_wins=45 late_remote=0 NaN=0
+1.56.268.984 I fill_late: hedge breaker box=0 failures=128 transport=0 deadline=128 streak=1 trips=0 unsent=0 transport_drops=0
+2.08.752.283 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.59 ms, 0 early lookups without a real one
+2.08.752.286 I fill_late: hedge per token tokens=273 posts=18.037 wins=5.714 exposed_remote_wait_ms=2.730069
+2.08.752.286 I fill_late: hedge drain calls=4924 wait_ms=29.086 (next plan, outside real-hook buckets)
+2.08.752.288 I fill_late: hedge total layer=3 posts=190 hedged=366 remote_wins=153 local_wins=213 late_remote=97 NaN=0
+2.08.752.289 I fill_late: hedge total layer=4 posts=146 hedged=222 remote_wins=80 local_wins=142 late_remote=21 NaN=0
+2.08.752.290 I fill_late: hedge total layer=5 posts=135 hedged=174 remote_wins=80 local_wins=94 late_remote=5 NaN=0
+2.08.752.290 I fill_late: hedge total layer=6 posts=92 hedged=117 remote_wins=49 local_wins=68 late_remote=4 NaN=0
+2.08.752.291 I fill_late: hedge total layer=7 posts=140 hedged=207 remote_wins=63 local_wins=144 late_remote=8 NaN=0
+2.08.752.292 I fill_late: hedge total layer=8 posts=121 hedged=185 remote_wins=79 local_wins=106 late_remote=22 NaN=0
+2.08.752.292 I fill_late: hedge total layer=9 posts=122 hedged=167 remote_wins=64 local_wins=103 late_remote=9 NaN=0
+2.08.752.293 I fill_late: hedge total layer=10 posts=114 hedged=156 remote_wins=64 local_wins=92 late_remote=5 NaN=0
+2.08.752.294 I fill_late: hedge total layer=11 posts=92 hedged=97 remote_wins=34 local_wins=63 late_remote=0 NaN=0
+2.08.752.295 I fill_late: hedge total layer=12 posts=69 hedged=87 remote_wins=23 local_wins=63 late_remote=0 NaN=0
+2.08.752.295 I fill_late: hedge total layer=13 posts=99 hedged=125 remote_wins=31 local_wins=94 late_remote=5 NaN=0
+2.08.752.296 I fill_late: hedge total layer=14 posts=76 hedged=81 remote_wins=21 local_wins=60 late_remote=0 NaN=0
+2.08.752.297 I fill_late: hedge total layer=15 posts=60 hedged=79 remote_wins=18 local_wins=61 late_remote=0 NaN=0
+2.08.752.297 I fill_late: hedge total layer=16 posts=68 hedged=83 remote_wins=15 local_wins=68 late_remote=2 NaN=0
+2.08.752.298 I fill_late: hedge total layer=17 posts=42 hedged=47 remote_wins=18 local_wins=29 late_remote=0 NaN=0
+2.08.752.299 I fill_late: hedge total layer=18 posts=51 hedged=57 remote_wins=13 local_wins=44 late_remote=2 NaN=0
+2.08.752.299 I fill_late: hedge total layer=19 posts=26 hedged=30 remote_wins=7 local_wins=23 late_remote=0 NaN=0
+2.08.752.300 I fill_late: hedge total layer=20 posts=42 hedged=54 remote_wins=14 local_wins=40 late_remote=1 NaN=0
+2.08.752.300 I fill_late: hedge total layer=21 posts=40 hedged=43 remote_wins=5 local_wins=38 late_remote=0 NaN=0
+2.08.752.303 I fill_late: hedge total layer=22 posts=64 hedged=68 remote_wins=14 local_wins=54 late_remote=0 NaN=0
+2.08.752.303 I fill_late: hedge total layer=23 posts=73 hedged=91 remote_wins=23 local_wins=68 late_remote=6 NaN=0
+2.08.752.304 I fill_late: hedge total layer=24 posts=85 hedged=117 remote_wins=35 local_wins=82 late_remote=4 NaN=0
+2.08.752.304 I fill_late: hedge total layer=25 posts=93 hedged=123 remote_wins=29 local_wins=94 late_remote=12 NaN=0
+2.08.752.305 I fill_late: hedge total layer=26 posts=71 hedged=84 remote_wins=32 local_wins=52 late_remote=0 NaN=0
+2.08.752.305 I fill_late: hedge total layer=27 posts=79 hedged=106 remote_wins=19 local_wins=87 late_remote=2 NaN=0
+2.08.752.306 I fill_late: hedge total layer=28 posts=65 hedged=70 remote_wins=15 local_wins=55 late_remote=0 NaN=0
+2.08.752.307 I fill_late: hedge total layer=29 posts=60 hedged=68 remote_wins=33 local_wins=35 late_remote=0 NaN=0
+2.08.752.307 I fill_late: hedge total layer=30 posts=44 hedged=51 remote_wins=9 local_wins=41 late_remote=4 NaN=0
+2.08.752.308 I fill_late: hedge total layer=31 posts=45 hedged=45 remote_wins=4 local_wins=41 late_remote=0 NaN=0
+2.08.752.308 I fill_late: hedge total layer=32 posts=17 hedged=17 remote_wins=4 local_wins=13 late_remote=0 NaN=0
+2.08.752.309 I fill_late: hedge total layer=33 posts=51 hedged=55 remote_wins=13 local_wins=42 late_remote=0 NaN=0
+2.08.752.310 I fill_late: hedge total layer=34 posts=52 hedged=54 remote_wins=5 local_wins=48 late_remote=0 NaN=0
+2.08.752.310 I fill_late: hedge total layer=35 posts=52 hedged=61 remote_wins=13 local_wins=48 late_remote=0 NaN=0
+2.08.752.311 I fill_late: hedge total layer=36 posts=44 hedged=56 remote_wins=15 local_wins=41 late_remote=0 NaN=0
+2.08.752.311 I fill_late: hedge total layer=37 posts=60 hedged=69 remote_wins=7 local_wins=62 late_remote=0 NaN=0
+2.08.752.312 I fill_late: hedge total layer=38 posts=72 hedged=93 remote_wins=11 local_wins=82 late_remote=3 NaN=0
+2.08.752.313 I fill_late: hedge total layer=39 posts=63 hedged=69 remote_wins=9 local_wins=60 late_remote=1 NaN=0
+2.08.752.313 I fill_late: hedge total layer=40 posts=36 hedged=38 remote_wins=8 local_wins=30 late_remote=0 NaN=0
+2.08.752.314 I fill_late: hedge total layer=41 posts=29 hedged=30 remote_wins=4 local_wins=26 late_remote=0 NaN=0
+2.08.752.314 I fill_late: hedge total layer=42 posts=41 hedged=48 remote_wins=4 local_wins=44 late_remote=0 NaN=0
+2.08.752.315 I fill_late: hedge total layer=43 posts=49 hedged=57 remote_wins=12 local_wins=45 late_remote=2 NaN=0
+2.08.752.316 I fill_late: hedge total layer=44 posts=75 hedged=79 remote_wins=19 local_wins=60 late_remote=0 NaN=0
+2.08.752.316 I fill_late: hedge total layer=45 posts=44 hedged=46 remote_wins=13 local_wins=33 late_remote=0 NaN=0
+2.08.752.317 I fill_late: hedge total layer=46 posts=73 hedged=81 remote_wins=14 local_wins=65 late_remote=0 NaN=0
+2.08.752.317 I fill_late: hedge total layer=47 posts=61 hedged=75 remote_wins=14 local_wins=61 late_remote=0 NaN=0
+2.08.752.318 I fill_late: hedge total layer=48 posts=37 hedged=37 remote_wins=10 local_wins=27 late_remote=0 NaN=0
+2.08.752.318 I fill_late: hedge total layer=49 posts=72 hedged=79 remote_wins=17 local_wins=62 late_remote=2 NaN=0
+2.08.752.319 I fill_late: hedge total layer=50 posts=42 hedged=49 remote_wins=8 local_wins=40 late_remote=2 NaN=0
+2.08.752.320 I fill_late: hedge total layer=51 posts=71 hedged=75 remote_wins=15 local_wins=60 late_remote=0 NaN=0
+2.08.752.320 I fill_late: hedge total layer=52 posts=48 hedged=54 remote_wins=8 local_wins=46 late_remote=0 NaN=0
+2.08.752.321 I fill_late: hedge total layer=53 posts=56 hedged=65 remote_wins=12 local_wins=53 late_remote=3 NaN=0
+2.08.752.321 I fill_late: hedge total layer=54 posts=50 hedged=50 remote_wins=10 local_wins=40 late_remote=0 NaN=0
+2.08.752.322 I fill_late: hedge total layer=55 posts=54 hedged=57 remote_wins=8 local_wins=49 late_remote=1 NaN=0
+2.08.752.322 I fill_late: hedge total layer=56 posts=39 hedged=39 remote_wins=9 local_wins=30 late_remote=0 NaN=0
+2.08.752.323 I fill_late: hedge total layer=57 posts=49 hedged=54 remote_wins=5 local_wins=49 late_remote=0 NaN=0
+2.08.752.324 I fill_late: hedge total layer=58 posts=47 hedged=47 remote_wins=14 local_wins=33 late_remote=0 NaN=0
+2.08.752.324 I fill_late: hedge total layer=59 posts=63 hedged=71 remote_wins=8 local_wins=63 late_remote=2 NaN=0
+2.08.752.325 I fill_late: hedge total layer=60 posts=50 hedged=51 remote_wins=8 local_wins=43 late_remote=0 NaN=0
+2.08.752.325 I fill_late: hedge total layer=61 posts=53 hedged=59 remote_wins=6 local_wins=53 late_remote=2 NaN=0
+2.08.752.326 I fill_late: hedge total layer=62 posts=28 hedged=32 remote_wins=4 local_wins=28 late_remote=0 NaN=0
+2.08.752.327 I fill_late: hedge total layer=63 posts=48 hedged=57 remote_wins=8 local_wins=49 late_remote=3 NaN=0
+2.08.752.327 I fill_late: hedge total layer=64 posts=67 hedged=75 remote_wins=7 local_wins=68 late_remote=0 NaN=0
+2.08.752.328 I fill_late: hedge total layer=65 posts=82 hedged=93 remote_wins=13 local_wins=80 late_remote=0 NaN=0
+2.08.752.328 I fill_late: hedge total layer=66 posts=43 hedged=47 remote_wins=12 local_wins=35 late_remote=1 NaN=0
+2.08.752.329 I fill_late: hedge total layer=67 posts=57 hedged=65 remote_wins=8 local_wins=57 late_remote=0 NaN=0
+2.08.752.330 I fill_late: hedge total layer=68 posts=55 hedged=67 remote_wins=10 local_wins=57 late_remote=1 NaN=0
+2.08.752.330 I fill_late: hedge total layer=69 posts=76 hedged=89 remote_wins=18 local_wins=71 late_remote=2 NaN=0
+2.08.752.331 I fill_late: hedge total layer=70 posts=50 hedged=59 remote_wins=9 local_wins=50 late_remote=2 NaN=0
+2.08.752.331 I fill_late: hedge total layer=71 posts=43 hedged=45 remote_wins=8 local_wins=37 late_remote=0 NaN=0
+2.08.752.332 I fill_late: hedge total layer=72 posts=48 hedged=53 remote_wins=7 local_wins=46 late_remote=0 NaN=0
+2.08.752.333 I fill_late: hedge total layer=73 posts=49 hedged=52 remote_wins=9 local_wins=43 late_remote=0 NaN=0
+2.08.752.333 I fill_late: hedge total layer=74 posts=61 hedged=67 remote_wins=16 local_wins=51 late_remote=0 NaN=0
+2.08.752.334 I fill_late: hedge total layer=75 posts=98 hedged=113 remote_wins=22 local_wins=90 late_remote=2 NaN=0
+2.08.752.334 I fill_late: hedge total layer=76 posts=81 hedged=89 remote_wins=21 local_wins=67 late_remote=1 NaN=0
+2.08.752.335 I fill_late: hedge total layer=77 posts=84 hedged=99 remote_wins=41 local_wins=58 late_remote=0 NaN=0
+2.08.752.336 I fill_late: hedge breaker box=0 failures=169 transport=0 deadline=169 streak=0 trips=0 unsent=0 transport_drops=0
+2.18.422.941 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.18.422.943 I fill_late: hedge per token tokens=327 posts=17.670 wins=5.511 exposed_remote_wait_ms=2.638819
+2.18.422.943 I fill_late: hedge drain calls=5778 wait_ms=32.535 (next plan, outside real-hook buckets)
+2.18.422.945 I fill_late: hedge total layer=3 posts=221 hedged=422 remote_wins=181 local_wins=241 late_remote=108 NaN=0
+2.18.422.946 I fill_late: hedge total layer=4 posts=176 hedged=266 remote_wins=102 local_wins=164 late_remote=25 NaN=0
+2.18.422.947 I fill_late: hedge total layer=5 posts=157 hedged=203 remote_wins=92 local_wins=111 late_remote=5 NaN=0
+2.18.422.948 I fill_late: hedge total layer=6 posts=108 hedged=136 remote_wins=57 local_wins=79 late_remote=4 NaN=0
+2.18.422.949 I fill_late: hedge total layer=7 posts=164 hedged=239 remote_wins=74 local_wins=165 late_remote=9 NaN=0
+2.18.422.950 I fill_late: hedge total layer=8 posts=140 hedged=218 remote_wins=89 local_wins=129 late_remote=31 NaN=0
+2.18.422.950 I fill_late: hedge total layer=9 posts=147 hedged=200 remote_wins=74 local_wins=126 late_remote=10 NaN=0
+2.18.422.951 I fill_late: hedge total layer=10 posts=133 hedged=183 remote_wins=78 local_wins=105 late_remote=5 NaN=0
+2.18.422.951 I fill_late: hedge total layer=11 posts=106 hedged=111 remote_wins=40 local_wins=71 late_remote=0 NaN=0
+2.18.422.952 I fill_late: hedge total layer=12 posts=80 hedged=101 remote_wins=25 local_wins=75 late_remote=0 NaN=0
+2.18.422.953 I fill_late: hedge total layer=13 posts=114 hedged=143 remote_wins=36 local_wins=107 late_remote=6 NaN=0
+2.18.422.954 I fill_late: hedge total layer=14 posts=91 hedged=96 remote_wins=25 local_wins=71 late_remote=0 NaN=0
+2.18.422.954 I fill_late: hedge total layer=15 posts=74 hedged=95 remote_wins=19 local_wins=76 late_remote=0 NaN=0
+2.18.422.955 I fill_late: hedge total layer=16 posts=80 hedged=98 remote_wins=20 local_wins=78 late_remote=2 NaN=0
+2.18.422.956 I fill_late: hedge total layer=17 posts=50 hedged=55 remote_wins=20 local_wins=35 late_remote=0 NaN=0
+2.18.422.956 I fill_late: hedge total layer=18 posts=62 hedged=71 remote_wins=15 local_wins=56 late_remote=4 NaN=0
+2.18.422.957 I fill_late: hedge total layer=19 posts=30 hedged=34 remote_wins=7 local_wins=27 late_remote=0 NaN=0
+2.18.422.957 I fill_late: hedge total layer=20 posts=47 hedged=60 remote_wins=15 local_wins=45 late_remote=1 NaN=0
+2.18.422.958 I fill_late: hedge total layer=21 posts=47 hedged=52 remote_wins=5 local_wins=47 late_remote=0 NaN=0
+2.18.422.959 I fill_late: hedge total layer=22 posts=74 hedged=79 remote_wins=14 local_wins=65 late_remote=0 NaN=0
+2.18.422.959 I fill_late: hedge total layer=23 posts=86 hedged=106 remote_wins=25 local_wins=81 late_remote=6 NaN=0
+2.18.422.960 I fill_late: hedge total layer=24 posts=98 hedged=135 remote_wins=37 local_wins=98 late_remote=6 NaN=0
+2.18.422.960 I fill_late: hedge total layer=25 posts=108 hedged=143 remote_wins=30 local_wins=113 late_remote=14 NaN=0
+2.18.422.961 I fill_late: hedge total layer=26 posts=86 hedged=101 remote_wins=39 local_wins=62 late_remote=0 NaN=0
+2.18.422.962 I fill_late: hedge total layer=27 posts=96 hedged=125 remote_wins=20 local_wins=105 late_remote=2 NaN=0
+2.18.422.962 I fill_late: hedge total layer=28 posts=75 hedged=80 remote_wins=15 local_wins=65 late_remote=0 NaN=0
+2.18.422.963 I fill_late: hedge total layer=29 posts=70 hedged=79 remote_wins=35 local_wins=44 late_remote=0 NaN=0
+2.18.422.963 I fill_late: hedge total layer=30 posts=52 hedged=60 remote_wins=9 local_wins=50 late_remote=4 NaN=0
+2.18.422.964 I fill_late: hedge total layer=31 posts=54 hedged=54 remote_wins=6 local_wins=48 late_remote=0 NaN=0
+2.18.422.965 I fill_late: hedge total layer=32 posts=19 hedged=19 remote_wins=5 local_wins=14 late_remote=0 NaN=0
+2.18.422.965 I fill_late: hedge total layer=33 posts=62 hedged=67 remote_wins=16 local_wins=51 late_remote=0 NaN=0
+2.18.422.966 I fill_late: hedge total layer=34 posts=59 hedged=61 remote_wins=7 local_wins=53 late_remote=0 NaN=0
+2.18.422.966 I fill_late: hedge total layer=35 posts=61 hedged=71 remote_wins=13 local_wins=58 late_remote=0 NaN=0
+2.18.422.967 I fill_late: hedge total layer=36 posts=56 hedged=73 remote_wins=16 local_wins=57 late_remote=0 NaN=0
+2.18.422.968 I fill_late: hedge total layer=37 posts=73 hedged=83 remote_wins=7 local_wins=76 late_remote=0 NaN=0
+2.18.422.968 I fill_late: hedge total layer=38 posts=84 hedged=109 remote_wins=13 local_wins=96 late_remote=5 NaN=0
+2.18.422.969 I fill_late: hedge total layer=39 posts=76 hedged=84 remote_wins=11 local_wins=73 late_remote=1 NaN=0
+2.18.422.970 I fill_late: hedge total layer=40 posts=41 hedged=43 remote_wins=9 local_wins=34 late_remote=0 NaN=0
+2.18.422.970 I fill_late: hedge total layer=41 posts=34 hedged=35 remote_wins=5 local_wins=30 late_remote=0 NaN=0
+2.18.422.971 I fill_late: hedge total layer=42 posts=48 hedged=55 remote_wins=4 local_wins=50 late_remote=0 NaN=0
+2.18.422.971 I fill_late: hedge total layer=43 posts=59 hedged=68 remote_wins=15 local_wins=53 late_remote=2 NaN=0
+2.18.422.972 I fill_late: hedge total layer=44 posts=88 hedged=93 remote_wins=22 local_wins=71 late_remote=0 NaN=0
+2.18.422.973 I fill_late: hedge total layer=45 posts=53 hedged=55 remote_wins=15 local_wins=40 late_remote=0 NaN=0
+2.18.422.973 I fill_late: hedge total layer=46 posts=84 hedged=93 remote_wins=17 local_wins=74 late_remote=0 NaN=0
+2.18.422.974 I fill_late: hedge total layer=47 posts=73 hedged=90 remote_wins=19 local_wins=71 late_remote=0 NaN=0
+2.18.422.975 I fill_late: hedge total layer=48 posts=43 hedged=43 remote_wins=12 local_wins=31 late_remote=0 NaN=0
+2.18.422.975 I fill_late: hedge total layer=49 posts=83 hedged=92 remote_wins=20 local_wins=72 late_remote=2 NaN=0
+2.18.422.976 I fill_late: hedge total layer=50 posts=48 hedged=57 remote_wins=9 local_wins=47 late_remote=2 NaN=0
+2.18.422.976 I fill_late: hedge total layer=51 posts=75 hedged=79 remote_wins=15 local_wins=64 late_remote=0 NaN=0
+2.18.422.977 I fill_late: hedge total layer=52 posts=56 hedged=63 remote_wins=9 local_wins=54 late_remote=0 NaN=0
+2.18.422.978 I fill_late: hedge total layer=53 posts=64 hedged=73 remote_wins=13 local_wins=60 late_remote=3 NaN=0
+2.18.422.978 I fill_late: hedge total layer=54 posts=60 hedged=60 remote_wins=12 local_wins=48 late_remote=0 NaN=0
+2.18.422.979 I fill_late: hedge total layer=55 posts=65 hedged=69 remote_wins=9 local_wins=60 late_remote=2 NaN=0
+2.18.422.979 I fill_late: hedge total layer=56 posts=46 hedged=46 remote_wins=11 local_wins=35 late_remote=0 NaN=0
+2.18.422.980 I fill_late: hedge total layer=57 posts=58 hedged=63 remote_wins=6 local_wins=57 late_remote=0 NaN=0
+2.18.422.980 I fill_late: hedge total layer=58 posts=50 hedged=50 remote_wins=15 local_wins=35 late_remote=0 NaN=0
+2.18.422.981 I fill_late: hedge total layer=59 posts=76 hedged=85 remote_wins=11 local_wins=74 late_remote=2 NaN=0
+2.18.422.982 I fill_late: hedge total layer=60 posts=59 hedged=61 remote_wins=9 local_wins=52 late_remote=0 NaN=0
+2.18.422.982 I fill_late: hedge total layer=61 posts=63 hedged=70 remote_wins=7 local_wins=63 late_remote=2 NaN=0
+2.18.422.983 I fill_late: hedge total layer=62 posts=32 hedged=36 remote_wins=5 local_wins=31 late_remote=0 NaN=0
+2.18.422.984 I fill_late: hedge total layer=63 posts=58 hedged=67 remote_wins=10 local_wins=57 late_remote=3 NaN=0
+2.18.422.984 I fill_late: hedge total layer=64 posts=80 hedged=90 remote_wins=8 local_wins=82 late_remote=0 NaN=0
+2.18.422.985 I fill_late: hedge total layer=65 posts=95 hedged=106 remote_wins=15 local_wins=91 late_remote=0 NaN=0
+2.18.422.986 I fill_late: hedge total layer=66 posts=49 hedged=53 remote_wins=12 local_wins=41 late_remote=1 NaN=0
+2.18.422.986 I fill_late: hedge total layer=67 posts=66 hedged=75 remote_wins=9 local_wins=66 late_remote=0 NaN=0
+2.18.422.987 I fill_late: hedge total layer=68 posts=66 hedged=81 remote_wins=13 local_wins=68 late_remote=1 NaN=0
+2.18.422.987 I fill_late: hedge total layer=69 posts=88 hedged=103 remote_wins=20 local_wins=83 late_remote=2 NaN=0
+2.18.422.988 I fill_late: hedge total layer=70 posts=63 hedged=75 remote_wins=11 local_wins=64 late_remote=3 NaN=0
+2.18.422.988 I fill_late: hedge total layer=71 posts=47 hedged=49 remote_wins=8 local_wins=41 late_remote=0 NaN=0
+2.18.422.989 I fill_late: hedge total layer=72 posts=57 hedged=63 remote_wins=8 local_wins=55 late_remote=0 NaN=0
+2.18.422.989 I fill_late: hedge total layer=73 posts=56 hedged=60 remote_wins=10 local_wins=50 late_remote=0 NaN=0
+2.18.422.990 I fill_late: hedge total layer=74 posts=74 hedged=81 remote_wins=18 local_wins=63 late_remote=0 NaN=0
+2.18.422.991 I fill_late: hedge total layer=75 posts=113 hedged=129 remote_wins=26 local_wins=102 late_remote=2 NaN=0
+2.18.422.991 I fill_late: hedge total layer=76 posts=95 hedged=105 remote_wins=27 local_wins=77 late_remote=1 NaN=0
+2.18.422.992 I fill_late: hedge total layer=77 posts=97 hedged=117 remote_wins=46 local_wins=71 late_remote=1 NaN=0
+2.18.422.993 I fill_late: hedge breaker box=0 failures=194 transport=0 deadline=194 streak=0 trips=0 unsent=0 transport_drops=0
+2.29.059.546 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.58 ms, 0 early lookups without a real one
+2.29.059.548 I fill_late: hedge per token tokens=382 posts=18.034 wins=5.717 exposed_remote_wait_ms=2.724272
+2.29.059.548 I fill_late: hedge drain calls=6889 wait_ms=44.622 (next plan, outside real-hook buckets)
+2.29.059.550 I fill_late: hedge total layer=3 posts=265 hedged=513 remote_wins=217 local_wins=296 late_remote=140 NaN=0
+2.29.059.551 I fill_late: hedge total layer=4 posts=206 hedged=316 remote_wins=118 local_wins=198 late_remote=32 NaN=0
+2.29.059.551 I fill_late: hedge total layer=5 posts=188 hedged=244 remote_wins=114 local_wins=130 late_remote=7 NaN=0
+2.29.059.552 I fill_late: hedge total layer=6 posts=130 hedged=165 remote_wins=69 local_wins=96 late_remote=7 NaN=0
+2.29.059.553 I fill_late: hedge total layer=7 posts=196 hedged=290 remote_wins=86 local_wins=204 late_remote=11 NaN=0
+2.29.059.554 I fill_late: hedge total layer=8 posts=174 hedged=269 remote_wins=114 local_wins=155 late_remote=36 NaN=0
+2.29.059.554 I fill_late: hedge total layer=9 posts=178 hedged=245 remote_wins=95 local_wins=150 late_remote=12 NaN=0
+2.29.059.555 I fill_late: hedge total layer=10 posts=163 hedged=224 remote_wins=94 local_wins=130 late_remote=5 NaN=0
+2.29.059.556 I fill_late: hedge total layer=11 posts=125 hedged=131 remote_wins=45 local_wins=86 late_remote=0 NaN=0
+2.29.059.556 I fill_late: hedge total layer=12 posts=97 hedged=120 remote_wins=33 local_wins=86 late_remote=0 NaN=0
+2.29.059.557 I fill_late: hedge total layer=13 posts=140 hedged=177 remote_wins=42 local_wins=135 late_remote=9 NaN=0
+2.29.059.559 I fill_late: hedge total layer=14 posts=106 hedged=113 remote_wins=28 local_wins=85 late_remote=0 NaN=0
+2.29.059.559 I fill_late: hedge total layer=15 posts=87 hedged=113 remote_wins=24 local_wins=89 late_remote=3 NaN=0
+2.29.059.560 I fill_late: hedge total layer=16 posts=95 hedged=117 remote_wins=26 local_wins=91 late_remote=3 NaN=0
+2.29.059.560 I fill_late: hedge total layer=17 posts=64 hedged=71 remote_wins=24 local_wins=47 late_remote=0 NaN=0
+2.29.059.561 I fill_late: hedge total layer=18 posts=73 hedged=82 remote_wins=16 local_wins=66 late_remote=4 NaN=0
+2.29.059.561 I fill_late: hedge total layer=19 posts=38 hedged=44 remote_wins=9 local_wins=35 late_remote=0 NaN=0
+2.29.059.562 I fill_late: hedge total layer=20 posts=56 hedged=73 remote_wins=17 local_wins=56 late_remote=3 NaN=0
+2.29.059.563 I fill_late: hedge total layer=21 posts=58 hedged=63 remote_wins=8 local_wins=55 late_remote=0 NaN=0
+2.29.059.563 I fill_late: hedge total layer=22 posts=90 hedged=96 remote_wins=19 local_wins=77 late_remote=0 NaN=0
+2.29.059.564 I fill_late: hedge total layer=23 posts=107 hedged=134 remote_wins=34 local_wins=100 late_remote=9 NaN=0
+2.29.059.565 I fill_late: hedge total layer=24 posts=117 hedged=158 remote_wins=50 local_wins=108 late_remote=6 NaN=0
+2.29.059.565 I fill_late: hedge total layer=25 posts=132 hedged=176 remote_wins=39 local_wins=136 late_remote=19 NaN=0
+2.29.059.566 I fill_late: hedge total layer=26 posts=99 hedged=117 remote_wins=45 local_wins=72 late_remote=0 NaN=0
+2.29.059.567 I fill_late: hedge total layer=27 posts=115 hedged=152 remote_wins=25 local_wins=127 late_remote=2 NaN=0
+2.29.059.567 I fill_late: hedge total layer=28 posts=91 hedged=98 remote_wins=21 local_wins=77 late_remote=0 NaN=0
+2.29.059.568 I fill_late: hedge total layer=29 posts=86 hedged=98 remote_wins=44 local_wins=54 late_remote=0 NaN=0
+2.29.059.569 I fill_late: hedge total layer=30 posts=62 hedged=73 remote_wins=11 local_wins=61 late_remote=5 NaN=0
+2.29.059.569 I fill_late: hedge total layer=31 posts=62 hedged=62 remote_wins=8 local_wins=54 late_remote=0 NaN=0
+2.29.059.570 I fill_late: hedge total layer=32 posts=24 hedged=24 remote_wins=7 local_wins=17 late_remote=0 NaN=0
+2.29.059.571 I fill_late: hedge total layer=33 posts=71 hedged=76 remote_wins=19 local_wins=57 late_remote=0 NaN=0
+2.29.059.571 I fill_late: hedge total layer=34 posts=72 hedged=75 remote_wins=7 local_wins=67 late_remote=0 NaN=0
+2.29.059.572 I fill_late: hedge total layer=35 posts=70 hedged=81 remote_wins=15 local_wins=66 late_remote=0 NaN=0
+2.29.059.573 I fill_late: hedge total layer=36 posts=64 hedged=83 remote_wins=21 local_wins=62 late_remote=0 NaN=0
+2.29.059.573 I fill_late: hedge total layer=37 posts=86 hedged=97 remote_wins=8 local_wins=89 late_remote=1 NaN=0
+2.29.059.574 I fill_late: hedge total layer=38 posts=99 hedged=129 remote_wins=16 local_wins=113 late_remote=5 NaN=0
+2.29.059.575 I fill_late: hedge total layer=39 posts=87 hedged=96 remote_wins=13 local_wins=83 late_remote=1 NaN=0
+2.29.059.575 I fill_late: hedge total layer=40 posts=50 hedged=53 remote_wins=12 local_wins=41 late_remote=0 NaN=0
+2.29.059.576 I fill_late: hedge total layer=41 posts=41 hedged=43 remote_wins=5 local_wins=38 late_remote=0 NaN=0
+2.29.059.577 I fill_late: hedge total layer=42 posts=57 hedged=66 remote_wins=7 local_wins=58 late_remote=0 NaN=0
+2.29.059.577 I fill_late: hedge total layer=43 posts=70 hedged=80 remote_wins=16 local_wins=64 late_remote=2 NaN=0
+2.29.059.578 I fill_late: hedge total layer=44 posts=99 hedged=105 remote_wins=25 local_wins=80 late_remote=0 NaN=0
+2.29.059.579 I fill_late: hedge total layer=45 posts=61 hedged=63 remote_wins=16 local_wins=47 late_remote=0 NaN=0
+2.29.059.579 I fill_late: hedge total layer=46 posts=98 hedged=110 remote_wins=21 local_wins=87 late_remote=0 NaN=0
+2.29.059.580 I fill_late: hedge total layer=47 posts=88 hedged=107 remote_wins=20 local_wins=87 late_remote=0 NaN=0
+2.29.059.581 I fill_late: hedge total layer=48 posts=54 hedged=54 remote_wins=15 local_wins=39 late_remote=0 NaN=0
+2.29.059.581 I fill_late: hedge total layer=49 posts=99 hedged=110 remote_wins=25 local_wins=85 late_remote=2 NaN=0
+2.29.059.582 I fill_late: hedge total layer=50 posts=57 hedged=67 remote_wins=10 local_wins=56 late_remote=2 NaN=0
+2.29.059.582 I fill_late: hedge total layer=51 posts=96 hedged=102 remote_wins=20 local_wins=82 late_remote=0 NaN=0
+2.29.059.583 I fill_late: hedge total layer=52 posts=69 hedged=79 remote_wins=10 local_wins=69 late_remote=1 NaN=0
+2.29.059.584 I fill_late: hedge total layer=53 posts=74 hedged=86 remote_wins=16 local_wins=70 late_remote=3 NaN=0
+2.29.059.584 I fill_late: hedge total layer=54 posts=73 hedged=73 remote_wins=14 local_wins=59 late_remote=0 NaN=0
+2.29.059.585 I fill_late: hedge total layer=55 posts=79 hedged=84 remote_wins=14 local_wins=70 late_remote=2 NaN=0
+2.29.059.585 I fill_late: hedge total layer=56 posts=56 hedged=56 remote_wins=13 local_wins=43 late_remote=0 NaN=0
+2.29.059.586 I fill_late: hedge total layer=57 posts=68 hedged=75 remote_wins=7 local_wins=68 late_remote=0 NaN=0
+2.29.059.587 I fill_late: hedge total layer=58 posts=61 hedged=61 remote_wins=17 local_wins=43 late_remote=0 NaN=0
+2.29.059.587 I fill_late: hedge total layer=59 posts=88 hedged=99 remote_wins=12 local_wins=87 late_remote=3 NaN=0
+2.29.059.588 I fill_late: hedge total layer=60 posts=69 hedged=71 remote_wins=9 local_wins=62 late_remote=0 NaN=0
+2.29.059.589 I fill_late: hedge total layer=61 posts=74 hedged=82 remote_wins=9 local_wins=73 late_remote=2 NaN=0
+2.29.059.589 I fill_late: hedge total layer=62 posts=37 hedged=42 remote_wins=5 local_wins=37 late_remote=0 NaN=0
+2.29.059.590 I fill_late: hedge total layer=63 posts=67 hedged=76 remote_wins=11 local_wins=65 late_remote=3 NaN=0
+2.29.059.590 I fill_late: hedge total layer=64 posts=95 hedged=106 remote_wins=9 local_wins=97 late_remote=0 NaN=0
+2.29.059.591 I fill_late: hedge total layer=65 posts=108 hedged=121 remote_wins=19 local_wins=102 late_remote=0 NaN=0
+2.29.059.592 I fill_late: hedge total layer=66 posts=57 hedged=62 remote_wins=14 local_wins=48 late_remote=1 NaN=0
+2.29.059.593 I fill_late: hedge total layer=67 posts=80 hedged=92 remote_wins=12 local_wins=80 late_remote=0 NaN=0
+2.29.059.593 I fill_late: hedge total layer=68 posts=76 hedged=91 remote_wins=15 local_wins=76 late_remote=1 NaN=0
+2.29.059.594 I fill_late: hedge total layer=69 posts=103 hedged=122 remote_wins=24 local_wins=98 late_remote=3 NaN=0
+2.29.059.594 I fill_late: hedge total layer=70 posts=72 hedged=85 remote_wins=12 local_wins=73 late_remote=3 NaN=0
+2.29.059.595 I fill_late: hedge total layer=71 posts=61 hedged=64 remote_wins=9 local_wins=55 late_remote=0 NaN=0
+2.29.059.595 I fill_late: hedge total layer=72 posts=66 hedged=74 remote_wins=9 local_wins=65 late_remote=0 NaN=0
+2.29.059.596 I fill_late: hedge total layer=73 posts=67 hedged=74 remote_wins=12 local_wins=62 late_remote=0 NaN=0
+2.29.059.597 I fill_late: hedge total layer=74 posts=84 hedged=92 remote_wins=22 local_wins=70 late_remote=0 NaN=0
+2.29.059.597 I fill_late: hedge total layer=75 posts=136 hedged=156 remote_wins=32 local_wins=123 late_remote=2 NaN=0
+2.29.059.598 I fill_late: hedge total layer=76 posts=110 hedged=124 remote_wins=30 local_wins=93 late_remote=1 NaN=0
+2.29.059.599 I fill_late: hedge total layer=77 posts=116 hedged=139 remote_wins=55 local_wins=84 late_remote=2 NaN=0
+2.29.059.599 I fill_late: hedge breaker box=0 failures=246 transport=0 deadline=246 streak=1 trips=0 unsent=0 transport_drops=0
+2.29.774.419 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.003 ms, wait at the real lookup 0.58 ms, 0 early lookups without a real one
+2.29.774.420 I llama_moe_cache: hedge per token tokens=385 posts=18.031 wins=5.704 exposed_remote_wait_ms=2.721753
+2.29.774.421 I llama_moe_cache: hedge drain calls=6942 wait_ms=45.779 (next plan, outside real-hook buckets)
+2.29.774.422 I llama_moe_cache: hedge total layer=3 posts=267 hedged=515 remote_wins=218 local_wins=297 late_remote=140 NaN=0
+2.29.774.424 I llama_moe_cache: hedge total layer=4 posts=207 hedged=318 remote_wins=120 local_wins=198 late_remote=32 NaN=0
+2.29.774.424 I llama_moe_cache: hedge total layer=5 posts=189 hedged=245 remote_wins=115 local_wins=130 late_remote=7 NaN=0
+2.29.774.425 I llama_moe_cache: hedge total layer=6 posts=131 hedged=167 remote_wins=70 local_wins=97 late_remote=7 NaN=0
+2.29.774.426 I llama_moe_cache: hedge total layer=7 posts=197 hedged=291 remote_wins=86 local_wins=205 late_remote=11 NaN=0
+2.29.774.426 I llama_moe_cache: hedge total layer=8 posts=174 hedged=269 remote_wins=114 local_wins=155 late_remote=36 NaN=0
+2.29.774.427 I llama_moe_cache: hedge total layer=9 posts=178 hedged=245 remote_wins=95 local_wins=150 late_remote=12 NaN=0
+2.29.774.428 I llama_moe_cache: hedge total layer=10 posts=164 hedged=225 remote_wins=94 local_wins=131 late_remote=5 NaN=0
+2.29.774.429 I llama_moe_cache: hedge total layer=11 posts=126 hedged=133 remote_wins=46 local_wins=87 late_remote=0 NaN=0
+2.29.774.430 I llama_moe_cache: hedge total layer=12 posts=98 hedged=121 remote_wins=33 local_wins=87 late_remote=0 NaN=0
+2.29.774.430 I llama_moe_cache: hedge total layer=13 posts=140 hedged=177 remote_wins=42 local_wins=135 late_remote=9 NaN=0
+2.29.774.431 I llama_moe_cache: hedge total layer=14 posts=107 hedged=114 remote_wins=28 local_wins=86 late_remote=0 NaN=0
+2.29.774.431 I llama_moe_cache: hedge total layer=15 posts=88 hedged=114 remote_wins=24 local_wins=90 late_remote=3 NaN=0
+2.29.774.432 I llama_moe_cache: hedge total layer=16 posts=95 hedged=117 remote_wins=26 local_wins=91 late_remote=3 NaN=0
+2.29.774.433 I llama_moe_cache: hedge total layer=17 posts=64 hedged=71 remote_wins=24 local_wins=47 late_remote=0 NaN=0
+2.29.774.433 I llama_moe_cache: hedge total layer=18 posts=73 hedged=82 remote_wins=16 local_wins=66 late_remote=4 NaN=0
+2.29.774.434 I llama_moe_cache: hedge total layer=19 posts=38 hedged=44 remote_wins=9 local_wins=35 late_remote=0 NaN=0
+2.29.774.435 I llama_moe_cache: hedge total layer=20 posts=57 hedged=74 remote_wins=17 local_wins=57 late_remote=3 NaN=0
+2.29.774.435 I llama_moe_cache: hedge total layer=21 posts=59 hedged=64 remote_wins=8 local_wins=56 late_remote=0 NaN=0
+2.29.774.436 I llama_moe_cache: hedge total layer=22 posts=91 hedged=97 remote_wins=19 local_wins=78 late_remote=0 NaN=0
+2.29.774.436 I llama_moe_cache: hedge total layer=23 posts=107 hedged=134 remote_wins=34 local_wins=100 late_remote=9 NaN=0
+2.29.774.437 I llama_moe_cache: hedge total layer=24 posts=117 hedged=158 remote_wins=50 local_wins=108 late_remote=6 NaN=0
+2.29.774.438 I llama_moe_cache: hedge total layer=25 posts=133 hedged=177 remote_wins=40 local_wins=136 late_remote=19 NaN=0
+2.29.774.438 I llama_moe_cache: hedge total layer=26 posts=101 hedged=119 remote_wins=45 local_wins=74 late_remote=0 NaN=0
+2.29.774.439 I llama_moe_cache: hedge total layer=27 posts=116 hedged=154 remote_wins=25 local_wins=129 late_remote=2 NaN=0
+2.29.774.439 I llama_moe_cache: hedge total layer=28 posts=93 hedged=100 remote_wins=21 local_wins=79 late_remote=0 NaN=0
+2.29.774.440 I llama_moe_cache: hedge total layer=29 posts=86 hedged=98 remote_wins=44 local_wins=54 late_remote=0 NaN=0
+2.29.774.441 I llama_moe_cache: hedge total layer=30 posts=62 hedged=73 remote_wins=11 local_wins=61 late_remote=5 NaN=0
+2.29.774.442 I llama_moe_cache: hedge total layer=31 posts=63 hedged=63 remote_wins=8 local_wins=55 late_remote=0 NaN=0
+2.29.774.442 I llama_moe_cache: hedge total layer=32 posts=24 hedged=24 remote_wins=7 local_wins=17 late_remote=0 NaN=0
+2.29.774.443 I llama_moe_cache: hedge total layer=33 posts=72 hedged=77 remote_wins=19 local_wins=58 late_remote=0 NaN=0
+2.29.774.443 I llama_moe_cache: hedge total layer=34 posts=72 hedged=75 remote_wins=7 local_wins=67 late_remote=0 NaN=0
+2.29.774.444 I llama_moe_cache: hedge total layer=35 posts=71 hedged=82 remote_wins=15 local_wins=67 late_remote=0 NaN=0
+2.29.774.445 I llama_moe_cache: hedge total layer=36 posts=65 hedged=84 remote_wins=21 local_wins=63 late_remote=0 NaN=0
+2.29.774.445 I llama_moe_cache: hedge total layer=37 posts=86 hedged=97 remote_wins=8 local_wins=89 late_remote=1 NaN=0
+2.29.774.446 I llama_moe_cache: hedge total layer=38 posts=99 hedged=129 remote_wins=16 local_wins=113 late_remote=5 NaN=0
+2.29.774.446 I llama_moe_cache: hedge total layer=39 posts=88 hedged=97 remote_wins=13 local_wins=84 late_remote=1 NaN=0
+2.29.774.448 I llama_moe_cache: hedge total layer=40 posts=50 hedged=53 remote_wins=12 local_wins=41 late_remote=0 NaN=0
+2.29.774.448 I llama_moe_cache: hedge total layer=41 posts=42 hedged=44 remote_wins=6 local_wins=38 late_remote=0 NaN=0
+2.29.774.449 I llama_moe_cache: hedge total layer=42 posts=57 hedged=66 remote_wins=7 local_wins=58 late_remote=0 NaN=0
+2.29.774.450 I llama_moe_cache: hedge total layer=43 posts=70 hedged=80 remote_wins=16 local_wins=64 late_remote=2 NaN=0
+2.29.774.450 I llama_moe_cache: hedge total layer=44 posts=101 hedged=107 remote_wins=26 local_wins=81 late_remote=0 NaN=0
+2.29.774.450 I llama_moe_cache: hedge total layer=45 posts=61 hedged=63 remote_wins=16 local_wins=47 late_remote=0 NaN=0
+2.29.774.451 I llama_moe_cache: hedge total layer=46 posts=99 hedged=111 remote_wins=21 local_wins=88 late_remote=0 NaN=0
+2.29.774.452 I llama_moe_cache: hedge total layer=47 posts=88 hedged=107 remote_wins=20 local_wins=87 late_remote=0 NaN=0
+2.29.774.452 I llama_moe_cache: hedge total layer=48 posts=55 hedged=55 remote_wins=15 local_wins=40 late_remote=0 NaN=0
+2.29.774.453 I llama_moe_cache: hedge total layer=49 posts=100 hedged=111 remote_wins=25 local_wins=86 late_remote=2 NaN=0
+2.29.774.454 I llama_moe_cache: hedge total layer=50 posts=59 hedged=69 remote_wins=10 local_wins=58 late_remote=2 NaN=0
+2.29.774.454 I llama_moe_cache: hedge total layer=51 posts=97 hedged=103 remote_wins=20 local_wins=83 late_remote=0 NaN=0
+2.29.774.455 I llama_moe_cache: hedge total layer=52 posts=69 hedged=79 remote_wins=10 local_wins=69 late_remote=1 NaN=0
+2.29.774.455 I llama_moe_cache: hedge total layer=53 posts=75 hedged=87 remote_wins=16 local_wins=71 late_remote=3 NaN=0
+2.29.774.456 I llama_moe_cache: hedge total layer=54 posts=73 hedged=73 remote_wins=14 local_wins=59 late_remote=0 NaN=0
+2.29.774.456 I llama_moe_cache: hedge total layer=55 posts=79 hedged=84 remote_wins=14 local_wins=70 late_remote=2 NaN=0
+2.29.774.457 I llama_moe_cache: hedge total layer=56 posts=56 hedged=56 remote_wins=13 local_wins=43 late_remote=0 NaN=0
+2.29.774.457 I llama_moe_cache: hedge total layer=57 posts=70 hedged=77 remote_wins=7 local_wins=70 late_remote=0 NaN=0
+2.29.774.458 I llama_moe_cache: hedge total layer=58 posts=62 hedged=62 remote_wins=17 local_wins=44 late_remote=0 NaN=0
+2.29.774.458 I llama_moe_cache: hedge total layer=59 posts=90 hedged=101 remote_wins=13 local_wins=88 late_remote=3 NaN=0
+2.29.774.459 I llama_moe_cache: hedge total layer=60 posts=69 hedged=71 remote_wins=9 local_wins=62 late_remote=0 NaN=0
+2.29.774.460 I llama_moe_cache: hedge total layer=61 posts=74 hedged=82 remote_wins=9 local_wins=73 late_remote=2 NaN=0
+2.29.774.460 I llama_moe_cache: hedge total layer=62 posts=38 hedged=43 remote_wins=5 local_wins=38 late_remote=0 NaN=0
+2.29.774.461 I llama_moe_cache: hedge total layer=63 posts=67 hedged=76 remote_wins=11 local_wins=65 late_remote=3 NaN=0
+2.29.774.461 I llama_moe_cache: hedge total layer=64 posts=96 hedged=107 remote_wins=9 local_wins=98 late_remote=0 NaN=0
+2.29.774.462 I llama_moe_cache: hedge total layer=65 posts=110 hedged=123 remote_wins=19 local_wins=104 late_remote=0 NaN=0
+2.29.774.463 I llama_moe_cache: hedge total layer=66 posts=57 hedged=62 remote_wins=14 local_wins=48 late_remote=1 NaN=0
+2.29.774.463 I llama_moe_cache: hedge total layer=67 posts=80 hedged=92 remote_wins=12 local_wins=80 late_remote=0 NaN=0
+2.29.774.464 I llama_moe_cache: hedge total layer=68 posts=76 hedged=91 remote_wins=15 local_wins=76 late_remote=1 NaN=0
+2.29.774.465 I llama_moe_cache: hedge total layer=69 posts=103 hedged=122 remote_wins=24 local_wins=98 late_remote=3 NaN=0
+2.29.774.465 I llama_moe_cache: hedge total layer=70 posts=72 hedged=85 remote_wins=12 local_wins=73 late_remote=3 NaN=0
+2.29.774.466 I llama_moe_cache: hedge total layer=71 posts=61 hedged=64 remote_wins=9 local_wins=55 late_remote=0 NaN=0
+2.29.774.466 I llama_moe_cache: hedge total layer=72 posts=68 hedged=76 remote_wins=9 local_wins=67 late_remote=0 NaN=0
+2.29.774.467 I llama_moe_cache: hedge total layer=73 posts=67 hedged=74 remote_wins=12 local_wins=62 late_remote=0 NaN=0
+2.29.774.467 I llama_moe_cache: hedge total layer=74 posts=86 hedged=95 remote_wins=23 local_wins=72 late_remote=0 NaN=0
+2.29.774.468 I llama_moe_cache: hedge total layer=75 posts=138 hedged=158 remote_wins=33 local_wins=124 late_remote=2 NaN=0
+2.29.774.469 I llama_moe_cache: hedge total layer=76 posts=112 hedged=126 remote_wins=30 local_wins=95 late_remote=1 NaN=0
+2.29.774.469 I llama_moe_cache: hedge total layer=77 posts=117 hedged=140 remote_wins=55 local_wins=85 late_remote=2 NaN=0
+2.29.774.470 I llama_moe_cache: hedge breaker box=0 failures=246 transport=0 deadline=246 streak=0 trips=0 unsent=0 transport_drops=0
+2.30.152.541 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14396 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.30.152.544 I host bank real bucket: a_ready_latency=14405/20260.118ms
+2.30.152.545 I host bank real bucket: b_early_read=10375/9328.407ms
+2.30.152.545 I host bank real bucket: b_predict_read=6894/2063.327ms
+2.30.152.546 I host bank real bucket: c_real_read=222/3604.735ms
+2.30.152.546 I host bank real bucket: d_lock=28864/0.898ms
+2.30.152.547 I host bank real bucket: e_other=28875/5824.312ms
+2.30.152.550 I host bank real histogram: ready_p50/p90/p99=0.000/1.890/5.830ms abc_p50/p90/p99=0.000/3.270/8.790ms (a overlaps b+c; overflow is lower bound)
+2.41.541.960 I expert store fill dispatch: calls=10378 queue_ms=59.049 lean=1
+K1b hedge counters posts/hedged/remote_wins/local_wins/late_remote/NaN: 6942 8499 2196 6292 353 0
+K1b MemAvailable 121166 MiB
+WIN2I4-DONE

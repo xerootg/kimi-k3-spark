@@ -1,0 +1,5 @@
+=== window z 01:21
+build20=2
+ABORT-WINDOW configure/build failed (~/win2/build20.log)
+pod restored: Running
+ALL-WINDOWS-DONE
