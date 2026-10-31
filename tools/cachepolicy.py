@@ -4,6 +4,9 @@ given capacity, with and without the deployed speculative prefetch (kind 1, the 
 One global cache as in pfeval.py. Used for the Spark eviction-policy entry of docs/experiments.md (2026-10-26).
 
   cachepolicy.py <pfdump.bin> [warm_steps=150]
+
+The speculation replay runs both ways: predicted hits promoted as the engine did until 2026-10-29, and left in place
+(LLAMA_EXPERT_STORE_PREFETCH_PROMOTE=0), to score audit item 8 offline.
 """
 import sys, heapq, collections, numpy as np
 
@@ -123,7 +126,9 @@ def belady_hits(seq, cap, score):
         res[k] = nxt[i]; heapq.heappush(h, (-nxt[i], k))
     return hits
 
-def run(steps, cap, warm, spec_window=0):
+def run(steps, cap, warm, spec_window=0, spec_promote=False):
+    # spec_promote: the engine's behaviour before LLAMA_EXPERT_STORE_PREFETCH_PROMOTE=0 (2026-10-29): a prediction's
+    # hits are promoted (and earn a second-chance count) like a real use; False = only its misses enter the cache
     order = sorted(steps); layers = sorted(il for il in steps[order[0]] if isinstance(il, int) and il >= 0)
     seq, score, spec = [], [], []
     for si, st in enumerate(order):
@@ -146,7 +151,9 @@ def run(steps, cap, warm, spec_window=0):
                 b = spec_window
                 for kk in spec[i]:
                     if b <= 0: break
-                    if kk in p: continue
+                    if kk in p:
+                        if spec_promote: p.access(kk)
+                        continue
                     p.access(kk); b -= 1; spec_started += 1
         out[name] = h / n
     if not spec_window: out['OPT'] = belady_hits(seq, cap, score) / n
@@ -159,5 +166,8 @@ if __name__ == '__main__':
     for cap in (6000, 7980, 9600, 12000, 16000):
         out, n = run(steps, cap, warm)
         print(f"cap {cap:6d} ({cap/82432*100:4.1f} % of experts): " + "  ".join(f"{k} {v*100:5.2f}" for k, v in out.items()))
-    out, n = run(steps, 7980, warm, spec_window=5)
-    print("cap 7980 with deployed speculation (kind 1, window 5), hit rate on real lookups: " + "  ".join(f"{k} {v*100:5.2f}" for k, v in out.items()))
+    for w in (5, 8):
+        for promote in (True, False):
+            out, n = run(steps, 7980, warm, spec_window=w, spec_promote=promote)
+            print(f"cap 7980 with deployed speculation (kind 1, window {w}, predicted hits {'promoted' if promote else 'left in place'}), hit rate on real lookups: "
+                  + "  ".join(f"{k} {v*100:5.2f}" for k, v in out.items()))

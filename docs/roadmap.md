@@ -94,14 +94,14 @@ Ranked by expected gain per hour. All bit-identical by construction.
 
 | # | change | expected | status |
 |---|---|---|---|
-| 1 | skip zero-record ids inside `mul_mat_vec_q` (about 9 dummy ids per layer at 28 us) and set SPLIT_LATE=16 | +5-6 % | agent Q |
-| 2 | bound the speculative reader's bytes in flight (own piece size, stop issuing on preempt) | +3-6 % (guess) | agent Q |
+| 1 | skip zero-record ids inside `mul_mat_vec_q` (about 9 dummy ids per layer at 28 us) and set SPLIT_LATE=16 | +5-6 % | done as patch 0009 (GLM-5.3 +4.8 %, in production). Q's K3 variant (op-param sentinel) measured 2.052 -> 2.094 tok/s (+2.0 %, gold, sync excess reads 0.16 -> 0) on 2026-10-29, not merged; `docs/experimental/q-audit-items.md` |
+| 2 | bound the speculative reader's bytes in flight (own piece size, stop issuing on preempt) | +3-6 % (guess) | built by Q (`PREFETCH_CHUNK_KIB`, `PREFETCH_PAUSE`), not measured: the Spark went to GLM-5.3 mid-window; parked in `docs/experimental/q-audit-items-on-c4efdca.patch`, needs a rebase onto the stack |
 | 3 | fused SiTU GLU op with the gate/up MUL_MAT_ID fusion (27 tiny kernels per layer) | +2-3 % | after Q |
 | 4 | remote tier: REMOTE_ROWS 3-4 and a shorter deadline now that the round trip is 0.66 ms | +1-2 % | pool agent, env only |
 | 5 | store v2 needs a per-entry file stride (5 offset sites), not only a header change; `max_sectors_kb` is already 512 | part of the aligned store | with step 2 |
 | 6 | fill and spec thread wake-ups on the critical path (condvar per layer) | +0.5-1 % | after Q |
-| 7 | io_uring SINGLE_ISSUER, DEFER_TASKRUN, COOP_TASKRUN | 0-1 % | agent Q |
-| 8 | predictions should not promote hits or earn second chances | +/-1 %, replay first | agent Q |
+| 7 | io_uring SINGLE_ISSUER, DEFER_TASKRUN, COOP_TASKRUN | 0-1 % | built by Q (`URING_DEFER=1`, Spark kernel 6.17 / liburing 2.5 qualify), not measured; parked with item 2 |
+| 8 | predictions should not promote hits or earn second chances | +/-1 %, replay first | replayed by Q (`tools/cachepolicy.py`): about 1 % fewer misses on both K3 traces, below A/B resolution; built (`PREFETCH_PROMOTE=0`), not measured; parked with item 2 |
 | 9 | byte strides in mmvq, drop the IQ2_XXS slot padding (+3 % cache) | +0.3 % | later |
 | 10 | k3cpu tail: re-execute a claimed-but-unfinished chunk; SO_BUSY_POLL | +1 % on the remote leg | pool agent |
 

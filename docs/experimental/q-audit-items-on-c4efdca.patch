@@ -1,0 +1,334 @@
+--- a/ggml/src/ggml-cuda/common.cuh
++++ b/ggml/src/ggml-cuda/common.cuh
+@@ -1591,8 +1591,14 @@
+     const void * shared_gate = nullptr;
+     float * shared_dst = nullptr;
+     uint32_t shared_stride_col_dst = 0;
++    // kimi-k3-spark: MUL_MAT_ID over a MoE bank whose channel `zero_channel` is a zero record (its rows are exactly
++    // +0.0f): the mmvq kernels write +0.0f for ids that select it and skip its weights. -1 = none.
++    int32_t zero_channel = -1;
+ };
+ 
++// kimi-k3-spark: op_params[GGML_CUDA_MMID_ZERO_CHANNEL_PARAM] of a MUL_MAT_ID's src0 = 1 + that zero channel (0 = none)
++#define GGML_CUDA_MMID_ZERO_CHANNEL_PARAM 8
++
+ struct ggml_cuda_kernel_launch_params {
+     dim3 block_nums;
+     dim3 block_dims;
+--- a/ggml/src/ggml-cuda/mmvq.cu
++++ b/ggml/src/ggml-cuda/mmvq.cu
+@@ -667,6 +667,20 @@
+     const uint32_t sample_x    = fastdiv(sample_dst, sample_ratio);
+     const uint32_t sample_y    = sample_dst;
+ 
++    if constexpr (ncols_dst == 1) {
++        // kimi-k3-spark: an id that selects the bank's zero record (the split expert GEMV's placeholder for an
++        // expert computed by the other lookup, or remotely): its rows are exactly +0.0f, which is what the dot
++        // products of a zero record give (fma(0, inner, +0) = +0), so write that and skip the weight reads.
++        // The whole block takes this branch (channel_x is per block), before any __syncthreads.
++        if (ids && !shared_expert && (int32_t) channel_x == fusion.zero_channel) {
++            if (threadIdx.y == 0 && threadIdx.x < rows_per_cuda_block &&
++                (rows_per_cuda_block == 1 || uint32_t(row0 + threadIdx.x) < stride_col_dst)) {
++                dst[sample_dst*stride_sample_dst + channel_dst*stride_channel_dst + row0 + threadIdx.x] = 0.0f;
++            }
++            return;
++        }
++    }
++
+     bool use_gate = false;
+     bool use_bias = false;
+     bool use_gate_bias = false;
+@@ -1168,6 +1182,14 @@
+     const uint32_t channel_x = shared_expert ? 0 : ids[channel_dst + token_idx * ids_stride];
+     const uint32_t channel_y = fastmodulo(channel_dst, nchannels_y);
+ 
++    if (!shared_expert && (int32_t) channel_x == fusion.zero_channel) {
++        // kimi-k3-spark: the bank's zero record, see mul_mat_vec_q (per warp here: one token per warp)
++        if (threadIdx.x < c_rows_per_block && (c_rows_per_block == 1 || uint32_t(row0 + threadIdx.x) < nrows_x)) {
++            dst[channel_dst*stride_channel_dst + token_idx*stride_col_dst + row0 + threadIdx.x] = 0.0f;
++        }
++        return;
++    }
++
+     const block_q8_1 * y = ((const block_q8_1 *) vy) + channel_y*stride_channel_y + token_idx*stride_col_y;
+     // channel offset of x applied to the pointer in 64 bits (see mul_mat_vec_q)
+     {
+@@ -1820,6 +1842,10 @@
+     float         *  dst_d =       (float         *)  dst->data;
+ 
+     ggml_cuda_mm_fusion_args_device fusion_local{};
++    if (ids) {
++        // kimi-k3-spark: a MoE bank marks its zero record's channel on the tensor (llama_moe_cache, split expert GEMV)
++        fusion_local.zero_channel = ggml_get_op_params_i32(src0, GGML_CUDA_MMID_ZERO_CHANNEL_PARAM) - 1;
++    }
+ 
+     if (fusion) {
+         const int cc = ggml_cuda_info().devices[ggml_cuda_get_device()].cc;
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -257,7 +257,9 @@
+     // returns false if the ids select more distinct experts than there are slots
+     // promote = false (prefill): hits keep their place and the misses go to the head, so a long prompt that touches
+     // every expert of a layer does not evict the working set of the generation that follows (scan resistance)
+-    bool plan(int32_t il, const int32_t * ids, size_t n_ids, std::vector<fill> & fills, size_t & n_hit, bool promote = true) {
++    // touch_hits = false (a prediction with LLAMA_EXPERT_STORE_PREFETCH_PROMOTE=0): the hits keep their place and
++    // their second-chance counts, only the misses take slots; a guess is not a use
++    bool plan(int32_t il, const int32_t * ids, size_t n_ids, std::vector<fill> & fills, size_t & n_hit, bool promote = true, bool touch_hits = true) {
+         fills.clear();
+         n_hit = 0;
+         // scan resistance only once the cache is full: while it fills, a prefill fill is as good as any other
+@@ -284,7 +286,7 @@
+         // hits go to the tail first, so the head can be evicted below
+         for (int32_t e : uniq) {
+             if (slots[e] >= 0) {
+-                if (!scan) {
++                if (!scan && touch_hits) {
+                     touch(slots[e]);
+                     if (chance[slots[e]] < chance_max) {
+                         chance[slots[e]]++;
+@@ -300,14 +302,16 @@
+                 continue;
+             }
+             int32_t s = head;
+-            if (scan || busy != nullptr || skip_layer >= 0 || chance_max > 0) {
+-                // the hits of this layer were not moved to the tail (scan): the victim search must step over them, or a
+-                // miss would evict a hit of the same batch and the lookup would read -1 for it; likewise over the
+-                // slots the speculative reader is filling, and over the layer the GPU computes during a lookahead.
++            const bool keep_hits = scan || !touch_hits;
++            if (keep_hits || busy != nullptr || skip_layer >= 0 || chance_max > 0) {
++                // the hits of this layer were not moved to the tail (scan, untouched prediction hits): the victim
++                // search must step over them, or a miss would evict a hit of the same batch and the lookup would read
++                // -1 for it; likewise over the slots the speculative reader is filling, and over the layer the GPU
++                // computes during a lookahead.
+                 // A resident expert with a second chance left spends it (count--, slot to the tail) and the search
+                 // goes on from the slot after it; the counts only fall, so the search ends at a slot with none.
+                 while (s >= 0) {
+-                    if ((scan && key_of[s] >= 0 && key_of[s] / n_expert == il && seen[key_of[s] % n_expert] == seen_gen) ||
++                    if ((keep_hits && key_of[s] >= 0 && key_of[s] / n_expert == il && seen[key_of[s] % n_expert] == seen_gen) ||
+                         (busy != nullptr && busy[s].load(std::memory_order_acquire) != 0) ||
+                         (skip_layer >= 0 && key_of[s] >= 0 && key_of[s] / n_expert == skip_layer)) {
+                         s = next[s];
+@@ -445,6 +449,28 @@
+     }
+ };
+ 
++#if defined(LLAMA_HAVE_LIBURING)
++// LLAMA_EXPERT_STORE_URING_DEFER=1: every ring of the store (the pool's thread-local rings, the speculative reader's)
++// is set up with IORING_SETUP_SINGLE_ISSUER | IORING_SETUP_DEFER_TASKRUN | IORING_SETUP_COOP_TASKRUN. Each ring is
++// created, submitted to and reaped by one thread only, which is what the flags require; a completion then no longer
++// interrupts that thread with task work, the completions are posted in a batch when it enters the ring to wait.
++// Needs a 6.1+ kernel; an init that fails with the flags falls back to none (logged once).
++static unsigned store_uring_setup_flags = 0;
++static std::atomic<bool> store_uring_flags_warned{false};
++static int store_uring_init(unsigned entries, io_uring * ring) {
++    if (store_uring_setup_flags != 0) {
++        const int res = io_uring_queue_init(entries, ring, store_uring_setup_flags);
++        if (res == 0) {
++            return 0;
++        }
++        if (!store_uring_flags_warned.exchange(true)) {
++            LLAMA_LOG_WARN("%s: expert store: io_uring setup with flags 0x%x failed (%s), rings without them\n", __func__, store_uring_setup_flags, strerror(-res));
++        }
++    }
++    return io_uring_queue_init(entries, ring, 0);
++}
++#endif
++
+ // a few threads issuing O_DIRECT preads, enough in flight to keep the NVMe queue full
+ struct io_pool {
+     struct job {
+@@ -651,7 +677,7 @@
+         io_uring ring;
+         bool     ok = false;
+ 
+-        uring_reader() { ok = io_uring_queue_init(depth, &ring, 0) == 0; }
++        uring_reader() { ok = store_uring_init(depth, &ring) == 0; }
+         ~uring_reader() {
+             if (ok) {
+                 io_uring_queue_exit(&ring);
+@@ -1230,8 +1256,9 @@
+         std::atomic<int8_t> * state; // 0 none or done, 1 queued, 2 in flight
+     };
+ 
+-    // the ring is created by the reader thread itself (like the pool's thread-local rings), not by the caller
+-    spec_reader(int fd, size_t piece, unsigned depth, bool uring) : fd(fd), piece(piece ? piece : (size_t) 1 << 20), depth(std::max(1u, depth)), uring(uring) {
++    // the ring is created by the reader thread itself (like the pool's thread-local rings), not by the caller.
++    // pause: a preempt also stops the pieces of the record being read (resumed by the next enqueue or by resume())
++    spec_reader(int fd, size_t piece, unsigned depth, bool uring, bool pause) : fd(fd), piece(piece ? piece : (size_t) 1 << 20), depth(std::max(1u, depth)), uring(uring), pause(pause) {
+         thread = std::thread([this] { main(); });
+         std::unique_lock<std::mutex> lock(mutex);
+         cv.wait(lock, [&] { return started; });
+@@ -1276,6 +1303,15 @@
+         }
+     }
+ 
++    // let a paused record go on (a fill is about to wait for it); nothing new is started: the queue was taken
++    void resume() {
++        {
++            std::lock_guard<std::mutex> lock(mutex);
++            preempt = false;
++        }
++        cv.notify_one();
++    }
++
+     bool ok = false;
+     std::atomic<uint64_t> n_done{0};
+ 
+@@ -1347,7 +1383,7 @@
+             std::lock_guard<std::mutex> lock(mutex);
+             if (uring) {
+ #if defined(LLAMA_HAVE_LIBURING)
+-                ok = io_uring_queue_init(std::max(8u, depth), &ring, 0) == 0;
++                ok = store_uring_init(std::max(8u, depth), &ring) == 0;
+ #else
+                 ok = false;
+ #endif
+@@ -1427,6 +1463,10 @@
+                         if (cur < 0) {
+                             break;
+                         }
++                    } else if (pause && preempt.load(std::memory_order_acquire)) {
++                        // LLAMA_EXPERT_STORE_PREFETCH_PAUSE: a real fill is at the drive, the rest of this record
++                        // waits for the next post (enqueue) or for a fill that needs it (resume)
++                        break;
+                     }
+                     active_t & a = act[cur];
+                     p = free_pieces.back();
+@@ -1461,8 +1501,9 @@
+                 if (stopping) {
+                     return;
+                 }
++                const bool paused = cur >= 0 && act[cur].next_off < act[cur].r.len; // a record stopped by a preempt (pause)
+                 std::unique_lock<std::mutex> lock(mutex);
+-                cv.wait(lock, [&] { return stop || (!queue.empty() && !preempt); });
++                cv.wait(lock, [&] { return stop || (!preempt && (!queue.empty() || paused)); });
+                 if (stop) {
+                     return;
+                 }
+@@ -1534,6 +1575,7 @@
+     size_t   piece;
+     unsigned depth;
+     bool     uring;
++    bool     pause;
+     bool     warned_zero = false;
+ #if defined(LLAMA_HAVE_LIBURING)
+     io_uring ring;
+@@ -1542,7 +1584,7 @@
+     std::mutex  mutex;
+     std::condition_variable cv;
+     std::deque<rec> queue;
+-    bool preempt = false;
++    std::atomic<bool> preempt{false}; // written under the mutex, read by the reader's submit loop without it
+     bool stop    = false;
+     bool started = false;
+     // thread backend
+@@ -1936,7 +1978,10 @@
+     std::unique_ptr<spec_reader> spec;
+     std::vector<spec_reader::rec> spec_recs;
+     bool     spec_uring  = true;     // LLAMA_EXPERT_STORE_PREFETCH_URING (default: as the pool): one ring, else `depth` pread threads
+-    unsigned spec_depth  = 8;        // LLAMA_EXPERT_STORE_PREFETCH_DEPTH: pieces (of the pool's chunk) in flight at most
++    unsigned spec_depth  = 8;        // LLAMA_EXPERT_STORE_PREFETCH_DEPTH: pieces in flight at most
++    size_t   spec_chunk  = 0;        // LLAMA_EXPERT_STORE_PREFETCH_CHUNK_KIB: the reader's piece (default: the pool's chunk)
++    bool     spec_pause  = false;    // LLAMA_EXPERT_STORE_PREFETCH_PAUSE=1: a real fill also stops the pieces of the record being read
++    bool     spec_promote = true;    // LLAMA_EXPERT_STORE_PREFETCH_PROMOTE=0: a prediction's hits keep their place and their counts
+     int      spec_max    = 16;       // LLAMA_EXPERT_STORE_PREFETCH_MAX: predicted misses read per post at most
+     bool     spec_demote = false;    // LLAMA_EXPERT_STORE_PREFETCH_DEMOTE=1: predictions the real fill did not use go to the eviction end
+     int      prefetch_input = 0;     // LLAMA_EXPERT_STORE_PREFETCH_INPUT: what the next layer's router is applied to (see build_moe_cache_prefetch)
+@@ -1958,6 +2003,8 @@
+     std::unordered_map<const ggml_tensor *, int32_t> map_kind; // early/late/merge map -> 1/2/3 (slot maps are absent)
+     int32_t  split_il  = -1;         // layer of the early lookup whose reads are in flight (-1: none)
+     int      split_late_max = 8;     // LLAMA_EXPERT_STORE_SPLIT_LATE: rows of the late matmul; more misses than this make the early lookup wait
++    bool     split_skip_zero = true; // LLAMA_EXPERT_STORE_SPLIT_SKIP_ZERO (default 1): the GPU kernels skip the zero record's ids
++    static constexpr int MMID_ZERO_CHANNEL_PARAM = 8; // = GGML_CUDA_MMID_ZERO_CHANNEL_PARAM (ggml-cuda/common.cuh): op_params index on src0
+     std::vector<int32_t> split_ids;  // the selected experts of the early lookup, in position order
+     ggml_tensor * split_iota = nullptr; // I32 [1, n_expert_used] = 0, 1, ...: the ids of the late and merge lookups (position-indexed maps)
+     uint64_t n_split_calls = 0, n_split_fallback = 0, n_split_sync = 0, n_split_sync_records = 0, n_split_early_hits = 0, n_split_late = 0, t_split_plan_us = 0, t_split_wait_us = 0;
+@@ -2669,6 +2716,15 @@
+ #if defined(LLAMA_HAVE_LIBURING)
+             // LLAMA_EXPERT_STORE_URING=0: read with the threads as before
+             pool->use_uring = getenv("LLAMA_EXPERT_STORE_URING") == nullptr || atoi(getenv("LLAMA_EXPERT_STORE_URING")) != 0;
++            // LLAMA_EXPERT_STORE_URING_DEFER=1: single-issuer rings with deferred, cooperative task work
++            if (getenv("LLAMA_EXPERT_STORE_URING_DEFER") != nullptr && atoi(getenv("LLAMA_EXPERT_STORE_URING_DEFER")) != 0) {
++#if defined(IORING_SETUP_SINGLE_ISSUER) && defined(IORING_SETUP_DEFER_TASKRUN) && defined(IORING_SETUP_COOP_TASKRUN)
++                store_uring_setup_flags = IORING_SETUP_SINGLE_ISSUER | IORING_SETUP_DEFER_TASKRUN | IORING_SETUP_COOP_TASKRUN;
++                LLAMA_LOG_INFO("%s: expert store: io_uring rings with SINGLE_ISSUER | DEFER_TASKRUN | COOP_TASKRUN\n", __func__);
++#else
++                LLAMA_LOG_WARN("%s: expert store: LLAMA_EXPERT_STORE_URING_DEFER: this liburing has no DEFER_TASKRUN, ignored\n", __func__);
++#endif
++            }
+ #endif
+             const char * env_hbm = getenv("LLAMA_EXPERT_STORE_HBM_MIB");
+             hbm_size = env_hbm != nullptr ? (size_t) std::max(0, atoi(env_hbm))*1024*1024 : 0;
+@@ -3372,7 +3428,21 @@
+                 }
+                 if (split) {
+                     filler.start_thread(pool.get());
+-                    LLAMA_LOG_INFO("%s: expert store: split expert GEMV on (the resident experts' matmuls run while a layer's misses are read; the late matmul has %d rows; the zero record is slot %d of each group)\n", __func__, split_late_max, groups[0].n_slots);
++                    // LLAMA_EXPERT_STORE_SPLIT_SKIP_ZERO (default 1): mark the zero record's channel on the split bank
++                    // views, so the CUDA mmvq kernels write +0.0f for the ids that select it instead of streaming
++                    // 6.6 MB of zeros from host memory per dummy id (the early matmul has one per miss plus the
++                    // scratch id, the late one per free row; ~28 us each). The rows are +0.0f either way.
++                    const char * env_skip = getenv("LLAMA_EXPERT_STORE_SPLIT_SKIP_ZERO");
++                    split_skip_zero = env_skip == nullptr || atoi(env_skip) != 0;
++                    if (split_skip_zero) {
++                        for (auto & b : bindings) {
++                            if (b.second.cached_split != nullptr) {
++                                b.second.cached_split->op_params[MMID_ZERO_CHANNEL_PARAM] = groups[layers[b.second.il].ig].n_slots + 1;
++                            }
++                        }
++                    }
++                    LLAMA_LOG_INFO("%s: expert store: split expert GEMV on (the resident experts' matmuls run while a layer's misses are read; the late matmul has %d rows; the zero record is slot %d of each group, %s)\n", __func__,
++                        split_late_max, groups[0].n_slots, split_skip_zero ? "its ids are skipped by the GPU kernels" : "its rows are computed by the GPU kernels");
+                 }
+                 LLAMA_LOG_INFO("%s: expert store: slot maps registered with the GPU, the lookups run there and the fills in its host hook (LLAMA_EXPERT_STORE_GPU_SLOTS=0 for the CPU split)\n", __func__);
+             } else if (getenv("LLAMA_EXPERT_STORE_SELF_PREFETCH") != nullptr && getenv("LLAMA_EXPERT_STORE_SELF_PREFETCH")[0] == '1') {
+@@ -3401,7 +3471,15 @@
+ #if !defined(LLAMA_HAVE_LIBURING)
+                 spec_uring = false;
+ #endif
+-                spec = std::make_unique<spec_reader>(store.fd, pool_chunk, spec_depth, spec_uring);
++                // the reader's piece: what is queued at the drive when a real fill lands is depth x piece bytes
++                spec_chunk = pool_chunk;
++                if (getenv("LLAMA_EXPERT_STORE_PREFETCH_CHUNK_KIB") != nullptr) {
++                    spec_chunk = (size_t) std::max(0, atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_CHUNK_KIB")))*1024;
++                    spec_chunk -= spec_chunk % 4096;
++                }
++                spec_pause   = getenv("LLAMA_EXPERT_STORE_PREFETCH_PAUSE") != nullptr && atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_PAUSE")) != 0;
++                spec_promote = getenv("LLAMA_EXPERT_STORE_PREFETCH_PROMOTE") == nullptr || atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_PROMOTE")) != 0;
++                spec = std::make_unique<spec_reader>(store.fd, spec_chunk, spec_depth, spec_uring, spec_pause);
+                 if (!spec->ok) {
+                     spec.reset();
+                 }
+@@ -3415,9 +3493,10 @@
+                             g.lru.busy = g.spec_state.get();
+                         }
+                     }
+-                    LLAMA_LOG_INFO("%s: expert store: predictive prefetch on (the next layer's predicted misses are read by a side reader, %u pieces of %zu KiB in flight at most through %s, %d records per post at most, unused predictions %s, router input %d, posted by the %s)\n", __func__,
+-                        spec_depth, pool_chunk/1024, spec_uring ? "one io_uring ring" : "pread threads", spec_max, spec_demote ? "demoted" : "kept", prefetch_input,
+-                        slots_on_gpu ? "GPU's host hook" : "CPU graph hook");
++                    LLAMA_LOG_INFO("%s: expert store: predictive prefetch on (the next layer's predicted misses are read by a side reader, %u pieces of %zu KiB in flight at most through %s, %d records per post at most, unused predictions %s, router input %d, posted by the %s, a real fill %s, predicted hits %s)\n", __func__,
++                        spec_depth, spec_chunk/1024, spec_uring ? "one io_uring ring" : "pread threads", spec_max, spec_demote ? "demoted" : "kept", prefetch_input,
++                        slots_on_gpu ? "GPU's host hook" : "CPU graph hook", spec_pause ? "pauses the record being read" : "lets the record being read finish",
++                        spec_promote ? "promoted" : "left in place");
+                 } else {
+                     prefetch = false;
+                     LLAMA_LOG_WARN("%s: expert store: predictive prefetch: the speculative reader could not start, off\n", __func__);
+@@ -4421,6 +4500,9 @@
+             if (!waited) {
+                 waited = true;
+                 t0 = std::chrono::steady_clock::now();
++                // the record may be paused by this fill's own preempt (LLAMA_EXPERT_STORE_PREFETCH_PAUSE): let it go
++                // on, or the wait below never ends. Nothing new starts: the queue was taken by spec_reclaim.
++                spec->resume();
+             }
+             n_spec_adopted++;
+             while (st.load(std::memory_order_acquire) != 0) {
+@@ -4461,7 +4543,7 @@
+             n_ids = remote_pf.size();
+         }
+         size_t n_hit = 0;
+-        if (!g.lru.plan(il, ids_data, n_ids, fills, n_hit, true)) {
++        if (!g.lru.plan(il, ids_data, n_ids, fills, n_hit, true, spec_promote)) {
+             return;
+         }
+         n_prefetch_calls++;
