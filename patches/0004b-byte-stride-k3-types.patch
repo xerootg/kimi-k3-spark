@@ -1,0 +1,31 @@
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -2894,13 +2894,12 @@
+                 // Opt in until CUDA compilation and decode hash validation have passed on the target.
+                 const char * env_byte = getenv("LLAMA_EXPERT_STORE_BYTE_STRIDE");
+                 const char * env_gpu = getenv("LLAMA_EXPERT_STORE_GPU");
+-                const char * env_slots = getenv("LLAMA_EXPERT_STORE_GPU_SLOTS");
+                 const bool byte_requested = env_byte != nullptr && env_byte[0] == '1';
+                 g.byte_stride = byte_requested && gpu_reg != nullptr &&
+-                    !(env_gpu != nullptr && env_gpu[0] == '0') && !(env_slots != nullptr && env_slots[0] == '0') &&
++                    !(env_gpu != nullptr && env_gpu[0] == '0') &&
+                     ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_host_bank_buffer_from_ptr") != nullptr &&
+                     ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_set_host_bank_hook") != nullptr;
+-                std::string byte_reason = !byte_requested ? "disabled" : !g.byte_stride ? "needs CUDA GPU slots and host-bank hooks" : "aligned CUDA loads";
++                std::string byte_reason = !byte_requested ? "disabled" : !g.byte_stride ? "needs CUDA host-bank hooks" : "aligned CUDA loads";
+                 std::string byte_parts;
+                 std::string byte_layers;
+                 for (int32_t il : g.layers) {
+@@ -3494,9 +3493,8 @@
+                 throw std::runtime_error("expert store: the CPU backend has no graph hook (ggml-cpu is missing patch 0003)");
+             }
+             set_hook(&impl::graph_hook, this);
+-            if (!slots_on_gpu && std::any_of(groups.begin(), groups.end(), [](const group & g) { return g.byte_stride; })) {
+-                throw std::runtime_error("expert store: byte stride requires GPU slot maps; retry with LLAMA_EXPERT_STORE_BYTE_STRIDE=0");
+-            }
++            // CPU GET_ROWS reads I32 slot IDs only; CUDA still reads registered
++            // banks using byte strides. Host-bank registration failure stays fatal.
+             if (slots_on_gpu) {
+                 auto * set_cuda_hook2 = (void (*)(cuda_host_bank_hook_t, void *)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_set_host_bank_hook");
+                 set_cuda_hook2(&impl::cuda_hook, this);
