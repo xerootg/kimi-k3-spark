@@ -1,0 +1,6 @@
+0.47.624.083 I expert store: THP bank huge backing=82480988160/82480988160 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=82480988160 bytes (before cudaHostRegister)
+0.50.701.792 I expert store: THP bank huge backing=1560281088/1560281088 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=1560281088 bytes (before cudaHostRegister)
+0.52.726.751 I expert store: THP bank huge backing=4018143232/4022337536 bytes (99.90%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=-1 errno=11; AnonHugePages delta=4018143232 bytes (before cudaHostRegister)
+2.20.438.021 I fill_late: expert store: memory valve: host MemAvailable 6.70 GB (lowest 6.69, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.30.704.024 I fill_late: expert store: memory valve: host MemAvailable 6.68 GB (lowest 6.68, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.42.405.905 I fill_late: expert store: memory valve: host MemAvailable 6.68 GB (lowest 6.67, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
