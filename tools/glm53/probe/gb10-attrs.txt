@@ -1,0 +1,14 @@
+GB10 (Spark), 2026-10-30, driver/runtime 13000, kernel 6.17.0-1018-nvidia, THP mode madvise, page size 4096:
+PageableMemoryAccess=1
+PageableMemoryAccessUsesHostPageTables=1
+HostNativeAtomicSupported=1
+Integrated=1
+CanMapHostMemory=1
+ConcurrentManagedAccess=1
+DirectManagedMemAccessFromHost=0
+HostRegisterSupported=1
+HostRegisterReadOnlySupported=0
+Meaning for the expert store: the GPU reads registered host memory through the host page tables, so cudaHostRegister
+does not pin physical pages; the valve's MADV_DONTNEED drops and refills, and THP collapse of a registered bank, are
+coherent with GPU access (patches 0024/0026 rely on this); system-scope atomics on mapped host memory are supported
+(patch 0020's ready flags rely on this).
