@@ -1,0 +1,154 @@
+build20=0
+LW0 LW=0 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+LW0 r1 5.36 tok/s md5 9449ae5738
+LW0 r2 5.381 tok/s md5 9449ae5738
+1.29.280.588 I fill_late: expert store: 35483 lookups, hit rate 92.0%, 34.9 GB read for decode, 0.0 GB for prefill
+1.29.280.600 I host bank c_real issued: early_records=1912 real_hook_records=924 (demand records, excludes speculative reads)
+1.29.280.604 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.39.295.289 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.5 GB read for decode, 0.0 GB for prefill
+1.39.295.297 I host bank c_real issued: early_records=3995 real_hook_records=924 (demand records, excludes speculative reads)
+1.39.295.302 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.51.330.384 I fill_late: expert store: 103733 lookups, hit rate 91.6%, 106.8 GB read for decode, 0.0 GB for prefill
+1.51.330.392 I host bank c_real issued: early_records=6344 real_hook_records=2345 (demand records, excludes speculative reads)
+1.51.330.396 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.00.943.581 I fill_late: expert store: 136501 lookups, hit rate 92.4%, 128.2 GB read for decode, 0.0 GB for prefill
+2.00.943.589 I host bank c_real issued: early_records=8081 real_hook_records=2345 (demand records, excludes speculative reads)
+2.00.943.593 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.31 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.13.365.377 I fill_late: expert store: 171983 lookups, hit rate 91.6%, 178.7 GB read for decode, 0.0 GB for prefill
+2.13.365.385 I host bank c_real issued: early_records=10759 real_hook_records=3771 (demand records, excludes speculative reads)
+2.13.365.388 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.22.967.461 I fill_late: expert store: 204751 lookups, hit rate 92.1%, 200.0 GB read for decode, 0.0 GB for prefill
+2.22.967.468 I host bank c_real issued: early_records=12490 real_hook_records=3771 (demand records, excludes speculative reads)
+2.22.967.472 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.33.395.980 I fill_late: expert store: 237519 lookups, hit rate 92.1%, 229.6 GB read for decode, 0.0 GB for prefill
+2.33.395.989 I host bank c_real issued: early_records=14888 real_hook_records=3771 (demand records, excludes speculative reads)
+2.33.395.993 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.34.082.686 I llama_moe_cache: ubatch <= 8: hits = 214214, misses = 15011, hit rate = 93.45%, uploaded = 176435.25 MiB
+2.34.082.691 I llama_moe_cache: ubatch  > 8: hits = 6147, misses = 3771, hit rate = 61.98%, uploaded = 44017.97 MiB
+2.34.082.767 I host bank c_real issued: early_records=15011 real_hook_records=3771 (demand records, excludes speculative reads)
+2.34.082.771 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at th
+2.34.320.996 I host bank hooks: early=28579/38.853ms real=28875/20159.516ms post=28268/328.807ms idle_sleeps=269590 lean=1
+2.34.322.310 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14419 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.34.322.313 I host bank real bucket: a_ready_latency=14382/19619.555ms
+2.34.322.314 I host bank real bucket: b_early_read=10298/14083.473ms
+2.34.322.314 I host bank real bucket: b_predict_read=6677/2049.553ms
+2.34.322.315 I host bank real bucket: c_real_read=222/3478.591ms
+2.34.322.316 I host bank real bucket: d_lock=28863/0.900ms
+2.34.322.316 I host bank real bucket: e_other=28875/544.370ms
+2.34.322.320 I host bank real histogram: ready_p50/p90/p99=0.000/1.910/5.450ms abc_p50/p90/p99=0.000/3.820/10.890ms (a overlaps b+c; overflow is lower bound)
+LW0 MemAvailable 121148 MiB
+LW1 LW=1 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+LW1 r1 5.006 tok/s md5 9449ae5738
+LW1 r2 5.004 tok/s md5 9449ae5738
+1.29.187.169 I fill_late: expert store: 35483 lookups, hit rate 92.3%, 33.5 GB read for decode, 0.0 GB for prefill
+1.29.187.182 I host bank c_real issued: early_records=1803 real_hook_records=924 (demand records, excludes speculative reads)
+1.29.187.185 I fill_late: expert store: split GEMV: 3948 early lookups, 7.0 of 8 experts complete at the early lookup, 1.04 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.39.992.624 I fill_late: expert store: 68251 lookups, hit rate 93.1%, 58.2 GB read for decode, 0.0 GB for prefill
+1.39.992.634 I host bank c_real issued: early_records=3802 real_hook_records=924 (demand records, excludes speculative reads)
+1.39.992.638 I fill_late: expert store: split GEMV: 8044 early lookups, 7.0 of 8 experts complete at the early lookup, 1.04 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.52.698.160 I fill_late: expert store: 103733 lookups, hit rate 91.9%, 102.9 GB read for decode, 0.0 GB for prefill
+1.52.698.167 I host bank c_real issued: early_records=6013 real_hook_records=2357 (demand records, excludes speculative reads)
+1.52.698.171 I fill_late: expert store: split GEMV: 12066 early lookups, 6.9 of 8 experts complete at the early lookup, 1.10 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.03.202.724 I fill_late: expert store: 136501 lookups, hit rate 92.7%, 123.3 GB read for decode, 0.0 GB for prefill
+2.03.202.732 I host bank c_real issued: early_records=7665 real_hook_records=2357 (demand records, excludes speculative reads)
+2.03.202.740 I fill_late: expert store: split GEMV: 16162 early lookups, 7.0 of 8 experts complete at the early lookup, 1.05 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.16.158.181 I fill_late: expert store: 171983 lookups, hit rate 91.9%, 172.0 GB read for decode, 0.0 GB for prefill
+2.16.158.189 I host bank c_real issued: early_records=10185 real_hook_records=3796 (demand records, excludes speculative reads)
+2.16.158.193 I fill_late: expert store: split GEMV: 20184 early lookups, 6.9 of 8 experts complete at the early lookup, 1.10 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.26.656.461 I fill_late: expert store: 204751 lookups, hit rate 92.4%, 192.6 GB read for decode, 0.0 GB for prefill
+2.26.656.470 I host bank c_real issued: early_records=11859 real_hook_records=3796 (demand records, excludes speculative reads)
+2.26.656.474 I fill_late: expert store: split GEMV: 24280 early lookups, 6.9 of 8 experts complete at the early lookup, 1.07 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.37.782.849 I fill_late: expert store: 237519 lookups, hit rate 92.4%, 220.8 GB read for decode, 0.0 GB for prefill
+2.37.782.857 I host bank c_real issued: early_records=14144 real_hook_records=3796 (demand records, excludes speculative reads)
+2.37.782.862 I fill_late: expert store: split GEMV: 28376 early lookups, 6.9 of 8 experts complete at the early lookup, 1.08 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.38.488.506 I llama_moe_cache: ubatch <= 8: hits = 214975, misses = 14250, hit rate = 93.78%, uploaded = 167551.41 MiB
+2.38.488.511 I llama_moe_cache: ubatch  > 8: hits = 6122, misses = 3796, hit rate = 61.73%, uploaded = 44310.28 MiB
+2.38.488.579 I host bank c_real issued: early_records=14250 real_hook_records=3796 (demand records, excludes speculative reads)
+2.38.488.583 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.9 of 8 experts complete at the early lookup, 1.09 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at th
+2.38.538.368 I host bank hooks: early=28579/43.751ms real=28875/4096.949ms post=28268/330.506ms idle_sleeps=532888 lean=1
+2.38.539.780 I host bank real readiness: calls=28875 split=28579 resident_entry_split=17577 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.38.539.782 I host bank real bucket: a_ready_latency=11224/3516.014ms
+2.38.539.783 I host bank real bucket: b_early_read=0/0.000ms
+2.38.539.783 I host bank real bucket: b_predict_read=0/0.000ms
+2.38.539.783 I host bank real bucket: c_real_read=222/3509.885ms
+2.38.539.784 I host bank real bucket: d_lock=28857/0.908ms
+2.38.539.785 I host bank real bucket: e_other=28875/584.229ms
+2.38.539.786 I host bank real histogram: ready_p50/p90/p99=0.000/0.010/0.010ms abc_p50/p90/p99=0.000/0.010/0.010ms (a overlaps b+c; overflow is lower bound)
+LW1 MemAvailable 121148 MiB
+LW0b LW=0 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+LW0b r1 5.369 tok/s md5 9449ae5738
+LW0b r2 5.278 tok/s md5 9449ae5738
+1.25.404.406 I fill_late: expert store: 35483 lookups, hit rate 91.9%, 35.1 GB read for decode, 0.0 GB for prefill
+1.25.404.418 I host bank c_real issued: early_records=1937 real_hook_records=924 (demand records, excludes speculative reads)
+1.25.404.422 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.35.421.587 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.9 GB read for decode, 0.0 GB for prefill
+1.35.421.595 I host bank c_real issued: early_records=4020 real_hook_records=924 (demand records, excludes speculative reads)
+1.35.421.598 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.47.448.367 I fill_late: expert store: 103733 lookups, hit rate 91.6%, 107.3 GB read for decode, 0.0 GB for prefill
+1.47.448.375 I host bank c_real issued: early_records=6374 real_hook_records=2349 (demand records, excludes speculative reads)
+1.47.448.378 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+1.57.052.783 I fill_late: expert store: 136501 lookups, hit rate 92.3%, 128.7 GB read for decode, 0.0 GB for prefill
+1.57.052.791 I host bank c_real issued: early_records=8108 real_hook_records=2349 (demand records, excludes speculative reads)
+1.57.052.798 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.31 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.09.529.249 I fill_late: expert store: 171983 lookups, hit rate 91.5%, 179.3 GB read for decode, 0.0 GB for prefill
+2.09.529.258 I host bank c_real issued: early_records=10802 real_hook_records=3773 (demand records, excludes speculative reads)
+2.09.529.262 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.19.351.021 I fill_late: expert store: 204751 lookups, hit rate 92.0%, 201.1 GB read for decode, 0.0 GB for prefill
+2.19.351.028 I host bank c_real issued: early_records=12572 real_hook_records=3773 (demand records, excludes speculative reads)
+2.19.351.032 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.29.984.453 I fill_late: expert store: 237519 lookups, hit rate 92.1%, 231.4 GB read for decode, 0.0 GB for prefill
+2.29.984.460 I host bank c_real issued: early_records=15030 real_hook_records=3773 (demand records, excludes speculative reads)
+2.29.984.464 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.30.645.161 I llama_moe_cache: ubatch <= 8: hits = 214076, misses = 15149, hit rate = 93.39%, uploaded = 178095.47 MiB
+2.30.645.165 I llama_moe_cache: ubatch  > 8: hits = 6145, misses = 3773, hit rate = 61.96%, uploaded = 44041.03 MiB
+2.30.645.231 I host bank c_real issued: early_records=15149 real_hook_records=3773 (demand records, excludes speculative reads)
+2.30.645.235 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at th
+2.30.875.142 I host bank hooks: early=28579/38.868ms real=28875/20830.408ms post=28268/325.092ms idle_sleeps=254024 lean=1
+2.30.876.229 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14337 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.30.876.234 I host bank real bucket: a_ready_latency=14464/20153.613ms
+2.30.876.234 I host bank real bucket: b_early_read=10336/14424.339ms
+2.30.876.235 I host bank real bucket: b_predict_read=6729/2204.442ms
+2.30.876.235 I host bank real bucket: c_real_read=222/3517.121ms
+2.30.876.236 I host bank real bucket: d_lock=28861/0.928ms
+2.30.876.236 I host bank real bucket: e_other=28875/681.409ms
+2.30.876.239 I host bank real histogram: ready_p50/p90/p99=0.010/2.020/5.460ms abc_p50/p90/p99=0.010/4.030/10.910ms (a overlaps b+c; overflow is lower bound)
+LW0b MemAvailable 121174 MiB
+LW1b LW=1 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+LW1b r1 4.864 tok/s md5 9449ae5738
+LW1b r2 4.857 tok/s md5 9449ae5738
+1.29.530.112 I fill_late: expert store: 35483 lookups, hit rate 92.3%, 33.6 GB read for decode, 0.0 GB for prefill
+1.29.530.124 I host bank c_real issued: early_records=1813 real_hook_records=924 (demand records, excludes speculative reads)
+1.29.530.128 I fill_late: expert store: split GEMV: 3948 early lookups, 7.0 of 8 experts complete at the early lookup, 1.04 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.40.672.860 I fill_late: expert store: 68251 lookups, hit rate 93.1%, 58.2 GB read for decode, 0.0 GB for prefill
+1.40.672.870 I host bank c_real issued: early_records=3809 real_hook_records=924 (demand records, excludes speculative reads)
+1.40.672.875 I fill_late: expert store: split GEMV: 8044 early lookups, 7.0 of 8 experts complete at the early lookup, 1.04 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.53.656.910 I fill_late: expert store: 103733 lookups, hit rate 91.9%, 103.0 GB read for decode, 0.0 GB for prefill
+1.53.656.919 I host bank c_real issued: early_records=6021 real_hook_records=2355 (demand records, excludes speculative reads)
+1.53.656.923 I fill_late: expert store: split GEMV: 12066 early lookups, 6.9 of 8 experts complete at the early lookup, 1.10 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.04.491.006 I fill_late: expert store: 136501 lookups, hit rate 92.6%, 123.4 GB read for decode, 0.0 GB for prefill
+2.04.491.015 I host bank c_real issued: early_records=7678 real_hook_records=2355 (demand records, excludes speculative reads)
+2.04.491.019 I fill_late: expert store: split GEMV: 16162 early lookups, 6.9 of 8 experts complete at the early lookup, 1.05 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.17.754.417 I fill_late: expert store: 171983 lookups, hit rate 91.9%, 172.1 GB read for decode, 0.0 GB for prefill
+2.17.754.425 I host bank c_real issued: early_records=10200 real_hook_records=3790 (demand records, excludes speculative reads)
+2.17.754.428 I fill_late: expert store: split GEMV: 20184 early lookups, 6.9 of 8 experts complete at the early lookup, 1.10 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.28.591.871 I fill_late: expert store: 204751 lookups, hit rate 92.4%, 192.3 GB read for decode, 0.0 GB for prefill
+2.28.591.879 I host bank c_real issued: early_records=11839 real_hook_records=3790 (demand records, excludes speculative reads)
+2.28.591.882 I fill_late: expert store: split GEMV: 24280 early lookups, 6.9 of 8 experts complete at the early lookup, 1.07 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.40.047.237 I fill_late: expert store: 237519 lookups, hit rate 92.5%, 220.2 GB read for decode, 0.0 GB for prefill
+2.40.047.246 I host bank c_real issued: early_records=14103 real_hook_records=3790 (demand records, excludes speculative reads)
+2.40.047.251 I fill_late: expert store: split GEMV: 28376 early lookups, 6.9 of 8 experts complete at the early lookup, 1.09 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.40.773.095 I llama_moe_cache: ubatch <= 8: hits = 215012, misses = 14213, hit rate = 93.80%, uploaded = 167085.75 MiB
+2.40.773.099 I llama_moe_cache: ubatch  > 8: hits = 6128, misses = 3790, hit rate = 61.79%, uploaded = 44241.09 MiB
+2.40.773.171 I host bank c_real issued: early_records=14213 real_hook_records=3790 (demand records, excludes speculative reads)
+2.40.773.175 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.9 of 8 experts complete at the early lookup, 1.09 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at th
+2.40.959.292 I host bank hooks: early=28579/46.292ms real=28875/4176.820ms post=28268/337.060ms idle_sleeps=562579 lean=1
+2.40.960.962 I host bank real readiness: calls=28875 split=28579 resident_entry_split=19099 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.40.960.965 I host bank real bucket: a_ready_latency=9702/3515.310ms
+2.40.960.966 I host bank real bucket: b_early_read=0/0.000ms
+2.40.960.966 I host bank real bucket: b_predict_read=0/0.000ms
+2.40.960.966 I host bank real bucket: c_real_read=222/3508.736ms
+2.40.960.967 I host bank real bucket: d_lock=28862/0.924ms
+2.40.960.967 I host bank real bucket: e_other=28875/665.270ms
+2.40.960.969 I host bank real histogram: ready_p50/p90/p99=0.000/0.010/0.010ms abc_p50/p90/p99=0.000/0.010/0.010ms (a overlaps b+c; overflow is lower bound)
+LW1b MemAvailable 121169 MiB
+WIN2Z-DONE

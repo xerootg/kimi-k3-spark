@@ -1,0 +1,103 @@
+=== window x3 13:46
+X0-std cache=84000 MemAvailable-loaded 6111 MiB log=/home/xero/win2/X0-std.log
+X0-std r0 5.257941354495374 tok/s md5 9449ae5738
+X0-std r1 5.789156372224704 tok/s md5 9449ae5738
+X0-std r2 5.876128436436254 tok/s md5 9449ae5738
+1.29.570.034 I fill_late: expert store: 35483 lookups, hit rate 91.5%, 37.2 GB read for decode, 0.0 GB for prefill
+1.39.832.504 I fill_late: expert store: 68251 lookups, hit rate 92.2%, 65.2 GB read for decode, 0.0 GB for prefill
+1.51.085.908 I fill_late: expert store: 103733 lookups, hit rate 92.0%, 101.5 GB read for decode, 0.0 GB for prefill
+2.00.206.396 I fill_late: expert store: 136501 lookups, hit rate 92.9%, 118.9 GB read for decode, 0.0 GB for prefill
+2.11.384.667 I fill_late: expert store: 171983 lookups, hit rate 92.7%, 154.7 GB read for decode, 0.0 GB for prefill
+2.20.151.617 I fill_late: expert store: 204751 lookups, hit rate 93.3%, 168.8 GB read for decode, 0.0 GB for prefill
+2.29.835.484 I fill_late: expert store: 237519 lookups, hit rate 93.5%, 191.3 GB read for decode, 0.0 GB for prefill
+2.30.639.534 I llama_moe_cache: ubatch <= 8: hits = 216555, misses = 12670, hit rate = 94.47%, uploaded = 149048.06 MiB
+2.30.639.538 I llama_moe_cache: ubatch  > 8: hits = 6959, misses = 2959, hit rate = 70.17%, uploaded = 34558.97 MiB
+X0-std VALVE-LOWEST 2.11.384.674 I fill_late: expert store: memory valve: host MemAvailable 6.16 GB (lowest 6.14, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+X1-std cache=84000 MemAvailable-loaded 6929 MiB log=/home/xero/win2/X1-std.log
+X1-std r0 5.276406639115515 tok/s md5 9449ae5738
+X1-std r1 5.7739088244330725 tok/s md5 9449ae5738
+X1-std r2 5.851921054359508 tok/s md5 9449ae5738
+0.46.497.718 I prefill bank: 3984.00 MiB shared landing replaces staging; decode cache budget unchanged
+1.08.956.626 I prefill bank: memfd alias registered ok
+1.09.691.104 I prefill bank: memfd alias registered ok
+1.10.938.362 I prefill bank: memfd alias registered ok
+1.10.941.518 I prefill bank enabled: batches over 32 tokens use resident records and shared landing slots; replaced staging 3984.00 MiB
+1.30.668.475 I fill_late: expert store: 35483 lookups, hit rate 91.5%, 37.2 GB read for decode, 0.0 GB for prefill
+1.40.939.281 I fill_late: expert store: 68251 lookups, hit rate 92.3%, 65.1 GB read for decode, 0.0 GB for prefill
+1.52.153.131 I fill_late: expert store: 103733 lookups, hit rate 92.1%, 100.9 GB read for decode, 0.0 GB for prefill
+2.01.288.327 I fill_late: expert store: 136501 lookups, hit rate 93.0%, 118.0 GB read for decode, 0.0 GB for prefill
+2.12.460.612 I fill_late: expert store: 171983 lookups, hit rate 92.7%, 153.9 GB read for decode, 0.0 GB for prefill
+2.21.270.437 I fill_late: expert store: 204751 lookups, hit rate 93.3%, 168.1 GB read for decode, 0.0 GB for prefill
+2.30.982.773 I fill_late: expert store: 237519 lookups, hit rate 93.5%, 190.8 GB read for decode, 0.0 GB for prefill
+2.31.728.229 I llama_moe_cache: ubatch <= 8: hits = 216604, misses = 12621, hit rate = 94.49%, uploaded = 148495.59 MiB
+2.31.728.233 I llama_moe_cache: ubatch  > 8: hits = 6957, misses = 2961, hit rate = 70.15%, uploaded = 34583.81 MiB
+X1-std VALVE-LOWEST 1.30.668.486 I fill_late: expert store: memory valve: host MemAvailable 7.11 GB (lowest 7.10, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+X0-long cache=84000 MemAvailable-loaded 6126 MiB log=/home/xero/win2/X0-long.log
+X0-long prompt_n= 2048 prompt_ms= 28385.018 pp tok/s= 72.15073811121064 predicted tok/s= 4.395488166376772 decode md5= fcd80d6576
+X0-long prompt_n= 8192 prompt_ms= 116116.965 pp tok/s= 70.5495532026694 predicted tok/s= 4.771677845167394 decode md5= 25d4133dc7
+1.58.397.065 I fill_late: expert store: 32769 lookups, hit rate 84.1%, 64.1 GB read for decode, 216.5 GB for prefill
+2.10.144.307 I fill_late: expert store: 65537 lookups, hit rate 86.3%, 110.4 GB read for decode, 216.5 GB for prefill
+4.18.099.522 I fill_late: expert store: 98305 lookups, hit rate 87.2%, 155.2 GB read for decode, 1062.0 GB for prefill
+4.29.416.677 I fill_late: expert store: 131073 lookups, hit rate 87.7%, 198.3 GB read for decode, 1062.0 GB for prefill
+4.37.143.521 I llama_moe_cache: ubatch <= 8: hits = 134685, misses = 18332, hit rate = 88.02%, uploaded = 214987.69 MiB
+X0-long VALVE-LOWEST 1.58.397.074 I fill_late: expert store: memory valve: host MemAvailable 5.96 GB (lowest 5.83, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+X1-long cache=84000 MemAvailable-loaded 6921 MiB log=/home/xero/win2/X1-long.log
+X1-long prompt_n= 2048 prompt_ms= 19282.561 pp tok/s= 106.20995831414716 predicted tok/s= 4.459474629645022 decode md5= fcd80d6576
+X1-long prompt_n= 8192 prompt_ms= 78466.246 pp tok/s= 104.40157924720904 predicted tok/s= 4.788766203044968 decode md5= 25d4133dc7
+0.46.614.186 I prefill bank: 3984.00 MiB shared landing replaces staging; decode cache budget unchanged
+1.07.251.550 I prefill bank: memfd alias registered ok
+1.07.835.245 I prefill bank: memfd alias registered ok
+1.08.985.880 I prefill bank: memfd alias registered ok
+1.08.989.277 I prefill bank enabled: batches over 32 tokens use resident records and shared landing slots; replaced staging 3984.00 MiB
+1.50.140.332 I fill_late: expert store: 32769 lookups, hit rate 84.2%, 63.6 GB read for decode, 136.5 GB for prefill
+2.01.617.599 I fill_late: expert store: 65537 lookups, hit rate 86.5%, 109.1 GB read for decode, 136.5 GB for prefill
+3.31.765.758 I fill_late: expert store: 98305 lookups, hit rate 87.4%, 152.7 GB read for decode, 642.4 GB for prefill
+3.43.039.689 I fill_late: expert store: 131073 lookups, hit rate 87.9%, 195.0 GB read for decode, 642.4 GB for prefill
+3.50.762.673 I llama_moe_cache: ubatch <= 8: hits = 134922, misses = 18095, hit rate = 88.17%, uploaded = 212180.81 MiB
+X1-long VALVE-LOWEST 1.50.140.343 I fill_late: expert store: memory valve: host MemAvailable 7.00 GB (lowest 6.95, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+X0c-std cache=80000 MemAvailable-loaded 10036 MiB log=/home/xero/win2/X0c-std.log
+X0c-std r0 5.129835117001239 tok/s md5 9449ae5738
+X0c-std r1 5.6389268172085485 tok/s md5 9449ae5738
+X0c-std r2 5.684231030065018 tok/s md5 9449ae5738
+1.28.976.096 I fill_late: expert store: 35483 lookups, hit rate 90.7%, 40.3 GB read for decode, 0.0 GB for prefill
+1.39.542.733 I fill_late: expert store: 68251 lookups, hit rate 91.5%, 71.6 GB read for decode, 0.0 GB for prefill
+1.51.092.363 I fill_late: expert store: 103733 lookups, hit rate 91.3%, 111.3 GB read for decode, 0.0 GB for prefill
+2.00.414.126 I fill_late: expert store: 136501 lookups, hit rate 92.2%, 130.4 GB read for decode, 0.0 GB for prefill
+2.11.945.726 I fill_late: expert store: 171983 lookups, hit rate 92.0%, 169.9 GB read for decode, 0.0 GB for prefill
+2.20.972.498 I fill_late: expert store: 204751 lookups, hit rate 92.6%, 185.9 GB read for decode, 0.0 GB for prefill
+2.31.036.067 I fill_late: expert store: 237519 lookups, hit rate 92.8%, 211.8 GB read for decode, 0.0 GB for prefill
+2.31.842.988 I llama_moe_cache: ubatch <= 8: hits = 215084, misses = 14141, hit rate = 93.83%, uploaded = 166323.75 MiB
+2.31.842.993 I llama_moe_cache: ubatch  > 8: hits = 6759, misses = 3159, hit rate = 68.15%, uploaded = 36881.72 MiB
+X0c-std VALVE-LOWEST 1.28.976.108 I fill_late: expert store: memory valve: host MemAvailable 10.35 GB (lowest 10.35, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+X1c-std cache=80000 MemAvailable-loaded 10954 MiB log=/home/xero/win2/X1c-std.log
+X1c-std r0 5.128318193488133 tok/s md5 9449ae5738
+X1c-std r1 5.647292939002877 tok/s md5 9449ae5738
+X1c-std r2 5.710030360725997 tok/s md5 9449ae5738
+0.47.257.195 I prefill bank: 3984.00 MiB shared landing replaces staging; decode cache budget unchanged
+1.07.747.911 I prefill bank: memfd alias registered ok
+1.08.482.209 I prefill bank: memfd alias registered ok
+1.09.674.685 I prefill bank: memfd alias registered ok
+1.09.678.436 I prefill bank enabled: batches over 32 tokens use resident records and shared landing slots; replaced staging 3984.00 MiB
+1.28.884.084 I fill_late: expert store: 35483 lookups, hit rate 90.7%, 40.4 GB read for decode, 0.0 GB for prefill
+1.39.473.802 I fill_late: expert store: 68251 lookups, hit rate 91.4%, 71.9 GB read for decode, 0.0 GB for prefill
+1.50.979.408 I fill_late: expert store: 103733 lookups, hit rate 91.2%, 111.6 GB read for decode, 0.0 GB for prefill
+2.00.267.106 I fill_late: expert store: 136501 lookups, hit rate 92.2%, 130.6 GB read for decode, 0.0 GB for prefill
+2.11.801.373 I fill_late: expert store: 171983 lookups, hit rate 92.0%, 170.3 GB read for decode, 0.0 GB for prefill
+2.20.777.361 I fill_late: expert store: 204751 lookups, hit rate 92.6%, 186.3 GB read for decode, 0.0 GB for prefill
+2.30.803.798 I fill_late: expert store: 237519 lookups, hit rate 92.7%, 212.1 GB read for decode, 0.0 GB for prefill
+2.31.522.397 I llama_moe_cache: ubatch <= 8: hits = 215057, misses = 14168, hit rate = 93.82%, uploaded = 166626.94 MiB
+2.31.522.401 I llama_moe_cache: ubatch  > 8: hits = 6760, misses = 3158, hit rate = 68.16%, uploaded = 36870.19 MiB
+X1c-std VALVE-LOWEST 1.39.473.809 I fill_late: expert store: memory valve: host MemAvailable 11.32 GB (lowest 11.31, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+X0c-long cache=80000 MemAvailable-loaded 10040 MiB log=/home/xero/win2/X0c-long.log
+X0c-long prompt_n= 2048 prompt_ms= 28233.973 pp tok/s= 72.5367272965799 predicted tok/s= 4.360183872043778 decode md5= fcd80d6576
+X0c-long prompt_n= 8192 prompt_ms= 115710.228 pp tok/s= 70.79754436228403 predicted tok/s= 4.667899531217919 decode md5= 25d4133dc7
+2.00.349.803 I fill_late: expert store: 32769 lookups, hit rate 83.4%, 66.9 GB read for decode, 216.5 GB for prefill
+2.12.149.528 I fill_late: expert store: 65537 lookups, hit rate 85.6%, 116.0 GB read for decode, 216.5 GB for prefill
+4.19.582.867 I fill_late: expert store: 98305 lookups, hit rate 86.6%, 161.4 GB read for decode, 1061.5 GB for prefill
+4.31.296.802 I fill_late: expert store: 131073 lookups, hit rate 87.0%, 209.0 GB read for decode, 1061.5 GB for prefill
+4.39.327.547 I llama_moe_cache: ubatch <= 8: hits = 133565, misses = 19452, hit rate = 87.29%, uploaded = 228083.25 MiB
+X0c-long VALVE-LOWEST 4.19.582.874 I fill_late: expert store: memory valve: host MemAvailable 10.23 GB (lowest 10.21, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+X1c-long cache=80000 MemAvailable-loaded 10971 MiB log=/home/xero/win2/X1c-long.log
+X1c-long prompt_n= 2048 prompt_ms= 19154.287 pp tok/s= 106.92123387312719 predicted tok/s= 4.34239653034995 decode md5= fcd80d6576
+pod restored: Running
+ALL-WINDOWS-DONE
