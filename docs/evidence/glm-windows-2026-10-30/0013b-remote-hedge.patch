@@ -1,0 +1,572 @@
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index e73ce9e..a5c73ab 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -1,4 +1,5 @@
+ #include "llama-moe-cache.h"
++#include "llama-remote-hedge.h"
+ 
+ #include "llama-impl.h"
+ #include "llama-mmap.h"
+@@ -466,6 +467,7 @@ struct io_pool {
+         size_t len;
+         off_t  off;
+         void * swap_with = nullptr; // not a read: exchange len bytes of dst and swap_with (off unused)
++        remote_hedge::completion * completion = nullptr;
+     };
+ 
+     // chunk: a record is read as pieces of this many bytes by different threads (0 = whole records). One
+@@ -494,7 +496,7 @@ struct io_pool {
+             return true;
+         }
+ #if defined(LLAMA_HAVE_LIBURING)
+-        if (use_uring && in.front().swap_with == nullptr) {
++        if (use_uring && in.front().swap_with == nullptr && in.front().completion == nullptr) {
+             thread_local uring_reader reader;
+             if (reader.ok) {
+                 return reader.read_all(fd, in, chunk);
+@@ -523,6 +525,9 @@ struct io_pool {
+             for (const job & j : in) {
+                 // swaps are memory bound, not latency bound: finer pieces put every thread on them
+                 const size_t piece = j.swap_with != nullptr ? (size_t) 256*1024 : chunk;
++                if (j.completion) {
++                    j.completion->left.store(piece == 0 ? 1 : (j.len + piece - 1)/piece, std::memory_order_relaxed);
++                }
+                 if (piece == 0 || j.len <= piece) {
+                     jobs.push_back(j);
+                     continue;
+@@ -533,7 +538,7 @@ struct io_pool {
+                 off_t  off = j.off;
+                 while (len > 0) {
+                     const size_t n = std::min(len, piece);
+-                    jobs.push_back({ dst, n, off, sw });
++                    jobs.push_back({ dst, n, off, sw, j.completion });
+                     dst += n;
+                     len -= n;
+                     off += (off_t) n;
+@@ -636,6 +641,9 @@ private:
+                 len -= (size_t) n;
+                 off += n;
+             }
++            if (j.completion && len == 0 && j.completion->left.fetch_sub(1, std::memory_order_acq_rel) == 1) {
++                j.completion->done.store(remote_hedge::now(), std::memory_order_release);
++            }
+             if (remaining.fetch_sub(1) == 1) {
+                 std::lock_guard<std::mutex> lock(mutex);
+                 done_cv.notify_all();
+@@ -644,6 +652,7 @@ private:
+     }
+ 
+ public:
++    void reserve_jobs(size_t n) { jobs.reserve(n); }
+     // reads go through an io_uring of the calling thread instead of the threads (swaps always use the threads)
+     bool use_uring = false;
+     int  spin_us   = 0; // LLAMA_EXPERT_STORE_SPIN_US: busy-wait this long before sleeping, workers and the caller
+@@ -843,6 +852,7 @@ struct remote_client {
+     struct slot {
+         std::atomic<int> state{FREE};
+         std::atomic<int> rows_done{0}; // prefix of reply rows received by the deadline
++        uint64_t         row_at[KMAX] = {}; // published with rows_done (steady ns)
+         bool             sent = false; // net thread only
+         int32_t          hdr[1 + KMAX] = {};
+         std::vector<float> x;
+@@ -874,6 +884,7 @@ struct remote_client {
+     // poller-side state and stats
+     int      misses_in_row = 0;
+     std::chrono::steady_clock::time_point tripped_until{};
++    uint64_t hedge_transport = 0, hedge_deadline = 0;
+     uint64_t n_trips = 0, n_posts = 0, n_rows = 0, n_hits = 0, n_late = 0, n_late_rows = 0, n_partial = 0, n_nan_rows = 0,
+              n_unsent = 0, n_shadow_ontime = 0;
+     std::vector<uint32_t> rtt_us = std::vector<uint32_t>(16384, 0); // post -> complete reply, of the replies in time (ring)
+@@ -1155,7 +1166,10 @@ struct remote_client {
+                 got += (size_t) r;
+                 // Publish only rows received within the post-to-needed budget, even if resolve runs later.
+                 if (std::chrono::steady_clock::now() <= s.t_post + std::chrono::microseconds(deadline_us)) {
+-                    s.rows_done.store((int) (got/((size_t) n_out*sizeof(float))), std::memory_order_release);
++                    const int nr = (int) (got/((size_t) n_out*sizeof(float)));
++                    const int prev = s.rows_done.load(std::memory_order_relaxed);
++                    for (int r = prev; r < nr; ++r) { s.row_at[r] = remote_hedge::now(); }
++                    s.rows_done.store(nr, std::memory_order_release);
+                 }
+                 if (got < want) {
+                     continue;
+@@ -1269,6 +1283,7 @@ struct spec_reader {
+         size_t  len;
+         off_t   off;
+         std::atomic<int8_t> * state; // 0 none or done, 1 queued, 2 in flight
++        std::atomic<uint64_t> * landed = nullptr;
+     };
+ 
+     // the ring is created by the reader thread itself (like the pool's thread-local rings), not by the caller
+@@ -1298,6 +1313,7 @@ struct spec_reader {
+         {
+             std::lock_guard<std::mutex> lock(mutex);
+             for (const rec & r : recs) {
++                if (r.landed) { r.landed->store(0, std::memory_order_relaxed); }
+                 r.state->store(1, std::memory_order_release);
+                 queue.push_back(r);
+             }
+@@ -1559,6 +1575,7 @@ private:
+                     if (a.n_out == 0 && a.next_off >= a.r.len) {
+                         // every byte of the record landed: resident
+                         a.used = false;
++                        if (a.r.landed) { a.r.landed->store(remote_hedge::now(), std::memory_order_release); }
+                         a.r.state->store(0, std::memory_order_release);
+                         n_done.fetch_add(1, std::memory_order_relaxed);
+                         if (cur == pc.act) {
+@@ -1880,6 +1897,7 @@ struct llama_moe_cache::impl {
+         size_t hbm_budget = 0;        // share of LLAMA_EXPERT_STORE_HBM_MIB; the first lru.n_hbm slots are on the HBM node
+         int32_t hbm_min_slot = -1;    // the least used expert in the HBM slots, refreshed every few fills
+         uint16_t hbm_min_uses = 0;
++        std::unique_ptr<std::atomic<uint64_t>[]> hedge_landed; // speculative record completion timestamps
+         std::unique_ptr<std::atomic<int8_t>[]> spec_state; // [n_slots] what the speculative reader holds, see spec_reader
+         ggml_tensor * dummy_const = nullptr; // I32 [1, 1] = n_slots, the zero record's slot, appended to the early ids by the graph
+     };
+@@ -1900,6 +1918,15 @@ struct llama_moe_cache::impl {
+         ggml_tensor * remote_rows = nullptr; // F32 [n_out, remote_rows_max]
+         ggml_tensor * rmerge_map  = nullptr; // I32 [1, n_expert], by position: merge row of each remote row
+         uint64_t remote_used = 0, remote_late = 0, remote_nan = 0;
++        struct pending_row {
++            remote_hedge::completion local;
++            int32_t id = -1, pos = -1, late = -1, box = -1, wire = -1;
++            bool own = false, settled = false, remote = false, nan = false;
++        };
++        std::unique_ptr<pending_row[]> hedge; // n_expert_used, allocated at startup
++        int hedge_n = 0;
++        uint64_t hedge_token = 0, hedge_token_posts = 0, hedge_token_rows = 0;
++        uint64_t hedge_posts = 0, hedge_rows = 0, hedge_remote = 0, hedge_local = 0, hedge_late = 0, hedge_nan = 0;
+         std::vector<ggml_tensor *> experts; // host expert tensors, in the order of the banks
+     };
+ 
+@@ -2074,6 +2101,10 @@ struct llama_moe_cache::impl {
+     // the late matmul's free rows instead. The rows are the same either way.
+     std::vector<std::unique_ptr<remote_client>> remotes;
+     std::vector<uint8_t> remote_box;   // [n_layer*n_expert]: 0 = local, else box index + 1
++    bool remote_hedge_on = [] { const char * e = getenv("LLAMA_EXPERT_STORE_REMOTE_HEDGE"); return e && strcmp(e, "1") == 0; }();
++    uint64_t hedge_drain_ns = 0, hedge_drain_calls = 0;
++    int32_t hedge_drain_il = -1; // completed at next early lookup before slots/maps can be reused
++    std::vector<io_pool::job> hedge_sync_jobs;
+     bool     remote_shadow = false;    // LLAMA_EXPERT_STORE_REMOTE_SHADOW=1: send and time, but read every expert locally
+     int      remote_rows_max = 2;      // LLAMA_EXPERT_STORE_REMOTE_ROWS: rows per layer at most (all boxes together)
+     // the early lookup sends the requests itself (the graph copies the input before it): the request leaves ~130 us
+@@ -3221,7 +3252,7 @@ struct llama_moe_cache::impl {
+                         ggml_backend_view_init(cached_split);
+                         bindings[l.experts[ip]].cached_split = cached_split;
+                         const char * skip_zero = getenv("LLAMA_EXPERT_STORE_SPLIT_SKIP_ZERO");
+-                        if (skip_zero != nullptr && strcmp(skip_zero, "1") == 0) {
++                        if (remote_hedge_on || (skip_zero != nullptr && strcmp(skip_zero, "1") == 0)) {
+                             // src0 op_params[8]: zero slot + 1; CUDA mmvq only, ordinary banks stay unmarked.
+                             cached_split->op_params[8] = g.n_slots + 1;
+                         }
+@@ -3408,6 +3439,29 @@ struct llama_moe_cache::impl {
+                     r_out = l.remote_rows->ne[0];
+                 }
+                 if (split && !remote_box.empty() && r_in > 0) {
++                    if (remote_hedge_on) {
++                        const char * exact = getenv("LLAMA_EXPERT_STORE_REMOTE_EXACT");
++                        if (!exact || strcmp(exact, "1") != 0 || !remote_early_post) {
++                            throw std::runtime_error("remote hedge requires REMOTE_EXACT=1 attestation and same-layer early post");
++                        }
++                        const size_t cap = store.n_expert;
++                        fills.reserve(cap); jobs.reserve(cap); split_ids.reserve(cap);
++                        hedge_sync_jobs.reserve(cap); filler.jobs.reserve(cap);
++                        remote_ids.reserve(cap); remote_pos.reserve(cap);
++                        remote_fill_at.reserve(remote_hosts.size());
++                        const size_t piece = pool_chunk ? std::min(pool_chunk, (size_t) 256*1024) : (size_t) 256*1024;
++                        pool->reserve_jobs(cap*(1 + store.max_record/piece));
++                        // Completion-tagged fills use the preallocated pread pool, including
++                        // synchronous excess reads. The speculative reader keeps its own backend.
++                        pool->use_uring = false;
++                        for (group & hg : groups) {
++                            hg.hedge_landed.reset(new std::atomic<uint64_t>[hg.n_slots]{});
++                            hg.lru.uniq.reserve(cap);
++                        }
++                        for (layer & hl : layers) {
++                            if (hl.rpost_map) { hl.hedge.reset(new layer::pending_row[n_expert_used]); }
++                        }
++                    }
+                     remote_shadow = getenv("LLAMA_EXPERT_STORE_REMOTE_SHADOW") != nullptr && getenv("LLAMA_EXPERT_STORE_REMOTE_SHADOW")[0] == '1';
+                     // deadline: one value for every box or one per box
+                     std::vector<int64_t> dl;
+@@ -3423,6 +3477,7 @@ struct llama_moe_cache::impl {
+                         }
+                     }
+                     auto env_int = [](const char * k, int def) { return getenv(k) != nullptr ? atoi(getenv(k)) : def; };
++                    if (remote_hedge_on && remote_shadow) { throw std::runtime_error("remote hedge cannot use SHADOW"); }
+                     std::vector<size_t> n_per(remote_hosts.size(), 0);
+                     for (uint8_t v : remote_box) {
+                         if (v) {
+@@ -3683,8 +3738,13 @@ struct llama_moe_cache::impl {
+                     set_cuda_hook(nullptr, nullptr); // joins the poller: no fill runs from here on
+                 }
+             }
++            if (remote_hedge_on) {
++                filler.wait(); // no losing read may outlive the host bank
++                if (filler.failed.load()) { GGML_ABORT("expert store: hedge local read failed"); }
++            }
+             hook_time.print();
+             snapshot_save("exit");
++            if (remote_hedge_on) { spec.reset(); } // drain losing speculative reads before freeing banks
+             if (slots_on_gpu) {
+                 buf_host.reset(); // unregisters
+                 store_region_free(slot_map_mem, slot_map_mem_size);
+@@ -4049,6 +4109,7 @@ struct llama_moe_cache::impl {
+     // speculative reader still writes (fill_io). fill_real does both; the split GEMV runs the reads on the fill
+     // thread between its early and real lookup instead
+     void fill_plan(int32_t il, const int32_t * ids_data, size_t n_ids, bool promote, size_t & n_hit) {
++        if (remote_hedge_on && hedge_drain_il >= 0) { hedge_drain(); }
+         layer & l = layers[il];
+         group & g = groups[l.ig];
+         const expert_store_entry * e = store.find(il);
+@@ -4129,6 +4190,7 @@ struct llama_moe_cache::impl {
+         GGML_ASSERT(split && n_ids == (size_t) n_expert_used);
+         prediction_measure(il, ids_data, n_ids);
+         const auto t0 = std::chrono::steady_clock::now();
++        if (remote_hedge_on && hedge_drain_il >= 0) { hedge_drain(); }
+         if (split_il >= 0) {
+             // an early lookup without its real one (should not happen): finish its reads first
+             filler.wait();
+@@ -4144,7 +4206,7 @@ struct llama_moe_cache::impl {
+         remote_pos.clear();
+         const int32_t * plan_ids = ids_data;
+         size_t n_plan = n_ids;
+-        if (remote_on() && l.rpost_map != nullptr) {
++        if (remote_on() && !remote_hedge_on && l.rpost_map != nullptr) {
+             int32_t * rm = (int32_t *) l.rmerge_map->data;
+             for (int r = 0; r < remote_rows_max; ++r) {
+                 rm[r] = n_expert_used; // the scratch row (the GPU finished this layer's previous token long ago)
+@@ -4273,8 +4335,10 @@ struct llama_moe_cache::impl {
+             if (n_miss > late_cap) {
+                 const size_t n_sync = n_miss - late_cap;
+                 GGML_ASSERT(n_sync <= jobs.size());
+-                std::vector<io_pool::job> sync_jobs(jobs.begin(), jobs.begin() + n_sync);
+-                if (!pool->run(store.fd, sync_jobs)) {
++                std::vector<io_pool::job> sync_jobs;
++                if (remote_hedge_on) { hedge_sync_jobs.assign(jobs.begin(), jobs.begin() + n_sync); }
++                else { sync_jobs.assign(jobs.begin(), jobs.begin() + n_sync); }
++                if (!pool->run(store.fd, remote_hedge_on ? hedge_sync_jobs : sync_jobs)) {
+                     GGML_ABORT("expert store: read failed for layer %d: %s", il, strerror(errno));
+                 }
+                 for (size_t k = 0; k < n_sync; ++k) {
+@@ -4313,6 +4377,10 @@ struct llama_moe_cache::impl {
+         n_split_early_hits += n_ids - n_miss - n_remote;
+         n_split_late += n_miss;
+         n_split_calls++;
++        if (remote_hedge_on && remote_on() && l.rpost_map) {
++            hedge_prepare(il, ids_data, n_ids);
++            remote_post(il);
++        }
+         if (!sync && !jobs.empty()) {
+             filler.submit(store.fd, jobs);
+         }
+@@ -4331,7 +4399,10 @@ struct llama_moe_cache::impl {
+             GGML_ABORT("expert store: the split's real lookup of layer %d came without its early lookup (%d)", il, split_il);
+         }
+         const auto t0 = std::chrono::steady_clock::now();
+-        if (filler.busy()) {
++        if (remote_hedge_on && l.hedge) {
++            hedge_collect(il, l, g);
++            hedge_drain_il = il;
++        } else if (filler.busy()) {
+             const uint64_t ht_wait = hook_time.active ? hook_timing::now() : 0;
+             filler.wait();
+             if (ht_wait) { hook_time.early += hook_timing::now() - ht_wait; }
+@@ -4357,7 +4428,7 @@ struct llama_moe_cache::impl {
+         stats_store_decode.hits   += n_hit;
+         stats_store_decode.misses += fills.size();
+         stats_store_decode.bytes  += fills.size()*g.record_size;
+-        if (remote_il == il) {
++        if (!remote_hedge_on && remote_il == il) {
+             remote_resolve(il, l, g);
+         }
+         remote_il = -1;
+@@ -4377,11 +4448,196 @@ struct llama_moe_cache::impl {
+         GGML_UNUSED(n_ids);
+     }
+ 
++    void hedge_drain() {
++        const uint64_t start = hook_time.enabled ? remote_hedge::now() : 0;
++        filler.wait(); // before the next plan can recycle slots or pending arrays
++        if (filler.failed.load()) { GGML_ABORT("expert store: hedge local read failed"); }
++        if (start) { hedge_drain_ns += remote_hedge::now() - start; hedge_drain_calls++; }
++        // The next-layer predictor may have replaced lru.uniq already.
++        hedge_demote(hedge_drain_il);
++        hedge_drain_il = -1;
++    }
++
++    // No wait here: selected records were either complete or replaced by a remote
++    // row. In-flight unused predictions retain their spec_state eviction protection.
++    void hedge_demote(int32_t il) {
++        if (!prefetch || !spec_demote) { return; }
++        group & g = groups[layers[il].ig];
++        for (int32_t x : spec_ids[il]) {
++            const size_t key = (size_t) il*store.n_expert + x;
++            const int32_t sl = g.lru.slot_map[il][x];
++            if (prefetched[key] && sl >= 0 && g.lru.key_of[sl] == (int32_t) key &&
++                    g.spec_state[sl].load(std::memory_order_acquire) == 0) { g.lru.demote(sl); }
++            prefetched[key] = 0;
++        }
++        spec_ids[il].clear();
++    }
++
++    uint64_t hedge_local_at(const layer &, const group & g, const layer::pending_row & p, int32_t il) const {
++        if (p.own) { return p.local.done.load(std::memory_order_acquire); }
++        const int32_t sl = g.lru.slot_map[il][p.id];
++        return g.hedge_landed[sl].load(std::memory_order_acquire);
++    }
++
++    // Called only after the complete LOCAL plan and maps exist. Every late row keeps its read.
++    void hedge_prepare(int32_t il, const int32_t * ids, size_t n_ids) {
++        layer & l = layers[il];
++        group & g = groups[l.ig];
++        GGML_ASSERT(split_late_used <= n_ids);
++        l.hedge_n = (int) split_late_used;
++        l.hedge_token++; l.hedge_token_posts = l.hedge_token_rows = 0;
++        for (size_t bx = 0; bx < remotes.size(); ++bx) { remote_slot[bx] = nullptr; remote_cnt[bx] = 0; }
++        for (int r = 0; r < remote_rows_max; ++r) { ((int32_t *) l.rmerge_map->data)[r] = n_expert_used; }
++        for (int j = 0; j < l.hedge_n; ++j) {
++            auto & p = l.hedge[j];
++            p.local.done.store(0, std::memory_order_relaxed);
++            p.pos = ((int32_t *) l.merge_map->data)[j];
++            p.id = ids[p.pos]; p.late = j; p.box = p.wire = -1;
++            p.own = p.settled = p.remote = p.nan = false;
++            for (size_t k = 0; k < jobs.size(); ++k) {
++                // Synchronous excess reads have been erased from jobs, not fills.
++                if (jobs[k].dst == (char *) g.region + (size_t) g.lru.slot_map[il][p.id]*g.slot_stride) {
++                    p.own = true;
++                    jobs[k].completion = &p.local;
++                    break;
++                }
++            }
++        }
++        remote_il = il;
++        n_remote_layers++;
++    }
++
++    void hedge_post(int32_t il) {
++        layer & l = layers[il];
++        group & g = groups[l.ig];
++        int used = 0;
++        for (size_t bx = 0; bx < remotes.size(); ++bx) {
++            if (remote_slot[bx]) { continue; }
++            remote_client & rc = *remotes[bx];
++            auto * s = rc.next_free();
++            if (!s) { continue; }
++            int k = 0;
++            remote_off[bx] = used;
++            for (int j = 0; j < l.hedge_n && used + k < remote_rows_max && k < remote_client::KMAX; ++j) {
++                auto & p = l.hedge[j];
++                // Recheck after planning: resident/landed rows are never candidates.
++                if (p.box >= 0 || remote_box_of(il, p.id) != (int) bx || hedge_local_at(l, g, p, il)) { continue; }
++                p.box = (int) bx; p.wire = k;
++                s->hdr[1 + k++] = il*(int32_t) store.n_expert + p.id;
++            }
++            if (!k) { continue; }
++            for (int r = k; r < remote_client::KMAX; ++r) { s->hdr[1 + r] = 0; }
++            s->hdr[0] = k; s->tseq = -1;
++            memcpy(s->x.data(), l.remote_x->data, ggml_nbytes(l.remote_x));
++            rc.post(s);
++            remote_slot[bx] = s; remote_cnt[bx] = k;
++            rc.n_posts++; rc.n_rows += k;
++            l.hedge_posts++; l.hedge_rows += k;
++            l.hedge_token_posts++; l.hedge_token_rows += k;
++            used += k;
++        }
++    }
++
++    // Poll all rows, never boxes serially. A published local completion ends its remote wait.
++    void hedge_collect(int32_t il, layer & l, group & g) {
++        const uint64_t start = remote_hedge::now();
++        const size_t width = (size_t) l.remote_rows->ne[0];
++        const uint64_t posts = l.hedge_token_posts, rows = l.hedge_token_rows;
++        uint64_t rw = 0, lw = 0, late = 0, nan = 0;
++        bool transport[250] = {}, timeout[250] = {};
++        bool healthy[250] = {};
++        bool failed[250] = {}; // fixed wire box bound; transport/deadline failures only
++        int remaining = l.hedge_n;
++        while (remaining) {
++            for (int j = 0; j < l.hedge_n; ++j) {
++                auto & p = l.hedge[j];
++                if (p.settled) { continue; }
++                uint64_t local_at = hedge_local_at(l, g, p, il);
++                uint64_t remote_at = 0, deadline = 0;
++                bool finite = false;
++                const float * src = nullptr;
++                if (p.box >= 0) {
++                    auto * s = remote_slot[p.box];
++                    auto & rc = *remotes[p.box];
++                    deadline = std::chrono::duration_cast<std::chrono::nanoseconds>(s->t_post.time_since_epoch()).count() + rc.deadline_us*1000;
++                    const int state = s->state.load(std::memory_order_acquire);
++                    const int nr = s->rows_done.load(std::memory_order_acquire);
++                    if (state != remote_client::FREE && nr > p.wire) {
++                        remote_at = s->row_at[p.wire];
++                        src = s->rows.data() + (size_t) p.wire*width;
++                        finite = remote_row_ok(src, width);
++                        if (!finite && !p.nan) { p.nan = true; nan++; rc.n_nan_rows++; }
++                    }
++                    // Acquire local again AFTER the reply prefix: it may have landed
++                    // between our first local check and the network publication.
++                    local_at = hedge_local_at(l, g, p, il);
++                    // Do not classify a local win as a timeout, even if resolve runs after the deadline.
++                    if ((!local_at || local_at > deadline) && !remote_at && (state == remote_client::FREE || remote_hedge::now() >= deadline) && !p.nan) {
++                        failed[p.box] = true;
++                        if (state == remote_client::FREE) { transport[p.box] = true; }
++                        else { timeout[p.box] = true; }
++                    }
++                }
++                const auto won = remote_hedge::choose(local_at, remote_at, finite, deadline);
++                if (won == remote_hedge::outstanding) { continue; }
++                p.settled = true; remaining--;
++                if (won == remote_hedge::remote) {
++                    const int out = remote_off[p.box] + p.wire;
++                    memcpy((float *) l.remote_rows->data + (size_t) out*width, src, width*sizeof(float));
++                    ((int32_t *) l.rmerge_map->data)[out] = p.pos;
++                    // Existing CUDA zero-record fast path skips this late GEMV. The graph's
++                    // second set_rows OVERWRITES this same expert position before weighting.
++                    // Other late rows and their merge positions are unchanged.
++                    ((int32_t *) l.late_map->data)[p.late] = g.n_slots;
++                    p.remote = true; rw++; remotes[p.box]->n_hits++; healthy[p.box] = true;
++                } else if (p.box >= 0) {
++                    lw++;
++                    if (!remote_at && !p.nan && remote_hedge::now() >= deadline && (!local_at || local_at > deadline)) { late++; }
++                }
++            }
++            if (filler.failed.load(std::memory_order_acquire)) { GGML_ABORT("expert store: hedge local read failed"); }
++            if (remaining) { io_pool::cpu_relax(); }
++        }
++        for (size_t bx = 0; bx < remotes.size(); ++bx) {
++            auto * s = remote_slot[bx];
++            if (!s) { continue; }
++            auto & rc = *remotes[bx];
++            // Freeze ownership before reuse; an abandoned reply is drained by the net thread.
++            const bool done = rc.abandon(s);
++            if (done) {
++                const auto rtt = std::chrono::duration_cast<std::chrono::microseconds>(s->t_done - s->t_post).count();
++                rc.rtt_us[rc.rtt_next++ % rc.rtt_us.size()] = (uint32_t) std::max<int64_t>(0, rtt);
++            }
++            if (done) { s->state.store(remote_client::FREE, std::memory_order_release); }
++            if (failed[bx]) {
++                rc.misses_in_row++; rc.n_late++;
++                rc.hedge_transport += transport[bx]; rc.hedge_deadline += timeout[bx];
++            }
++            else if (healthy[bx]) { rc.misses_in_row = 0; } // NaN/local-win does not alter the streak
++            remote_slot[bx] = nullptr;
++        }
++        l.hedge_remote += rw; l.hedge_local += lw; l.hedge_late += late; l.hedge_nan += nan;
++        l.remote_used += rw; l.remote_late += late; l.remote_nan += nan;
++        n_remote_fallback_layers += lw != 0;
++        const uint64_t elapsed = remote_hedge::now() - start;
++        t_remote_wait_us += elapsed/1000;
++        if (hook_time.active) { hook_time.early += elapsed; }
++        if (hook_time.enabled) {
++            LLAMA_LOG_INFO("hedge token layer=%d token=%llu posts=%llu hedged=%llu remote_wins=%llu local_wins=%llu late_remote=%llu NaN=%llu real_wait_us=%.3f\n",
++                il, (unsigned long long) l.hedge_token, (unsigned long long) posts, (unsigned long long) rows, (unsigned long long) rw,
++                (unsigned long long) lw, (unsigned long long) late, (unsigned long long) nan, elapsed/1e3);
++        }
++    }
++
+     // remote experts: the GPU has copied the experts' input into the layer's remote input; send it with each box's
+     // candidates (the slots fill_early found free are still free: only this thread posts). Called by fill_early itself
+     // (the default: the graph copies the input before the early lookup), or by the "moe_rpost-<il>" post after it
+     // (LLAMA_EXPERT_STORE_REMOTE_LATE_POST=1); a second call for the same layer finds the slots taken and does nothing.
+     void remote_post(int32_t il) {
++        if (remote_hedge_on) {
++            if (remote_on() && remote_il == il) { hedge_post(il); }
++            return;
++        }
+         if (!remote_on() || remote_il != il || remote_ids.empty()) {
+             return;
+         }
+@@ -4588,12 +4844,22 @@ struct llama_moe_cache::impl {
+         if (!remote_on()) {
+             return;
+         }
++        if (remote_hedge_on && hook_time.enabled) {
++            LLAMA_LOG_INFO("%s: hedge drain calls=%llu wait_ms=%.3f (next plan, outside real-hook buckets)\n", func,
++                (unsigned long long) hedge_drain_calls, hedge_drain_ns/1e6);
++        }
+         LLAMA_LOG_INFO("%s: expert store: remote experts%s: %llu layers with candidates, %llu of them read some locally; wait at the real lookup %.3f ms per layer with candidates\n", func,
+             remote_shadow ? " (SHADOW)" : "", (unsigned long long) n_remote_layers, (unsigned long long) n_remote_fallback_layers,
+             n_remote_layers ? t_remote_wait_us/1e3/n_remote_layers : 0.0);
+         for (size_t il = 0; il < layers.size(); ++il) {
+             const layer & l = layers[il];
+             if (l.rpost_map != nullptr) {
++                if (remote_hedge_on) {
++                    LLAMA_LOG_INFO("%s: hedge total layer=%zu posts=%llu hedged=%llu remote_wins=%llu local_wins=%llu late_remote=%llu NaN=%llu\n", func, il,
++                        (unsigned long long) l.hedge_posts, (unsigned long long) l.hedge_rows,
++                        (unsigned long long) l.hedge_remote, (unsigned long long) l.hedge_local,
++                        (unsigned long long) l.hedge_late, (unsigned long long) l.hedge_nan);
++                }
+                 LLAMA_LOG_INFO("%s: expert store: remote layer %zu: rows used=%llu late=%llu NaN=%llu%s\n", func, il,
+                     (unsigned long long) l.remote_used, (unsigned long long) l.remote_late, (unsigned long long) l.remote_nan,
+                     remote_shadow ? " (SHADOW: local rows only)" : "");
+@@ -4601,6 +4867,11 @@ struct llama_moe_cache::impl {
+         }
+         for (const auto & p : remotes) {
+             const remote_client & rc = *p;
++            if (remote_hedge_on) {
++                LLAMA_LOG_INFO("%s: hedge breaker box=%d failures=%llu transport=%llu deadline=%llu streak=%d trips=%llu unsent=%llu transport_drops=%llu\n", func,
++                    rc.id, (unsigned long long) rc.n_late, (unsigned long long) rc.hedge_transport, (unsigned long long) rc.hedge_deadline, rc.misses_in_row, (unsigned long long) rc.n_trips,
++                    (unsigned long long) rc.n_unsent, (unsigned long long) rc.n_disconnects.load());
++            }
+             std::vector<uint32_t> v(rc.rtt_us.begin(), rc.rtt_us.begin() + std::min(rc.rtt_next, rc.rtt_us.size()));
+             std::sort(v.begin(), v.end());
+             auto pct = [&](double q) { return v.empty() ? 0.0 : v[(size_t) (q*(v.size() - 1))]/1e3; };
+@@ -4762,7 +5033,7 @@ struct llama_moe_cache::impl {
+         }
+         prediction_ids[il].assign(ids_data, ids_data + n_ids);
+         spec_reclaim(); // a prediction not started by now is stale
+-        if (remote_on() && !remote_shadow && l.rpost_map != nullptr) {
++        if (remote_on() && !remote_hedge_on && !remote_shadow && l.rpost_map != nullptr) {
+             // the remote experts are not read ahead: saving the drive those reads is the point
+             remote_pf.clear();
+             for (size_t i = 0; i < n_ids; ++i) {
+@@ -4815,7 +5086,7 @@ struct llama_moe_cache::impl {
+             }
+             return n_ids;
+         };
+-        if (store_hook_lean() && fills.size() <= 8) {
++        if (remote_hedge_on || (store_hook_lean() && fills.size() <= 8)) {
+             // Keep the same stable order without stable_sort's temporary allocation.
+             for (size_t i = 1; i < fills.size(); ++i) {
+                 const auto f = fills[i];
+@@ -4845,7 +5116,8 @@ struct llama_moe_cache::impl {
+         for (const auto & f : fills) {
+             const int32_t key = il*store.n_expert + f.expert;
+             spec_recs.push_back({ l.ig, f.slot, key, (char *) g.region + (size_t) f.slot*g.slot_stride, g.record_size,
+-                (off_t) (e->offset((size_t) f.expert)), &g.spec_state[f.slot] });
++                (off_t) (e->offset((size_t) f.expert)), &g.spec_state[f.slot],
++                remote_hedge_on && g.hedge_landed ? &g.hedge_landed[f.slot] : nullptr });
+             prefetched[key] = 1;
+             sid.push_back(f.expert);
+         }
+diff --git a/src/llama-remote-hedge.h b/src/llama-remote-hedge.h
+new file mode 100644
+index 0000000..d4bf553
+--- /dev/null
++++ b/src/llama-remote-hedge.h
+@@ -0,0 +1,24 @@
++#pragma once
++#include <atomic>
++#include <chrono>
++#include <cstdint>
++#include <cstddef>
++
++// Shared by the engine and the host completion tests. All times use steady_clock.
++namespace remote_hedge {
++inline uint64_t now() {
++    return std::chrono::duration_cast<std::chrono::nanoseconds>(
++        std::chrono::steady_clock::now().time_since_epoch()).count();
++}
++struct completion {
++    std::atomic<std::size_t> left{0};
++    std::atomic<uint64_t> done{0};
++};
++enum winner { outstanding, local, remote };
++inline winner choose(uint64_t local_at, uint64_t remote_at, bool finite, uint64_t deadline) {
++    if (remote_at && finite && remote_at <= deadline && (!local_at || remote_at < local_at)) {
++        return remote;
++    }
++    return local_at ? local : outstanding; // a deadline never cancels the local hedge
++}
++}

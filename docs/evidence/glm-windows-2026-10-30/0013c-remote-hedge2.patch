@@ -1,0 +1,250 @@
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -2102,7 +2102,9 @@
+     std::vector<std::unique_ptr<remote_client>> remotes;
+     std::vector<uint8_t> remote_box;   // [n_layer*n_expert]: 0 = local, else box index + 1
+     bool remote_hedge_on = [] { const char * e = getenv("LLAMA_EXPERT_STORE_REMOTE_HEDGE"); return e && strcmp(e, "1") == 0; }();
++    bool hedge_predict_uring = false; // preserve configured predictor backend before tagged-fill override
+     uint64_t hedge_drain_ns = 0, hedge_drain_calls = 0;
++    uint64_t hedge_exposed_ns = 0;
+     int32_t hedge_drain_il = -1; // completed at next early lookup before slots/maps can be reused
+     std::vector<io_pool::job> hedge_sync_jobs;
+     bool     remote_shadow = false;    // LLAMA_EXPERT_STORE_REMOTE_SHADOW=1: send and time, but read every expert locally
+@@ -3453,6 +3455,7 @@
+                         pool->reserve_jobs(cap*(1 + store.max_record/piece));
+                         // Completion-tagged fills use the preallocated pread pool, including
+                         // synchronous excess reads. The speculative reader keeps its own backend.
++                        hedge_predict_uring = pool->use_uring;
+                         pool->use_uring = false;
+                         for (group & hg : groups) {
+                             hg.hedge_landed.reset(new std::atomic<uint64_t>[hg.n_slots]{});
+@@ -3624,7 +3627,7 @@
+                 }
+                 spec_demote    = getenv("LLAMA_EXPERT_STORE_PREFETCH_DEMOTE") != nullptr && getenv("LLAMA_EXPERT_STORE_PREFETCH_DEMOTE")[0] == '1';
+                 prefetch_input = getenv("LLAMA_EXPERT_STORE_PREFETCH_INPUT") != nullptr ? atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_INPUT")) : 0;
+-                spec_uring     = pool->use_uring;
++                spec_uring     = remote_hedge_on ? hedge_predict_uring : pool->use_uring;
+                 if (getenv("LLAMA_EXPERT_STORE_PREFETCH_URING") != nullptr) {
+                     spec_uring = atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_URING")) != 0;
+                 }
+@@ -4287,6 +4290,11 @@
+                 }
+             }
+         }
++        // Exact activation is available here. Enqueue before local planning/issue;
++        // the preallocated remote_client ring owns the bytes until the net thread drains them.
++        if (remote_hedge_on && remote_on() && l.rpost_map) {
++            hedge_enqueue(il, ids_data, n_ids);
++        }
+         size_t n_hit = 0;
+         fill_plan(il, plan_ids, n_plan, true, n_hit);
+         split_ids.assign(plan_ids, plan_ids + n_plan);
+@@ -4379,7 +4387,6 @@
+         n_split_calls++;
+         if (remote_hedge_on && remote_on() && l.rpost_map) {
+             hedge_prepare(il, ids_data, n_ids);
+-            remote_post(il);
+         }
+         if (!sync && !jobs.empty()) {
+             filler.submit(store.fd, jobs);
+@@ -4399,7 +4406,7 @@
+             GGML_ABORT("expert store: the split's real lookup of layer %d came without its early lookup (%d)", il, split_il);
+         }
+         const auto t0 = std::chrono::steady_clock::now();
+-        if (remote_hedge_on && l.hedge) {
++        if (remote_hedge_on && l.hedge && l.hedge_token_posts) {
+             hedge_collect(il, l, g);
+             hedge_drain_il = il;
+         } else if (filler.busy()) {
+@@ -4485,15 +4492,23 @@
+         group & g = groups[l.ig];
+         GGML_ASSERT(split_late_used <= n_ids);
+         l.hedge_n = (int) split_late_used;
+-        l.hedge_token++; l.hedge_token_posts = l.hedge_token_rows = 0;
+-        for (size_t bx = 0; bx < remotes.size(); ++bx) { remote_slot[bx] = nullptr; remote_cnt[bx] = 0; }
+-        for (int r = 0; r < remote_rows_max; ++r) { ((int32_t *) l.rmerge_map->data)[r] = n_expert_used; }
+         for (int j = 0; j < l.hedge_n; ++j) {
+             auto & p = l.hedge[j];
+             p.local.done.store(0, std::memory_order_relaxed);
+             p.pos = ((int32_t *) l.merge_map->data)[j];
+             p.id = ids[p.pos]; p.late = j; p.box = p.wire = -1;
+             p.own = p.settled = p.remote = p.nan = false;
++            // Bind only late-map rows to the earlier post. Rows that became ready
++            // during planning keep their normal early GEMV; their reply is drained.
++            for (size_t bx = 0; bx < remotes.size(); ++bx) {
++                auto * slot = remote_slot[bx];
++                if (!slot) { continue; }
++                for (int r = 0; r < remote_cnt[bx]; ++r) {
++                    if (slot->hdr[1 + r] == il*(int32_t) store.n_expert + p.id) {
++                        p.box = (int) bx; p.wire = r;
++                    }
++                }
++            }
+             for (size_t k = 0; k < jobs.size(); ++k) {
+                 // Synchronous excess reads have been erased from jobs, not fills.
+                 if (jobs[k].dst == (char *) g.region + (size_t) g.lru.slot_map[il][p.id]*g.slot_stride) {
+@@ -4504,33 +4519,36 @@
+             }
+         }
+         remote_il = il;
+-        n_remote_layers++;
+-    }
+-
+-    void hedge_post(int32_t il) {
++        n_remote_layers += l.hedge_token_posts != 0;
++    }
++
++    void hedge_enqueue(int32_t il, const int32_t * ids, size_t n_ids) {
+         layer & l = layers[il];
+         group & g = groups[l.ig];
++        l.hedge_token++; l.hedge_token_posts = l.hedge_token_rows = 0;
++        for (size_t bx = 0; bx < remotes.size(); ++bx) { remote_slot[bx] = nullptr; remote_cnt[bx] = 0; }
++        for (int r = 0; r < remote_rows_max; ++r) { ((int32_t *) l.rmerge_map->data)[r] = n_expert_used; }
+         int used = 0;
+         for (size_t bx = 0; bx < remotes.size(); ++bx) {
+-            if (remote_slot[bx]) { continue; }
+             remote_client & rc = *remotes[bx];
+-            auto * s = rc.next_free();
+-            if (!s) { continue; }
++            auto * slot = rc.next_free();
++            if (!slot) { continue; }
+             int k = 0;
+             remote_off[bx] = used;
+-            for (int j = 0; j < l.hedge_n && used + k < remote_rows_max && k < remote_client::KMAX; ++j) {
+-                auto & p = l.hedge[j];
+-                // Recheck after planning: resident/landed rows are never candidates.
+-                if (p.box >= 0 || remote_box_of(il, p.id) != (int) bx || hedge_local_at(l, g, p, il)) { continue; }
+-                p.box = (int) bx; p.wire = k;
+-                s->hdr[1 + k++] = il*(int32_t) store.n_expert + p.id;
++            for (size_t j = 0; j < n_ids && used + k < remote_rows_max && k < remote_client::KMAX; ++j) {
++                const int32_t id = ids[j], sl = g.lru.slot_map[il][id];
++                if (remote_box_of(il, id) != (int) bx) { continue; }
++                if (sl >= 0 && (!spec_ok() || g.spec_state[sl].load(std::memory_order_acquire) == 0)) { continue; }
++                slot->hdr[1 + k++] = il*(int32_t) store.n_expert + id;
+             }
+             if (!k) { continue; }
+-            for (int r = k; r < remote_client::KMAX; ++r) { s->hdr[1 + r] = 0; }
+-            s->hdr[0] = k; s->tseq = -1;
+-            memcpy(s->x.data(), l.remote_x->data, ggml_nbytes(l.remote_x));
+-            rc.post(s);
+-            remote_slot[bx] = s; remote_cnt[bx] = k;
++            for (int r = k; r < remote_client::KMAX; ++r) { slot->hdr[1 + r] = 0; }
++            slot->hdr[0] = k; slot->tseq = -1;
++            memcpy(slot->x.data(), l.remote_x->data, ggml_nbytes(l.remote_x));
++            // post() only publishes the fixed ring slot and rings its doorbell.
++            // send_all2 (header + exact activation) runs exclusively in main().
++            rc.post(slot);
++            remote_slot[bx] = slot; remote_cnt[bx] = k;
+             rc.n_posts++; rc.n_rows += k;
+             l.hedge_posts++; l.hedge_rows += k;
+             l.hedge_token_posts++; l.hedge_token_rows += k;
+@@ -4540,15 +4558,16 @@
+ 
+     // Poll all rows, never boxes serially. A published local completion ends its remote wait.
+     void hedge_collect(int32_t il, layer & l, group & g) {
+-        const uint64_t start = remote_hedge::now();
+         const size_t width = (size_t) l.remote_rows->ne[0];
+         const uint64_t posts = l.hedge_token_posts, rows = l.hedge_token_rows;
+         uint64_t rw = 0, lw = 0, late = 0, nan = 0;
+         bool transport[250] = {}, timeout[250] = {};
+         bool healthy[250] = {};
+         bool failed[250] = {}; // fixed wire box bound; transport/deadline failures only
++        uint64_t exposed = 0, local_own = 0, local_predicted = 0;
+         int remaining = l.hedge_n;
+         while (remaining) {
++            bool pending_remote = false, pending_own = false, pending_predicted = false;
+             for (int j = 0; j < l.hedge_n; ++j) {
+                 auto & p = l.hedge[j];
+                 if (p.settled) { continue; }
+@@ -4565,7 +4584,7 @@
+                     if (state != remote_client::FREE && nr > p.wire) {
+                         remote_at = s->row_at[p.wire];
+                         src = s->rows.data() + (size_t) p.wire*width;
+-                        finite = remote_row_ok(src, width);
++                        finite = !p.nan && remote_row_ok(src, width);
+                         if (!finite && !p.nan) { p.nan = true; nan++; rc.n_nan_rows++; }
+                     }
+                     // Acquire local again AFTER the reply prefix: it may have landed
+@@ -4579,7 +4598,14 @@
+                     }
+                 }
+                 const auto won = remote_hedge::choose(local_at, remote_at, finite, deadline);
+-                if (won == remote_hedge::outstanding) { continue; }
++                if (won == remote_hedge::outstanding) {
++                    pending_own |= p.own;
++                    pending_predicted |= !p.own;
++                    pending_remote |= p.box >= 0 && !p.nan && !remote_at &&
++                        remote_hedge::now() < deadline &&
++                        remote_slot[p.box]->state.load(std::memory_order_acquire) != remote_client::FREE;
++                    continue;
++                }
+                 p.settled = true; remaining--;
+                 if (won == remote_hedge::remote) {
+                     const int out = remote_off[p.box] + p.wire;
+@@ -4596,7 +4622,16 @@
+                 }
+             }
+             if (filler.failed.load(std::memory_order_acquire)) { GGML_ABORT("expert store: hedge local read failed"); }
+-            if (remaining) { io_pool::cpu_relax(); }
++            if (remaining) {
++                // Time only exposed blocking, never the scan, merge copies or
++                // cleanup. No unresolved eligible hedged row means zero remote wait.
++                const uint64_t begin = remote_hedge::now();
++                for (int spin = 0; spin < 64; ++spin) { io_pool::cpu_relax(); }
++                const uint64_t wait = remote_hedge::now() - begin;
++                if (pending_remote) { exposed += wait; }
++                if (pending_own) { local_own += wait; }
++                else if (pending_predicted) { local_predicted += wait; }
++            }
+         }
+         for (size_t bx = 0; bx < remotes.size(); ++bx) {
+             auto * s = remote_slot[bx];
+@@ -4619,13 +4654,16 @@
+         l.hedge_remote += rw; l.hedge_local += lw; l.hedge_late += late; l.hedge_nan += nan;
+         l.remote_used += rw; l.remote_late += late; l.remote_nan += nan;
+         n_remote_fallback_layers += lw != 0;
+-        const uint64_t elapsed = remote_hedge::now() - start;
+-        t_remote_wait_us += elapsed/1000;
+-        if (hook_time.active) { hook_time.early += elapsed; }
++        hedge_exposed_ns += exposed;
++        t_remote_wait_us += exposed/1000;
++        if (hook_time.active) {
++            hook_time.early += local_own;
++            hook_time.predicted += local_predicted;
++        }
+         if (hook_time.enabled) {
+             LLAMA_LOG_INFO("hedge token layer=%d token=%llu posts=%llu hedged=%llu remote_wins=%llu local_wins=%llu late_remote=%llu NaN=%llu real_wait_us=%.3f\n",
+                 il, (unsigned long long) l.hedge_token, (unsigned long long) posts, (unsigned long long) rows, (unsigned long long) rw,
+-                (unsigned long long) lw, (unsigned long long) late, (unsigned long long) nan, elapsed/1e3);
++                (unsigned long long) lw, (unsigned long long) late, (unsigned long long) nan, exposed/1e3);
+         }
+     }
+ 
+@@ -4635,8 +4673,7 @@
+     // (LLAMA_EXPERT_STORE_REMOTE_LATE_POST=1); a second call for the same layer finds the slots taken and does nothing.
+     void remote_post(int32_t il) {
+         if (remote_hedge_on) {
+-            if (remote_on() && remote_il == il) { hedge_post(il); }
+-            return;
++            return; // hedge_enqueue already published the exact input before local planning
+         }
+         if (!remote_on() || remote_il != il || remote_ids.empty()) {
+             return;
+@@ -4843,6 +4880,16 @@
+     void remote_log(const char * func) const {
+         if (!remote_on()) {
+             return;
++        }
++        if (remote_hedge_on) {
++            uint64_t tokens = 0, posts = 0, wins = 0;
++            for (const auto & l : layers) {
++                tokens = std::max(tokens, l.hedge_token);
++                posts += l.hedge_posts; wins += l.hedge_remote;
++            }
++            LLAMA_LOG_INFO("%s: hedge per token tokens=%llu posts=%.3f wins=%.3f exposed_remote_wait_ms=%.6f\n", func,
++                (unsigned long long) tokens, tokens ? (double) posts/tokens : 0.0,
++                tokens ? (double) wins/tokens : 0.0, tokens ? hedge_exposed_ns/1e6/tokens : 0.0);
+         }
+         if (remote_hedge_on && hook_time.enabled) {
+             LLAMA_LOG_INFO("%s: hedge drain calls=%llu wait_ms=%.3f (next plan, outside real-hook buckets)\n", func,
