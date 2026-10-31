@@ -1,5 +1,5 @@
 diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
-index 6ce232f..e96a115 100644
+index 6ce232f27..feba5bf9c 100644
 --- a/src/llama-moe-cache.cpp
 +++ b/src/llama-moe-cache.cpp
 @@ -11,6 +11,7 @@
@@ -228,23 +228,29 @@ index 6ce232f..e96a115 100644
          if (!self->map_kind.empty()) {
              // the split GEMV: the early lookup (early map) plans and starts the reads, the real one (late map) waits
              const auto mk = self->map_kind.find(slot_map);
-@@ -3665,7 +3800,6 @@ struct llama_moe_cache::impl {
+@@ -3665,7 +3800,10 @@ struct llama_moe_cache::impl {
              if (it == layer_of.end()) {
                  continue;
              }
 -            protect_layer(it->second);
++            const bool lfu = groups[layers[it->second].ig].lru.lfu;
++            if (!lfu) {
++                protect_layer(it->second, nullptr, 0);
++            }
              const ggml_tensor * sel  = node->src[1];
              const ggml_tensor * base = sel;
              while (base->view_src != nullptr) {
-@@ -3679,6 +3813,7 @@ struct llama_moe_cache::impl {
+@@ -3679,6 +3817,9 @@ struct llama_moe_cache::impl {
                  }
                  continue;
              }
-+            protect_layer(it->second, (const int32_t *) sel->data, (size_t) ggml_nelements(sel));
++            if (lfu) {
++                protect_layer(it->second, (const int32_t *) sel->data, (size_t) ggml_nelements(sel));
++            }
              if (strncmp(node->name, "moe_prefetch_self-", 18) == 0) {
                  continue; // never built for the CPU split (self-prefetch needs the GPU hook)
              }
-@@ -3729,7 +3864,7 @@ struct llama_moe_cache::impl {
+@@ -3729,7 +3870,7 @@ struct llama_moe_cache::impl {
          if (!ok || fills.empty()) {
              return;
          }
@@ -253,12 +259,12 @@ index 6ce232f..e96a115 100644
          jobs.clear();
          for (const auto & f : fills) {
              jobs.push_back({ (char *) g.region + (size_t) f.slot*g.slot_stride, g.record_size, (off_t) (e->offset((size_t) f.expert)) });
-@@ -3916,6 +4051,32 @@ struct llama_moe_cache::impl {
+@@ -3916,6 +4057,32 @@ struct llama_moe_cache::impl {
          GGML_ASSERT(e != nullptr && g.region != nullptr);
          spec_reclaim();
          if (!g.lru.plan(il, ids_data, n_ids, fills, n_hit, promote)) {
 +            const char * stats = getenv("LLAMA_EXPERT_STORE_HOOK_STATS");
-+            if (stats != nullptr && strcmp(stats, "1") == 0) {
++            if (g.lru.lfu && stats != nullptr && strcmp(stats, "1") == 0) {
 +                const auto & c = g.lru;
 +                size_t needed = 0, eligible = 0, protected_slots = 0, busy_slots = 0;
 +                for (int32_t ex : c.uniq) {
@@ -286,7 +292,7 @@ index 6ce232f..e96a115 100644
              GGML_ABORT("the expert store cache is too small for the experts selected in layer %d", il);
          }
          // every selected expert must now have a slot: the lookup that follows reads the slot map on the GPU and a
-@@ -4606,8 +4767,38 @@ struct llama_moe_cache::impl {
+@@ -4606,8 +4773,38 @@ struct llama_moe_cache::impl {
              ids_data = remote_pf.data();
              n_ids = remote_pf.size();
          }
