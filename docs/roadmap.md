@@ -160,10 +160,52 @@ The fork `xerootg/llama.cpp` is a research fork and will not be upstreamed. Its 
 
 ## GLM-5.3
 
-See [GLM-5.3 current state](GLM-STATUS.md) for the deployed configuration, measured decode and prefill results,
-per-token budget, ranked remaining work, NUC integration gates and the pending GH200 decision.
-That page supersedes the earlier GLM priorities here; the [experiment ledger](experiments.md) retains the dated results
-and the decision log below retains the model and worker-policy decisions.
+As of **2026-10-30**. See [GLM-5.3 current state](GLM-STATUS.md) for configuration and the broader budget,
+NUC integration gates and pending GH200 decision. The [experiment ledger](experiments.md#glm-53-the-candidate-windows-first-pass-2026-10-30-afternoon)
+and its [second pass](experiments.md#glm-53-the-candidate-windows-second-pass-2026-10-30-evening) record the measurements below.
+
+**Spark production: 5.43 tok/s, gold md5 `9449ae5738`**, image `ge0ba4b3`, argo-things commit `07f7100`.
+Patches 0009 (split dummy-row skip) and 0012 (hook lean) are both on in the manifest. Combined window u measured
+4.80 → 5.43 tok/s, **+13.1 %**, with all eight timed passes gold. The separate gains were +4.8 % and +5.8 %;
+the combined measurement decides adoption. Production predictor input stays at 3.
+
+**Measured candidates and dispositions:**
+
+| candidate | measured result / decision |
+|---|---|
+| 0017 predictor inputs 4/5 | Input 3: 4.893/4.878; input 4: 4.771/4.748; input 5: 4.762/4.727 tok/s, all gold. Useful predicted reads: 67.7 / 65.5 / 41.9 %. Both alternatives slower; keep input 3. |
+| 0018 LFU v1 | Aborts during the first request in both LFU legs; no candidate tok/s or md5. Baseline 4.889/4.84 and 4.884/4.887 tok/s, 92.2 % hits; partial LFU logs 91.7 % hits, 70.1 GB decode reads. Cause (from the logs): the planner aborted with "cache too small for layer 77" late in the first request, because v1 protected every cached key of the recent layers and the skewed restored snapshot left no eligible victim; v2 protects only the selected keys and is queued as window l. |
+| 0015/0016 long-context DSA / attention combine | At an 8192-token prompt: baseline 3.945/3.906, 0015 3.943/3.893, 0016 3.912/3.922 tok/s; prefill 63.7–64.4 tok/s, md5 `25d4133dc7` throughout. Neutral within 1 % noise; flags stay off. |
+| 0005b bounded speculative-read wait | 4.884/4.887 and 4.891/4.882 tok/s, all four gold; neutral against window r's baseline. Kept, no knob. |
+| MTP | Window j: baseline 4.508/4.518 versus 3.996/3.998 tok/s, 121 of 133 drafts accepted: −11 % and changed bytes (`15e1fbcf60` → `d8fe1a07a3`). 0014 did not apply, so these are upstream MTP results; exact verification remains unmeasured there. |
+| 0010 prefill bank v1 | Prefill 72.2 → 102.6 tok/s on 2k, 70.9 → 98.7 on 8k; decode −8 % (4.05 → 3.74, 4.79 → 4.36) as landing slots consume decode cache. Long-prompt bytes matched, standard short-request bytes changed. Not adopted. |
+| 0011 DSA skip v1 | Aborts on the first decode token: `GGML_ASSERT(buffer)`, unallocated index tensor. Fix and allocation gate required before adoption. |
+
+**Open questions:** prompt reuse after about 16k tokens worked, but the second cached pass took 162.8 s with
+16.0 s prefill despite reusing 16267 tokens; the server log puts 3.6 s in the KV restore, 16.0 s in the prompt and 143.1 s in the 32 decode tokens (4.5 s per token), so decode stalled; the cause is not in the log, hence the ctx window.
+Cold prefill bytes vary with the cache layout even from the same snapshot, so long-prompt hashes cannot yet gate
+prefill changes. The whole **42 ms/token hook bucket is real-lookup wait**, not handshake overhead; hook lean
+increases real-hook time while improving decode. Split that wait before choosing the next overlap change.
+
+**Queued windows and the decisions they must settle** (not measured gains):
+
+| window | work | decision / gate |
+|---|---|---|
+| v | Clean-tree rebuild, GEMV and bank-read benches, 0011 v2 DSA skip | Establish a reproducible candidate tree and kernel costs; does the repaired skip avoid the abort, preserve bytes and improve decode without per-decode allocation? |
+| w | 0012b wait split + 0012c wider prediction | Locate exposed lookup wait and determine whether wider prediction improves useful reads and decode while preserving bytes and protecting executing rows. |
+| x | 0010 v2 prefill bank | Can prefill reach ≥ 95 tok/s with standard md5 gold and decode within 1 % of baseline, without taking landing slots from the decode cache? |
+| y | 0014 MTP exact | Does rebased exact verification preserve whole-model bytes and yield a net speed gain with safe reservations? |
+| m | nsys trace | Identify the remaining device work, gaps and overlap on the current configuration to choose the next bottleneck. |
+| s | 0019 SIGTERM fast exit v2 | Does the rebased fast exit shorten shutdown while durably preserving the snapshot, including parent-directory fsync? The earlier window failed to apply and measured no exit times. |
+| l | 0018 LFU v2 | Does the planner fix eliminate the crash and improve decode against second chance, with protected-layer headroom and no hook-path allocation? |
+| z | 0020 late GEMV ready flags | Can missed rows compute as records arrive, preserving bytes and improving overlap without per-launch capability queries? |
+| o | 0021 prefill order independence | Can identical prompts produce identical bytes across cache layouts, making prefill changes testable bit for bit? |
+| i | Remote tier against nuc2 using the first real-trace placement | Do actually used remote rows preserve exact output and improve end-to-end decode with deadline fallback? Trace placement is now available; replay's zero waits are a model, not a measured remote gain. |
+| ctx | Decode versus context length | Measure how decode changes with context length and investigate the unexplained cached-prompt slowdown. |
+
+Source reviews found and addressed reservation, LFU headroom, durable-rename and allocation issues before the queued
+windows; they do not certify GPU bytes or timings. The 0011 v2 per-decode identity allocation finding remains a gate.
+Use matched frozen snapshots, the standard greedy md5 gate and measured A/Bs before adopting any candidate.
 
 ## Cluster layout for this work
 
@@ -186,3 +228,6 @@ and the decision log below retains the model and worker-policy decisions.
 - 2026-10-29: the local pool switches from K3 to GLM-5.3 UD-Q2_K_XL (user: "the smallest version of the largest model", above the 2-bit cliff; Flash rejected as a smaller, shallower model). K3 files stay on disk; the GH200 keeps serving K3.
 - 2026-10-29: shards live on the NAS (slow but reliable); every pool member gets a full store copy so expert ownership is a table, not a copy.
 - 2026-10-29: bounded, testable work goes to GitHub Copilot (coding agent for repo-only tasks, `copilot-agent` CLI for tasks that need the laptop iGPU); Claude reviews and reruns every gate before committing.
+- 2026-10-30: adopt 0009 + 0012 together on Spark: image ge0ba4b3, argo-things 07f7100, 4.80 → 5.43 tok/s (+13.1 %), all eight timed passes md5 gold; predictor input 3 stays after inputs 4/5 lost.
+- 2026-10-30: keep neutral 0005b; leave neutral 0015/0016 off. LFU v1 crashes, prefill bank v1 costs −8 % decode and changes short-request bytes, and upstream MTP costs −11 % and changes bytes; none is adopted.
+- 2026-10-30: queue v/w/x/y/m/s/l/z/o/i/ctx to settle rebuild/kernel costs, lookup wait/prediction, prefill bank, exact MTP, device timeline, shutdown, LFU, late GEMV readiness, prefill order, real-trace nuc2 offload and context scaling. Cached long-prompt decode and cache-layout-dependent prefill bytes remain unresolved; source review and placement replay do not establish runtime gains.
