@@ -1,0 +1,105 @@
+Note: switching to '9ec55d89d56989e568163bae3309c61a16742fd9'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+applied-ok
+buildpb2=0 03:56
+bank0-std MemAvailable 9708 MiB (loaded)
+bank0-std r0 4.872924302113786 tok/s md5 9449ae5738
+bank0-std r1 4.904021919665093 tok/s md5 9449ae5738
+bank0-std r2 4.904543866800312 tok/s md5 9449ae5738
+1.24.737.437 I fill_late: expert store: 35483 lookups, hit rate 91.1%, 39.0 GB read for decode, 0.0 GB for prefill
+1.35.835.111 I fill_late: expert store: 68251 lookups, hit rate 92.4%, 64.0 GB read for decode, 0.0 GB for prefill
+1.48.838.533 I fill_late: expert store: 103733 lookups, hit rate 91.4%, 109.4 GB read for decode, 0.0 GB for prefill
+1.59.521.872 I fill_late: expert store: 136501 lookups, hit rate 92.2%, 130.2 GB read for decode, 0.0 GB for prefill
+2.12.784.777 I fill_late: expert store: 171983 lookups, hit rate 91.5%, 179.4 GB read for decode, 0.0 GB for prefill
+2.23.469.077 I fill_late: expert store: 204751 lookups, hit rate 92.0%, 200.3 GB read for decode, 0.0 GB for prefill
+2.34.831.837 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 228.9 GB read for decode, 0.0 GB for prefill
+2.35.614.086 I llama_moe_cache: ubatch <= 8: hits = 214556, misses = 14669, hit rate = 93.60%, uploaded = 172355.16 MiB
+2.35.614.090 I llama_moe_cache: ubatch  > 8: hits = 5868, misses = 4050, hit rate = 59.17%, uploaded = 47266.50 MiB
+bank1-std MemAvailable 10653 MiB (loaded)
+bank1-std r0 4.892471376442118 tok/s md5 9449ae5738
+bank1-std r1 4.903975714894436 tok/s md5 9449ae5738
+bank1-std r2 4.8624182582503845 tok/s md5 9449ae5738
+0.45.520.356 I prefill bank: 3984.00 MiB shared landing replaces staging; decode cache budget unchanged
+1.03.436.415 I prefill bank: memfd alias registered ok
+1.04.097.948 I prefill bank: memfd alias registered ok
+1.05.370.776 I prefill bank: memfd alias registered ok
+1.05.374.212 I prefill bank enabled: batches over 32 tokens use resident records and shared landing slots; replaced staging 3984.00 MiB
+1.25.736.745 I fill_late: expert store: 35483 lookups, hit rate 91.0%, 39.1 GB read for decode, 0.0 GB for prefill
+1.36.768.336 I fill_late: expert store: 68251 lookups, hit rate 92.4%, 64.1 GB read for decode, 0.0 GB for prefill
+1.49.735.976 I fill_late: expert store: 103733 lookups, hit rate 91.4%, 109.6 GB read for decode, 0.0 GB for prefill
+2.00.423.113 I fill_late: expert store: 136501 lookups, hit rate 92.2%, 130.3 GB read for decode, 0.0 GB for prefill
+2.13.701.343 I fill_late: expert store: 171983 lookups, hit rate 91.5%, 179.6 GB read for decode, 0.0 GB for prefill
+2.24.409.538 I fill_late: expert store: 204751 lookups, hit rate 92.0%, 200.4 GB read for decode, 0.0 GB for prefill
+2.35.977.889 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 229.3 GB read for decode, 0.0 GB for prefill
+2.36.816.486 I llama_moe_cache: ubatch <= 8: hits = 214521, misses = 14704, hit rate = 93.59%, uploaded = 172744.03 MiB
+2.36.816.490 I llama_moe_cache: ubatch  > 8: hits = 5862, misses = 4056, hit rate = 59.10%, uploaded = 47327.62 MiB
+bank0-long MemAvailable 9732 MiB (loaded)
+bank0-long prompt_n= 2048 prompt_ms= 28237.991 pp tok/s= 72.52640600388321 predicted tok/s= 4.028541359067444 decode md5= fcd80d6576
+bank0-long prompt_n= 8192 prompt_ms= 115925.69 pp tok/s= 70.66595851187084 predicted tok/s= 4.10247120267109 decode md5= 25d4133dc7
+1.53.837.933 I fill_late: expert store: 32769 lookups, hit rate 83.8%, 65.4 GB read for decode, 216.5 GB for prefill
+2.06.947.257 I fill_late: expert store: 65537 lookups, hit rate 85.2%, 119.4 GB read for decode, 216.5 GB for prefill
+4.16.248.803 I fill_late: expert store: 98305 lookups, hit rate 85.7%, 173.2 GB read for decode, 1060.7 GB for prefill
+4.29.389.930 I fill_late: expert store: 131073 lookups, hit rate 85.9%, 226.5 GB read for decode, 1060.7 GB for prefill
+4.38.621.518 I llama_moe_cache: ubatch <= 8: hits = 131516, misses = 21501, hit rate = 85.95%, uploaded = 252141.94 MiB
+bank1-long MemAvailable 10652 MiB (loaded)
+bank1-long prompt_n= 2048 prompt_ms= 19259.717 pp tok/s= 106.3359342195942 predicted tok/s= 4.019313593017914 decode md5= fcd80d6576
+bank1-long prompt_n= 8192 prompt_ms= 80320.801 pp tok/s= 101.99101475594098 predicted tok/s= 4.070597102747705 decode md5= 25d4133dc7
+0.46.489.420 I prefill bank: 3984.00 MiB shared landing replaces staging; decode cache budget unchanged
+1.04.163.458 I prefill bank: memfd alias registered ok
+1.04.780.474 I prefill bank: memfd alias registered ok
+1.05.803.366 I prefill bank: memfd alias registered ok
+1.05.806.730 I prefill bank enabled: batches over 32 tokens use resident records and shared landing slots; replaced staging 3984.00 MiB
+1.46.857.204 I fill_late: expert store: 32769 lookups, hit rate 83.8%, 65.3 GB read for decode, 136.5 GB for prefill
+2.00.008.623 I fill_late: expert store: 65537 lookups, hit rate 85.2%, 119.1 GB read for decode, 136.5 GB for prefill
+3.33.780.038 I fill_late: expert store: 98305 lookups, hit rate 85.7%, 172.8 GB read for decode, 668.6 GB for prefill
+3.46.978.466 I fill_late: expert store: 131073 lookups, hit rate 85.9%, 226.9 GB read for decode, 668.6 GB for prefill
+3.56.261.035 I llama_moe_cache: ubatch <= 8: hits = 131372, misses = 21645, hit rate = 85.85%, uploaded = 253860.38 MiB
+bank0b-std MemAvailable 9735 MiB (loaded)
+bank0b-std r0 4.8873065987913415 tok/s md5 9449ae5738
+bank0b-std r1 4.892803868258443 tok/s md5 9449ae5738
+bank0b-std r2 4.882481552389239 tok/s md5 9449ae5738
+1.19.728.924 I fill_late: expert store: 35483 lookups, hit rate 91.0%, 39.0 GB read for decode, 0.0 GB for prefill
+1.30.771.849 I fill_late: expert store: 68251 lookups, hit rate 92.4%, 64.0 GB read for decode, 0.0 GB for prefill
+1.43.765.284 I fill_late: expert store: 103733 lookups, hit rate 91.4%, 109.3 GB read for decode, 0.0 GB for prefill
+1.54.474.435 I fill_late: expert store: 136501 lookups, hit rate 92.2%, 130.1 GB read for decode, 0.0 GB for prefill
+2.07.810.855 I fill_late: expert store: 171983 lookups, hit rate 91.5%, 179.1 GB read for decode, 0.0 GB for prefill
+2.18.565.740 I fill_late: expert store: 204751 lookups, hit rate 92.1%, 199.8 GB read for decode, 0.0 GB for prefill
+2.29.953.890 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 228.4 GB read for decode, 0.0 GB for prefill
+2.30.780.923 I llama_moe_cache: ubatch <= 8: hits = 214587, misses = 14638, hit rate = 93.61%, uploaded = 171958.31 MiB
+2.30.780.928 I llama_moe_cache: ubatch  > 8: hits = 5872, misses = 4046, hit rate = 59.21%, uploaded = 47208.28 MiB
+bank1b-std MemAvailable 10672 MiB (loaded)
+bank1b-std r0 4.883292012480003 tok/s md5 9449ae5738
+bank1b-std r1 4.8952686188072825 tok/s md5 9449ae5738
+bank1b-std r2 4.902785863299521 tok/s md5 9449ae5738
+0.46.313.971 I prefill bank: 3984.00 MiB shared landing replaces staging; decode cache budget unchanged
+1.03.896.283 I prefill bank: memfd alias registered ok
+1.04.583.980 I prefill bank: memfd alias registered ok
+1.05.640.686 I prefill bank: memfd alias registered ok
+1.05.644.068 I prefill bank enabled: batches over 32 tokens use resident records and shared landing slots; replaced staging 3984.00 MiB
+1.25.754.986 I fill_late: expert store: 35483 lookups, hit rate 91.1%, 38.9 GB read for decode, 0.0 GB for prefill
+1.36.821.918 I fill_late: expert store: 68251 lookups, hit rate 92.4%, 63.9 GB read for decode, 0.0 GB for prefill
+1.49.808.998 I fill_late: expert store: 103733 lookups, hit rate 91.4%, 109.3 GB read for decode, 0.0 GB for prefill
+2.00.527.682 I fill_late: expert store: 136501 lookups, hit rate 92.2%, 130.2 GB read for decode, 0.0 GB for prefill
+2.13.823.773 I fill_late: expert store: 171983 lookups, hit rate 91.5%, 179.5 GB read for decode, 0.0 GB for prefill
+2.24.528.468 I fill_late: expert store: 204751 lookups, hit rate 92.1%, 200.1 GB read for decode, 0.0 GB for prefill
+2.35.882.176 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 228.5 GB read for decode, 0.0 GB for prefill
+2.36.692.212 I llama_moe_cache: ubatch <= 8: hits = 214590, misses = 14635, hit rate = 93.62%, uploaded = 171951.94 MiB
+2.36.692.217 I llama_moe_cache: ubatch  > 8: hits = 5861, misses = 4057, hit rate = 59.09%, uploaded = 47339.16 MiB
+PREFILL-BANK pp2k=72.526/106.336 pp8k=70.666/101.991 tok/s
+DECODE-DELTA std=-0.013%
+WIN2X2-DONE

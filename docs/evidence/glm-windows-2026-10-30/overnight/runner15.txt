@@ -1,0 +1,63 @@
+=== window cap 02:01
+build18c=0
+CAP80 MemAvailable loaded 12384 MiB
+CAP80 r1 5.637 tok/s md5 9449ae5738
+CAP80 r2 5.697 tok/s md5 9449ae5738
+CAP80 MemAvailable after-requests 12294 MiB
+1.09.542.053 I valve_start: expert store: memory valve on: host reserve 4096 MiB, floor 50% of the slots, sampled every 500 ms (no PSI trigger: /proc/pressure/memory not writable), released slots re-armed after 10 s of c
+1.22.370.690 I fill_late: expert store: 35483 lookups, hit rate 91.9%, 35.4 GB read for decode, 0.0 GB for prefill
+1.22.370.702 I fill_late: expert store: memory valve: host MemAvailable 12.88 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.32.957.806 I fill_late: expert store: 68251 lookups, hit rate 92.1%, 66.7 GB read for decode, 0.0 GB for prefill
+1.32.957.813 I fill_late: expert store: memory valve: host MemAvailable 12.87 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.44.397.884 I fill_late: expert store: 103733 lookups, hit rate 91.7%, 106.5 GB read for decode, 0.0 GB for prefill
+1.44.397.891 I fill_late: expert store: memory valve: host MemAvailable 12.86 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.53.751.171 I fill_late: expert store: 136501 lookups, hit rate 92.5%, 125.7 GB read for decode, 0.0 GB for prefill
+1.53.751.178 I fill_late: expert store: memory valve: host MemAvailable 12.89 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.05.232.223 I fill_late: expert store: 171983 lookups, hit rate 92.2%, 165.0 GB read for decode, 0.0 GB for prefill
+2.05.232.231 I fill_late: expert store: memory valve: host MemAvailable 12.90 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.14.255.154 I fill_late: expert store: 204751 lookups, hit rate 92.8%, 181.1 GB read for decode, 0.0 GB for prefill
+2.14.255.161 I fill_late: expert store: memory valve: host MemAvailable 12.89 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.24.265.920 I fill_late: expert store: 237519 lookups, hit rate 92.9%, 206.9 GB read for decode, 0.0 GB for prefill
+2.24.265.926 I fill_late: expert store: memory valve: host MemAvailable 12.89 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.24.918.805 I llama_moe_cache: ubatch <= 8: hits = 215195, misses = 14030, hit rate = 93.88%, uploaded = 165056.91 MiB
+2.24.918.810 I llama_moe_cache: ubatch  > 8: hits = 7052, misses = 2866, hit rate = 71.10%, uploaded = 33474.00 MiB
+2.24.918.816 I llama_moe_cache: expert store: memory valve: host MemAvailable 12.89 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+CAP80 MemAvailable unloaded 121154 MiB
+CAP84 MemAvailable loaded 8558 MiB
+CAP84 r1 5.793 tok/s md5 9449ae5738
+CAP84 r2 5.858 tok/s md5 9449ae5738
+CAP84 MemAvailable after-requests 8336 MiB
+1.10.425.828 I valve_start: expert store: memory valve on: host reserve 4096 MiB, floor 50% of the slots, sampled every 500 ms (no PSI trigger: /proc/pressure/memory not writable), released slots re-armed after 10 s of c
+1.23.095.767 I fill_late: expert store: 35483 lookups, hit rate 92.6%, 32.2 GB read for decode, 0.0 GB for prefill
+1.23.095.778 I fill_late: expert store: memory valve: host MemAvailable 8.80 GB (lowest 8.79, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.33.400.279 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.6 GB read for decode, 0.0 GB for prefill
+1.33.400.286 I fill_late: expert store: memory valve: host MemAvailable 8.80 GB (lowest 8.79, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.44.475.806 I fill_late: expert store: 103733 lookups, hit rate 92.4%, 96.8 GB read for decode, 0.0 GB for prefill
+1.44.475.812 I fill_late: expert store: memory valve: host MemAvailable 8.77 GB (lowest 8.77, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.53.575.856 I fill_late: expert store: 136501 lookups, hit rate 93.2%, 114.0 GB read for decode, 0.0 GB for prefill
+1.53.575.863 I fill_late: expert store: memory valve: host MemAvailable 8.75 GB (lowest 8.75, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.04.738.694 I fill_late: expert store: 171983 lookups, hit rate 92.9%, 150.2 GB read for decode, 0.0 GB for prefill
+2.04.738.701 I fill_late: expert store: memory valve: host MemAvailable 8.75 GB (lowest 8.75, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.13.532.904 I fill_late: expert store: 204751 lookups, hit rate 93.5%, 164.3 GB read for decode, 0.0 GB for prefill
+2.13.532.911 I fill_late: expert store: memory valve: host MemAvailable 8.75 GB (lowest 8.75, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.23.229.124 I fill_late: expert store: 237519 lookups, hit rate 93.6%, 186.8 GB read for decode, 0.0 GB for prefill
+2.23.229.130 I fill_late: expert store: memory valve: host MemAvailable 8.74 GB (lowest 8.74, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.23.899.344 I llama_moe_cache: ubatch <= 8: hits = 216637, misses = 12588, hit rate = 94.51%, uploaded = 148104.38 MiB
+2.23.899.349 I llama_moe_cache: ubatch  > 8: hits = 7247, misses = 2671, hit rate = 73.07%, uploaded = 31207.12 MiB
+2.23.899.354 I llama_moe_cache: expert store: memory valve: host MemAvailable 8.74 GB (lowest 8.74, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+CAP84 MemAvailable unloaded 121207 MiB
+CAP80b MemAvailable loaded 12469 MiB
+CAP80b r1 5.63 tok/s md5 9449ae5738
+CAP80b r2 5.713 tok/s md5 9449ae5738
+CAP80b MemAvailable after-requests 12294 MiB
+1.06.416.830 I valve_start: expert store: memory valve on: host reserve 4096 MiB, floor 50% of the slots, sampled every 500 ms (no PSI trigger: /proc/pressure/memory not writable), released slots re-armed after 10 s of c
+1.19.434.497 I fill_late: expert store: 35483 lookups, hit rate 91.8%, 35.9 GB read for decode, 0.0 GB for prefill
+1.19.434.509 I fill_late: expert store: memory valve: host MemAvailable 12.91 GB (lowest 12.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.30.014.422 I fill_late: expert store: 68251 lookups, hit rate 92.0%, 67.1 GB read for decode, 0.0 GB for prefill
+1.30.014.430 I fill_late: expert store: memory valve: host MemAvailable 12.92 GB (lowest 12.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.41.744.093 I fill_late: expert store: 103733 lookups, hit rate 91.5%, 108.1 GB read for decode, 0.0 GB for prefill
+1.41.744.099 I fill_late: expert store: memory valve: host MemAvailable 12.92 GB (lowest 12.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.51.034.404 I fill_late: expert store: 136501 lookups, hit rate 92.4%, 127.1 GB read for decode, 0.0 GB for prefill
+1.51.034.411 I fill_late: expert store: memory valve: host MemAvailable 12.92 GB (lowest 12.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+pod restored: Running
+ALL-WINDOWS-DONE

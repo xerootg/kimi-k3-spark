@@ -1,0 +1,38 @@
+build29=0
+PC8 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0 TOPK=8
+PC8 r1 5.396 tok/s md5 9449ae5738
+PC8 r2 5.363 tok/s md5 9449ae5738
+2.33.005.989 I llama_moe_cache: ubatch <= 8: hits = 214212, misses = 15013, hit rate = 93.45%, uploaded = 176460.56 MiB
+2.33.152.217 I host bank hooks: early=28579/42.358ms real=28875/20664.597ms post=28268/332.186ms idle_sleeps=256937 lean=1
+2.33.154.342 I host bank record latency: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=48822 bin_ms=0.5 overflow_gt_ms=16 p50=1.500 p90=3.500 p99=5.000 (bin upper bounds; overflow lower bound)
+2.33.154.362 I host bank record incomplete at real hook: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded count=23619 completed=23619 remaining_p50=1.500 p90=2.500 p99=5.000 ms (0.5ms bins; overflow lower bound)
+2.33.154.365 I host bank physical bytes per token: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=599009624064 decode_steps=381 bytes_per_token=1572203737.701; tracked pieces in flight at real hook avg=8.138 hooks=28579 token_scope=GPU-real-first-stored-layer-single-token-split-or-unsplit
+PC8 MemAvailable 121098 MiB
+PC6 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0 TOPK=6
+PC6 r1 5.249 tok/s md5 9449ae5738
+PC6 r2 5.359 tok/s md5 9449ae5738
+2.34.902.026 I llama_moe_cache: ubatch <= 8: hits = 208679, misses = 20546, hit rate = 91.04%, uploaded = 240820.78 MiB
+2.35.240.620 I host bank hooks: early=28579/49.971ms real=28875/21679.735ms post=28268/318.660ms idle_sleeps=259582 lean=1
+2.35.244.559 I host bank record latency: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=44360 bin_ms=0.5 overflow_gt_ms=16 p50=1.500 p90=3.500 p99=5.000 (bin upper bounds; overflow lower bound)
+2.35.244.579 I host bank record incomplete at real hook: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded count=26418 completed=26418 remaining_p50=1.500 p90=2.500 p99=5.000 ms (0.5ms bins; overflow lower bound)
+2.35.244.582 I host bank physical bytes per token: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=544461127680 decode_steps=381 bytes_per_token=1429031831.181; tracked pieces in flight at real hook avg=8.518 hooks=28579 token_scope=GPU-real-first-stored-layer-single-token-split-or-unsplit
+PC6 MemAvailable 121088 MiB
+PC7 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0 TOPK=7
+PC7 r1 5.398 tok/s md5 9449ae5738
+PC7 r2 5.352 tok/s md5 9449ae5738
+2.34.032.904 I llama_moe_cache: ubatch <= 8: hits = 212011, misses = 17214, hit rate = 92.49%, uploaded = 202028.72 MiB
+2.34.164.375 I host bank hooks: early=28579/47.309ms real=28875/20436.802ms post=28268/329.999ms idle_sleeps=260227 lean=1
+2.34.167.072 I host bank record latency: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=46289 bin_ms=0.5 overflow_gt_ms=16 p50=1.500 p90=3.500 p99=5.000 (bin upper bounds; overflow lower bound)
+2.34.167.093 I host bank record incomplete at real hook: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded count=24563 completed=24563 remaining_p50=1.500 p90=2.500 p99=5.000 ms (0.5ms bins; overflow lower bound)
+2.34.167.096 I host bank physical bytes per token: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=568072667136 decode_steps=381 bytes_per_token=1491004375.685; tracked pieces in flight at real hook avg=8.121 hooks=28579 token_scope=GPU-real-first-stored-layer-single-token-split-or-unsplit
+PC7 MemAvailable 121102 MiB
+PC8b SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0 TOPK=8
+PC8b r1 5.335 tok/s md5 9449ae5738
+PC8b r2 5.379 tok/s md5 9449ae5738
+2.32.222.931 I llama_moe_cache: ubatch <= 8: hits = 214142, misses = 15083, hit rate = 93.42%, uploaded = 177301.78 MiB
+2.32.654.103 I host bank hooks: early=28579/42.147ms real=28875/20357.006ms post=28268/332.632ms idle_sleeps=265084 lean=1
+2.32.656.405 I host bank record latency: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=48850 bin_ms=0.5 overflow_gt_ms=16 p50=2.000 p90=3.500 p99=5.000 (bin upper bounds; overflow lower bound)
+2.32.656.423 I host bank record incomplete at real hook: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded count=23712 completed=23712 remaining_p50=1.500 p90=3.000 p99=5.000 ms (0.5ms bins; overflow lower bound)
+2.32.656.426 I host bank physical bytes per token: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=599336976384 decode_steps=381 bytes_per_token=1573062930.142; tracked pieces in flight at real hook avg=8.181 hooks=28579 token_scope=GPU-real-first-stored-layer-single-token-split-or-unsplit
+PC8b MemAvailable 121091 MiB
+WIN2PC-DONE

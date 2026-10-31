@@ -1,6 +1,6 @@
 # GLM-5.3 current state
 
-As of 2026-10-30. This page separates deployed behavior, measured experiments and estimates. The [experiment ledger](experiments.md) is the chronological record; older roadmap priorities are superseded by the results below.
+As of 2026-10-31. This page separates deployed behavior, measured experiments and estimates. The [experiment ledger](experiments.md) is the chronological record; older roadmap priorities are superseded by the results below.
 
 ## What runs today
 
@@ -9,12 +9,12 @@ The Spark serves full GLM-5.3 UD-Q2_K_XL, chosen as the smallest quant above the
 | Deployed setting or measured step | Value | Source |
 |---|---|---|
 | Short-prompt decode progression | 3.76 → 3.85 tok/s with cache expansion → 4.25 with byte strides → 4.90–4.93 with prediction | [Ledger: cache, byte-stride and predictive-prefetch legs](experiments.md) |
-| Expert cache / context / request slots | 80000 MiB / 65536 tokens / one slot | [Production profile configuration](glm-floor-profile-2026-10-30.md), [GH200 service trade](gh200-glm-plan.md) |
+| Expert cache / context / request slots | 84000 MiB adopted, pending rollout (80000 MiB deployed) / 65536 tokens / one slot | [Production profile configuration](glm-floor-profile-2026-10-30.md), [GH200 service trade](gh200-glm-plan.md) |
 | Cache expert slots | 6859 restored experts; distinct layout groups constrain capacity | [Prefill analysis](experimental/0007-prefill-analysis.md), [placement assumptions](../tools/glm53/PLACEMENT.md) |
 | Spark store and active knobs / eviction policy | Store v1; split expert GEMV, byte strides, predictive prefetch input 3, second chance, snapshot restore and memory valve. **LFU adopted after window l: +5.49 % (5.40525 → 5.70225 tok/s), bit-identical in all eight timed passes**; final hit rate 92.0 → 92.7 %, decode reads 234.1 → 212.6 GB. Patch 0018 v2 with headroom and no-growth fixes goes into the stack; manifest sets `LLAMA_EXPERT_STORE_POLICY=lfu`, `LLAMA_EXPERT_STORE_LFU_HALF_LIFE=262144` (owner commits) | [Ledger: window l](experiments.md#glm-53-the-candidate-windows-second-pass-2026-10-30-evening), [profile configuration](glm-floor-profile-2026-10-30.md), [patches](../patches/README.md) |
-| Production short-prompt decode | 5.43 → **~5.6 tok/s warm with LFU**; image `ge4e4290`, argo-things `8a2d14b`. Public check after window i: r0/r1 5.114/5.584 tok/s, md5 `9449ae5738` both; volatile LFU state warms after restart | [Live check](../evidence/prodcheck2.txt), [ledger](experiments.md#glm-53-the-candidate-windows-second-pass-2026-10-30-evening) |
+| Production short-prompt decode | Cache **84000 MiB pending rollout**, expected **~5.8 tok/s warm** after window cap (+2.7 %, bit-identical). Current deployed check: **~5.6 tok/s warm with LFU**; image `ge4e4290`, argo-things `8a2d14b`. Public check after window i: r0/r1 5.114/5.584 tok/s, md5 `9449ae5738` both; volatile LFU state warms after restart | [Live check](../evidence/prodcheck2.txt), [ledger](experiments.md#glm-53-the-candidate-windows-second-pass-2026-10-30-evening) |
 | Greedy decode identity gate | md5 prefix `9449ae5738`; full digest `9449ae5738f2e56f99ab7ab6e9626eb5` for the standard fixture | [Ledger](experiments.md), [prefill analysis](experimental/0007-prefill-analysis.md) |
-| Prefill with larger ubatches | 512: 24.0 tok/s; 1024: 37.4; 2048: 65.9; production now uses 2048 | [Latest prefill ledger](experiments.md#glm-53-the-per-token-budget-at-490-toks-and-prefill-2026-10-30) |
+| Prefill with larger ubatches | 512: 24.0 tok/s; 1024: 37.4; 2048: 65.9; production now uses 2048. **0010 v3 measured +45 % prefill** (2048-token prompt 72.5 → 106.3, 8192-token 70.7 → 102.0 tok/s), decode and bytes unchanged on pb2; **adoption pending clean-tree confirmation and image** | [Third-pass ledger](experiments.md#glm-53-the-candidate-windows-third-pass-2026-10-31-night) |
 | Long-prompt qualification | 30000-token measured prompt: 493.8 s, 60.76 tok/s; decode after long prompts: about 4.0–4.2 tok/s | [Prefill analysis](experimental/0007-prefill-analysis.md), [ledger](experiments.md) |
 
 The larger ubatch amortizes repeated weight passes. The detailed prefill analysis measured the larger-ubatch legs with the experimental miss-only patch; it explicitly left the unpatched large-ubatch comparison open. The later ledger records the production setting and rejection of that patch, but does not supply a separate unpatched large-ubatch timing table. Treat the headline as the reported rollout result with that provenance caveat, rather than proof that every production prompt sustains it. Sources: [analysis](experimental/0007-prefill-analysis.md), [latest ledger](experiments.md).

@@ -1,0 +1,7 @@
+=== window gm 02:44
+build27=0
+GM0 r1 5.392 tok/s md5 9449ae5738
+GM0 r2 5.411 tok/s md5 9449ae5738
+ABORT-WINDOW GM0 missing GEMV init log
+pod restored: Running
+ALL-WINDOWS-DONE

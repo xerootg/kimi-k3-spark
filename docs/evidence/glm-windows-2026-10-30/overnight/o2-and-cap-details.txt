@@ -1,0 +1,44 @@
+P16.r0.json prompt_n 16384 prompt_s 238.3 pp 68.74 decode 3.547 md5 546cda4032
+P16.r1.json prompt_n 16384 prompt_s 239.4 pp 68.42 decode 4.631 md5 546cda4032
+P16.r2.json prompt_n 16384 prompt_s 239.4 pp 68.43 decode 4.664 md5 546cda4032
+P8-a.r0.json prompt_n 8192 prompt_s 114.5 pp 71.53 decode 3.631 md5 5e7108fd8d
+P8-b.r0.json prompt_n 8192 prompt_s 114.5 pp 71.58 decode 3.61 md5 5e7108fd8d
+S16.r0.json prompt_n 16384 prompt_s 238.4 pp 68.72 decode 3.5 md5 546cda4032
+S16.r1.json prompt_n 16384 prompt_s 238.9 pp 68.57 decode 4.518 md5 546cda4032
+S16.r2.json prompt_n 16384 prompt_s 239.2 pp 68.5 decode 4.639 md5 546cda4032
+/srv/glm-5.3/legs/CAP80b.log:1.19.434.509 I fill_late: expert store: memory valve: host MemAvailable 12.91 GB (lowest 12.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PS
+/srv/glm-5.3/legs/CAP80b.log:1.30.014.430 I fill_late: expert store: memory valve: host MemAvailable 12.92 GB (lowest 12.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PS
+/srv/glm-5.3/legs/CAP80b.log:1.41.744.099 I fill_late: expert store: memory valve: host MemAvailable 12.92 GB (lowest 12.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PS
+/srv/glm-5.3/legs/CAP80b.log:1.51.034.411 I fill_late: expert store: memory valve: host MemAvailable 12.92 GB (lowest 12.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PS
+/srv/glm-5.3/legs/CAP80b.log:2.02.625.203 I fill_late: expert store: memory valve: host MemAvailable 12.92 GB (lowest 12.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PS
+/srv/glm-5.3/legs/CAP80b.log:2.11.582.265 I fill_late: expert store: memory valve: host MemAvailable 12.92 GB (lowest 12.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PS
+/srv/glm-5.3/legs/CAP80b.log:2.21.595.121 I fill_late: expert store: 237519 lookups, hit rate 92.9%, 208.5 GB read for decode, 0.0 GB for prefill
+/srv/glm-5.3/legs/CAP80b.log:2.21.595.129 I fill_late: expert store: memory valve: host MemAvailable 12.89 GB (lowest 12.88, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PS
+/srv/glm-5.3/legs/CAP80b.log:2.22.230.292 I llama_moe_cache: expert store: memory valve: host MemAvailable 12.89 GB (lowest 12.88, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms
+/srv/glm-5.3/legs/CAP80.log:1.22.370.702 I fill_late: expert store: memory valve: host MemAvailable 12.88 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI
+/srv/glm-5.3/legs/CAP80.log:1.32.957.813 I fill_late: expert store: memory valve: host MemAvailable 12.87 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI
+/srv/glm-5.3/legs/CAP80.log:1.44.397.891 I fill_late: expert store: memory valve: host MemAvailable 12.86 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI
+/srv/glm-5.3/legs/CAP80.log:1.53.751.178 I fill_late: expert store: memory valve: host MemAvailable 12.89 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI
+/srv/glm-5.3/legs/CAP80.log:2.05.232.231 I fill_late: expert store: memory valve: host MemAvailable 12.90 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI
+/srv/glm-5.3/legs/CAP80.log:2.14.255.161 I fill_late: expert store: memory valve: host MemAvailable 12.89 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI
+/srv/glm-5.3/legs/CAP80.log:2.24.265.920 I fill_late: expert store: 237519 lookups, hit rate 92.9%, 206.9 GB read for decode, 0.0 GB for prefill
+/srv/glm-5.3/legs/CAP80.log:2.24.265.926 I fill_late: expert store: memory valve: host MemAvailable 12.89 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI
+/srv/glm-5.3/legs/CAP80.log:2.24.918.816 I llama_moe_cache: expert store: memory valve: host MemAvailable 12.89 GB (lowest 12.85, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms,
+/srv/glm-5.3/legs/CAP84b.log:1.25.088.798 I fill_late: expert store: memory valve: host MemAvailable 8.72 GB (lowest 8.71, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI 
+/srv/glm-5.3/legs/CAP84b.log:1.35.316.821 I fill_late: expert store: memory valve: host MemAvailable 8.72 GB (lowest 8.71, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI 
+/srv/glm-5.3/legs/CAP84b.log:1.46.416.842 I fill_late: expert store: memory valve: host MemAvailable 8.69 GB (lowest 8.68, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI 
+/srv/glm-5.3/legs/CAP84b.log:1.55.552.000 I fill_late: expert store: memory valve: host MemAvailable 8.70 GB (lowest 8.68, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI 
+/srv/glm-5.3/legs/CAP84b.log:2.06.707.788 I fill_late: expert store: memory valve: host MemAvailable 8.71 GB (lowest 8.68, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI 
+/srv/glm-5.3/legs/CAP84b.log:2.15.484.022 I fill_late: expert store: memory valve: host MemAvailable 8.71 GB (lowest 8.68, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI 
+/srv/glm-5.3/legs/CAP84b.log:2.25.142.668 I fill_late: expert store: 237519 lookups, hit rate 93.6%, 186.3 GB read for decode, 0.0 GB for prefill
+/srv/glm-5.3/legs/CAP84b.log:2.25.142.676 I fill_late: expert store: memory valve: host MemAvailable 8.71 GB (lowest 8.68, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI 
+/srv/glm-5.3/legs/CAP84b.log:2.25.787.481 I llama_moe_cache: expert store: memory valve: host MemAvailable 11.70 GB (lowest 8.68, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms,
+/srv/glm-5.3/legs/CAP84.log:1.23.095.778 I fill_late: expert store: memory valve: host MemAvailable 8.80 GB (lowest 8.79, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI w
+/srv/glm-5.3/legs/CAP84.log:1.33.400.286 I fill_late: expert store: memory valve: host MemAvailable 8.80 GB (lowest 8.79, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI w
+/srv/glm-5.3/legs/CAP84.log:1.44.475.812 I fill_late: expert store: memory valve: host MemAvailable 8.77 GB (lowest 8.77, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI w
+/srv/glm-5.3/legs/CAP84.log:1.53.575.863 I fill_late: expert store: memory valve: host MemAvailable 8.75 GB (lowest 8.75, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI w
+/srv/glm-5.3/legs/CAP84.log:2.04.738.701 I fill_late: expert store: memory valve: host MemAvailable 8.75 GB (lowest 8.75, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI w
+/srv/glm-5.3/legs/CAP84.log:2.13.532.911 I fill_late: expert store: memory valve: host MemAvailable 8.75 GB (lowest 8.75, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI w
+/srv/glm-5.3/legs/CAP84.log:2.23.229.124 I fill_late: expert store: 237519 lookups, hit rate 93.6%, 186.8 GB read for decode, 0.0 GB for prefill
+/srv/glm-5.3/legs/CAP84.log:2.23.229.130 I fill_late: expert store: memory valve: host MemAvailable 8.74 GB (lowest 8.74, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI w
+/srv/glm-5.3/legs/CAP84.log:2.23.899.354 I llama_moe_cache: expert store: memory valve: host MemAvailable 8.74 GB (lowest 8.74, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0

@@ -1,0 +1,63 @@
+=== window af 02:28
+build23=0
+expert store: affinity: big cores = 19 (capacity, fallback max frequency; allowed CPUs)
+expert store: affinity: spec = detect
+affinity AF1/AF2 poller=19,readers=5,6,7,8,9,15,16,17,18,main=18
+AF0 r1 5.39 tok/s md5 9449ae5738
+AF0 r2 5.403 tok/s md5 9449ae5738
+expert store: affinity: big cores = 19 (capacity, fallback max frequency; allowed CPUs)
+1.23.158.638 I fill_late: expert store: 35483 lookups, hit rate 92.1%, 34.3 GB read for decode, 0.0 GB for prefill
+1.33.144.865 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.2 GB read for decode, 0.0 GB for prefill
+1.45.135.922 I fill_late: expert store: 103733 lookups, hit rate 91.6%, 106.6 GB read for decode, 0.0 GB for prefill
+1.54.694.147 I fill_late: expert store: 136501 lookups, hit rate 92.4%, 128.1 GB read for decode, 0.0 GB for prefill
+2.07.033.950 I fill_late: expert store: 171983 lookups, hit rate 91.6%, 178.6 GB read for decode, 0.0 GB for prefill
+2.16.596.446 I fill_late: expert store: 204751 lookups, hit rate 92.1%, 199.6 GB read for decode, 0.0 GB for prefill
+2.26.989.012 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 229.1 GB read for decode, 0.0 GB for prefill
+2.27.656.367 I llama_moe_cache: ubatch <= 8: hits = 214239, misses = 14986, hit rate = 93.46%, uploaded = 176170.22 MiB
+2.27.656.371 I llama_moe_cache: ubatch  > 8: hits = 6167, misses = 3751, hit rate = 62.18%, uploaded = 43771.69 MiB
+2.28.098.681 I host bank hooks: early=28579/35.342ms real=28875/20303.304ms post=28268/320.110ms idle_sleeps=263852 lean=1
+AF1 AFFINITY=affinity SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+AF1 r1 5.406 tok/s md5 9449ae5738
+AF1 r2 5.409 tok/s md5 9449ae5738
+expert store: affinity: big cores = 19 (capacity, fallback max frequency; allowed CPUs)
+expert store: affinity: spec = poller=19,readers=5,6,7,8,9,15,16,17,18,main=18
+1.21.110.469 I fill_late: expert store: 35483 lookups, hit rate 92.1%, 34.4 GB read for decode, 0.0 GB for prefill
+1.31.055.787 I fill_late: expert store: 68251 lookups, hit rate 92.9%, 60.0 GB read for decode, 0.0 GB for prefill
+1.43.008.516 I fill_late: expert store: 103733 lookups, hit rate 91.7%, 106.1 GB read for decode, 0.0 GB for prefill
+1.52.574.499 I fill_late: expert store: 136501 lookups, hit rate 92.4%, 127.6 GB read for decode, 0.0 GB for prefill
+2.04.906.440 I fill_late: expert store: 171983 lookups, hit rate 91.6%, 177.9 GB read for decode, 0.0 GB for prefill
+2.14.456.222 I fill_late: expert store: 204751 lookups, hit rate 92.1%, 198.9 GB read for decode, 0.0 GB for prefill
+2.24.828.368 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 228.5 GB read for decode, 0.0 GB for prefill
+2.25.491.175 I llama_moe_cache: ubatch <= 8: hits = 214299, misses = 14926, hit rate = 93.49%, uploaded = 175415.81 MiB
+2.25.491.179 I llama_moe_cache: ubatch  > 8: hits = 6161, misses = 3757, hit rate = 62.12%, uploaded = 43844.91 MiB
+2.25.856.158 I host bank hooks: early=28579/38.683ms real=28875/20093.071ms post=28268/319.785ms idle_sleeps=263682 lean=1
+AF2 r1 5.39 tok/s md5 9449ae5738
+AF2 r2 5.331 tok/s md5 9449ae5738
+expert store: affinity: big cores = 19 (capacity, fallback max frequency; allowed CPUs)
+expert store: affinity: spec = poller=19,readers=5,6,7,8,9,15,16,17,18,main=18
+expert store: affinity: warning: poller SCHED_FIFO priority 1: Operation not permitted; continuing
+1.23.114.743 I fill_late: expert store: 35483 lookups, hit rate 92.1%, 34.4 GB read for decode, 0.0 GB for prefill
+1.33.057.269 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.1 GB read for decode, 0.0 GB for prefill
+1.45.016.821 I fill_late: expert store: 103733 lookups, hit rate 91.7%, 106.3 GB read for decode, 0.0 GB for prefill
+1.54.617.675 I fill_late: expert store: 136501 lookups, hit rate 92.4%, 128.1 GB read for decode, 0.0 GB for prefill
+2.07.237.749 I fill_late: expert store: 171983 lookups, hit rate 91.5%, 179.6 GB read for decode, 0.0 GB for prefill
+2.16.901.117 I fill_late: expert store: 204751 lookups, hit rate 92.0%, 201.0 GB read for decode, 0.0 GB for prefill
+2.27.275.063 I fill_late: expert store: 237519 lookups, hit rate 92.1%, 230.5 GB read for decode, 0.0 GB for prefill
+2.27.934.854 I llama_moe_cache: ubatch <= 8: hits = 214138, misses = 15087, hit rate = 93.42%, uploaded = 177344.25 MiB
+2.27.934.858 I llama_moe_cache: ubatch  > 8: hits = 6161, misses = 3757, hit rate = 62.12%, uploaded = 43844.91 MiB
+2.28.332.022 I host bank hooks: early=28579/37.962ms real=28875/20390.462ms post=28268/319.097ms idle_sleeps=271994 lean=1
+AF0b r1 5.406 tok/s md5 9449ae5738
+AF0b r2 5.401 tok/s md5 9449ae5738
+expert store: affinity: big cores = 19 (capacity, fallback max frequency; allowed CPUs)
+1.22.348.488 I fill_late: expert store: 35483 lookups, hit rate 92.0%, 34.7 GB read for decode, 0.0 GB for prefill
+1.32.742.008 I fill_late: expert store: 68251 lookups, hit rate 92.6%, 62.3 GB read for decode, 0.0 GB for prefill
+1.44.711.687 I fill_late: expert store: 103733 lookups, hit rate 91.5%, 108.4 GB read for decode, 0.0 GB for prefill
+1.54.268.052 I fill_late: expert store: 136501 lookups, hit rate 92.3%, 129.8 GB read for decode, 0.0 GB for prefill
+2.06.589.129 I fill_late: expert store: 171983 lookups, hit rate 91.5%, 180.2 GB read for decode, 0.0 GB for prefill
+2.16.162.422 I fill_late: expert store: 204751 lookups, hit rate 92.0%, 201.3 GB read for decode, 0.0 GB for prefill
+2.26.553.198 I fill_late: expert store: 237519 lookups, hit rate 92.1%, 231.0 GB read for decode, 0.0 GB for prefill
+2.27.220.119 I llama_moe_cache: ubatch <= 8: hits = 214088, misses = 15137, hit rate = 93.40%, uploaded = 177980.34 MiB
+2.27.220.122 I llama_moe_cache: ubatch  > 8: hits = 6172, misses = 3746, hit rate = 62.23%, uploaded = 43718.06 MiB
+2.27.240.573 I host bank hooks: early=28579/37.377ms real=28875/20645.777ms post=28268/323.904ms idle_sleeps=248050 lean=1
+pod restored: Running
+ALL-WINDOWS-DONE
