@@ -1,0 +1,93 @@
+=== window gm 12:32
+ABORT-WINDOW existing GM0 outputs; archive first
+pod restored: Running
+=== window bg 12:34
+ABORT-WINDOW existing BG0 outputs; archive first
+pod restored: Running
+=== window thp 12:36
+bankread2-build=0
+G0 mmap+register HUGEPAGE=none COLLAPSE=not requested
+G0 mmap+register AnonHugePages=0/94464 kB fraction=0.0000 rollup-delta=0 kB (process-wide)
+G0 mmap+register         ms/layer=0.601496 GB/s=160.818 md5=4886caf147345f985622537f1e657392 MATCH vs B speedups valid=yes
+G mmap+THP+register HUGEPAGE=OK COLLAPSE=OK
+G mmap+THP+register AnonHugePages=92160/94464 kB fraction=0.9756 rollup-delta=92160 kB (process-wide)
+G mmap+THP+register      ms/layer=0.603264 GB/s=160.346 md5=4886caf147345f985622537f1e657392 MATCH vs B speedups valid=yes
+H hugetlbfs 2 MiB unavailable: mmap: Cannot allocate memory
+bankread2-run=1
+build26=0
+TH0 MemAvailable-loaded 12277 MiB
+TH0 r0 5.363 tok/s md5 9449ae5738
+TH0 r1 5.325 tok/s md5 9449ae5738
+TH0 r2 5.386 tok/s md5 9449ae5738
+TH0 MemAvailable-after-requests 12160 MiB
+TH0 MemAvailable 121067 MiB
+1.09.255.205 I impl: expert store: slot maps registered with the GPU, the lookups run there and the fills in its host hook (LLAMA_EXPERT_STORE_GPU_SLOTS=0 for the CPU split)
+1.10.635.176 I ensure_staging: expert store: 3984.00 MiB of prefill staging allocated (pinned)
+1.16.898.745 I impl: expert store: host cache below is filled from the store, expert matmuls run on the GPU from the registered cache, batches up to 32 tokens from the cache (larger ones through a 3984.00 MiB staging, allocated when one comes)
+1.30.257.680 I fill_late: expert store: 35483 lookups, hit rate 92.0%, 34.9 GB read for decode, 0.0 GB for prefill
+1.30.257.683 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.21 ms (0.7 records, 40.64 GB/s), between fills 7.75 ms
+1.30.257.692 I fill_late: expert store: memory valve: host MemAvailable 12.71 GB (lowest 12.71, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.30.257.696 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+1.30.257.698 I fill_late: expert store: self-prefetch: 74 posts, 0.0 records and 0.00 ms of reads per post
+1.30.257.699 I fill_late: expert store: predictor top-k: 26664/31144 ids matched (85.6%), 3893 single-token pairs
+1.30.257.700 I fill_late: expert store: prefetch: 5708 predicted misses read, 3775 of them used by the real fill (66.1%)
+1.30.257.701 I fill_late: expert store: prefetch: 2964 posts, 1.93 records queued per post, 1099 handed back unread, 890 adopted in flight (0.308 ms per wait, 888 waits)
+1.40.387.509 I fill_late: expert store: 68251 lookups, hit rate 92.7%, 61.1 GB read for decode, 0.0 GB for prefill
+1.40.387.513 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.10 ms (0.6 records, 71.13 GB/s), between fills 7.75 ms
+1.40.387.517 I fill_late: expert store: memory valve: host MemAvailable 12.73 GB (lowest 12.71, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.40.387.521 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.40.387.523 I fill_late: expert store: self-prefetch: 74 posts, 0.0 records and 0.00 ms of reads per post
+1.40.387.523 I fill_late: expert store: predictor top-k: 54006/63472 ids matched (85.1%), 7934 single-token pairs
+1.40.387.524 I fill_late: expert store: prefetch: 11421 predicted misses read, 7631 of them used by the real fill (66.8%)
+1.40.387.525 I fill_late: expert store: prefetch: 5923 posts, 1.93 records queued per post, 2242 handed back unread, 1810 adopted in flight (0.328 ms per wait, 1803 waits)
+1.52.829.727 I fill_late: expert store: 103733 lookups, hit rate 91.5%, 108.6 GB read for decode, 0.0 GB for prefill
+1.52.829.730 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.18 ms (0.7 records, 47.92 GB/s), between fills 7.04 ms
+1.52.829.734 I fill_late: expert store: memory valve: host MemAvailable 12.75 GB (lowest 12.71, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.52.829.739 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+1.52.829.740 I fill_late: expert store: self-prefetch: 74 posts, 0.0 records and 0.00 ms of reads per post
+1.52.829.741 I fill_late: expert store: predictor top-k: 81125/95216 ids matched (85.2%), 11902 single-token pairs
+1.52.829.743 I fill_late: expert store: prefetch: 18185 predicted misses read, 11992 of them used by the real fill (65.9%)
+1.52.829.745 I fill_late: expert store: prefetch: 9182 posts, 1.98 records queued per post, 3864 handed back unread, 2979 adopted in flight (0.347 ms per wait, 2959 waits)
+2.02.417.563 I fill_late: expert store: 136501 lookups, hit rate 92.3%, 130.1 GB read for decode, 0.0 GB for prefill
+2.02.417.566 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.14 ms (0.6 records, 57.41 GB/s), between fills 7.04 ms
+2.02.417.570 I fill_late: expert store: memory valve: host MemAvailable 12.75 GB (lowest 12.71, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.02.417.573 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.31 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.02.417.576 I fill_late: expert store: self-prefetch: 74 posts, 0.0 records and 0.00 ms of reads per post
+2.02.417.577 I fill_late: expert store: predictor top-k: 108531/127544 ids matched (85.1%), 15943 single-token pairs
+2.02.417.577 I fill_late: expert store: prefetch: 23251 predicted misses read, 15491 of them used by the real fill (66.6%)
+2.02.417.578 I fill_late: expert store: prefetch: 11982 posts, 1.94 records queued per post, 4702 handed back unread, 3802 adopted in flight (0.340 ms per wait, 3781 waits)
+2.14.788.883 I fill_late: expert store: 171983 lookups, hit rate 91.5%, 180.4 GB read for decode, 0.0 GB for prefill
+2.14.788.886 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.17 ms (0.7 records, 50.43 GB/s), between fills 6.69 ms
+2.14.788.890 I fill_late: expert store: memory valve: host MemAvailable 12.76 GB (lowest 12.71, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.14.788.899 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.60 ms, 0 early lookups without a real one
+2.14.788.901 I fill_late: expert store: self-prefetch: 74 posts, 0.0 records and 0.00 ms of reads per post
+2.14.788.901 I fill_late: expert store: predictor top-k: 135503/159280 ids matched (85.1%), 19910 single-token pairs
+2.14.788.902 I fill_late: expert store: prefetch: 30402 predicted misses read, 20123 of them used by the real fill (66.2%)
+2.14.788.903 I fill_late: expert store: prefetch: 15300 posts, 1.99 records queued per post, 6424 handed back unread, 4891 adopted in flight (0.329 ms per wait, 4870 waits)
+2.24.383.402 I fill_late: expert store: 204751 lookups, hit rate 92.0%, 201.6 GB read for decode, 0.0 GB for prefill
+2.24.383.405 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.15 ms (0.7 records, 56.37 GB/s), between fills 6.69 ms
+2.24.383.409 I fill_late: expert store: memory valve: host MemAvailable 12.75 GB (lowest 12.71, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.24.383.414 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.34 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+2.24.383.414 I fill_late: expert store: self-prefetch: 74 posts, 0.0 records and 0.00 ms of reads per post
+2.24.383.415 I fill_late: expert store: predictor top-k: 163036/191616 ids matched (85.1%), 23952 single-token pairs
+2.24.383.416 I fill_late: expert store: prefetch: 35604 predicted misses read, 23709 of them used by the real fill (66.6%)
+2.24.383.417 I fill_late: expert store: prefetch: 18151 posts, 1.96 records queued per post, 7299 handed back unread, 5723 adopted in flight (0.327 ms per wait, 5701 waits)
+2.34.805.631 I fill_late: expert store: 237519 lookups, hit rate 92.1%, 231.1 GB read for decode, 0.0 GB for prefill
+2.34.805.634 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.12 ms (0.7 records, 64.61 GB/s), between fills 6.69 ms
+2.34.805.637 I fill_late: expert store: memory valve: host MemAvailable 12.76 GB (lowest 12.71, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.34.805.642 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.58 ms, 0 early lookups without a real one
+2.34.805.643 I fill_late: expert store: self-prefetch: 74 posts, 0.0 records and 0.00 ms of reads per post
+2.34.805.643 I fill_late: expert store: predictor top-k: 190347/223944 ids matched (85.0%), 27993 single-token pairs
+2.34.805.644 I fill_late: expert store: prefetch: 42127 predicted misses read, 28063 of them used by the real fill (66.6%)
+2.34.805.645 I fill_late: expert store: prefetch: 21363 posts, 1.97 records queued per post, 8688 handed back unread, 6729 adopted in flight (0.323 ms per wait, 6706 waits)
+2.35.497.839 I llama_moe_cache: ubatch <= 8: hits = 214102, misses = 15123, hit rate = 93.40%, uploaded = 177798.00 MiB
+2.35.497.844 I llama_moe_cache: ubatch  > 8: hits = 6147, misses = 3771, hit rate = 61.98%, uploaded = 44009.91 MiB
+2.35.497.845 I llama_moe_cache: expert store: 232.58 GB read for decode, 0.00 GB read for prefill
+2.35.497.846 I llama_moe_cache: expert store: per layer fill: plan 0.00 ms, reads 0.12 ms (0.7 records, 65.02 GB/s), between fills 6.69 ms
+2.35.497.935 I llama_moe_cache: expert store: prefetch: 42483 predicted misses read, 28304 of them used by the real fill (66.6%)
+pod restored: Running
+=== window z 12:51
+build20=2
+ABORT-WINDOW configure/build failed (~/win2/build20.log)
+pod restored: Running
+ALL-WINDOWS-DONE
