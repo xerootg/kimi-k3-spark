@@ -1,0 +1,31 @@
+=== window gm 14:17
+build27=0
+GM0 r1 5.379 tok/s md5 9449ae5738
+GM0 r2 5.385 tok/s md5 9449ae5738
+1.17.564.612 I GB10 GEMV guard: device=0 cc=1210 nsm=48 compiled=1210 requested=0
+1.17.564.624 I GB10 GEMV: disabled (stock); dense device weights, unfused single vector; gemv schedule: attn_q_a/shared_gate_up(q5_K,6144,2048)=stock attn_o(q5_K,16384,6144)=stock dense_gate_up(q5_K,6144,12288)=stock attn_q_b(q8_0,2048,16384)=stock shared_down_exception(q8_0,2048,6144)=stock
+GM1 r1 5.4 tok/s md5 9449ae5738
+GM1 r2 5.256 tok/s md5 9449ae5738
+1.17.212.282 I GB10 GEMV guard: device=0 cc=1210 nsm=48 compiled=1210 requested=1
+1.17.212.293 I GB10 GEMV: enabled; dense device weights, unfused single vector; gemv schedule: attn_q_a/shared_gate_up(q5_K,6144,2048)=bulk-R4-B8 attn_o(q5_K,16384,6144)=pipe3-16B dense_gate_up(q5_K,6144,12288)=pipe3-16B attn_q_b(q8_0,2048,16384)=pipe3-16B shared_down_exception(q8_0,2048,6144)=pipe3-16B
+1.19.788.993 I GB10 GEMV dispatch: device=0 shape=attn_q_a/shared_gate_up schedule=bulk-R4-B8
+1.19.789.071 I GB10 GEMV dispatch: device=0 shape=attn_q_b schedule=pipe3-16B
+1.19.799.181 I GB10 GEMV dispatch: device=0 shape=dense_gate_up schedule=pipe3-16B
+1.19.801.467 I GB10 GEMV dispatch: device=0 shape=shared_down_exception schedule=pipe3-16B
+1.19.950.029 I GB10 GEMV dispatch: device=0 shape=attn_o schedule=pipe3-16B
+GM0b r1 5.372 tok/s md5 9449ae5738
+GM0b r2 5.369 tok/s md5 9449ae5738
+1.18.002.341 I GB10 GEMV guard: device=0 cc=1210 nsm=48 compiled=1210 requested=0
+1.18.002.354 I GB10 GEMV: disabled (stock); dense device weights, unfused single vector; gemv schedule: attn_q_a/shared_gate_up(q5_K,6144,2048)=stock attn_o(q5_K,16384,6144)=stock dense_gate_up(q5_K,6144,12288)=stock attn_q_b(q8_0,2048,16384)=stock shared_down_exception(q8_0,2048,6144)=stock
+GM1b r1 5.4 tok/s md5 9449ae5738
+GM1b r2 5.353 tok/s md5 9449ae5738
+1.17.691.663 I GB10 GEMV guard: device=0 cc=1210 nsm=48 compiled=1210 requested=1
+1.17.691.674 I GB10 GEMV: enabled; dense device weights, unfused single vector; gemv schedule: attn_q_a/shared_gate_up(q5_K,6144,2048)=bulk-R4-B8 attn_o(q5_K,16384,6144)=pipe3-16B dense_gate_up(q5_K,6144,12288)=pipe3-16B attn_q_b(q8_0,2048,16384)=pipe3-16B shared_down_exception(q8_0,2048,6144)=pipe3-16B
+1.20.807.090 I GB10 GEMV dispatch: device=0 shape=attn_q_a/shared_gate_up schedule=bulk-R4-B8
+1.20.807.169 I GB10 GEMV dispatch: device=0 shape=attn_q_b schedule=pipe3-16B
+1.20.817.094 I GB10 GEMV dispatch: device=0 shape=dense_gate_up schedule=pipe3-16B
+1.20.819.523 I GB10 GEMV dispatch: device=0 shape=shared_down_exception schedule=pipe3-16B
+1.20.965.987 I GB10 GEMV dispatch: device=0 shape=attn_o schedule=pipe3-16B
+WIN2GM-DONE
+pod restored: Running
+ALL-WINDOWS-DONE

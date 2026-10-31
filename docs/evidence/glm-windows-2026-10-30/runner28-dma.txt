@@ -1,0 +1,39 @@
+=== window dma 14:35
+bankread3-build=0
+bankread3 device=NVIDIA GB10 cc=12.1 SM=48 L2=25165824 canMapHostMemory=1 hostNativeAtomicSupported=1 pageableMemoryAccess=1 unifiedAddressing=1 asyncEngineCount=1
+record=12091392 bytes (decimal MB=12.091392); piece bytes: 3022752 3022752 3022784 3023104
+ring ms/record includes pipeline fill/drain over 8 records; per-record A/B use identical launch granularity.
+payload=96731136 bytes/layer; repeated 8-record working set, L2=25165824; no cache flush; useful weight GB/s (DMA traffic extra).
+B device stock           ms/layer=0.442547 GB/s=218.578 ms/record=0.055318 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+A malloc+register        ms/layer=0.604587 GB/s=159.995 ms/record=0.075573 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+B device per-record      ms/layer=0.529408 GB/s=182.716 ms/record=0.066176 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+A register per-record    ms/layer=0.693084 GB/s=139.566 ms/record=0.086636 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+C DMA serial             ms/layer=2.022896 GB/s=47.818 ms/record=0.252862 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+C DMA ring2              ms/layer=1.949033 GB/s=49.630 ms/record=0.243629 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+C DMA ring3              ms/layer=1.993541 GB/s=48.522 ms/record=0.249193 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+C piece4 ring2           ms/layer=1.864748 GB/s=51.874 ms/record=0.233094 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+C piece4 ring3           ms/layer=1.973860 GB/s=49.006 ms/record=0.246732 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+C copy engine record ms/record=0.206783 GB/s=58.474 ms/copy=0.206783 md5=4886caf147345f985622537f1e657392 MATCH CHECK=bytes+GEMV
+C copy engine piece4 ms/record=0.209958 GB/s=57.590 ms/copy=0.052490 md5=4886caf147345f985622537f1e657392 MATCH CHECK=bytes+GEMV
+C copy-complete empty roundtrip ms/record=0.000386 (two stream waits; scheduling estimate)
+A hostalloc cached       ms/layer=0.481585 GB/s=200.860 ms/record=0.060198 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+E hostalloc WC           ms/layer=0.469760 GB/s=205.916 ms/record=0.058720 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+E registered node0       ms/layer=0.612015 GB/s=158.054 ms/record=0.076502 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+G0 mmap+register         ms/layer=0.614317 GB/s=157.461 ms/record=0.076790 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+G mmap+THP+register HUGEPAGE=OK COLLAPSE=OK
+G mmap+THP+register AnonHugePages=92160/94464 kB fraction=0.9756 rollup-delta=92160 kB (process-wide)
+G mmap+THP+register      ms/layer=0.604537 GB/s=160.009 ms/record=0.075567 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+H hugetlbfs 2 MiB unavailable: mmap: Cannot allocate memory
+F managed prefetched     ms/layer=0.590356 GB/s=163.852 ms/record=0.073794 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+bankread3 device=NVIDIA GB10 cc=12.1 SM=48 L2=25165824 canMapHostMemory=1 hostNativeAtomicSupported=1 pageableMemoryAccess=1 unifiedAddressing=1 asyncEngineCount=1
+record=12091392 bytes (decimal MB=12.091392); piece bytes: 3022752 3022752 3022784 3023104
+ring ms/record includes pipeline fill/drain over 8 records; per-record A/B use identical launch granularity.
+payload=96731136 bytes/layer; repeated 8-record working set, L2=25165824; no cache flush; useful weight GB/s (DMA traffic extra).
+D probe: aligned 1D bulk global->shared; host-mapped support is runtime-tested, not assumed from cc.
+D bulk registered-host   ms/layer=0.604508 GB/s=160.016 ms/record=0.075563 md5=4886caf147345f985622537f1e657392 MATCH vs B CHECK=warm+reuse valid=yes
+SUMMARY all outputs MATCH; synthetic raw GEMVs, not an end-to-end engine result
+SUMMARY all outputs MATCH; synthetic raw GEMVs, not an end-to-end engine result
+bankread3-run=0
+WIN2DMA-DONE
+pod restored: Running
+ALL-WINDOWS-DONE
