@@ -1,0 +1,20 @@
+=== window m 00:00
+bin=/home/xero/llama-k3-c/build/bin/llama-server
+short 5.75 tok/s md5 ce346130d0
+12588400 nsys/glm-short.nsys-rep
+	/srv/glm-5.3/nsys/glm-short.nsys-rep
+1304 glm-short_cuda_api_sum.csv
+19285 glm-short_cuda_gpu_kern_sum.csv
+92894641 glm-short_cuda_gpu_trace.csv
+12588400 glm-short.nsys-rep
+1154 glm-short_osrt_sum.csv
+long 4.38 tok/s after 1 prompt tokens (cached 8255 )
+13186041 nsys/glm-long.nsys-rep
+	/srv/glm-5.3/nsys/glm-long.nsys-rep
+1101 glm-long_cuda_api_sum.csv
+14349 glm-long_cuda_gpu_kern_sum.csv
+96056414 glm-long_cuda_gpu_trace.csv
+13186041 glm-long.nsys-rep
+1157 glm-long_osrt_sum.csv
+pod restored: Running
+ALL-WINDOWS-DONE

@@ -21,7 +21,7 @@ The larger ubatch amortizes repeated weight passes. The detailed prefill analysi
 
 ## Where a token's time goes, and the remaining levers
 
-The unprofiled budget is about 204 ms/token. These four large classes come from instrumented node intervals, not an exact partition of uninstrumented wall time. The profiler reduced throughput from 4.90 to 4.75 tok/s, and its class totals must not be corrected by subtracting a uniform overhead. Source: [per-token profile](glm-floor-profile-2026-10-30.md).
+The unprofiled budget is about 204 ms/token. These four large classes come from instrumented node intervals, not an exact partition of uninstrumented wall time. The profiler reduced throughput from 4.90 to 4.75 tok/s, and its class totals must not be corrected by subtracting a uniform overhead. Source: [per-token profile](glm-floor-profile-2026-10-30.md). Window m (clean tree, LFU off, 64-token nsys captures): **Three buckets of similar size: dense-spine GEMV ~68 ms (patch 0027 targets ~7), host-bank expert GEMV ~56 ms at ~132 GB/s (scheduling plan: 10-19 ms ceiling), read waits ~40 ms (hedge/latency work); the 124 ms / 59 GB/s first reading was a classification error, corrected the same night.** Source: [window m breakdown](experiments.md#glm-53-the-candidate-windows-second-pass-2026-10-30-evening).
 
 | Large class | ms/token | Meaning | Source |
 |---|---:|---|---|

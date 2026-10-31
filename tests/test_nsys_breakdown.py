@@ -36,13 +36,22 @@ class BreakdownTests(unittest.TestCase):
                           'Name,Instances,Total Time (ns),Time (%)\n'
                           '"void mul_mat_vec_q<int, float>()",2,"2,000,000",100\n')
         rows = nsys.read_csv(str(path))
-        self.assertEqual(nsys.totals(rows, nsys.kernel_family)['routed expert GEMV'], 2000000)
+        self.assertEqual(nsys.totals(rows, nsys.kernel_family)[nsys.DENSE], 2000000)
 
     def test_families_and_shared_precedence(self):
-        names = ['mul_mat_vec_q<Q2>', 'shared_mmvq', 'flash_attn_ext', 'indexer_topk',
+        names = ['mul_mat_vec_q<(ggml_type)17>', 'mul_mat_vec_q<Q2>',
+                 'shared_mmvq', 'flash_attn_ext', 'indexer_topk',
                  'rms_norm', 'rope_f32', 'get_rows_q', 'some_gemm']
         self.assertEqual([nsys.kernel_family(n) for n in names], list(nsys.FAMILIES))
-        self.assertEqual(nsys.kernel_family('mmvq_kernel'), 'routed expert GEMV')
+        self.assertEqual(nsys.kernel_family('mmvq_kernel'), nsys.DENSE)
+        for kind in ('17', '18', '23', 'IQ2_XS', 'IQ3_XXS', 'IQ4_XS'):
+            name = 'mul_mat_vec_q<' + kind + '>'
+            self.assertEqual(nsys.kernel_family(name, 9), nsys.BANK)
+            self.assertEqual(nsys.kernel_family(name, 8), nsys.BANK)
+            self.assertEqual(nsys.kernel_family(name, 1), nsys.DENSE)
+        self.assertEqual(nsys.grid({'Name': 'mul_mat_vec_q<17> grid2048x9'}, 'Y'), 9)
+        self.assertEqual(nsys.grid({'Name': 'mul_mat_vec_q<18> grid6144x8'}, 'X'), 6144)
+        self.assertEqual(nsys.kernel_family('mul_mat_vec_q<(ggml_type)18>', 8), nsys.BANK)
         for name in ('dsa_kernel', 'topk_kernel'):
             self.assertEqual(nsys.kernel_family(name), 'DSA indexer')
 
@@ -127,6 +136,48 @@ class BreakdownTests(unittest.TestCase):
             result = nsys.analyze(str(self.directory), 64)
         self.assertEqual(result['busy'], 1)
         self.assertIn('n/a | 100.00%', output.getvalue())
+
+    def test_grid_classification_split_and_gap_attribution(self):
+        self.write('cuda_gpu_kern_sum.csv',
+                   'Name,Total Time (ms),Instances\n'
+                   'mul_mat_vec_q<17>,4,3\n'
+                   'mul_mat_vec_q<IQ3_XXS>,2,1\n'
+                   'mul_mat_vec_q<13>,1,1\n')
+        self.write('cuda_gpu_trace.csv',
+                   'Name,Start (ms),Duration (ms),GrdX,GrdY,Device\n'
+                   'mul_mat_vec_q<13>,0,1,2048,1,0\n'
+                   'request,1,1,1,1,0\n'
+                   'mul_mat_vec_q<17>,3,1,2048,9,0\n'
+                   'mul_mat_vec_q<IQ3_XXS>,4,2,6144,9,0\n'
+                   'request,6,1,1,1,0\n'
+                   'gather,9,1,1,1,0\n'
+                   'mul_mat_vec_q<17>,10,1,2048,8,0\n'
+                   'mul_mat_vec_q<17>,11,2,2048,1,0\n')
+        result = self.run_cli('--tokens', '2', '--decode-passes', '1')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for expected in (
+                'host-bank expert GEMV: 2.000000',
+                'dense-spine GEMV (device): 1.500000',
+                'early (Y=9): 1.500000 | 3.000000 | 2 | 1.000000 | 2.000000',
+                'late (Y=8): 0.500000 | 1.000000 | 1 | 0.500000 | 1.000000',
+                'pre-first-bank-kernel: 1 | 0.500000 | 1.000000',
+                'early-to-late: real-lookup wait (6144-wide early down): 1 | 1.000000 | 2.000000'):
+            self.assertIn(expected, result.stdout)
+        self.assertNotIn('Caveat:', result.stdout)
+
+    def test_summary_grid_and_type_only_caveat(self):
+        self.write('cuda_gpu_kern_sum.csv',
+                   'Name,Total Time (ms),Instances,Grid Y\n'
+                   'mul_mat_vec_q<17>,1,1,1\n'
+                   'mul_mat_vec_q<18>,2,2,9\n'
+                   'mul_mat_vec_q<IQ4_XS>,3,3,\n')
+        result = self.run_cli('--tokens', '1')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Caveat:', result.stdout)
+        self.assertIn('host-bank expert GEMV: 5.000000', result.stdout)
+        self.assertIn('dense-spine GEMV (device): 1.000000', result.stdout)
+        self.assertIn('unknown Y: 3.000000', result.stdout)
+        self.assertNotEqual(self.run_cli('--decode-passes', '0').returncode, 0)
 
     def test_invalid_tokens_and_malformed_reports(self):
         result = self.run_cli('--tokens', '0')
