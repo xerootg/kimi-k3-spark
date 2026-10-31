@@ -1,0 +1,35 @@
+=== window gm 13:03
+build27=0
+GM0 r1 5.387 tok/s md5 9449ae5738
+GM0 r2 5.373 tok/s md5 9449ae5738
+GM1 r1 5.355 tok/s md5 9449ae5738
+GM1 r2 5.327 tok/s md5 9449ae5738
+ABORT-WINDOW GM1 missing enabled GEMV init log
+pod restored: Running
+=== window bg 13:13
+build28=0
+GB10 bank bench hostRegister mapped page_tables=1; variant=bank ordinary vector loads; rotating >=512MiB live host weights
+BEST shape=IQ2_XS_early_gate_up variant=stock stock_us=532.718 bank_us=1549.574 bank_GB/s=16.43 positions=9 live=7 stride=3637248 copies=22
+BEST shape=IQ3_XXS_early_gate_up variant=stock stock_us=392.397 bank_us=2350.325 bank_GB/s=14.35 positions=9 live=7 stride=4816896 copies=16
+BEST shape=IQ3_XXS_early_down variant=stock stock_us=427.294 bank_us=1756.397 bank_GB/s=19.20 positions=9 live=7 stride=4816896 copies=16
+BEST shape=IQ4_XS_early_down variant=stock stock_us=285.469 bank_us=3673.636 bank_GB/s=12.74 positions=9 live=7 stride=6684672 copies=12
+BEST shape=IQ2_XS_late_gate_up variant=stock stock_us=169.947 bank_us=604.152 bank_GB/s=12.04 positions=8 live=1 stride=3637248 copies=148
+BEST shape=IQ3_XXS_late_gate_up variant=stock stock_us=128.670 bank_us=916.963 bank_GB/s=10.51 positions=8 live=1 stride=4816896 copies=112
+BEST shape=IQ3_XXS_late_down variant=stock stock_us=103.093 bank_us=295.678 bank_GB/s=16.29 positions=8 live=1 stride=4816896 copies=112
+BEST shape=IQ4_XS_late_down variant=stock stock_us=53.030 bank_us=573.501 bank_GB/s=11.66 positions=8 live=1 stride=6684672 copies=81
+BG0 GGML_CUDA_GB10_BANK_GEMV=0 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+BG0 r1 5.357 tok/s md5 9449ae5738
+BG0 r2 5.368 tok/s md5 9449ae5738
+1.19.527.805 I GB10 bank gemv: off (plain vector loads, three groups; guarded host bank IQ)
+2.36.585.867 I host bank hooks: early=28579/39.317ms real=28875/20286.945ms post=28268/329.345ms idle_sleeps=269363 lean=1
+BG1 GGML_CUDA_GB10_BANK_GEMV=1 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+BG1 r1 2.137 tok/s md5 9449ae5738
+BG1 r2 2.136 tok/s md5 9449ae5738
+1.19.921.878 I GB10 bank gemv: on (plain vector loads, three groups; guarded host bank IQ)
+4.23.944.380 I host bank hooks: early=28579/60.763ms real=28875/5653.248ms post=28268/437.034ms idle_sleeps=1423052 lean=1
+ABORT-WINDOW BG1 missing enabled GEMV init log
+pod restored: Running
+=== window thp 13:26
+ABORT-WINDOW ~/llama-k3-thp exists
+pod restored: Running
+ALL-WINDOWS-DONE

@@ -1,5 +1,5 @@
 # Host-bank GEMV: evidence correction and experiment plan
-Local evidence only; no kernel patch, GPU run, network, or claim of measured optimization gain.
+Local evidence audit updated after windows gm/bg; measurements below are supplied Spark outputs, not new sandbox GPU runs.
 Sources: `evidence/csv/glm-{short,long}_cuda_{gpu_kern_sum,gpu_trace,api_sum}.csv`; derived audit: `evidence/nsys2-analysis.txt`.
 ## Correct denominator and family
 `nsys_breakdown.py` classifies **all** `mul_mat_vec_q` as routed: 124.018/127.919 ms per short/long captured token is not host-bank time.
@@ -47,22 +47,84 @@ Other small copies exist (audit); NO ~12 MB expert-record H→D copies. Maps are
 Likely some host copy calls wait for preceding GPU work (e.g. logits readback); API sum lacks timestamps/directions/call stacks, GPU CorrId alone cannot join host durations. Exact21-ms attribution and critical-path fraction remain unresolved; do not budget21 ms savings.
 “Other”15.3204 ms/64 top: float GEMV<1,256,false,false>4.8630; MMQ IQ2_XS2.5113; quantize_q8_1=1.7229; MMQ IQ3_XXS1.5558; argsort0.9423; MMQ Q5_K0.7589; bank_request0.5219; float add0.3878; MMQ Q8_0=0.3542; weighted reduction0.2376.
 These sum13.8557 ms; rest1.4646. MMQ/prompt contamination explains much of short-minus-long “other”5.4100 ms; classifier also puts argsort here and rope_norm under norms.
-## Ranked design, estimated recoverable ms/token; gains overlap
-1. **Host IQ load scheduling (medium risk): screening target5–10 ms**, ideal whole-bank ceiling55.56−7333.4784/160=9.73 ms, /200 gives18.89 ms (63-pass baseline increases ceilings≈0.9ms).
-Port the scheduling concept, not Q5_K arithmetic: IQ2/IQ3/IQ4 decode and vector-dot layout differ. Keep each lane's block assignment, accumulation sequence, warp/block reduction, fusion and merge unchanged.
-Compare plain aligned16B loads with2–3 groups in flight, pipe3-16B, then bulk-R4-B8. Gather each expert base once, tile output rows within its record, preserve IDs/zero-slot/shared exceptions and 64-bit strides.
-Host path is explicitly excluded by0027 (`!ids && !fusion && ...dense_weight`); its dense correctness/performance results do not validate host IQ schedules. Uncached records need enough independent requests; larger tiles can hurt sparse occupancy/register pressure.
-`cp.async.cg.shared.global` uses a global source address and bypasses L1, but these local artifacts do not demonstrate mapped-system-memory support/efficiency on GB10. Test actual registered/hostalloc addresses, aligned16B tails, visibility/fences and sanitizers; plain vector-load path is the control/fallback, not an assumed loser.
-Bulk TMA and per-thread cp.async are distinct paths; test both separately. GB10 has shared LPDDR, not discrete HBM; device staging does not create an independent high-bandwidth weight store.
-2. **Sparse/dummy and launch scheduling (medium risk): target1–5 ms**, not a measured gain. Late minima≈34/73/28 µs (IQ2 fused/IQ3 down/IQ4 down) imply ~7.9 ms/token floor if representative of empty launches; IDs are absent, so not proven all-dummy.
-Check live-count histograms; skip fully empty late work or schedule only active positions while emitting exact zeros/scratch output. Keep dependencies and graph replay viable; CPU count readbacks could erase gains.
-Extra split launches≈150–225/token versus unsplit, at assumed2–5 µs overhead gives0.30–1.13 ms; most12.92 ms late time is not launch overhead alone. Batch consecutive output rows within a layer; cross-layer batching violates activation dependencies.
-Test fused EARLY gate/up (currently two launches) for up to75 fewer launches≈0.15–0.375 ms launch-only plus load-scheduling benefits; extra live registers can reverse the gain. Never change arithmetic order.
-3. **DMA ring for late records (high risk): plausible0–5 ms**, optimistic ceiling≈12.9 ms late bucket; at~1 miss/layer,0.917 GB/token DMA costs4.58 ms at200 GB/s; each12.22 MB record≈61.1 µs.
-Pipeline DMA after CPU fill completion in another stream while early resident work runs (~577 µs/layer); late GEMV waits on ready event and uses device addresses. If fill ends only at exposed wait, its DMA is additional visible work, not hidden.
-At hypothetical device GEMV200 GB/s, late read service another4.58 ms: serialized total9.17 vs12.92 saves3.75 ms; fully hidden DMA leaves4.58 ms and saves8.34 ms before fixed overhead. Unified-memory contention and sparse floor reduce both estimates.
-Two8-record ring slots≈195.5 MB plus maps/events; never recycle until all consumers finish. Copy exact quantized bytes and preserve arithmetic/ID order. Repair bench DMA variant mismatch first; its~200 GB/s is an assumed target, not validated ring performance.
-4. **Allocation choice (medium operational risk): ceiling55.56×(1−161.948/203.011)=11.24 ms**, only if actual workload scales like repeated-bank bench; compare register versus cached hostalloc on same snapshot, CPU fill/reads and memory pressure. Not additive to rank1 bandwidth ceiling.
-Payoff ranking within GEMV: scheduling ceiling9.7–18.9 ms; allocation sensitivity11.2; sparse scheduling target1–5; DMA target0–5 (optimistic8.3). Risk ranking: plain-load scheduling < allocation < compaction/fusion < DMA ring; all require measurement.
-5. **Read readiness (I/O work, outside GEMV):** short exposed decode hook gaps≈24.26×64/63=24.65 ms/token versus long75.20;10–25% improvement means2.5–6.2 ms short,7.5–18.8 long, conditional targets. Read start/completion plus NVTX layer/token markers needed.
-Acceptance for every candidate: exact intermediate tensors and output hash on real/dummy/NaN-scale cases; frozen snapshot/prompt, repeat short+long, pure-decode ranges, live-row counts, bytes and joined CUDA API trace. Reject speed at changed accumulation order. No speedup validated here.
+## Window bg: rank 1 rejected as designed
+`evidence/legs-bg2.txt`: all eight checks pass, but BG0=5.357/5.368 and BG1=2.137/2.136 tok/s (−60.2%); output md5 remains `9449ae5738`.
+`evidence/BG1.log` explicitly says `GB10 bank gemv: on (plain vector loads, three groups; guarded host bank IQ)`.
+The later BG gate failure is the missing **dense** GEMV policy log, not evidence that the bank schedule was off.
+Use `GGML_CUDA_GB10_BANK_GEMV=0`; 0028 is a rejected experimental implementation, not a production optimization.
+
+| Shape | positions/live | stride B | stock / bank µs | stock / bank useful GB/s | slowdown |
+|---|---|---:|---:|---:|---:|
+|IQ2 early gate/up|9/7|3637248|532.718 / 1549.574|47.79 / 16.43|2.91×|
+|IQ3 early gate/up|9/7|4816896|392.397 / 2350.325|85.95 / 14.35|5.99×|
+|IQ3 early down|9/7|4816896|427.294 / 1756.397|78.92 / 19.20|4.11×|
+|IQ4 early down|9/7|6684672|285.469 / 3673.636|163.92 / 12.74|12.87×|
+|IQ2 late fused gate/up|8/1|3637248|169.947 / 604.152|42.80 / 12.04|3.55×|
+|IQ3 late fused gate/up|8/1|4816896|128.670 / 916.963|74.87 / 10.51|7.13×|
+|IQ3 late down|8/1|4816896|103.093 / 295.678|46.72 / 16.29|2.87×|
+|IQ4 late down|8/1|6684672|53.030 / 573.501|126.05 / 11.66|10.81×|
+
+Stock bandwidth in this standalone bench is **not universally 130–160 GB/s**: useful bytes divided by stock_us gives 43–164 GB/s.
+The historical engine aggregate ≈132 GB/s uses estimated live payload; it is a different measurement and denominator.
+Copies rotate ≥512 MiB of live weights; late runs use 81–148 copies versus early 12–22. Gate/up late is fused (two weight tensors); down is unfused.
+
+### What the code establishes, and what it cannot establish
+`bank_bytes<N>` rounds the pointer DOWN to 16 B, uses `ld.global.v4.u32`, and fetches a second aligned vector when needed.
+The quant fields may be only 2 B aligned, but the issued vector instructions are naturally aligned. Misaligned 16 B instructions are therefore **not** the explanation.
+IQ2/IQ3 lanes consume 8 B slices spaced 8 B apart, in four quant blocks per warp; IQ4 consumes 16 B slices spaced 16 B apart, also four blocks per warp.
+Those blocks are 74/98/136 B, so neither stock nor bank is literally one aligned 128 B line per warp instruction for every field.
+Stock's small field loads nevertheless retain compact, adjacent lane accesses and immediate reuse of the same quant block's lines.
+Rounding introduces overlapping lane requests and optional second instructions: over a complete block-offset cycle, vector-field requested bytes/useful field bytes are IQ2 2.75×, IQ3 3.333×, IQ4 1.5× (metadata excluded).
+These are **lane request** ratios, not DRAM/C2C traffic ratios: coalescing and caches merge overlaps. The union of lines mostly covers the same contiguous block, with boundary rounding.
+It is incorrect to equate that ratio with doubled host traffic, or to assert an order-of-magnitude increase in unique 64 B host lines.
+CUDA sector counts, cache-line size, fabric transfers and host translation walks are distinct quantities; a translation walk is per translation miss, not per fetched line.
+
+The three-group transformation also materializes partially populated quant blocks per lane, extracts bytes using runtime offsets, and extends their lifetimes before invoking unchanged dot helpers.
+IQ4 has R=4 and 3×4×136=1632 B of source-level `bx` storage per thread; fused IQ2/IQ3 maintain both gate and up temporaries.
+Scalar replacement may optimize this storage; dynamic byte selection can instead cause local-memory traffic, register pressure and reduced residency. No generated SASS, ptxas spill report or hardware counters are supplied to settle that.
+Three source groups are not three guaranteed asynchronous memory groups: these are ordinary loads with dependent metadata/extraction, and the compiler controls their actual issue order.
+More requests and longer reuse distances can increase system-path queue pressure, but overload of that path is a hypothesis, not a measured mechanism.
+Thus the precise proven regression is this load/reconstruction/staging implementation; the evidence does **not** isolate a C2C hardware limit from instruction/spill costs.
+
+The shapes discriminate against the proposed single causes:
+- One-live late kernels remain at 10.51–16.29 GB/s, close to seven-live early 12.74–19.20: seven experts are not required for the collapse.
+- IQ3 gate/up and down have identical stride and positions/live yet bank down reaches 19.20 vs 14.35 early, and 16.29 vs 10.51 late; K/N, fusion and work layout matter.
+- IQ4 has the lowest vector-field inflation but the largest slowdown (10.8–12.9×), and stages four rows: rounding alone cannot account for the result.
+- Larger IQ4 stride correlates with worse performance, but quant type and R change simultaneously. This is not an isolated stride or TLB experiment.
+- Supplied THP observation (~160 GB/s with either page size) weighs against a page-size-only explanation; it does not measure translation misses in this kernel.
+
+A viable bank schedule must preserve stock's compact warp-coalesced field/line access, near-term reuse, metadata reuse, dummy skip, accumulation and reductions.
+Any prefetch must operate cooperatively on contiguous lines, avoid per-lane rounded overlapping gathers and local-block reconstruction, and justify its instruction/register cost.
+A controlled one-group vs three-group comparison, stock-sized loads vs rounded loads, ptxas/SASS inspection and transaction/spill counters would be needed to assign the regression precisely; no further GPU experiment was possible here.
+
+### Bandwidth ceiling and the read-only “A” comparison
+The supplied registered-bank read benchmark's A result (~160 GB/s; earlier plan quotes 161.948) is a useful empirical streaming reference, not a proven architectural ceiling.
+**Its source and full A output are absent from this sandbox**, so its exact lane width, row/stride mapping, reuse and cache policy cannot be verified locally.
+`tools/uvmbw.cu` is a different benchmark: aligned `int4` array chunks, lane-consecutive elements, block partitions and a strided loop, with no IQ decode; its accumulator uses only x/y, so emitted load width needs checking too. It must not be relabeled A.
+If A is a contiguous warp-coalesced bank scan, it shares stock's spatial locality principle, not stock IQ field instructions, scale lookups, dot arithmetic, dummy scans or reductions.
+132/160≈82.5% suggests stock is already near the observed practical range for the aggregate path; reaching 160 would save at most 55.56−7333.4784/160≈9.73 ms/token under identical payload assumptions.
+That is an optimistic bound, not an expected gain; neither “no schedule can beat stock” nor “132 is the hard C2C ceiling” follows. The 200 GB/s ceiling and prior 5–10 ms scheduling target are withdrawn.
+GB10 has shared LPDDR; do not import discrete-HBM latency-hiding assumptions or claim a physically independent HBM tier on Spark.
+
+## Revised ranking; gains overlap
+1. **Former rank 1, three-group per-lane 16 B host IQ schedule: dead as designed.** Measured severe regression; no positive recoverable-ms budget. Preserve stock bank MMVQ. Cooperative line-preserving variants require new evidence, not another assumed gain.
+2. **DMA ring for the ~1 missing record per layer: remaining experiment, high risk.** Keep resident early records on stock bank loads; after CPU fill, copy only the missing record to a reusable device allocation, then let late consumers wait on its event.
+At ~0.917 GB/token, DMA alone costs ~5.73 ms at160 GB/s (4.58 ms at hypothetical200); it helps only if overlap and device-side read behavior repay the copy and synchronization costs.
+The 12.92 ms late bucket is an optimistic whole-bucket upper bound, not a savings forecast; short-record overhead, shared LPDDR contention and fill completion timing may erase the gain.
+Size slots for bounded in-flight misses, keep 64-bit maps and exact quant bytes, and prevent reuse until all consumers finish. The earlier two eight-record slots (~195.5 MB) are not a requirement for ~one miss/layer.
+The old DMA bench mismatch must be fixed before interpreting throughput; no ring gain is validated.
+3. **Sparse late launches/dummy scheduling: remaining experiment, medium risk; unvalidated target1–5 ms/token.** Avoid scheduling empty positions while preserving output indices, exact zeros and nonfinite-scale fallback.
+One live expert still supplies thousands of row CTAs. Missing live-position metadata must be made graph-replay-safe; the map is filled asynchronously, so a CPU readback/synchronization can cost more than it saves.
+Extra split launches alone at2–5 µs each suggest only0.30–1.13 ms/token; the whole late bucket is not removable launch overhead. Early fusion's launch-only budget remains0.15–0.375 ms, with register cost to measure.
+4. **Allocation choice: lower-priority controlled experiment.** The earlier register/hostalloc numbers are read-bench observations, not an11.2 ms engine promise. Keep CPU fill visibility, memory pressure and address lifetime equivalent.
+5. **Read readiness: separate I/O work.** Historical exposed waits remain relevant (short≈24.65 ms/token, long≈75.20); BG1's reduced waits are hidden by much slower compute and are not an improvement.
+Acceptance: exact intermediate tensors and gold output, repeated off/on/off/on, same snapshot and prompt, measured live counts, decode-only trace, actual custom-launch evidence and joined copy/compute timing. No remaining gain is validated.
+
+## Window gm and 0027 diagnostics
+GM0=5.387/5.373; GM1=5.355/5.327 tok/s (−0.72% by two-run means; about−0.8%), gold. GM1 has **zero** `GB10 GEMV:` lines, including no `disabled (stock)` line.
+0027 called its logger during `ggml_cuda_init` device enumeration, before the ordinary server log starts; surrounding CUDA enumeration logs are absent too. An early logger/filter issue is consistent with this, not proven by it.
+The init guard silently returned on cc/SM mismatch, but did not control runtime dispatch. Absence of that line alone cannot establish that GM1 ran stock; treat this as an unvalidated/possibly stock run and the small delta as inconclusive noise.
+The local Spark constant is1210; device12.1 maps to12*100+1*10=1210, and `sm_121a` does not introduce a different `__CUDA_ARCH__` integer. BG1 passes the same cc/48-SM/compiled-arch checks. There is no evidence identifying either guard as wrong.
+Updated0027 moves policy logging to both runtime MMVQ entrypoints, before tensor eligibility; prints cc/nsm/compiled/requested and explicit rejection predicates; and logs the first actual custom launch per shape/device/thread.
+Retain conservative guards and unchanged schedules. `win2gm.sh` is unchanged; its existing enabled-policy gate can now observe runtime logging. On rerun also inspect `GB10 GEMV dispatch:` to prove custom launches, because policy enabled alone is insufficient.
+Rerun the full gm window on Spark after applying revised0027 plus the existing alignment patch; no valid dense performance verdict yet.

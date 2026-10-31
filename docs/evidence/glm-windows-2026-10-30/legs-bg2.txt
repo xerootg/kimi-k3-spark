@@ -1,0 +1,73 @@
+build28=0
+GB10 bank bench hostRegister mapped page_tables=1; variant=bank ordinary vector loads; rotating >=512MiB live host weights
+BEST shape=IQ2_XS_early_gate_up variant=stock stock_us=532.718 bank_us=1549.574 bank_GB/s=16.43 positions=9 live=7 stride=3637248 copies=22
+BEST shape=IQ3_XXS_early_gate_up variant=stock stock_us=392.397 bank_us=2350.325 bank_GB/s=14.35 positions=9 live=7 stride=4816896 copies=16
+BEST shape=IQ3_XXS_early_down variant=stock stock_us=427.294 bank_us=1756.397 bank_GB/s=19.20 positions=9 live=7 stride=4816896 copies=16
+BEST shape=IQ4_XS_early_down variant=stock stock_us=285.469 bank_us=3673.636 bank_GB/s=12.74 positions=9 live=7 stride=6684672 copies=12
+BEST shape=IQ2_XS_late_gate_up variant=stock stock_us=169.947 bank_us=604.152 bank_GB/s=12.04 positions=8 live=1 stride=3637248 copies=148
+BEST shape=IQ3_XXS_late_gate_up variant=stock stock_us=128.670 bank_us=916.963 bank_GB/s=10.51 positions=8 live=1 stride=4816896 copies=112
+BEST shape=IQ3_XXS_late_down variant=stock stock_us=103.093 bank_us=295.678 bank_GB/s=16.29 positions=8 live=1 stride=4816896 copies=112
+BEST shape=IQ4_XS_late_down variant=stock stock_us=53.030 bank_us=573.501 bank_GB/s=11.66 positions=8 live=1 stride=6684672 copies=81
+SUMMARY bank shapes=8 failed=0
+BG0 GGML_CUDA_GB10_BANK_GEMV=0 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+BG0 r1 5.357 tok/s md5 9449ae5738
+BG0 r2 5.368 tok/s md5 9449ae5738
+1.19.527.805 I GB10 bank gemv: off (plain vector loads, three groups; guarded host bank IQ)
+1.31.395.242 I fill_late: expert store: 35483 lookups, hit rate 92.0%, 34.8 GB read for decode, 0.0 GB for prefill
+1.31.395.256 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+1.41.425.266 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.6 GB read for decode, 0.0 GB for prefill
+1.41.425.279 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.53.472.907 I fill_late: expert store: 103733 lookups, hit rate 91.6%, 107.0 GB read for decode, 0.0 GB for prefill
+1.53.472.917 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+2.03.077.056 I fill_late: expert store: 136501 lookups, hit rate 92.4%, 128.3 GB read for decode, 0.0 GB for prefill
+2.03.077.068 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.30 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+2.15.543.964 I fill_late: expert store: 171983 lookups, hit rate 91.5%, 178.9 GB read for decode, 0.0 GB for prefill
+2.15.543.978 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.25.161.560 I fill_late: expert store: 204751 lookups, hit rate 92.1%, 199.9 GB read for decode, 0.0 GB for prefill
+2.25.161.572 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.54 ms, 0 early lookups without a real one
+2.35.626.585 I fill_late: expert store: 237519 lookups, hit rate 92.1%, 229.5 GB read for decode, 0.0 GB for prefill
+2.35.626.596 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+2.36.310.231 I llama_moe_cache: ubatch <= 8: hits = 214232, misses = 14993, hit rate = 93.46%, uploaded = 176249.62 MiB
+2.36.310.235 I llama_moe_cache: ubatch  > 8: hits = 6144, misses = 3774, hit rate = 61.95%, uploaded = 44048.53 MiB
+2.36.310.245 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+2.36.585.867 I host bank hooks: early=28579/39.317ms real=28875/20286.945ms post=28268/329.345ms idle_sleeps=269363 lean=1
+2.36.587.779 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14520 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.36.587.784 I host bank real bucket: a_ready_latency=14281/19317.120ms
+2.36.587.785 I host bank real bucket: b_early_read=10279/13881.564ms
+2.36.587.786 I host bank real bucket: b_predict_read=6582/1951.390ms
+2.36.587.786 I host bank real bucket: c_real_read=222/3476.857ms
+2.36.587.786 I host bank real bucket: d_lock=28858/0.902ms
+2.36.587.787 I host bank real bucket: e_other=28875/973.912ms
+2.36.587.791 I host bank real histogram: ready_p50/p90/p99=0.000/1.900/5.480ms abc_p50/p90/p99=0.000/3.790/10.960ms (a overlaps b+c; overflow is lower bound)
+BG0 MemAvailable 121148 MiB
+BG1 GGML_CUDA_GB10_BANK_GEMV=1 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+BG1 r1 2.137 tok/s md5 9449ae5738
+BG1 r2 2.136 tok/s md5 9449ae5738
+1.19.921.878 I GB10 bank gemv: on (plain vector loads, three groups; guarded host bank IQ)
+1.46.341.979 I fill_late: expert store: 35483 lookups, hit rate 93.0%, 30.6 GB read for decode, 0.0 GB for prefill
+1.46.341.994 I fill_late: expert store: split GEMV: 3948 early lookups, 7.1 of 8 experts complete at the early lookup, 0.92 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.03 ms, 0 early lookups without a real one
+2.11.826.046 I fill_late: expert store: 68251 lookups, hit rate 93.8%, 52.2 GB read for decode, 0.0 GB for prefill
+2.11.826.062 I fill_late: expert store: split GEMV: 8044 early lookups, 7.1 of 8 experts complete at the early lookup, 0.92 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.04 ms, 0 early lookups without a real one
+2.38.770.824 I fill_late: expert store: 103733 lookups, hit rate 92.7%, 93.4 GB read for decode, 0.0 GB for prefill
+2.38.770.840 I fill_late: expert store: split GEMV: 12066 early lookups, 7.0 of 8 experts complete at the early lookup, 0.96 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.04 ms, 0 early lookups without a real one
+3.04.141.760 I fill_late: expert store: 136501 lookups, hit rate 93.3%, 111.7 GB read for decode, 0.0 GB for prefill
+3.04.141.772 I fill_late: expert store: split GEMV: 16162 early lookups, 7.1 of 8 experts complete at the early lookup, 0.93 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.04 ms, 0 early lookups without a real one
+3.31.203.423 I fill_late: expert store: 171983 lookups, hit rate 92.6%, 156.1 GB read for decode, 0.0 GB for prefill
+3.31.203.439 I fill_late: expert store: split GEMV: 20184 early lookups, 7.0 of 8 experts complete at the early lookup, 0.97 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.04 ms, 0 early lookups without a real one
+3.56.595.899 I fill_late: expert store: 204751 lookups, hit rate 93.1%, 174.4 GB read for decode, 0.0 GB for prefill
+3.56.595.914 I fill_late: expert store: split GEMV: 24280 early lookups, 7.1 of 8 experts complete at the early lookup, 0.94 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.04 ms, 0 early lookups without a real one
+4.22.269.770 I fill_late: expert store: 237519 lookups, hit rate 93.2%, 199.1 GB read for decode, 0.0 GB for prefill
+4.22.269.785 I fill_late: expert store: split GEMV: 28376 early lookups, 7.0 of 8 experts complete at the early lookup, 0.96 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.04 ms, 0 early lookups without a real one
+4.23.679.835 I llama_moe_cache: ubatch <= 8: hits = 216770, misses = 12455, hit rate = 94.57%, uploaded = 146352.47 MiB
+4.23.679.840 I llama_moe_cache: ubatch  > 8: hits = 6102, misses = 3816, hit rate = 61.52%, uploaded = 44537.34 MiB
+4.23.679.850 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 7.0 of 8 experts complete at the early lookup, 0.96 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.04 ms, 0 early lookups without a real one
+4.23.944.380 I host bank hooks: early=28579/60.763ms real=28875/5653.248ms post=28268/437.034ms idle_sleeps=1423052 lean=1
+4.23.946.320 I host bank real readiness: calls=28875 split=28579 resident_entry_split=27663 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+4.23.946.325 I host bank real bucket: a_ready_latency=1138/4763.457ms
+4.23.946.326 I host bank real bucket: b_early_read=898/1203.920ms
+4.23.946.326 I host bank real bucket: b_predict_read=215/34.865ms
+4.23.946.326 I host bank real bucket: c_real_read=222/3521.088ms
+4.23.946.327 I host bank real bucket: d_lock=28870/1.350ms
+4.23.946.327 I host bank real bucket: e_other=28875/888.543ms
+4.23.946.330 I host bank real histogram: ready_p50/p90/p99=0.000/0.000/3.370ms abc_p50/p90/p99=0.000/0.000/6.730ms (a overlaps b+c; overflow is lower bound)
+ABORT-WINDOW BG1 missing enabled GEMV init log
