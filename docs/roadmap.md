@@ -164,48 +164,79 @@ As of **2026-10-30**. See [GLM-5.3 current state](GLM-STATUS.md) for configurati
 NUC integration gates and pending GH200 decision. The [experiment ledger](experiments.md#glm-53-the-candidate-windows-first-pass-2026-10-30-afternoon)
 and its [second pass](experiments.md#glm-53-the-candidate-windows-second-pass-2026-10-30-evening) record the measurements below.
 
-**Spark production: 5.43 tok/s, gold md5 `9449ae5738`**, image `ge0ba4b3`, argo-things commit `07f7100`.
-Patches 0009 (split dummy-row skip) and 0012 (hook lean) are both on in the manifest. Combined window u measured
-4.80 → 5.43 tok/s, **+13.1 %**, with all eight timed passes gold. The separate gains were +4.8 % and +5.8 %;
-the combined measurement decides adoption. Production predictor input stays at 3.
+**Spark production: 5.11 cold / 5.58 warm tok/s, gold md5 `9449ae5738`**, image `ge4e4290`,
+argo-things `8a2d14b`. The live check measured 5.114/5.584 tok/s after restart; LFU frequency state is
+volatile and warms up. Patches 0009 (split dummy-row skip), 0012 (hook lean) and 0018 (LFU) are on.
+Combined window u measured 4.80 → 5.43 tok/s (+13.1 %, all eight passes gold); window l then measured
+LFU +5.49 % (about +5.5 %). Production predictor input stays at 3.
 
 **Measured candidates and dispositions:**
 
 | candidate | measured result / decision |
 |---|---|
 | 0017 predictor inputs 4/5 | Input 3: 4.893/4.878; input 4: 4.771/4.748; input 5: 4.762/4.727 tok/s, all gold. Useful predicted reads: 67.7 / 65.5 / 41.9 %. Both alternatives slower; keep input 3. |
-| 0018 LFU v1 | Aborts during the first request in both LFU legs; no candidate tok/s or md5. Baseline 4.889/4.84 and 4.884/4.887 tok/s, 92.2 % hits; partial LFU logs 91.7 % hits, 70.1 GB decode reads. Cause (from the logs): the planner aborted with "cache too small for layer 77" late in the first request, because v1 protected every cached key of the recent layers and the skewed restored snapshot left no eligible victim; v2 protects only the selected keys and is queued as window l. |
+| 0018 LFU v2 (window l) | v1 crashed from victim protection; v2 with headroom/no-growth fixes measured 5.40525 → 5.70225 tok/s, +5.49 %, all eight timed passes gold. Hit rate 92.0 → 92.7 %, decode reads 234.1 → 212.6 GB. Adopted in production. |
 | 0015/0016 long-context DSA / attention combine | At an 8192-token prompt: baseline 3.945/3.906, 0015 3.943/3.893, 0016 3.912/3.922 tok/s; prefill 63.7–64.4 tok/s, md5 `25d4133dc7` throughout. Neutral within 1 % noise; flags stay off. |
 | 0005b bounded speculative-read wait | 4.884/4.887 and 4.891/4.882 tok/s, all four gold; neutral against window r's baseline. Kept, no knob. |
 | MTP | Window j: baseline 4.508/4.518 versus 3.996/3.998 tok/s, 121 of 133 drafts accepted: −11 % and changed bytes (`15e1fbcf60` → `d8fe1a07a3`). 0014 did not apply, so these are upstream MTP results; exact verification remains unmeasured there. |
 | 0010 prefill bank v1 | Prefill 72.2 → 102.6 tok/s on 2k, 70.9 → 98.7 on 8k; decode −8 % (4.05 → 3.74, 4.79 → 4.36) as landing slots consume decode cache. Long-prompt bytes matched, standard short-request bytes changed. Not adopted. |
-| 0011 DSA skip v1 | Aborts on the first decode token: `GGML_ASSERT(buffer)`, unallocated index tensor. Fix and allocation gate required before adoption. |
+| 0011 DSA skip v2 (window v) | v1 aborted; v2 no longer crashes: off 5.41–5.42 versus on 5.37–5.44 tok/s, all eight timed passes gold. After 8192 tokens: 4.09/4.13 tok/s, same md5. Neutral; kept off; allocation-free identity-index v3 staged. |
+| 0012c wider prediction (window w) | −1.5 %, all eight timed passes gold; useful predicted reads fall from about 67 % to 41 %. Not adopted; 0012b wait-split stats kept, off by default. |
+| 0019 v2 fast exit (window s) | SIGTERM-to-exit 12.6/13.2/12.4/8.3 s, snapshots rewritten durably. Neutral to small; kept off. Production preStop SIGINT already exits in seconds. |
+| 0021 prefill order independence (window o) | Whole-K tiles make reduction order independent of slot layout by construction; model-free stock FAIL / patched PASS. Decode 5.382/5.390/5.371 tok/s, gold. At 2k/ubatch 512, prefill 24.495 → 24.435 tok/s (noise), same bytes in stock too. Adoption awaits o2 at 16k/ubatch 2048. |
+| 0013 remote tier (window i) | Off 5.388–5.398 versus on 4.969–5.120 tok/s: about −7 %, gold with remote rows used; about 30 % refusals/fallback (29.5 % in R1), causes unresolved. The 1500 µs leg served zero rows and failed the gate. Not adopted; nuc2 pod scaled to zero. |
 
 **Open questions:** prompt reuse after about 16k tokens worked, but the second cached pass took 162.8 s with
 16.0 s prefill despite reusing 16267 tokens; the server log puts 3.6 s in the KV restore, 16.0 s in the prompt and 143.1 s in the 32 decode tokens (4.5 s per token), so decode stalled; the cause is not in the log, hence the ctx window.
-Cold prefill bytes vary with the cache layout even from the same snapshot, so long-prompt hashes cannot yet gate
-prefill changes. The whole **42 ms/token hook bucket is real-lookup wait**, not handshake overhead; hook lean
-increases real-hook time while improving decode. Split that wait before choosing the next overlap change.
+Cold prefill bytes vary with cache layout even from the same snapshot; o2 must confirm 0021 at the failing
+shape before long-prompt hashes can gate prefill changes. The ctx window is running.
+
+Window w's wait split points to exposed **per-record read latency for ~1.35 unpredicted records per layer**,
+rather than hook, lock or poller work. Early-fill waits account for 36.9 ms/token; the 53.45 ms/token real-hook
+service total also includes prompt hooks and nested buckets, so it is not all removable decode stall.
+The 0.614 GB/token accounting excludes speculative side-reader traffic and does not prove physical saturation.
+The real-trace predictor study found no cheap ensemble that reduces exposure without more reads; input 3 stays.
+Read latency (rl) and capacity (cap), alongside host-bank allocation (hb) and the GEMV spine (gv), are the next decode levers.
+
+The [remote audit](remote-tier-2026-10-30.md) supersedes window i's posting explanation: posting already occurs
+at the same-layer early hook; resolution includes fallback I/O. About 30 % refuse/fall back, with no defensible
+per-cause split. Even hiding all exposed I/O gives only about **6.7 tok/s** (audit bound 6.74), an unattainable
+whole-system ceiling for this subset tier. NUC value is now a **prefill / batch > 1 hypothesis, unproved**;
+the RAM-only / PREPARE(ids)-EXECUTE(exact_x) redesign is parked behind that case. Predicted IDs alone cannot
+supply the exact next-layer activation, and local prediction reads must remain a hedge until a remote row is ready.
+
+The capacity study makes **84000 MiB the budget ceiling to test**, against production's 80000 MiB:
+projected headroom leaves ~4302 MiB above the reserve, versus only ~302 MiB at 88000. Simulated LFU predicts
+5.6 % fewer bytes/token at 84000; ideal completion and absent valve/timing effects make this a replay estimate.
+The valve starts after allocation, so load survival and long-prefill peaks remain hardware gates.
+
+The [GH200 decision memo](gh200-decision-2026-10-30.md) offers uninterrupted K3 service, a reversible K3
+byte-stride window, or a GLM UD-Q5_K_XL benchmark. Keep K3 production and prepare byte-stride first; the
+[audit](gh200-stride-audit.md) computes **+3.2 % nominal host capacity** (65102 → 67198 slots, +3.220 %),
+not a measured speedup. CPU-slot/GPU-bank guard support and restore/pressure/identity gates remain required.
+The larger GLM window needs concrete transfer, capacity and outage budgets; the plan's 4–9 tok/s warm
+(~2 downside) is unmeasured, and displacing K3 loses its two 256k slots. The owner decision remains pending.
 
 **Queued windows and the decisions they must settle** (not measured gains):
 
 | window | work | decision / gate |
 |---|---|---|
-| v | Clean-tree rebuild, GEMV and bank-read benches, 0011 v2 DSA skip | Establish a reproducible candidate tree and kernel costs; does the repaired skip avoid the abort, preserve bytes and improve decode without per-decode allocation? |
-| w | 0012b wait split + 0012c wider prediction | Locate exposed lookup wait and determine whether wider prediction improves useful reads and decode while preserving bytes and protecting executing rows. |
-| x | 0010 v2 prefill bank | Can prefill reach ≥ 95 tok/s with standard md5 gold and decode within 1 % of baseline, without taking landing slots from the decode cache? |
-| y | 0014 MTP exact | Does rebased exact verification preserve whole-model bytes and yield a net speed gain with safe reservations? |
-| m | nsys trace | Identify the remaining device work, gaps and overlap on the current configuration to choose the next bottleneck. |
-| s | 0019 SIGTERM fast exit v2 | Does the rebased fast exit shorten shutdown while durably preserving the snapshot, including parent-directory fsync? The earlier window failed to apply and measured no exit times. |
-| l | 0018 LFU v2 | Does the planner fix eliminate the crash and improve decode against second chance, with protected-layer headroom and no hook-path allocation? |
-| z | 0020 late GEMV ready flags | Can missed rows compute as records arrive, preserving bytes and improving overlap without per-launch capability queries? |
-| o | 0021 prefill order independence | Can identical prompts produce identical bytes across cache layouts, making prefill changes testable bit for bit? |
-| i | Remote tier against nuc2 using the first real-trace placement | Do actually used remote rows preserve exact output and improve end-to-end decode with deadline fallback? Trace placement is now available; replay's zero waits are a model, not a measured remote gain. |
-| ctx | Decode versus context length | Measure how decode changes with context length and investigate the unexplained cached-prompt slowdown. |
+| o2 | 0021 at 16k / ubatch 2048 | Confirm layout-independent bytes at window q's failing shape, measure cost, decide adoption and re-baseline long-prompt golds. |
+| cap | LFU cache 80000 vs 84000 MiB | Does the budget ceiling survive load/prefill/decode and improve measured speed/reads without valve pressure? |
+| rl | Record-latency histogram and read-latency microbench | Which read-path latency exposes the unpredicted records, and what change can reduce it? |
+| dp | 0025 demand-priority readers (queued last) | Do demand readers improve prompt latency with safe teardown and gold bytes? Expected to help prompts, not decode. |
+| hb | 0024 `cudaHostAlloc` bank | Does the 203/210 versus 162 GB/s bank-read bench translate into engine speed? Start at 72000 MiB or less; valve is off, so measure load/prefill/decode memory and preserve reader teardown barriers. |
+| gv | GEMV iteration 2, 3-stage `cp.async` | Can a spine variant preserve bytes and improve engine decode? Window v timed only stock at one shape; identity checks establish no variant speed gain. |
+| sh | 0022 shared-expert reorder | Confirm bytes and overlap; shared FFN already overlaps lookup wait through 0005/input 3, so the old +6 % estimate is already spent. |
+| af | 0023 I/O and poller affinity on X925 cores | Does affinity improve decode? Successful FIFO needs an exclusive poller CPU or blocking producer waits. |
+| z | 0020 late GEMV ready flags, rebased against Spark files | Does computing rows as records arrive improve overlap with gold bytes and safe composed teardown? Earlier apply failure measured nothing. |
+| x | Exact MMVQ columns + 0010 prefill bank v3, prefix fixed | Gated on order-independent prefill bytes: standard md5 gold, decode within 1 % of baseline, prefill ≥ 95 tok/s, bounded reservations without taking decode slots. Earlier apply failure measured nothing. |
+| y | Rebased 0014 MTP exact, after x | Does whole-model exact verification preserve bytes and yield a net gain with safe reservations? Earlier x failure prevented its build. |
+| m | Nsight Systems short/long profiles, obsolete flag removed | Locate remaining device work, gaps and overlap; earlier launches produced no usable profiles. |
+| ctx (running) | Decode versus context length | Measure context scaling and explain the cached-prompt decode stall. |
 
-Source reviews found and addressed reservation, LFU headroom, durable-rename and allocation issues before the queued
-windows; they do not certify GPU bytes or timings. The 0011 v2 per-decode identity allocation finding remains a gate.
-Use matched frozen snapshots, the standard greedy md5 gate and measured A/Bs before adopting any candidate.
+Source reviews address allocation, reservation, durable-rename and teardown issues; they do not certify GPU bytes
+or timings. Use matched frozen snapshots, the standard greedy md5 gate and measured A/Bs before adoption.
 
 ## Cluster layout for this work
 
@@ -230,4 +261,8 @@ Use matched frozen snapshots, the standard greedy md5 gate and measured A/Bs bef
 - 2026-10-29: bounded, testable work goes to GitHub Copilot (coding agent for repo-only tasks, `copilot-agent` CLI for tasks that need the laptop iGPU); Claude reviews and reruns every gate before committing.
 - 2026-10-30: adopt 0009 + 0012 together on Spark: image ge0ba4b3, argo-things 07f7100, 4.80 → 5.43 tok/s (+13.1 %), all eight timed passes md5 gold; predictor input 3 stays after inputs 4/5 lost.
 - 2026-10-30: keep neutral 0005b; leave neutral 0015/0016 off. LFU v1 crashes, prefill bank v1 costs −8 % decode and changes short-request bytes, and upstream MTP costs −11 % and changes bytes; none is adopted.
-- 2026-10-30: queue v/w/x/y/m/s/l/z/o/i/ctx to settle rebuild/kernel costs, lookup wait/prediction, prefill bank, exact MTP, device timeline, shutdown, LFU, late GEMV readiness, prefill order, real-trace nuc2 offload and context scaling. Cached long-prompt decode and cache-layout-dependent prefill bytes remain unresolved; source review and placement replay do not establish runtime gains.
+- 2026-10-30: LFU 0018 v2 adopted after window l: +5.49 %, eight timed passes gold; production image ge4e4290, argo-things 8a2d14b, live check 5.114 cold / 5.584 warm tok/s, md5 gold. Neutral 0011 v2 and 0019 stay off; 0012c (−1.5 %) is not adopted.
+- 2026-10-30: remote tier not adopted at decode: window i −7 % with about 30 % refusals/fallback. The audit corrects the posting account and bounds even ideal I/O hiding at about 6.7 tok/s. Park RAM-only / prepare-protocol redesign behind an unproved prefill/batch > 1 case; decode work moves to rl/cap/hb/gv, with no cheap predictor ensemble win.
+- 2026-10-30: set 84000 MiB as the cache-capacity budget ceiling to test against 80000 in window cap; 88000 leaves too little projected reserve margin. Replay's 5.6 % fewer bytes/token is not a measured speedup or load-survival guarantee.
+- 2026-10-30: 0021 adoption pending o2 at 16k/ubatch 2048. Window o is order-independent by construction, decode gold and neutral at 2k; confirm the failing shape before re-baselining long-prompt golds or gating prefill changes.
+- 2026-10-30: queue o2/cap/rl/dp/hb/gv/sh/af/z/x/y/m; ctx is running. z is rebased, x uses prefill v3 with identity gates, and y follows x. GH200 remains K3 pending the owner's choice among uninterrupted service, byte-stride (+3.2 % nominal capacity, unmeasured speed), and a reversible GLM benchmark.
