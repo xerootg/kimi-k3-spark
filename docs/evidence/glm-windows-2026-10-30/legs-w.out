@@ -1,0 +1,71 @@
+build12c=0 22:03
+HW0 r1 5.396 tok/s md5 9449ae5738
+HW0 r2 5.414 tok/s md5 9449ae5738
+2.34.334.035 I llama_moe_cache: ubatch  > 8: hits = 5868, misses = 4050, hit rate = 59.17%, uploaded = 47254.41 MiB
+2.34.334.045 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.0
+2.34.334.046 I llama_moe_cache: expert store: predictor top-k: 191746/225552 ids matched (85.0%), 28194 single-token pairs
+2.34.334.046 I llama_moe_cache: expert store: prefetch: 42770 predicted misses read, 28629 of them used by the real fill (66.9%)
+1.08.178.409 I impl: expert store: split expert GEMV on (the resident experts' matmuls run while a layer's misses are read; the late matmul has 8 rows; the zero record is slot 6496 of each group)
+2.34.728.124 I host bank hooks: early=28579/36.129ms real=28875/20525.258ms post=28268/323.614ms idle_sleeps=281803 lean=1
+2.34.729.407 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14359 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.34.729.409 I host bank real bucket: a_ready_latency=14442/19891.120ms
+2.34.729.410 I host bank real bucket: b_early_read=10337/14164.544ms
+2.34.729.410 I host bank real bucket: b_predict_read=6851/1995.246ms
+2.34.729.411 I host bank real bucket: c_real_read=222/3724.066ms
+2.34.729.411 I host bank real bucket: d_lock=28860/0.909ms
+2.34.729.412 I host bank real bucket: e_other=28875/638.458ms
+2.34.729.415 I host bank real histogram: ready_p50/p90/p99=0.010/1.950/5.460ms abc_p50/p90/p99=0.010/3.900/10.910ms (a overlaps b+c; overflow is lower bound)
+2.34.742.235 I snapshot_save: expert store: cache snapshot (exit): 6858 resident experts, 41.2 KB to /srv/glm-5.3/legs/HW0.k3sn
+HW1 r1 5.32 tok/s md5 9449ae5738
+HW1 r2 5.306 tok/s md5 9449ae5738
+2.36.375.649 I llama_moe_cache: ubatch  > 8: hits = 5825, misses = 4093, hit rate = 58.73%, uploaded = 47757.84 MiB
+2.36.375.725 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.0
+2.36.375.727 I llama_moe_cache: expert store: predictor top-k: 211762/225552 ids matched (93.9%), 28194 single-token pairs
+2.36.375.727 I llama_moe_cache: expert store: prefetch: 78037 predicted misses read, 31889 of them used by the real fill (40.9%)
+1.09.466.325 I impl: expert store: split expert GEMV on (the resident experts' matmuls run while a layer's misses are read; the late matmul has 8 rows; the zero record is slot 6496 of each group)
+2.36.414.764 I host bank hooks: early=28579/35.386ms real=28875/21055.732ms post=28268/337.299ms idle_sleeps=281076 lean=1
+2.36.415.781 I host bank real readiness: calls=28875 split=28579 resident_entry_split=15288 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.36.415.783 I host bank real bucket: a_ready_latency=13513/20549.916ms
+2.36.415.784 I host bank real bucket: b_early_read=8672/14346.429ms
+2.36.415.784 I host bank real bucket: b_predict_read=7615/2432.352ms
+2.36.415.784 I host bank real bucket: c_real_read=222/3764.653ms
+2.36.415.785 I host bank real bucket: d_lock=28854/0.906ms
+2.36.415.785 I host bank real bucket: e_other=28875/509.361ms
+2.36.415.789 I host bank real histogram: ready_p50/p90/p99=0.000/2.070/5.750ms abc_p50/p90/p99=0.000/4.140/11.480ms (a overlaps b+c; overflow is lower bound)
+2.36.428.741 I snapshot_save: expert store: cache snapshot (exit): 6855 resident experts, 41.2 KB to /srv/glm-5.3/legs/HW1.k3sn
+HW0b r1 5.401 tok/s md5 9449ae5738
+HW0b r2 5.249 tok/s md5 9449ae5738
+2.30.037.935 I llama_moe_cache: ubatch  > 8: hits = 5865, misses = 4053, hit rate = 59.13%, uploaded = 47289.00 MiB
+2.30.037.945 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.0
+2.30.037.946 I llama_moe_cache: expert store: predictor top-k: 191715/225552 ids matched (85.0%), 28194 single-token pairs
+2.30.037.947 I llama_moe_cache: expert store: prefetch: 42783 predicted misses read, 28382 of them used by the real fill (66.3%)
+1.02.830.247 I impl: expert store: split expert GEMV on (the resident experts' matmuls run while a layer's misses are read; the late matmul has 8 rows; the zero record is slot 6496 of each group)
+2.30.161.446 I host bank hooks: early=28579/36.658ms real=28875/21586.622ms post=28268/323.907ms idle_sleeps=279676 lean=1
+2.30.162.551 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14149 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.30.162.555 I host bank real bucket: a_ready_latency=14652/20746.990ms
+2.30.162.556 I host bank real bucket: b_early_read=10438/14761.692ms
+2.30.162.556 I host bank real bucket: b_predict_read=6915/2206.191ms
+2.30.162.557 I host bank real bucket: c_real_read=222/3771.729ms
+2.30.162.557 I host bank real bucket: d_lock=28860/0.895ms
+2.30.162.558 I host bank real bucket: e_other=28875/844.045ms
+2.30.162.561 I host bank real histogram: ready_p50/p90/p99=0.090/2.080/5.540ms abc_p50/p90/p99=0.170/4.150/11.070ms (a overlaps b+c; overflow is lower bound)
+2.30.175.547 I snapshot_save: expert store: cache snapshot (exit): 6858 resident experts, 41.2 KB to /srv/glm-5.3/legs/HW0b.k3sn
+HW1b r1 5.308 tok/s md5 9449ae5738
+HW1b r2 5.309 tok/s md5 9449ae5738
+2.30.475.202 I llama_moe_cache: ubatch  > 8: hits = 5826, misses = 4092, hit rate = 58.74%, uploaded = 47750.81 MiB
+2.30.475.278 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.0
+2.30.475.281 I llama_moe_cache: expert store: predictor top-k: 211775/225552 ids matched (93.9%), 28194 single-token pairs
+2.30.475.282 I llama_moe_cache: expert store: prefetch: 78129 predicted misses read, 31905 of them used by the real fill (40.8%)
+1.03.755.926 I impl: expert store: split expert GEMV on (the resident experts' matmuls run while a layer's misses are read; the late matmul has 8 rows; the zero record is slot 6496 of each group)
+2.30.839.139 I host bank hooks: early=28579/34.069ms real=28875/21248.161ms post=28268/332.234ms idle_sleeps=278595 lean=1
+2.30.841.055 I host bank real readiness: calls=28875 split=28579 resident_entry_split=15320 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.30.841.058 I host bank real bucket: a_ready_latency=13481/20737.612ms
+2.30.841.059 I host bank real bucket: b_early_read=8666/14538.178ms
+2.30.841.059 I host bank real bucket: b_predict_read=7505/2423.144ms
+2.30.841.060 I host bank real bucket: c_real_read=222/3769.364ms
+2.30.841.061 I host bank real bucket: d_lock=28865/0.899ms
+2.30.841.062 I host bank real bucket: e_other=28875/514.611ms
+2.30.841.066 I host bank real histogram: ready_p50/p90/p99=0.000/2.110/5.700ms abc_p50/p90/p99=0.000/4.210/11.390ms (a overlaps b+c; overflow is lower bound)
+2.30.853.993 I snapshot_save: expert store: cache snapshot (exit): 6855 resident experts, 41.2 KB to /srv/glm-5.3/legs/HW1b.k3sn
+WIN2W-DONE
+2.34.334.036 I llama_moe_cache: expert store: 235.76 GB read for decode, 0.00 GB read for prefill

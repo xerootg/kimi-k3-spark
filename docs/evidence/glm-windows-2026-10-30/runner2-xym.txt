@@ -1,0 +1,14 @@
+=== window x 21:15
+ABORT-WINDOW apply failed /home/xero/win2/0008-exact-mmvq-cols.patch
+pod restored: Running
+=== window y 21:17
+ABORT-WINDOW 0014 does not apply
+pod restored: Running
+=== window m 21:19
+bin=/home/xero/llama-k3-c/build/bin/llama-server
+NSshort died: ERROR: The --sample switch is not supported by the launch command after NVIDIA Nsight Systems v2021.5.
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+NSlong died: ERROR: The --sample switch is not supported by the launch command after NVIDIA Nsight Systems v2021.5.
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+pod restored: Running
+ALL-WINDOWS-DONE
