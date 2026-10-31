@@ -1,0 +1,63 @@
+=== window s 21:23
+build19=0
+FAST_EXIT=0: SIGTERM to exit 12.6 s; snapshot 22:25:17 1 exit-line
+FAST_EXIT=1: SIGTERM to exit 13.2 s; snapshot 22:26:50 0 exit-line
+FAST_EXIT=0: SIGTERM to exit 12.4 s; snapshot 22:28:24 1 exit-line
+FAST_EXIT=1: SIGTERM to exit 8.3 s; snapshot 22:30:01 0 exit-line
+pod restored: Running
+=== window l 21:31
+build18b=0
+LF0 LFU=0 SZ=1 HL=1 PREFETCH_WIDE=0
+LF0 r1 5.407 tok/s md5 9449ae5738
+LF0 r2 5.407 tok/s md5 9449ae5738
+1.21.693.264 I fill_late: expert store: 35483 lookups, hit rate 90.9%, 39.8 GB read for decode, 0.0 GB for prefill
+1.31.681.880 I fill_late: expert store: 68251 lookups, hit rate 92.2%, 65.5 GB read for decode, 0.0 GB for prefill
+1.43.637.813 I fill_late: expert store: 103733 lookups, hit rate 91.2%, 111.6 GB read for decode, 0.0 GB for prefill
+1.53.193.915 I fill_late: expert store: 136501 lookups, hit rate 92.1%, 133.2 GB read for decode, 0.0 GB for prefill
+2.05.514.979 I fill_late: expert store: 171983 lookups, hit rate 91.3%, 183.6 GB read for decode, 0.0 GB for prefill
+2.15.084.673 I fill_late: expert store: 204751 lookups, hit rate 91.9%, 204.6 GB read for decode, 0.0 GB for prefill
+2.25.449.227 I fill_late: expert store: 237519 lookups, hit rate 92.0%, 234.1 GB read for decode, 0.0 GB for prefill
+2.26.142.468 I llama_moe_cache: ubatch <= 8: hits = 214133, misses = 15092, hit rate = 93.42%, uploaded = 177349.12 MiB
+2.26.142.471 I llama_moe_cache: ubatch  > 8: hits = 5860, misses = 4058, hit rate = 59.08%, uploaded = 47362.78 MiB
+LF1 LFU=1 SZ=1 HL=1 PREFETCH_WIDE=0
+LF1 r1 5.661 tok/s md5 9449ae5738
+LF1 r2 5.738 tok/s md5 9449ae5738
+0.45.824.967 I impl: expert store: LFU eviction, half-life 262144 planned ids; volatile frequency state
+1.19.805.210 I fill_late: expert store: 35483 lookups, hit rate 90.7%, 40.7 GB read for decode, 0.0 GB for prefill
+1.30.524.297 I fill_late: expert store: 68251 lookups, hit rate 91.4%, 72.6 GB read for decode, 0.0 GB for prefill
+1.42.058.589 I fill_late: expert store: 103733 lookups, hit rate 91.2%, 112.3 GB read for decode, 0.0 GB for prefill
+1.51.309.156 I fill_late: expert store: 136501 lookups, hit rate 92.2%, 131.3 GB read for decode, 0.0 GB for prefill
+2.02.712.855 I fill_late: expert store: 171983 lookups, hit rate 91.9%, 170.6 GB read for decode, 0.0 GB for prefill
+2.11.616.344 I fill_late: expert store: 204751 lookups, hit rate 92.6%, 186.7 GB read for decode, 0.0 GB for prefill
+2.21.620.883 I fill_late: expert store: 237519 lookups, hit rate 92.7%, 212.6 GB read for decode, 0.0 GB for prefill
+2.22.268.697 I llama_moe_cache: ubatch <= 8: hits = 215016, misses = 14209, hit rate = 93.80%, uploaded = 167127.09 MiB
+2.22.268.702 I llama_moe_cache: ubatch  > 8: hits = 6754, misses = 3164, hit rate = 68.10%, uploaded = 36945.66 MiB
+LFU-OK LF1
+LF0b LFU=0 SZ=1 HL=1 PREFETCH_WIDE=0
+LF0b r1 5.405 tok/s md5 9449ae5738
+LF0b r2 5.402 tok/s md5 9449ae5738
+1.21.610.801 I fill_late: expert store: 35483 lookups, hit rate 90.9%, 39.8 GB read for decode, 0.0 GB for prefill
+1.31.574.411 I fill_late: expert store: 68251 lookups, hit rate 92.2%, 65.6 GB read for decode, 0.0 GB for prefill
+1.43.528.520 I fill_late: expert store: 103733 lookups, hit rate 91.2%, 111.8 GB read for decode, 0.0 GB for prefill
+1.53.083.308 I fill_late: expert store: 136501 lookups, hit rate 92.1%, 133.2 GB read for decode, 0.0 GB for prefill
+2.05.423.803 I fill_late: expert store: 171983 lookups, hit rate 91.3%, 183.6 GB read for decode, 0.0 GB for prefill
+2.14.997.680 I fill_late: expert store: 204751 lookups, hit rate 91.9%, 204.8 GB read for decode, 0.0 GB for prefill
+2.25.372.516 I fill_late: expert store: 237519 lookups, hit rate 92.0%, 234.2 GB read for decode, 0.0 GB for prefill
+2.26.053.396 I llama_moe_cache: ubatch <= 8: hits = 214129, misses = 15096, hit rate = 93.41%, uploaded = 177422.62 MiB
+2.26.053.400 I llama_moe_cache: ubatch  > 8: hits = 5859, misses = 4059, hit rate = 59.07%, uploaded = 47374.31 MiB
+LF1b LFU=1 SZ=1 HL=1 PREFETCH_WIDE=0
+LF1b r1 5.67 tok/s md5 9449ae5738
+LF1b r2 5.74 tok/s md5 9449ae5738
+0.45.588.476 I impl: expert store: LFU eviction, half-life 262144 planned ids; volatile frequency state
+1.26.766.477 I fill_late: expert store: 35483 lookups, hit rate 90.7%, 40.5 GB read for decode, 0.0 GB for prefill
+1.37.327.774 I fill_late: expert store: 68251 lookups, hit rate 91.4%, 72.2 GB read for decode, 0.0 GB for prefill
+1.48.880.977 I fill_late: expert store: 103733 lookups, hit rate 91.2%, 111.9 GB read for decode, 0.0 GB for prefill
+1.58.162.733 I fill_late: expert store: 136501 lookups, hit rate 92.2%, 130.9 GB read for decode, 0.0 GB for prefill
+2.09.572.795 I fill_late: expert store: 171983 lookups, hit rate 91.9%, 170.5 GB read for decode, 0.0 GB for prefill
+2.18.508.859 I fill_late: expert store: 204751 lookups, hit rate 92.6%, 186.6 GB read for decode, 0.0 GB for prefill
+2.28.445.539 I fill_late: expert store: 237519 lookups, hit rate 92.8%, 211.9 GB read for decode, 0.0 GB for prefill
+2.29.095.685 I llama_moe_cache: ubatch <= 8: hits = 215077, misses = 14148, hit rate = 93.83%, uploaded = 166386.09 MiB
+2.29.095.689 I llama_moe_cache: ubatch  > 8: hits = 6753, misses = 3165, hit rate = 68.09%, uploaded = 36965.25 MiB
+LFU-OK LF1b
+pod restored: Running
+=== window z 21:47

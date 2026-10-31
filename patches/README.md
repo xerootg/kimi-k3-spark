@@ -673,3 +673,27 @@ Measured on the Spark, GLM-5.3, same protocol as 0009 (0009 off in all four legs
 4.837/4.812, **5.137/5.118 tok/s (+5.8 %)**, md5 `9449ae5738` in every run. The stats showed early and post hooks at
 1.3-1.7 us each and the real hook at 0.55-0.60 ms: the hook bucket of the profile is the real-lookup wait, not the
 handshake. Written by a sol worker (gpt-6.1-sol); summary in docs/experiments.md (2026-10-30, candidate windows).
+
+## 0018-lfu-policy
+
+Opt-in decaying LFU eviction for the expert store. Each group's volatile, model-key-sized frequency table counts
+selected experts on non-scan plans; the least frequent eligible resident is evicted, with LRU order breaking ties.
+Prefill scans retain the existing scan-resistant policy. Frequencies start fresh after snapshot restore; the
+snapshot format and HBM use counts are unchanged. The four-layer GPU window protects the union of selected keys,
+while busy/parked slots, the executing layer and the current plan's selections remain ineligible for eviction.
+
+`LLAMA_EXPERT_STORE_POLICY=lfu` enables it (`default` keeps the existing policy).
+`LLAMA_EXPERT_STORE_LFU_HALF_LIFE` sets decay in planned unique ids (default 262144, range 1..4294967295).
+`LLAMA_EXPERT_STORE_SECOND_CHANCE` continues to control the default policy; LFU chooses by frequency instead.
+`LLAMA_EXPERT_STORE_HOOK_STATS=1` also prints slot, selection and protection diagnostics if a plan fails.
+
+Measured on the Spark, GLM-5.3, window l, from the same frozen snapshot per leg: **5.40 -> 5.66-5.74 tok/s
+(+6 %)**, bit-identical output, hit rate **92.0 -> 92.7 %**, **234 -> 212 GB** read per leg. Adopted.
+V1 crashed because whole-layer protection left no eligible victim on a skewed restored snapshot; v2 protects only
+selected keys in the four-layer window, including the union from repeated hooks for one layer.
+
+Both reviewer fixes are folded in: speculative headroom excludes LFU-protected keys, and four fixed-size key
+buffers plus active lengths avoid heap growth on the hook path. The measured tree's speculative headroom guard
+was absent from the committed stack, so its corrected guard and executing-layer skip are included only for LFU.
+The CUDA hook call is re-contexted without the unadopted 0012b timing instrumentation. This patch applies after
+0001-0006, 0009 and 0012 on pinned llama.cpp `547208d`; it does not require 0012b or 0012c.

@@ -1,0 +1,328 @@
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index 6ce232f..e96a115 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -11,6 +11,7 @@
+ #include <atomic>
+ #include <chrono>
+ #include <condition_variable>
++#include <cmath>
+ #include <cerrno>
+ #include <cinttypes>
+ #include <csignal>
+@@ -158,6 +159,43 @@ struct moe_cache_lru {
+     std::vector<uint8_t> chance; // [n_slots]
+     int32_t chance_max = 0;
+ 
++    // Volatile LFU state, independent of the snapshot's HBM use counts.
++    bool lfu = false;
++    const int32_t * protected_layers = nullptr; // owner's four layers the GPU may still read
++    const std::vector<int32_t> * protected_keys = nullptr; // selected keys in those layers
++    const size_t * protected_lengths = nullptr;
++
++    bool lfu_protected(int32_t key, int32_t il) const {
++        if (key < 0 || key / n_expert == il || protected_layers == nullptr) {
++            return false;
++        }
++        for (int i = 0; i < 4; ++i) {
++            if (key / n_expert == protected_layers[i] &&
++                (protected_keys == nullptr || std::find(protected_keys[i].begin(), protected_keys[i].begin() + protected_lengths[i], key) != protected_keys[i].begin() + protected_lengths[i])) {
++                return true;
++            }
++        }
++        return false;
++    }
++    uint64_t lfu_half_life = 262144;
++    uint64_t lfu_clock = 0;
++    std::vector<double> frequency;
++
++    void count_frequency(int32_t il) {
++        lfu_clock += uniq.size();
++        if (lfu_clock >= lfu_half_life) {
++            const double factor = std::exp2(-(double) lfu_clock/lfu_half_life);
++            for (double & f : frequency) {
++                f *= factor;
++            }
++            lfu_clock = 0;
++        }
++        const double weight = std::exp2((double) lfu_clock/lfu_half_life);
++        for (int32_t e : uniq) {
++            frequency[(size_t) il*n_expert + e] += weight;
++        }
++    }
++
+     std::vector<uint32_t> seen; // [n_expert]
+     uint32_t seen_gen = 0;
+     std::vector<int32_t> uniq;
+@@ -170,6 +208,14 @@ struct moe_cache_lru {
+     // lookahead plans layer il+1 while the GPU computes layer il from its slots, so layer il is skipped.
+     int32_t skip_layer = -1;
+ 
++    bool lfu_eligible(int32_t s, int32_t il) const {
++        const int32_t key = key_of[s];
++        return !lfu_protected(key, il) &&
++            !(key >= 0 && key / n_expert == il && seen[key % n_expert] == seen_gen) &&
++            !(busy != nullptr && busy[s].load(std::memory_order_acquire) != 0) &&
++            !(skip_layer >= 0 && key >= 0 && key / n_expert == skip_layer);
++    }
++
+     void init(int32_t n_layer, int32_t n_expert, int32_t n_slots) {
+         this->n_expert = n_expert;
+         this->n_slots  = n_slots;
+@@ -187,6 +233,8 @@ struct moe_cache_lru {
+         seen.assign(n_expert, 0);
+         uses.assign((size_t) n_layer*n_expert, 0);
+         chance.assign(n_slots, 0);
++        lfu_clock = 0;
++        frequency.assign(lfu ? (size_t) n_layer*n_expert : 0, 0.0);
+     }
+ 
+     // exchange the experts of slots a and b (the caller exchanges the data); each slot keeps its place in the
+@@ -284,6 +332,21 @@ struct moe_cache_lru {
+             return false;
+         }
+ 
++        if (lfu && !scan) {
++            size_t needed = 0;
++            for (int32_t e : uniq) {
++                needed += slot_map[il][e] < 0;
++            }
++            for (int32_t s = head; s >= 0 && needed > 0; s = next[s]) {
++                if (lfu_eligible(s, il)) {
++                    needed--;
++                }
++            }
++            if (needed > 0) {
++                return false; // no partial reservations if all remaining slots are protected
++            }
++            count_frequency(il);
++        }
+         int32_t * slots = slot_map[il];
+ 
+         // hits go to the tail first, so the head can be evicted below
+@@ -305,7 +368,26 @@ struct moe_cache_lru {
+                 continue;
+             }
+             int32_t s = head;
+-            if (scan || busy != nullptr || skip_layer >= 0 || chance_max > 0) {
++            if (lfu && !scan) {
++                int32_t victim = -1;
++                double least = 0.0;
++                for (int32_t candidate = head; candidate >= 0; candidate = next[candidate]) {
++                    const int32_t key = key_of[candidate];
++                    if (!lfu_eligible(candidate, il)) {
++                        continue;
++                    }
++                    const double score = key < 0 ? -1.0 : frequency[key];
++                    if (victim < 0 || score < least) {
++                        victim = candidate;
++                        least = score;
++                        if (key < 0) {
++                            break;
++                        }
++                    }
++                }
++                GGML_ASSERT(victim >= 0); // never reuse bytes the GPU may still read
++                s = victim;
++            } else if (scan || busy != nullptr || skip_layer >= 0 || chance_max > 0) {
+                 // Busy slots and second chances can move the search past the promoted hits. Never evict an expert
+                 // selected by this plan, including a miss assigned a slot earlier in this loop.
+                 // A resident expert with a second chance left spends it (count--, slot to the tail) and the search
+@@ -2198,18 +2280,41 @@ struct llama_moe_cache::impl {
+     size_t   valve_last_host = 0, valve_last_hbm = 0;
+     std::chrono::steady_clock::time_point valve_calm_host{}, valve_calm_hbm{};
+     int32_t  protected_il[4] = { -1, -1, -1, -1 };    // layers whose slots the GPU may be reading right now
++    std::vector<int32_t> protected_keys[4];           // selected keys only; old residents are safe to evict
++    size_t   protected_lengths[4] = {};
+     int      protected_pos = 0;
+     uint64_t cg_oom_kill = 0, cg_high = 0;            // cgroup memory.events seen so far
+     unsigned long valve_hbm_mask = 0;
+ 
+-    void protect_layer(int32_t il) {
+-        for (int32_t p : protected_il) {
+-            if (p == il) {
+-                return;
++    void protect_layer(int32_t il, const int32_t * ids, size_t n_ids) {
++        int pos = protected_pos;
++        bool found = false;
++        for (int i = 0; i < 4; ++i) {
++            if (protected_il[i] == il) {
++                pos = i;
++                found = true;
++                break;
++            }
++        }
++        if (!found) {
++            protected_il[pos] = il;
++            protected_lengths[pos] = 0;
++            protected_pos = (protected_pos + 1) % 4;
++        }
++        if (!groups[layers[il].ig].lru.lfu) {
++            return;
++        }
++        // Multiple hooks can refer to the same layer before its matmuls finish.
++        for (size_t i = 0; i < n_ids; ++i) {
++            GGML_ASSERT(ids[i] >= 0 && ids[i] < (int32_t) store.n_expert);
++            const int32_t key = il*(int32_t) store.n_expert + ids[i];
++            auto & keys = protected_keys[pos];
++            size_t & length = protected_lengths[pos];
++            if (std::find(keys.begin(), keys.begin() + length, key) == keys.begin() + length) {
++                GGML_ASSERT(length < keys.size());
++                keys[length++] = key;
+             }
+         }
+-        protected_il[protected_pos] = il;
+-        protected_pos = (protected_pos + 1) % 4;
+     }
+     bool is_protected(int32_t il) const {
+         for (int32_t p : protected_il) {
+@@ -3006,11 +3111,41 @@ struct llama_moe_cache::impl {
+                 g.n_slots = 0;
+                 continue;
+             }
++            const char * policy = getenv("LLAMA_EXPERT_STORE_POLICY");
++            if (policy != nullptr && strcmp(policy, "default") != 0 && strcmp(policy, "lfu") != 0) {
++                throw std::runtime_error("LLAMA_EXPERT_STORE_POLICY must be default or lfu");
++            }
++            g.lru.lfu = use_store && policy != nullptr && strcmp(policy, "lfu") == 0;
++            g.lru.protected_layers = protected_il;
++            g.lru.protected_keys = protected_keys;
++            g.lru.protected_lengths = protected_lengths;
++            if (g.lru.lfu && protected_keys[0].empty()) {
++                // The planner deduplicates ids in [0, n_expert), including full-layer prefill.
++                for (auto & keys : protected_keys) {
++                    keys.assign(store.n_expert, 0);
++                }
++            }
++            if (g.lru.lfu) {
++                const char * half = getenv("LLAMA_EXPERT_STORE_LFU_HALF_LIFE");
++                if (half != nullptr) {
++                    char * end = nullptr;
++                    errno = 0;
++                    const unsigned long long value = strtoull(half, &end, 10);
++                    if (errno != 0 || end == half || *end != 0 || half[0] == '-' || value == 0 || value > UINT32_MAX) {
++                        throw std::runtime_error("LLAMA_EXPERT_STORE_LFU_HALF_LIFE must be 1..4294967295 planned ids");
++                    }
++                    g.lru.lfu_half_life = value;
++                }
++                if (&g == &groups.front()) {
++                    LLAMA_LOG_INFO("%s: expert store: LFU eviction, half-life %llu planned ids; volatile frequency state\n", __func__,
++                        (unsigned long long) g.lru.lfu_half_life);
++                }
++            }
+             g.lru.init(model.layers.size(), n_expert, g.n_slots);
+             g.lru.n_hbm = g.slot_stride > 0 ? std::min<int32_t>(g.n_slots, (int32_t) (g.hbm_budget/g.slot_stride)) : 0;
+             // the second init below (store open, snapshot) keeps chance_max: init() does not touch it
+             g.lru.chance_max = getenv("LLAMA_EXPERT_STORE_SECOND_CHANCE") != nullptr ? std::min(255, std::max(0, atoi(getenv("LLAMA_EXPERT_STORE_SECOND_CHANCE")))) : 0;
+-            if (&g == &groups.front() && g.lru.chance_max > 0) {
++            if (&g == &groups.front() && !g.lru.lfu && g.lru.chance_max > 0) {
+                 LLAMA_LOG_INFO("%s: MoE cache eviction: LRU with %d second chances per hit (LLAMA_EXPERT_STORE_SECOND_CHANCE)\n", __func__, g.lru.chance_max);
+             }
+             if (&g == &groups.front()) {
+@@ -3627,7 +3762,7 @@ struct llama_moe_cache::impl {
+         // the memory valve releases slots under the same lock, and never those of the last layers looked up: the
+         // split GEMV's early lookup leaves its misses' reads in flight on the fill thread until the late lookup
+         std::lock_guard<std::recursive_mutex> lock(self->lru_mutex);
+-        self->protect_layer(it->second);
++        self->protect_layer(it->second, ids, (size_t) n_ids);
+         if (!self->map_kind.empty()) {
+             // the split GEMV: the early lookup (early map) plans and starts the reads, the real one (late map) waits
+             const auto mk = self->map_kind.find(slot_map);
+@@ -3665,7 +3800,6 @@ struct llama_moe_cache::impl {
+             if (it == layer_of.end()) {
+                 continue;
+             }
+-            protect_layer(it->second);
+             const ggml_tensor * sel  = node->src[1];
+             const ggml_tensor * base = sel;
+             while (base->view_src != nullptr) {
+@@ -3679,6 +3813,7 @@ struct llama_moe_cache::impl {
+                 }
+                 continue;
+             }
++            protect_layer(it->second, (const int32_t *) sel->data, (size_t) ggml_nelements(sel));
+             if (strncmp(node->name, "moe_prefetch_self-", 18) == 0) {
+                 continue; // never built for the CPU split (self-prefetch needs the GPU hook)
+             }
+@@ -3729,7 +3864,7 @@ struct llama_moe_cache::impl {
+         if (!ok || fills.empty()) {
+             return;
+         }
+-        protect_layer(nl); // the memory valve leaves the slots in flight alone
++        protect_layer(nl, la_all.data(), la_all.size()); // the memory valve leaves the slots in flight alone
+         jobs.clear();
+         for (const auto & f : fills) {
+             jobs.push_back({ (char *) g.region + (size_t) f.slot*g.slot_stride, g.record_size, (off_t) (e->offset((size_t) f.expert)) });
+@@ -3916,6 +4051,32 @@ struct llama_moe_cache::impl {
+         GGML_ASSERT(e != nullptr && g.region != nullptr);
+         spec_reclaim();
+         if (!g.lru.plan(il, ids_data, n_ids, fills, n_hit, promote)) {
++            const char * stats = getenv("LLAMA_EXPERT_STORE_HOOK_STATS");
++            if (stats != nullptr && strcmp(stats, "1") == 0) {
++                const auto & c = g.lru;
++                size_t needed = 0, eligible = 0, protected_slots = 0, busy_slots = 0;
++                for (int32_t ex : c.uniq) {
++                    needed += c.slot_map[il][ex] < 0;
++                }
++                for (int32_t sl = 0; sl < c.n_slots; ++sl) {
++                    eligible += c.lfu_eligible(sl, il);
++                    protected_slots += c.lfu_protected(c.key_of[sl], il);
++                    busy_slots += c.busy != nullptr && c.busy[sl].load(std::memory_order_acquire) != 0;
++                }
++                LLAMA_LOG_ERROR("%s: LFU blocked: layer %d group %d slots %d keys %zu frequency %zu clock %llu half-life %llu selected %zu needed %zu eligible %zu protected %zu busy %zu skip %d split %d promote %d\n",
++                    __func__, il, l.ig, c.n_slots, c.uses.size(), c.frequency.size(), (unsigned long long) c.lfu_clock,
++                    (unsigned long long) c.lfu_half_life, c.uniq.size(), needed, eligible, protected_slots, busy_slots, c.skip_layer, (int) split, (int) promote);
++                for (int i = 0; i < 4; ++i) {
++                    LLAMA_LOG_ERROR("%s: LFU window %d layer %d selected keys %zu\n", __func__, i, protected_il[i], protected_lengths[i]);
++                }
++                for (int32_t ex : c.uniq) {
++                    LLAMA_LOG_ERROR("%s: LFU selected: layer %d expert %d slot %d\n", __func__, il, ex, c.slot_map[il][ex]);
++                }
++                for (int32_t sl = 0; sl < c.n_slots; ++sl) {
++                    LLAMA_LOG_ERROR("%s: LFU slot %d key %d busy %d eligible %d\n", __func__, sl, c.key_of[sl],
++                        c.busy != nullptr ? (int) c.busy[sl].load(std::memory_order_acquire) : 0, (int) c.lfu_eligible(sl, il));
++                }
++            }
+             GGML_ABORT("the expert store cache is too small for the experts selected in layer %d", il);
+         }
+         // every selected expert must now have a slot: the lookup that follows reads the slot map on the GPU and a
+@@ -4606,8 +4767,38 @@ struct llama_moe_cache::impl {
+             ids_data = remote_pf.data();
+             n_ids = remote_pf.size();
+         }
++        const int32_t previous_skip = g.lru.skip_layer;
++        const int32_t executing_il = split_il >= 0 ? split_il : last_fill_il;
++        if (g.lru.lfu) {
++            g.lru.skip_layer = executing_il;
++            size_t victims = 0, misses = 0;
++            for (size_t i = 0; i < n_ids; ++i) {
++                misses += g.lru.slot_map[il][ids_data[i]] < 0;
++            }
++            for (int32_t slot = 0; slot < g.n_slots; ++slot) {
++                const int32_t key = g.lru.key_of[slot];
++                if (g.spec_state[slot].load(std::memory_order_acquire) != 0 ||
++                        (key >= 0 && key / g.lru.n_expert == executing_il)) {
++                    continue;
++                }
++                if (key >= 0 && key / g.lru.n_expert == il &&
++                        std::find(ids_data, ids_data + n_ids, key % g.lru.n_expert) != ids_data + n_ids) {
++                    continue;
++                }
++                if (g.lru.lfu_protected(key, il)) {
++                    continue;
++                }
++                victims++;
++            }
++            if (victims < misses + std::max(n_ids, (size_t) n_expert_used)) {
++                g.lru.skip_layer = previous_skip;
++                return;
++            }
++        }
+         size_t n_hit = 0;
+-        if (!g.lru.plan(il, ids_data, n_ids, fills, n_hit, true)) {
++        const bool planned = g.lru.plan(il, ids_data, n_ids, fills, n_hit, true);
++        g.lru.skip_layer = previous_skip;
++        if (!planned) {
+             return;
+         }
+         n_prefetch_calls++;
