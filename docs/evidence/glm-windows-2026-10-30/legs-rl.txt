@@ -1,0 +1,180 @@
+readlat backend=pread
+pieces rings bg records p50_ms p90_ms p99_ms GB/s(p50)
+     1     1  0     200   1.300   1.319   1.506     9.403
+     1     2  0     200   1.311   1.734   1.887     9.323
+     1     4  0     200   1.488   1.690   2.250     8.216
+     4     1  0     200   2.198   2.357   2.441     5.560
+     4     2  0     200   1.302   1.499   1.567     9.384
+     4     4  0     200   1.298   1.380   1.422     9.415
+    12     1  0     200   3.100   3.101   3.600     3.943
+    12     2  0     200   1.898   2.000   2.110     6.438
+    12     4  0     200   1.398   1.572   1.828     8.741
+     1     1  2     200   2.723   2.901   2.989     4.489
+     1     2  2     200   2.712   2.976   3.087     4.507
+     1     4  2     200   2.777   3.022   3.362     4.402
+     4     1  2     200   6.396   6.702   7.292     1.911
+     4     2  2     200   4.625   4.824   5.001     2.643
+     4     4  2     200   2.889   3.078   3.213     4.230
+    12     1  2     200  17.191  18.001  19.014     0.711
+    12     2  2     200   9.101   9.807  10.397     1.343
+    12     4  2     200   5.207   5.697   5.999     2.347
+FLOOR pieces=4 rings=4 bg=0 p50=1.298 p99=1.422
+readlat backend=io_uring
+pieces rings bg records p50_ms p90_ms p99_ms GB/s(p50)
+     1     1  0     200   1.290   1.394   1.446     9.478
+     1     2  0     200   1.111   1.301   1.312    11.003
+     1     4  0     200   1.376   1.403   1.500     8.882
+     4     1  0     200   1.195   1.398   1.782    10.226
+     4     2  0     200   1.300   1.400   1.580     9.404
+     4     4  0     200   1.225   1.315   1.399     9.976
+    12     1  0     200   1.212   1.378   1.406    10.083
+    12     2  0     200   1.300   1.400   1.499     9.400
+    12     4  0     200   1.298   1.399   1.575     9.414
+     1     1  2     200   2.745   2.933   3.039     4.452
+     1     2  2     200   2.706   2.901   3.002     4.517
+     1     4  2     200   2.709   2.902   3.084     4.511
+     4     1  2     200   2.712   2.901   3.094     4.506
+     4     2  2     200   2.811   2.999   3.099     4.347
+     4     4  2     200   2.882   3.001   3.102     4.242
+    12     1  2     200   2.722   2.900   3.004     4.490
+    12     2  2     200   2.863   3.078   3.187     4.268
+    12     4  2     200   2.898   3.092   3.186     4.218
+FLOOR pieces=1 rings=2 bg=0 p50=1.111 p99=1.312
+build12d=0
+RL0 SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+RL0 r1 5.377 tok/s md5 9449ae5738
+RL0 r2 5.401 tok/s md5 9449ae5738
+1.23.186.666 I fill_late: expert store: 35483 lookups, hit rate 92.1%, 34.3 GB read for decode, 0.0 GB for prefill
+1.23.186.681 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.000 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.33.175.898 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.2 GB read for decode, 0.0 GB for prefill
+1.33.175.908 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+1.45.246.940 I fill_late: expert store: 103733 lookups, hit rate 91.6%, 106.8 GB read for decode, 0.0 GB for prefill
+1.45.246.951 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+1.54.846.838 I fill_late: expert store: 136501 lookups, hit rate 92.4%, 128.2 GB read for decode, 0.0 GB for prefill
+1.54.846.850 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.31 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.54 ms, 0 early lookups without a real one
+2.07.183.105 I fill_late: expert store: 171983 lookups, hit rate 91.6%, 178.5 GB read for decode, 0.0 GB for prefill
+2.07.183.116 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.58 ms, 0 early lookups without a real one
+2.16.749.478 I fill_late: expert store: 204751 lookups, hit rate 92.1%, 199.7 GB read for decode, 0.0 GB for prefill
+2.16.749.489 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+2.27.135.221 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 229.3 GB read for decode, 0.0 GB for prefill
+2.27.135.233 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.27.814.594 I llama_moe_cache: ubatch <= 8: hits = 214230, misses = 14995, hit rate = 93.46%, uploaded = 176294.62 MiB
+2.27.814.598 I llama_moe_cache: ubatch  > 8: hits = 6169, misses = 3749, hit rate = 62.20%, uploaded = 43756.69 MiB
+2.27.814.599 I llama_moe_cache: expert store: 230.74 GB read for decode, 0.00 GB read for prefill
+2.27.814.674 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+2.28.189.716 I host bank hooks: early=28579/38.981ms real=28875/20277.930ms post=28268/327.745ms idle_sleeps=254875 lean=1
+2.28.192.996 I host bank record latency: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=48833 bin_ms=0.5 overflow_gt_ms=16 p50=1.500 p90=3.500 p99=5.000 (bin upper bounds; overflow lower bound)
+2.28.192.997 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=0.0 count=0
+2.28.192.998 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=0.5 count=0
+2.28.192.998 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=1.0 count=338
+2.28.192.999 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=1.5 count=24316
+2.28.192.999 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=2.0 count=7437
+2.28.193.000 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=2.5 count=6598
+2.28.193.000 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=3.0 count=3798
+2.28.193.000 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=3.5 count=3954
+2.28.193.001 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=4.0 count=821
+2.28.193.001 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=4.5 count=928
+2.28.193.001 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=5.0 count=195
+2.28.193.002 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=5.5 count=261
+2.28.193.002 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=6.0 count=69
+2.28.193.003 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=6.5 count=47
+2.28.193.003 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=7.0 count=51
+2.28.193.003 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=7.5 count=5
+2.28.193.004 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=8.0 count=9
+2.28.193.004 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=8.5 count=5
+2.28.193.004 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=9.0 count=1
+2.28.193.005 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=9.5 count=0
+2.28.193.005 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=10.0 count=0
+2.28.193.006 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=10.5 count=0
+2.28.193.006 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=11.0 count=0
+2.28.193.007 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=11.5 count=0
+2.28.193.007 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=12.0 count=0
+2.28.193.008 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=12.5 count=0
+2.28.193.008 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=13.0 count=0
+2.28.193.009 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=13.5 count=0
+2.28.193.009 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=14.0 count=0
+2.28.193.010 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=14.5 count=0
+2.28.193.010 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=15.0 count=0
+2.28.193.010 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=15.5 count=0
+2.28.193.011 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=16.0 count=0
+2.28.193.012 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=16.0+ count=0
+2.28.193.013 I host bank record incomplete at real hook: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded count=23638 completed=23638 remaining_p50=1.500 p90=2.500 p99=5.000 ms (0.5ms bins; overflow lower bound)
+2.28.193.014 I host bank physical bytes per token: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=599193255936 decode_steps=381 bytes_per_token=1572685711.118; tracked pieces in flight at real hook avg=8.133 hooks=28579 token_scope=GPU-real-first-stored-layer-single-token-split-or-unsplit
+2.28.193.015 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14373 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.28.193.016 I host bank real bucket: a_ready_latency=14428/19638.902ms
+2.28.193.016 I host bank real bucket: b_early_read=10286/14095.255ms
+2.28.193.016 I host bank real bucket: b_predict_read=6750/2057.550ms
+2.28.193.017 I host bank real bucket: c_real_read=222/3474.678ms
+2.28.193.017 I host bank real bucket: d_lock=28864/0.920ms
+2.28.193.017 I host bank real bucket: e_other=28875/645.832ms
+2.28.193.021 I host bank real histogram: ready_p50/p90/p99=0.000/1.940/5.460ms abc_p50/p90/p99=0.000/3.870/10.920ms (a overlaps b+c; overflow is lower bound)
+RL0 MemAvailable 121162 MiB
+RL0b SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+RL0b r1 5.402 tok/s md5 9449ae5738
+RL0b r2 5.405 tok/s md5 9449ae5738
+1.21.208.638 I fill_late: expert store: 35483 lookups, hit rate 92.1%, 34.3 GB read for decode, 0.0 GB for prefill
+1.21.208.653 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.31.194.661 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.1 GB read for decode, 0.0 GB for prefill
+1.31.194.672 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+1.43.204.236 I fill_late: expert store: 103733 lookups, hit rate 91.6%, 106.5 GB read for decode, 0.0 GB for prefill
+1.43.204.247 I fill_late: expert store: split GEMV: 12066 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+1.52.754.482 I fill_late: expert store: 136501 lookups, hit rate 92.4%, 127.8 GB read for decode, 0.0 GB for prefill
+1.52.754.493 I fill_late: expert store: split GEMV: 16162 early lookups, 6.7 of 8 experts complete at the early lookup, 1.30 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.53 ms, 0 early lookups without a real one
+2.05.090.968 I fill_late: expert store: 171983 lookups, hit rate 91.6%, 178.0 GB read for decode, 0.0 GB for prefill
+2.05.090.979 I fill_late: expert store: split GEMV: 20184 early lookups, 6.6 of 8 experts complete at the early lookup, 1.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+2.14.639.790 I fill_late: expert store: 204751 lookups, hit rate 92.1%, 199.2 GB read for decode, 0.0 GB for prefill
+2.14.639.802 I fill_late: expert store: split GEMV: 24280 early lookups, 6.7 of 8 experts complete at the early lookup, 1.32 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+2.25.032.016 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 228.8 GB read for decode, 0.0 GB for prefill
+2.25.032.027 I fill_late: expert store: split GEMV: 28376 early lookups, 6.7 of 8 experts complete at the early lookup, 1.34 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.25.689.567 I llama_moe_cache: ubatch <= 8: hits = 214283, misses = 14942, hit rate = 93.48%, uploaded = 175688.06 MiB
+2.25.689.571 I llama_moe_cache: ubatch  > 8: hits = 6156, misses = 3762, hit rate = 62.07%, uploaded = 43902.56 MiB
+2.25.689.572 I llama_moe_cache: expert store: 230.26 GB read for decode, 0.00 GB read for prefill
+2.25.689.580 I llama_moe_cache: expert store: split GEMV: 28579 early lookups, 6.7 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.001 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.25.953.025 I host bank hooks: early=28579/38.393ms real=28875/20010.846ms post=28268/331.479ms idle_sleeps=256823 lean=1
+2.25.955.761 I host bank record latency: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=48892 bin_ms=0.5 overflow_gt_ms=16 p50=1.500 p90=3.500 p99=5.000 (bin upper bounds; overflow lower bound)
+2.25.955.763 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=0.0 count=0
+2.25.955.764 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=0.5 count=0
+2.25.955.765 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=1.0 count=390
+2.25.955.766 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=1.5 count=24473
+2.25.955.766 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=2.0 count=7304
+2.25.955.767 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=2.5 count=6623
+2.25.955.767 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=3.0 count=3794
+2.25.955.767 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=3.5 count=4025
+2.25.955.768 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=4.0 count=771
+2.25.955.768 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=4.5 count=895
+2.25.955.769 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=5.0 count=186
+2.25.955.769 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=5.5 count=246
+2.25.955.769 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=6.0 count=60
+2.25.955.770 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=6.5 count=44
+2.25.955.770 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=7.0 count=59
+2.25.955.771 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=7.5 count=6
+2.25.955.771 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=8.0 count=13
+2.25.955.772 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=8.5 count=2
+2.25.955.772 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=9.0 count=0
+2.25.955.773 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=9.5 count=1
+2.25.955.774 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=10.0 count=0
+2.25.955.774 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=10.5 count=0
+2.25.955.775 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=11.0 count=0
+2.25.955.775 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=11.5 count=0
+2.25.955.776 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=12.0 count=0
+2.25.955.776 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=12.5 count=0
+2.25.955.777 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=13.0 count=0
+2.25.955.777 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=13.5 count=0
+2.25.955.778 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=14.0 count=0
+2.25.955.778 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=14.5 count=0
+2.25.955.779 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=15.0 count=0
+2.25.955.779 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=15.5 count=0
+2.25.955.779 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=16.0 count=0
+2.25.955.780 I host bank record latency histogram: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded upper_ms=16.0+ count=0
+2.25.955.782 I host bank record incomplete at real hook: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded count=23513 completed=23513 remaining_p50=1.500 p90=2.500 p99=5.000 ms (0.5ms bins; overflow lower bound)
+2.25.955.784 I host bank physical bytes per token: scope=early-issued-demand+predicted prompt/multi-token-fills=excluded completed=599944298496 decode_steps=381 bytes_per_token=1574656951.433; tracked pieces in flight at real hook avg=8.091 hooks=28579 token_scope=GPU-real-first-stored-layer-single-token-split-or-unsplit
+2.25.955.785 I host bank real readiness: calls=28875 split=28579 resident_entry_split=14425 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.25.955.785 I host bank real bucket: a_ready_latency=14376/19476.940ms
+2.25.955.786 I host bank real bucket: b_early_read=10255/14015.929ms
+2.25.955.786 I host bank real bucket: b_predict_read=6664/1982.977ms
+2.25.955.786 I host bank real bucket: c_real_read=222/3466.785ms
+2.25.955.787 I host bank real bucket: d_lock=28861/0.907ms
+2.25.955.787 I host bank real bucket: e_other=28875/540.340ms
+2.25.955.790 I host bank real histogram: ready_p50/p90/p99=0.000/1.900/5.520ms abc_p50/p90/p99=0.000/3.780/11.030ms (a overlaps b+c; overflow is lower bound)
+RL0b MemAvailable 121160 MiB
+WIN2RL-DONE
