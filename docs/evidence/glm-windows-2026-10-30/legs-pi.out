@@ -1,0 +1,52 @@
+build17=0
+PI3 r1 4.893 tok/s md5 9449ae5738
+PI3 r2 4.878 tok/s md5 9449ae5738
+2.32.914.029 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 229.1 GB read for decode, 0.0 GB for prefill
+2.32.914.041 I fill_late: expert store: split GEMV: 28376 early lookups, 6.9 of 8 experts complete at the early lookup, 1.05 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.32.914.042 I fill_late: expert store: predictor top-k: 190866/223944 ids matched (85.2%), 27993 single-token pairs
+2.32.914.042 I fill_late: expert store: prefetch: 42539 predicted misses read, 28793 of them used by the real fill (67.7%)
+PI3 MemAvailable 12373 MiB
+PI4 r1 4.771 tok/s md5 9449ae5738
+PI4 r2 4.748 tok/s md5 9449ae5738
+2.34.613.149 I fill_late: expert store: 237519 lookups, hit rate 91.9%, 238.1 GB read for decode, 0.0 GB for prefill
+2.34.613.160 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.34.613.166 I fill_late: expert store: predictor top-k: 191499/223944 ids matched (85.5%), 27993 single-token pairs
+2.34.613.241 I fill_late: expert store: prefetch: 42747 predicted misses read, 27995 of them used by the real fill (65.5%)
+PI4 MemAvailable 12390 MiB
+PI5 r1 4.762 tok/s md5 9449ae5738
+PI5 r2 4.727 tok/s md5 9449ae5738
+2.37.808.852 I fill_late: expert store: 237519 lookups, hit rate 92.8%, 211.1 GB read for decode, 0.0 GB for prefill
+2.37.808.863 I fill_late: expert store: split GEMV: 28376 early lookups, 6.9 of 8 experts complete at the early lookup, 1.06 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.37.808.870 I fill_late: expert store: predictor top-k: 210503/335916 ids matched (62.7%), 27993 single-token pairs
+2.37.808.956 I fill_late: expert store: prefetch: 77544 predicted misses read, 32491 of them used by the real fill (41.9%)
+PI5 MemAvailable 12361 MiB
+PI3b r1 4.848 tok/s md5 9449ae5738
+PI3b r2 4.881 tok/s md5 9449ae5738
+2.33.472.973 I fill_late: expert store: 237519 lookups, hit rate 92.1%, 230.5 GB read for decode, 0.0 GB for prefill
+2.33.472.984 I fill_late: expert store: split GEMV: 28376 early lookups, 6.9 of 8 experts complete at the early lookup, 1.07 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.33.472.986 I fill_late: expert store: predictor top-k: 190832/223944 ids matched (85.2%), 27993 single-token pairs
+2.33.472.986 I fill_late: expert store: prefetch: 42540 predicted misses read, 28673 of them used by the real fill (67.4%)
+PI3b MemAvailable 12364 MiB
+PI4b r1 4.734 tok/s md5 9449ae5738
+PI4b r2 4.749 tok/s md5 9449ae5738
+2.37.711.280 I fill_late: expert store: 237519 lookups, hit rate 91.9%, 238.2 GB read for decode, 0.0 GB for prefill
+2.37.711.291 I fill_late: expert store: split GEMV: 28376 early lookups, 6.6 of 8 experts complete at the early lookup, 1.42 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.37.711.293 I fill_late: expert store: predictor top-k: 191499/223944 ids matched (85.5%), 27993 single-token pairs
+2.37.711.365 I fill_late: expert store: prefetch: 42750 predicted misses read, 27990 of them used by the real fill (65.5%)
+PI4b MemAvailable 12381 MiB
+== PI3
+prefetch: 42539 predicted misses read, 28793 of them used by the real fill (67.7%)
+split GEMV: 28579 early lookups, 6.9 of 8 experts complete at the early lookup, 1.05 read under the early matmul (8 rows), 0 lookups with more misses (0.00 reco
+predictor top-k: 192251/225552 ids matched (85.2%), 28194 single-token pairs
+prefetch: 42892 predicted misses read, 29033 of them used by the real fill (67.7%)
+== PI4
+predictor layer 75 input 4: 381 pairs, top-8 precision 90.94%, candidate recall 90.94%, no-share precision 0.00% (0 pairs)
+predictor layer 76 input 4: 381 pairs, top-8 precision 88.78%, candidate recall 88.78%, no-share precision 0.00% (0 pairs)
+predictor layer 77 input 4: 381 pairs, top-8 precision 80.71%, candidate recall 80.71%, no-share precision 0.00% (0 pairs)
+prefetch: 43111 predicted misses read, 28232 of them used by the real fill (65.5%)
+== PI5
+predictor layer 75 input 5: 381 pairs, top-8 precision 90.29%, candidate recall 98.43%, no-share precision 83.37% (381 pairs)
+predictor layer 76 input 5: 381 pairs, top-8 precision 88.45%, candidate recall 98.10%, no-share precision 83.46% (381 pairs)
+predictor layer 77 input 5: 381 pairs, top-8 precision 80.77%, candidate recall 90.72%, no-share precision 79.04% (381 pairs)
+prefetch: 78179 predicted misses read, 32769 of them used by the real fill (41.9%)
+WIN2P-DONE

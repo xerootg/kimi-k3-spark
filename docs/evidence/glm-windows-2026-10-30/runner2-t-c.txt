@@ -1,0 +1,35 @@
+=== window t 20:01
+build5b=0
+SB1 r1 4.884 tok/s md5 9449ae5738
+SB1 r2 4.887 tok/s md5 9449ae5738
+SB2 r1 4.891 tok/s md5 9449ae5738
+SB2 r2 4.882 tok/s md5 9449ae5738
+pod restored: Running
+=== window c 20:09
+layer 76 real=2048 predictor=2048 pairs=2048 precision=81.006% (13272/16384)
+layer 77 real=2048 predictor=2048 pairs=2048 precision=74.469% (12201/16384)
+steps=2048 layers=75 pairs=151552 precision=80.367% (974386/1212416)
+place=0
+        "p99": 0,
+        "maximum": 0
+      }
+    },
+    "wait_ms_per_token": 0.0,
+    "p99_service_scenario_wait_ms_per_token": 0.0
+  }
+}
+deploy.sh
+engine.env
+engine.yaml
+nuc2-ram.idx
+nuc2-ram.set
+nuc2-ssd.set
+nuc3-ram.idx
+nuc3-ram.set
+nuc3-ssd.set
+owners.csv
+report.json
+spark.set
+WIN2C-DONE
+pod restored: Running
+=== window u 20:23

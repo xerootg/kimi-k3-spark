@@ -1,0 +1,87 @@
+{
+  "source": "trace",
+  "discarded_incomplete_tokens": 0,
+  "counts": {
+    "spark": 6859,
+    "nuc2-ram": 3588,
+    "nuc3-ram": 1471,
+    "nuc2-ssd": 3640,
+    "nuc3-ssd": 3642
+  },
+  "assumptions": [
+    "Spark desired set is not pinned; replay uses LRU warmed from it",
+    "missing predictor scores use Bernoulli top-8 overlap, window 5",
+    "fast mode 0 timings; exact mode 1 does not fit",
+    "SSD ideal mode requires an unimplemented weight-prefetch channel"
+  ],
+  "resident": {
+    "tokens": 1024,
+    "spark_reads_per_token": 121.9775390625,
+    "demand_reads_per_token": 35.361328125,
+    "prefetch_reads_per_token": 86.6162109375,
+    "remote_rows_per_token": 88.05859375,
+    "fallback_rows_per_token": 0.0,
+    "rows": {
+      "nuc2": {
+        "p50": 1,
+        "p99": 2,
+        "maximum": 2
+      },
+      "nuc3": {
+        "p50": 0,
+        "p99": 2,
+        "maximum": 2
+      }
+    },
+    "wait_ms_per_token": 0.0,
+    "p99_service_scenario_wait_ms_per_token": 0.0,
+    "tok_s_no_io_credit": 4.9,
+    "tok_s_serial_io_credit": 7.60657818723451
+  },
+  "ssd_ideal": {
+    "tokens": 1024,
+    "spark_reads_per_token": 112.5341796875,
+    "demand_reads_per_token": 66.0390625,
+    "prefetch_reads_per_token": 46.4951171875,
+    "remote_rows_per_token": 65.947265625,
+    "fallback_rows_per_token": 30.6806640625,
+    "rows": {
+      "nuc2": {
+        "p50": 1,
+        "p99": 2,
+        "maximum": 2
+      },
+      "nuc3": {
+        "p50": 0,
+        "p99": 2,
+        "maximum": 2
+      }
+    },
+    "wait_ms_per_token": 0.0,
+    "p99_service_scenario_wait_ms_per_token": 0.0,
+    "tok_s_no_io_credit": 4.9,
+    "tok_s_serial_io_credit": 8.151166832514651
+  },
+  "baseline": {
+    "tokens": 1024,
+    "spark_reads_per_token": 200.05078125,
+    "demand_reads_per_token": 42.3212890625,
+    "prefetch_reads_per_token": 157.7294921875,
+    "remote_rows_per_token": 0.0,
+    "fallback_rows_per_token": 0.0,
+    "rows": {
+      "nuc2": {
+        "p50": 0,
+        "p99": 0,
+        "maximum": 0
+      },
+      "nuc3": {
+        "p50": 0,
+        "p99": 0,
+        "maximum": 0
+      }
+    },
+    "wait_ms_per_token": 0.0,
+    "p99_service_scenario_wait_ms_per_token": 0.0
+  }
+}

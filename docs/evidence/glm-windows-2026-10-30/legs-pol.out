@@ -1,0 +1,86 @@
+build18=0
+POL0 r1 4.889 tok/s md5 9449ae5738
+POL0 r2 4.84 tok/s md5 9449ae5738
+2.37.978.343 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 229.2 GB read for decode, 0.0 GB for prefill
+2.37.978.354 I fill_late: expert store: split GEMV: 28376 early lookups, 6.9 of 8 experts complete at the early lookup, 1.06 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.37.978.355 I fill_late: expert store: predictor top-k: 190904/223944 ids matched (85.2%), 27993 single-token pairs
+2.37.978.356 I fill_late: expert store: prefetch: 42558 predicted misses read, 28787 of them used by the real fill (67.6%)
+POL0 MemAvailable 12376 MiB
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.12/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.12/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+1.37.794.983 I fill_late: expert store: 68251 lookups, hit rate 91.7%, 70.1 GB read for decode, 0.0 GB for prefill
+1.37.794.994 I fill_late: expert store: split GEMV: 8044 early lookups, 6.8 of 8 experts complete at the early lookup, 1.17 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.37.794.995 I fill_late: expert store: predictor top-k: 54110/63472 ids matched (85.3%), 7934 single-token pairs
+1.37.794.996 I fill_late: expert store: prefetch: 12545 predicted misses read, 8092 of them used by the real fill (64.5%)
+POL1 MemAvailable 12869 MiB
+POL0b r1 4.884 tok/s md5 9449ae5738
+POL0b r2 4.887 tok/s md5 9449ae5738
+2.40.702.193 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 228.6 GB read for decode, 0.0 GB for prefill
+2.40.702.205 I fill_late: expert store: split GEMV: 28376 early lookups, 7.0 of 8 experts complete at the early lookup, 1.04 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the earl
+2.40.702.206 I fill_late: expert store: predictor top-k: 190880/223944 ids matched (85.2%), 27993 single-token pairs
+2.40.702.207 I fill_late: expert store: prefetch: 42576 predicted misses read, 28859 of them used by the real fill (67.8%)
+POL0b MemAvailable 12388 MiB
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.12/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.12/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+1.39.678.900 I fill_late: expert store: 68251 lookups, hit rate 91.7%, 70.1 GB read for decode, 0.0 GB for prefill
+1.39.678.911 I fill_late: expert store: split GEMV: 8044 early lookups, 6.9 of 8 experts complete at the early lookup, 1.14 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early
+1.39.678.912 I fill_late: expert store: predictor top-k: 54132/63472 ids matched (85.3%), 7934 single-token pairs
+1.39.678.913 I fill_late: expert store: prefetch: 12552 predicted misses read, 8084 of them used by the real fill (64.4%)
+POL1b MemAvailable 13023 MiB
+2.38.719.908 I llama_moe_cache: ubatch  > 8: hits = 5870, misses = 4048, hit rate = 59.19%, uploaded = 47231.34 MiB
+split GEMV: 28579 early lookups, 6.9 of 8 experts complete at the early lookup, 1.06 read under the early matmul (8 rows
+68251 lookups, hit rate 91.7%, 70.1 GB read for decode, 0.0 GB for prefill
+split GEMV: 8044 early lookups, 6.8 of 8 experts complete at the early lookup, 1.17 read under the early matmul (8 rows)
+WIN2R-DONE

@@ -1,0 +1,58 @@
+=== window p 16:45
+build17=0
+PI3 r1 4.893 tok/s md5 9449ae5738
+PI3 r2 4.878 tok/s md5 9449ae5738
+2.32.914.042 I fill_late: expert store: predictor top-k: 190866/223944 ids matched (85.2%), 27993 single-token pairs
+2.32.914.042 I fill_late: expert store: prefetch: 42539 predicted misses read, 28793 of them used by the real fill (67.7%)
+PI4 r1 4.771 tok/s md5 9449ae5738
+PI4 r2 4.748 tok/s md5 9449ae5738
+2.34.613.166 I fill_late: expert store: predictor top-k: 191499/223944 ids matched (85.5%), 27993 single-token pairs
+2.34.613.241 I fill_late: expert store: prefetch: 42747 predicted misses read, 27995 of them used by the real fill (65.5%)
+PI5 r1 4.762 tok/s md5 9449ae5738
+PI5 r2 4.727 tok/s md5 9449ae5738
+2.37.808.870 I fill_late: expert store: predictor top-k: 210503/335916 ids matched (62.7%), 27993 single-token pairs
+2.37.808.956 I fill_late: expert store: prefetch: 77544 predicted misses read, 32491 of them used by the real fill (41.9%)
+PI3b r1 4.848 tok/s md5 9449ae5738
+PI3b r2 4.881 tok/s md5 9449ae5738
+2.33.472.986 I fill_late: expert store: predictor top-k: 190832/223944 ids matched (85.2%), 27993 single-token pairs
+2.33.472.986 I fill_late: expert store: prefetch: 42540 predicted misses read, 28673 of them used by the real fill (67.4%)
+PI4b r1 4.734 tok/s md5 9449ae5738
+PI4b r2 4.749 tok/s md5 9449ae5738
+2.37.711.293 I fill_late: expert store: predictor top-k: 191499/223944 ids matched (85.5%), 27993 single-token pairs
+2.37.711.365 I fill_late: expert store: prefetch: 42750 predicted misses read, 27990 of them used by the real fill (65.5%)
+== PI3
+prefetch: 42539 predicted misses read, 28793 of them used by the real fill (67.7%)
+predictor top-k: 192251/225552 ids matched (85.2%), 28194 single-token pairs
+prefetch: 42892 predicted misses read, 29033 of them used by the real fill (67.7%)
+== PI4
+predictor layer 75 input 4: 381 pairs, top-8 precision 90.94%, candidate recall 90.94%, no-share precision 0.00% (0 pairs)
+predictor layer 76 input 4: 381 pairs, top-8 precision 88.78%, candidate recall 88.78%, no-share precision 0.00% (0 pairs)
+predictor layer 77 input 4: 381 pairs, top-8 precision 80.71%, candidate recall 80.71%, no-share precision 0.00% (0 pairs)
+prefetch: 43111 predicted misses read, 28232 of them used by the real fill (65.5%)
+== PI5
+predictor layer 75 input 5: 381 pairs, top-8 precision 90.29%, candidate recall 98.43%, no-share precision 83.37% (381 pairs)
+predictor layer 76 input 5: 381 pairs, top-8 precision 88.45%, candidate recall 98.10%, no-share precision 83.46% (381 pairs)
+predictor layer 77 input 5: 381 pairs, top-8 precision 80.77%, candidate recall 90.72%, no-share precision 79.04% (381 pairs)
+prefetch: 78179 predicted misses read, 32769 of them used by the real fill (41.9%)
+pod restored: Running
+=== window q 17:01
+cache-ram=0: A1 wall 272.4s prompt_n 16268 cache_n 0 pp 264.0s md5 b525499b | B wall 69.7s | A2 wall 268.2s prompt_n 16251 cache_n 17 pp 261.2s md5 bf747563
+cache-ram=8192: A1 wall 271.3s prompt_n 16268 cache_n 0 pp 262.8s md5 e1a66612 | B wall 71.5s | A2 wall 7.6s prompt_n 1 cache_n 16267 pp 0.3s md5 f3154bd3
+cache-ram=0: A1 wall 270.6s prompt_n 16268 cache_n 0 pp 262.2s md5 f90172c2 | B wall 68.9s | A2 wall 267.5s prompt_n 16251 cache_n 17 pp 260.4s md5 601367da
+cache-ram=8192: A1 wall 269.9s prompt_n 16268 cache_n 0 pp 261.6s md5 b525499b | B wall 69.0s | A2 wall 162.8s prompt_n 1 cache_n 16267 pp 16.0s md5 b525499b
+WIN2Q-DONE
+pod restored: Running
+=== window r 17:43
+build18=0
+POL0 r1 4.889 tok/s md5 9449ae5738
+POL0 r2 4.84 tok/s md5 9449ae5738
+2.37.978.343 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 229.2 GB read for decode, 0.0 GB for prefill
+1.37.794.983 I fill_late: expert store: 68251 lookups, hit rate 91.7%, 70.1 GB read for decode, 0.0 GB for prefill
+POL0b r1 4.884 tok/s md5 9449ae5738
+POL0b r2 4.887 tok/s md5 9449ae5738
+2.40.702.193 I fill_late: expert store: 237519 lookups, hit rate 92.2%, 228.6 GB read for decode, 0.0 GB for prefill
+1.39.678.900 I fill_late: expert store: 68251 lookups, hit rate 91.7%, 70.1 GB read for decode, 0.0 GB for prefill
+2.38.719.908 I llama_moe_cache: ubatch  > 8: hits = 5870, misses = 4048, hit rate = 59.19%, uploaded = 47231.34 MiB
+68251 lookups, hit rate 91.7%, 70.1 GB read for decode, 0.0 GB for prefill
+pod restored: Running
+=== window s 17:55
