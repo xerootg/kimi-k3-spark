@@ -1,0 +1,11 @@
+=== window u 20:23
+CB0 r1 4.797 tok/s md5 9449ae5738
+CB0 r2 4.696 tok/s md5 9449ae5738
+CB1 r1 5.429 tok/s md5 9449ae5738
+CB1 r2 5.409 tok/s md5 9449ae5738
+CB0b r1 4.841 tok/s md5 9449ae5738
+CB0b r2 4.858 tok/s md5 9449ae5738
+CB1b r1 5.433 tok/s md5 9449ae5738
+CB1b r2 5.436 tok/s md5 9449ae5738
+2.43.005.220 I host bank hooks: early=28579/37.846ms real=28875/15757.192ms post=28268/46.725ms idle_sleeps=124406 lean=0
+2.38.579.548 I host bank hooks: early=28579/40.575ms real=28875/17463.834ms post=28268/49.595ms idle_sleeps=349994 lean=1
