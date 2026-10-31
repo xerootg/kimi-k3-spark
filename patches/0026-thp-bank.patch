@@ -1,0 +1,453 @@
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index 32ef1b00a..c7aaf65f4 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -540,6 +540,8 @@ struct expert_store {
+     }
+ };
+ 
++using store_landed_fn = void (*)(void *, const void *, size_t, off_t);
++
+ // a few threads issuing O_DIRECT preads, enough in flight to keep the NVMe queue full
+ struct io_pool {
+     struct job {
+@@ -589,12 +591,16 @@ struct io_pool {
+             if (bank) {
+                 GGML_ASSERT(bank_reader);
+                 if (bank_reader->ok) {
+-                    return bank_reader->read_all(fd, in, chunk, true);
++                    const bool ok = bank_reader->read_all(fd, in, chunk, true);
++                    if (ok) { check_landed(in); }
++                    return ok;
+                 }
+             } else {
+                 thread_local uring_reader reader;
+                 if (reader.ok) {
+-                    return reader.read_all(fd, in, chunk);
++                    const bool ok = reader.read_all(fd, in, chunk);
++                    if (ok) { check_landed(in); }
++                    return ok;
+                 }
+             }
+         }
+@@ -663,7 +669,9 @@ struct io_pool {
+             std::unique_lock<std::mutex> lock(mutex);
+             done_cv.wait(lock, [&] { return remaining.load() == 0; });
+         }
+-        return !failed.load();
++        const bool ok = !failed.load();
++        if (ok) { check_landed(in); }
++        return ok;
+     }
+ 
+ private:
+@@ -745,6 +753,15 @@ private:
+ 
+ public:
+     // reads go through an io_uring of the calling thread instead of the threads (swaps always use the threads)
++    store_landed_fn landed = nullptr;
++    void * landed_ctx = nullptr;
++    void check_landed(const std::vector<job> & in) {
++        if (landed) {
++            for (const job & j : in) {
++                if (!j.swap_with) { landed(landed_ctx, j.dst, j.len, j.off); }
++            }
++        }
++    }
+     bool use_uring = false;
+     int  spin_us   = 0; // LLAMA_EXPERT_STORE_SPIN_US: busy-wait this long before sleeping, workers and the caller
+ 
+@@ -1358,7 +1375,7 @@ struct spec_reader {
+     };
+ 
+     // the ring is created by the reader thread itself (like the pool's thread-local rings), not by the caller
+-    spec_reader(int fd, size_t piece, unsigned depth, bool uring) : fd(fd), piece(piece ? piece : (size_t) 1 << 20), depth(std::max(1u, depth)), uring(uring) {
++    spec_reader(int fd, size_t piece, unsigned depth, bool uring, store_landed_fn landed, void * landed_ctx) : landed(landed), landed_ctx(landed_ctx), fd(fd), piece(piece ? piece : (size_t) 1 << 20), depth(std::max(1u, depth)), uring(uring) {
+         thread = std::thread([this] { main(); });
+         std::unique_lock<std::mutex> lock(mutex);
+         cv.wait(lock, [&] { return started; });
+@@ -1644,6 +1661,7 @@ private:
+                     free_pieces.push_back(p);
+                     if (a.n_out == 0 && a.next_off >= a.r.len) {
+                         // every byte of the record landed: resident
++                        if (landed) { landed(landed_ctx, a.r.dst, a.r.len, a.r.off); }
+                         a.used = false;
+                         a.r.state->store(0, std::memory_order_release);
+                         n_done.fetch_add(1, std::memory_order_relaxed);
+@@ -1657,6 +1675,8 @@ private:
+         }
+     }
+ 
++    store_landed_fn landed;
++    void * landed_ctx;
+     int      fd;
+     size_t   piece;
+     unsigned depth;
+@@ -1742,14 +1762,90 @@ static unsigned long store_gpu_node_mask() {
+ // page-aligned, populated host memory for the banks and the staging (O_DIRECT reads land here).
+ // hbm_bytes > 0: the first hbm_bytes are bound to the GPU's HBM node (GH200), where the GPU reads them at HBM
+ // speed through the same registered mapping; the allocation fails if that node cannot hold them.
+-static void * store_region_alloc(size_t size, std::string & err, size_t hbm_bytes = 0, int landing_fd = -1, size_t landing_off = 0) {
++static constexpr size_t store_thp_size = 2*1024*1024;
++
++static size_t store_anon_huge(const void * base = nullptr, size_t size = 0) {
++    FILE * f = fopen(base ? "/proc/self/smaps" : "/proc/self/smaps_rollup", "r");
++    if (!f) {
++        LLAMA_LOG_WARN("expert store: cannot read huge backing: %s; treating backing as unverified\n", strerror(errno));
++        return 0;
++    }
++    char line[512];
++    unsigned long lo = 0, hi = 0;
++    size_t total = 0;
++    while (fgets(line, sizeof(line), f)) {
++        unsigned long a, b;
++        size_t kb;
++        if (sscanf(line, "%lx-%lx", &a, &b) == 2) { lo = a; hi = b; }
++        if (sscanf(line, "AnonHugePages: %zu kB", &kb) == 1 &&
++                (!base || (lo >= (uintptr_t) base && hi <= (uintptr_t) base + size))) {
++            total += kb*1024;
++        }
++    }
++    fclose(f);
++    return total;
++}
++
++static void store_thp_populate(void * p, size_t size, bool regrow = false) {
++#if defined(__linux__)
++    const size_t before = store_anon_huge();
++    const int advice = madvise(p, size, MADV_HUGEPAGE);
++    const int advice_errno = advice ? errno : 0;
++    const int populate = madvise(p, size, MADV_POPULATE_WRITE);
++    const int populate_errno = populate ? errno : 0;
++    if (populate) {
++        for (size_t off = 0; off < size; off += (size_t) sysconf(_SC_PAGESIZE)) {
++            ((volatile char *) p)[off] = 0;
++        }
++    }
++    // Linux UAPI value, also usable with headers older than Linux 6.1.
++    const int collapse = madvise(p, size, 25 /* MADV_COLLAPSE */);
++    const int collapse_errno = collapse ? errno : 0;
++    const size_t after = store_anon_huge();
++    const size_t huge = regrow && collapse == 0 ? size : store_anon_huge(p, size);
++    LLAMA_LOG_INFO("expert store: THP bank huge backing=%zu/%zu bytes (%.2f%%), HUGEPAGE=%d errno=%d populate=%d errno=%d COLLAPSE=%d errno=%d; AnonHugePages delta=%lld bytes (%s)\n",
++        huge, size, 100.0*huge/size, advice, advice_errno, populate, populate_errno, collapse, collapse_errno,
++        (long long) after - (long long) before, regrow ? "quiescent regrow" : "before cudaHostRegister");
++    if (advice || huge < size - size/10) {
++        const char * strict = getenv("LLAMA_EXPERT_STORE_THP_STRICT");
++        if (strict && strcmp(strict, "1") == 0) {
++            GGML_ABORT("expert store: THP bank huge backing below 90%% or MADV_HUGEPAGE failed (THP_STRICT=1)");
++        }
++        // THP is an optimization. Keep the aligned slot geometry and the valve's
++        // whole-slot ranges even when the kernel can only provide base pages.
++        LLAMA_LOG_WARN("expert store: THP bank backing below 90%% or advice failed; continuing with available huge/base pages (set LLAMA_EXPERT_STORE_THP_STRICT=1 to require THP)\n");
++    }
++#else
++    GGML_UNUSED(p); GGML_UNUSED(size); GGML_UNUSED(regrow);
++    GGML_ABORT("expert store: THP bank needs Linux");
++#endif
++}
++
++static void * store_region_alloc(size_t size, std::string & err, size_t hbm_bytes = 0, int landing_fd = -1, size_t landing_off = 0, bool thp_bank = false) {
+ #if defined(__linux__)
+     const size_t mapped_size = size;
+-    void * p = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
++    if (thp_bank) {
++        size_t pmd = 0;
++        FILE * f = fopen("/sys/kernel/mm/transparent_hugepage/hpage_pmd_size", "r");
++        if (f) { if (fscanf(f, "%zu", &pmd) != 1) { pmd = 0; } fclose(f); }
++        if (pmd != store_thp_size || (landing_fd >= 0 ? landing_off : size) % store_thp_size || size > SIZE_MAX - store_thp_size) {
++            GGML_ABORT("expert store: THP bank requires 2 MiB PMD geometry and a valid aligned region size");
++        }
++    }
++    const size_t reserved = size + (thp_bank ? store_thp_size : 0);
++    void * p = mmap(nullptr, reserved, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+     if (p == MAP_FAILED) {
+         err = strerror(errno);
+         return nullptr;
+     }
++    if (thp_bank) {
++        const uintptr_t raw = (uintptr_t) p;
++        const uintptr_t aligned = (raw + store_thp_size - 1)/store_thp_size*store_thp_size;
++        if (aligned > raw) { munmap((void *) raw, aligned - raw); }
++        const size_t tail = reserved - (aligned - raw) - size;
++        if (tail) { munmap((void *) (aligned + size), tail); }
++        p = (void *) aligned;
++    }
+     if (landing_fd >= 0) {
+         if (mmap((char *) p + landing_off, size - landing_off, PROT_READ | PROT_WRITE,
+                  MAP_SHARED | MAP_FIXED, landing_fd, 0) == MAP_FAILED) {
+@@ -1759,7 +1855,7 @@ static void * store_region_alloc(size_t size, std::string & err, size_t hbm_byte
+         }
+         size = landing_off; // Only populate private resident pages; landing pages are shared by all groups.
+     }
+-    const size_t page = (size_t) sysconf(_SC_PAGESIZE);
++    const size_t page = thp_bank ? store_thp_size : (size_t) sysconf(_SC_PAGESIZE);
+     hbm_bytes = std::min(size, (hbm_bytes + page - 1)/page*page);
+     if (hbm_bytes > 0) {
+         const unsigned long gmask = store_gpu_node_mask();
+@@ -1768,9 +1864,9 @@ static void * store_region_alloc(size_t size, std::string & err, size_t hbm_byte
+             err = "no CPU-less memory node for the HBM tier";
+             return nullptr;
+         }
+-        madvise(p, hbm_bytes, MADV_HUGEPAGE);
++        if (!thp_bank) { madvise(p, hbm_bytes, MADV_HUGEPAGE); }
+         if (syscall(SYS_mbind, p, hbm_bytes, MPOL_BIND, &gmask, 8*sizeof(gmask) + 1, 0) != 0 ||
+-            madvise(p, hbm_bytes, MADV_POPULATE_WRITE) != 0) {
++            (!thp_bank && madvise(p, hbm_bytes, MADV_POPULATE_WRITE) != 0)) {
+             err = std::string("binding ") + std::to_string(hbm_bytes/1024/1024) + " MiB to the HBM node failed: " + strerror(errno);
+             munmap(p, mapped_size);
+             return nullptr;
+@@ -1785,6 +1881,10 @@ static void * store_region_alloc(size_t size, std::string & err, size_t hbm_byte
+             }
+         }
+     }
++    if (thp_bank) {
++        store_thp_populate(p, size);
++        return p;
++    }
+     // Transparent huge pages only on the HBM part (above), where they speed up the GPU's first reads of an expert
+     // (2.6 vs 2.1 TB/s). On the host part they are opt-in (LLAMA_EXPERT_STORE_THP=1): on the Spark, with them, about
+     // half of the server starts produced NaN from the first prefill ("GGGG..." at temperature 0, 4 of 7 starts on the
+@@ -1804,6 +1904,7 @@ static void * store_region_alloc(size_t size, std::string & err, size_t hbm_byte
+     GGML_UNUSED(hbm_bytes);
+     GGML_UNUSED(landing_fd);
+     GGML_UNUSED(landing_off);
++    GGML_UNUSED(thp_bank);
+     err = "needs Linux";
+     return nullptr;
+ #endif
+@@ -1944,6 +2045,53 @@ static bool llama_moe_cache_is_host_weight(const ggml_tensor * t) {
+ }
+ 
+ struct llama_moe_cache::impl {
++    bool thp_bank = [] { const char * e = getenv("LLAMA_EXPERT_STORE_THP_BANK"); return e && strcmp(e, "1") == 0; }();
++    struct record_checker {
++        int fd = -1;
++        std::mutex mutex;
++        uint64_t landed = 0, checks = 0;
++        char expected[128];
++        ~record_checker() { if (fd >= 0) { close(fd); } }
++    } record_check;
++
++    static void check_record(void * ctx, const void * dst, size_t len, off_t off) {
++        impl & self = *(impl *) ctx;
++        auto & c = self.record_check;
++        std::lock_guard<std::mutex> lock(c.mutex);
++        if (++c.landed % 1000 != 0) { return; }
++        int32_t il = -1, ex = -1, slot = -1;
++        for (size_t i = 0; i < self.layers.size(); ++i) {
++            const expert_store_entry * e = self.store.find((int32_t) i);
++            if (e && (size_t) off >= e->base_offset && e->stride &&
++                    ((size_t) off - e->base_offset) % e->stride == 0 &&
++                    ((size_t) off - e->base_offset)/e->stride < self.store.n_expert) {
++                il = (int32_t) i; ex = (int32_t) (((size_t) off - e->base_offset)/e->stride); break;
++            }
++        }
++        for (const auto & g : self.groups) {
++            const uintptr_t a = (uintptr_t) dst, b = (uintptr_t) g.region;
++            if (g.region && a >= b && a - b < g.region_size) { slot = (int32_t) ((a - b)/g.slot_stride); break; }
++        }
++        if (slot < 0 && self.staging && (uintptr_t) dst >= (uintptr_t) self.staging &&
++                (uintptr_t) dst - (uintptr_t) self.staging < self.staging_size) { slot = ex; }
++        // dst/off describe the whole landed record, including file padding, not a tensor part or slot stride.
++        const size_t n = std::min<size_t>(64, len);
++        bool ok = il >= 0 && len >= 64;
++        for (int part = 0; part < 2 && ok; ++part) {
++            const size_t at = part ? len - n : 0;
++            size_t got = 0;
++            while (got < n) {
++                const ssize_t rc = pread(c.fd, c.expected + part*64 + got, n - got, off + at + got);
++                if (rc < 0 && errno == EINTR) { continue; }
++                if (rc <= 0) { ok = false; break; }
++                got += (size_t) rc;
++            }
++            ok = ok && memcmp(c.expected + part*64, (const char *) dst + at, n) == 0;
++        }
++        if (!ok) { GGML_ABORT("expert store: record check mismatch layer=%d expert=%d slot=%d offset=%lld len=%zu", il, ex, slot, (long long) off, len); }
++        ++c.checks;
++    }
++
+     // a GPU with its own budget and banks, it caches the layers assigned to it
+     struct device {
+         ggml_backend_t backend;
+@@ -2327,6 +2475,7 @@ struct llama_moe_cache::impl {
+     std::atomic<bool> valve_stop{false};
+     std::recursive_mutex lru_mutex;                   // the fill hooks hold it for a whole fill, the valve for a release
+     int      valve_psi_fd = -1;
++    std::vector<int32_t> valve_victims; // reserved at init; no per-release allocation
+     std::vector<std::vector<int32_t>> valve_released_host; // [group] released slots of the host domain
+     std::vector<std::vector<int32_t>> valve_released_hbm;  // [group] released slots of the HBM domain
+     size_t   valve_released_bytes_host = 0, valve_released_bytes_hbm = 0;
+@@ -2467,6 +2616,13 @@ struct llama_moe_cache::impl {
+         }
+         valve_released_host.assign(groups.size(), {});
+         valve_released_hbm.assign(groups.size(), {});
++        size_t max_slots = 0;
++        for (size_t ig = 0; ig < groups.size(); ++ig) {
++            max_slots = std::max(max_slots, (size_t) groups[ig].n_slots);
++            valve_released_host[ig].reserve(groups[ig].n_slots);
++            valve_released_hbm[ig].reserve(groups[ig].n_slots);
++        }
++        valve_victims.reserve(max_slots);
+         bool hbm = false;
+         for (const group & g : groups) {
+             hbm = hbm || g.lru.n_hbm > 0;
+@@ -2605,7 +2761,7 @@ struct llama_moe_cache::impl {
+     // the first or last bytes of a neighbouring slot that is still resident (on the GH200's 64 KiB pages a slot
+     // boundary is almost never page aligned). The partial pages at the two ends stay resident.
+     bool slots_page_range(const group & g, int32_t first, int32_t last, char *& p, size_t & len) const {
+-        const uintptr_t page = (uintptr_t) sysconf(_SC_PAGESIZE);
++        const uintptr_t page = thp_bank ? store_thp_size : (uintptr_t) sysconf(_SC_PAGESIZE);
+         const uintptr_t lo = (uintptr_t) g.region + (size_t) first*g.slot_stride;
+         const uintptr_t hi = (uintptr_t) g.region + (size_t) (last + 1)*g.slot_stride;
+         const uintptr_t a = (lo + page - 1)/page*page;
+@@ -2625,23 +2781,34 @@ struct llama_moe_cache::impl {
+         if (!slots_page_range(g, first, last, p, len)) {
+             return 0;
+         }
++        if (thp_bank) {
++            for (int32_t s = first; s <= last; ++s) {
++                GGML_ASSERT(s < g.n_slots && g.lru.key_of[s] == -1 && g.spec_state[s].load(std::memory_order_acquire) == 3);
++            }
++        }
+         if (mlock_ok && munlock(p, len) != 0) { // MADV_DONTNEED is refused on a locked range
+             LLAMA_LOG_WARN("%s: expert store: memory valve: munlock of slots %d-%d failed: %s\n", __func__, first, last, strerror(errno));
+             return 0;
+         }
+         if (madvise(p, len, MADV_DONTNEED) != 0) {
+             LLAMA_LOG_WARN("%s: expert store: memory valve: MADV_DONTNEED of slots %d-%d failed: %s\n", __func__, first, last, strerror(errno));
++#ifdef MLOCK_ONFAULT
++            if (mlock_ok) { mlock2(p, len, MLOCK_ONFAULT); }
++#endif
+             return 0;
+         }
++        if (thp_bank) { LLAMA_LOG_INFO("expert store: THP valve returned %zu bytes (2 MiB pages)\n", len); }
+         return len;
+     }
+ 
+     void slots_take_pages(group & g, int32_t first, int32_t last) {
+         char * p = nullptr;
+         size_t len = 0;
+-        if (!mlock_ok || !slots_page_range(g, first, last, p, len)) {
++        if (!slots_page_range(g, first, last, p, len)) {
+             return;
+         }
++        if (thp_bank) { store_thp_populate(p, len, true); }
++        if (!mlock_ok) { return; }
+ #ifdef MLOCK_ONFAULT
+         mlock2(p, len, MLOCK_ONFAULT);
+ #endif
+@@ -2656,7 +2823,7 @@ struct llama_moe_cache::impl {
+         size_t freed = 0;   // slot bytes taken out of the cache
+         size_t dropped = 0; // bytes actually given back to the kernel (whole pages only)
+         int n_slots_released = 0;
+-        std::vector<int32_t> victims;
++        auto & victims = valve_victims;
+         for (size_t ig = 0; ig < groups.size() && freed < bytes; ++ig) {
+             group & g = groups[ig];
+             if (g.region == nullptr || g.n_slots == 0) {
+@@ -2754,14 +2921,12 @@ struct llama_moe_cache::impl {
+         for (size_t ig = 0; ig < groups.size(); ++ig) {
+             group & g = groups[ig];
+             std::vector<int32_t> & released = hbm ? valve_released_hbm[ig] : valve_released_host[ig];
+-            std::vector<int32_t> back;
++            auto & back = valve_victims;
++            back.clear();
+             while (!released.empty() && n < valve_regrow_chunk && bytes + g.slot_stride <= room) {
+                 const int32_t s = released.back();
+                 released.pop_back();
+                 back.push_back(s);
+-                g.spec_state[s].store(0, std::memory_order_release);
+-                g.lru.n_parked--;
+-                g.lru.demote(s); // empty and usable: next to be taken
+                 n++;
+                 bytes += g.slot_stride;
+             }
+@@ -2774,6 +2939,11 @@ struct llama_moe_cache::impl {
+                 slots_take_pages(g, back[i], back[j]);
+                 i = j + 1;
+             }
++            for (int32_t slot : back) {
++                g.spec_state[slot].store(0, std::memory_order_release);
++                g.lru.n_parked--;
++                g.lru.demote(slot);
++            }
+         }
+         if (n > 0) {
+             valve_n_rearms++;
+@@ -2843,6 +3013,10 @@ struct llama_moe_cache::impl {
+             if (!store.open(store_path, err)) {
+                 throw std::runtime_error(std::string("expert store ") + store_path + ": " + err);
+             }
++            if (filler.hook_stats) {
++                record_check.fd = ::open(store_path, O_RDONLY | O_CLOEXEC);
++                if (record_check.fd < 0) { throw std::runtime_error("expert store: buffered record check fd open failed"); }
++            }
+             for (size_t i = 0; i < backends.size(); ++i) {
+                 const auto dev_type = ggml_backend_dev_type(ggml_backend_get_device(backends[i]));
+                 if (dev_type == GGML_BACKEND_DEVICE_TYPE_CPU && devices.empty()) {
+@@ -2866,6 +3040,7 @@ struct llama_moe_cache::impl {
+             size_t chunk = env_chunk ? (size_t) std::max(0, atoi(env_chunk))*1024 : (size_t) 1024*1024;
+             chunk -= chunk % 4096; // O_DIRECT alignment
+             pool = std::make_unique<io_pool>(n_io, chunk);
++            if (record_check.fd >= 0) { pool->landed = check_record; pool->landed_ctx = this; }
+             pool_chunk = chunk;
+             if (getenv("LLAMA_EXPERT_STORE_SPIN_US") != nullptr) {
+                 pool->spin_us = std::max(0, atoi(getenv("LLAMA_EXPERT_STORE_SPIN_US")));
+@@ -3026,9 +3201,12 @@ struct llama_moe_cache::impl {
+                         g.byte_stride = false;
+                     }
+                 }
+-                g.slot_stride = GGML_PAD(g.record_size, (size_t) 4096);
++                const size_t align = thp_bank ? store_thp_size : 4096;
++                if (g.record_size > SIZE_MAX - align) { throw std::runtime_error("expert store: slot stride overflow"); }
++                g.slot_stride = GGML_PAD(g.record_size, align);
+                 while (!g.byte_stride && std::any_of(g.ref.begin(), g.ref.end(), [&](const ggml_tensor * t) { return g.slot_stride % ggml_type_size(t->type) != 0; })) {
+-                    g.slot_stride += 4096;
++                    if (g.slot_stride > SIZE_MAX - align) { throw std::runtime_error("expert store: slot stride overflow"); }
++                    g.slot_stride += align;
+                 }
+                 LLAMA_LOG_INFO("%s: expert store: layers [%s], %s: stride %zu B (%s), %s\n", __func__,
+                     byte_layers.c_str(), byte_parts.c_str(), g.slot_stride, g.byte_stride ? "bytes" : "block padded", byte_reason.c_str());
+@@ -3044,7 +3222,11 @@ struct llama_moe_cache::impl {
+         // one extra slot at the end, CUDA MMQ can read past the last expert
+         auto alloc_size = [&](const group & g, int32_t n_slots) {
+             if (use_store) {
+-                return GGML_PAD(g.slot_stride*(size_t) (n_slots + 1), (size_t) 4096);
++                const size_t align = thp_bank ? store_thp_size : 4096;
++                if (n_slots < 0 || (size_t) n_slots + 1 > (SIZE_MAX - align)/g.slot_stride) {
++                    throw std::runtime_error("expert store: bank size overflow");
++                }
++                return GGML_PAD(g.slot_stride*((size_t) n_slots + 1), align);
+             }
+             const size_t alignment = ggml_backend_buft_get_alignment(devices[g.id].buft);
+             size_t res = 0;
+@@ -3282,7 +3464,7 @@ struct llama_moe_cache::impl {
+                 g.region_size = landing_off + (prefill_bank ? landing_bytes : 0);
+                 if (!model.hparams.no_alloc) {
+                     std::string err;
+-                    g.region = store_region_alloc(g.region_size, err, (size_t) g.lru.n_hbm*g.slot_stride, landing.fd, landing_off);
++                    g.region = store_region_alloc(g.region_size, err, (size_t) g.lru.n_hbm*g.slot_stride, landing.fd, landing_off, thp_bank);
+                     if (g.region == nullptr) {
+                         throw std::runtime_error("expert store: failed to allocate " + std::to_string(g.region_size/1024/1024) + " MiB of host cache: " + err);
+                     }
+@@ -3721,7 +3903,7 @@ struct llama_moe_cache::impl {
+ #if !defined(LLAMA_HAVE_LIBURING)
+                 spec_uring = false;
+ #endif
+-                spec = std::make_unique<spec_reader>(store.fd, pool_chunk, spec_depth, spec_uring);
++                spec = std::make_unique<spec_reader>(store.fd, pool_chunk, spec_depth, spec_uring, pool->landed, this);
+                 if (!spec->ok) {
+                     spec.reset();
+                 }
+@@ -3835,6 +4017,10 @@ struct llama_moe_cache::impl {
+             snapshot_save("exit");
+             filler.wait();
+             spec.reset();
++            if (record_check.fd >= 0) {
++                LLAMA_LOG_INFO("expert store: record checks=%llu landed=%llu (first/last 64 bytes, every 1000)\n",
++                    (unsigned long long) record_check.checks, (unsigned long long) record_check.landed);
++            }
+             pool.reset();
+             if (slots_on_gpu) {
+                 buf_host.reset(); // unregisters

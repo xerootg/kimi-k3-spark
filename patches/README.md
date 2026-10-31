@@ -697,3 +697,128 @@ buffers plus active lengths avoid heap growth on the hook path. The measured tre
 was absent from the committed stack, so its corrected guard and executing-layer skip are included only for LFU.
 The CUDA hook call is re-contexted without the unadopted 0012b timing instrumentation. This patch applies after
 0001-0006, 0009 and 0012 on pinned llama.cpp `547208d`; it does not require 0012b or 0012c.
+
+## 0010-prefill-bank
+
+Opt-in direct bank prefill (`LLAMA_EXPERT_STORE_PREFILL_BANK=1`, default off).
+Batches over 32 tokens read resident expert records directly on CUDA and read
+misses into a shared memfd landing area, avoiding the staging uploads. Preserve
+the staged path's logical expert order and MMQ grid. Decode and requests of at
+most 32 tokens keep their original views, cache capacity and fill paths.
+
+Window x, GLM-5.3, pb2, ubatch 2048: **2048-token prefill 72.5 -> 106.3 tok/s
+(+47 %)** and **8192-token prefill 70.7 -> 102.0 (+44 %)**. Decode after those
+prompts was unchanged: 4.03/4.02 and 4.10/4.07 tok/s. Standard decode gold
+`9449ae5738` and the long-prompt decode golds matched; all window gates passed
+(`evidence/legs-x.txt`). These are pb2 measurements; LFU/c-tree confirmation is x3.
+
+V1 subtracted 10344 MiB from the decode cache budget and expanded the ordinary
+expert view even for short requests. It regressed decode and changed short-request
+bytes (gold `9449ae5738` became `9a76bcc98b`); the exact arithmetic source of that
+hash change was not isolated. V2 restored the original cache capacity, selected a
+separate expanded view only above 32 tokens, and shared landing storage across
+groups. V3 preserved those bytes and arithmetic while reserving dedicated landing
+jobs, staging ID/maps and fixed reader scratch before requests, with bounds guards.
+
+Reviewer fixes are folded in: bounded allocation-free bank I/O scratch and strict
+alias registration from v3, plus drain readers before bank free (`filler.wait()`,
+`spec.reset()`, `pool.reset()` before unregister/unmap). The CUDA memfd alias
+registration logs success and aborts on unavailable/failed registration, including
+the CUDA error, rather than silently falling back. The caller still synchronizes
+GPU work before teardown.
+
+GLM's physical landing area is **3984 MiB**, shared across groups and replacing
+ordinary prefill staging; it is separate from the unchanged resident cache budget.
+Budget for it while the model is loaded and during prefill: x3 uses 84000 MiB cache,
+prints loaded MemAvailable and each leg's valve lowest line, and requires more than
+the 4096 MiB valve reserve throughout the valve's recorded samples.
+
+Rebased onto the committed 0001-0006 + 0009 + 0012 + 0018 stack; the LFU selected-key
+protection call is retained before bank dispatch. No 0008 dependency: its opt-in
+`GGML_CUDA_MMVQ_EXACT_COLS` dispatch affects only 2-4-column MMVQ, while this bank
+path starts above 32 tokens and uses MMQ. Short-request views and MMVQ are unchanged;
+the window x script does not set that knob. No portion of 0008 is added. The unchanged MMQ
+base was recovered from the local 0006 index because the supplied post-0018 fixture
+contains only ggml-cuda.cu; 0009/0012/0018 do not modify MMQ.
+
+`0010-prefill-bank.stack.patch` is byte-identical to this production patch for
+`~/win2`. Apply `0018-lfu-policy.ctree.patch` first in the copied c tree. The actual
+c-tree files and c-tree LFU patch are absent here, so c-tree compatibility and a
+need for a c-tree variant cannot be certified offline; x3 checks both applications
+and stops on conflict. Host syntax checks do not build CUDA or repeat GPU/model gates.
+
+## 0026-thp-bank
+
+Opt-in `LLAMA_EXPERT_STORE_THP_BANK=1` (unset/0 keeps the existing path), Linux
+with 2 MiB PMDs. Applied after the committed 547208d stack (0001-0006, 0009,
+0012, 0018) and `evidence/0010-prefill-bank.stack.patch`. This rebases the v2
+window patch; it changes only `src/llama-moe-cache.cpp`.
+
+The private resident banks and their slot strides are 2 MiB-aligned. Before
+CUDA registration, the allocator applies `MADV_HUGEPAGE`, populates writable
+pages (`MADV_POPULATE_WRITE`, with a page-touch fallback), then requests
+`MADV_COLLAPSE`. It logs actual `AnonHugePages` backing and all three return
+codes, and refuses use below 90% huge backing or if HUGEPAGE fails. The dummy
+slot follows the same geometry. Staging keeps its existing policy; with 0010
+prefill bank enabled, the shared memfd landing tail also keeps its existing
+policy. Alignment happens before mapping that tail, and THP population stops
+at the private resident-bank boundary.
+
+The memory valve releases whole huge pages belonging to evicted, parked slots,
+with assertions protecting live, in-flight and dummy slots. Regrowth populates
+and collapses quiescent ranges before publishing slots as usable. Victim lists
+are reserved at initialization. Under `LLAMA_EXPERT_STORE_HOOK_STATS=1`, a
+buffered store fd checks the first and last 64 bytes of every 1000th completed
+record against its file offset; failures abort with layer/expert/slot/offset/len.
+This covers the pool's thread and io_uring paths (including 0010's bank reader)
+and speculative completions before publication. These are sampled boundary
+checks, not exhaustive record verification. The older prototype's staging-hit
+copy checks are absent because the committed stack's staged path reads all used
+records; pool completion checks cover them directly.
+
+For the measured GLM record size, stride grows from 12222464 to 12582912 bytes
+(+360448 bytes per slot). Capacity below is `floor(budget / stride) - 1`,
+including one dummy slot; it illustrates a single bank's capacity, before
+multi-group budget distribution and 0010's separate shared landing allocation:
+
+| Cache budget | 4 KiB stride slots | 2 MiB stride slots | Capacity loss |
+| --- | ---: | ---: | ---: |
+| 80000 MiB | 6862 | 6665 | 197 slots, 2.87% |
+| 84000 MiB | 7205 | 6999 | 206 slots, 2.86% |
+
+Window `thp`, 80000 MiB, fixed checker (`evidence/legs-thp.txt`), tok/s:
+
+| Leg | THP_BANK | r0 | r1 | r2 | Mean r1/r2 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| TH0 | 0 | 5.363 | 5.325 | 5.386 | 5.3555 |
+| TH1 | 1 | 5.479 | 5.428 | 5.431 | 5.4295 |
+| TH0b | 0 | 5.428 | 5.387 | 5.376 | 5.3815 |
+| TH1b | 1 | 5.486 | 5.457 | 5.451 | 5.4540 |
+
+Both ON legs confirm a small gain: +1.38% and +1.35% for r1/r2 means against
+their preceding OFF legs (roughly +1.5%). All 12 outputs have gold md5
+`9449ae5738`. Both ON legs report 100% huge backing for all three banks:
+78555119616 + 1493172224 + 3831496704 bytes (78.6 + 1.5 + 3.8 GB), with
+HUGEPAGE/populate/COLLAPSE all returning 0. Record checks were 59/61/59/61
+per leg with no mismatch, and the window ended `failed=none check_fired=none`.
+Loaded MemAvailable was 12277/11659/11650/11618 MiB in leg order (about
+11.6 GiB for the last three legs); no valve releases or re-arms occurred.
+
+The same window's read benchmark gave G (mmap+THP+register) 160.346 GB/s
+versus G0 (mmap+register, 4 KiB) 160.818 GB/s, both matching the device md5.
+There is no GPU read-bandwidth gain here; the throughput improvement is
+consistent with a fill-side gain, though this comparison does not isolate its
+cause. These measurements used the earlier window stack, not this offline
+rebase with 0010; combined runtime behavior remains to be measured.
+
+The old broad `LLAMA_EXPERT_STORE_THP=1` experiment produced NaNs from the
+first prefill in 4/7 starts versus 0/4 without THP; registered staging was a
+suspect and the cause remains unresolved. Earlier THP-window checker failures
+also included false positives from normal startup `logit bias = -inf` lines.
+The corrected window here showed 100% bank backing, gold outputs and no sampled
+mismatch. That evidence does not resolve the older NaN cause or exercise the
+THP valve under pressure. At 84000 MiB, budget growth is 4000 MiB = 3.906 GiB
+= 4.194 GB: starting from 11618 MiB = 12.182 GB leaves about 7.987 GB
+(7.438 GiB), above the 4.295 GB reserve by about 3.69 GB. In the requested
+rounded shorthand, 11.6 - 4.0 = 7.6 GB > 4.3 GB. THP release/regrow under
+production pressure at 84000 MiB is still the main risk; keep this opt-in.
