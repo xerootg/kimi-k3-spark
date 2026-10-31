@@ -1,0 +1,83 @@
+=== window gv 23:38
+gemv2-build=0
+gemv2-run=0
+  stock              us=   42.334 GB/s= 204.34 ms/token=   3.2597 speedup=1.000 bitident=yes activeCTA/SM=10 shared=0 grid=2048x1 peak273_pct=74.85
+  pipe3-16B          us=   36.635 GB/s= 236.13 ms/token=   2.8209 speedup=1.156 bitident=yes activeCTA/SM=10 shared=4224 grid=2048x1 peak273_pct=86.50
+  bulk-R1-B2         us=   39.570 GB/s= 218.62 ms/token=   3.0469 speedup=1.070 bitident=yes activeCTA/SM=7 shared=8448 grid=96x1 peak273_pct=80.08
+  async.cg-R1-B2     us=   36.965 GB/s= 234.03 ms/token=   2.8463 speedup=1.145 bitident=yes activeCTA/SM=7 shared=8448 grid=96x1 peak273_pct=85.72
+  bulk-R1-B4         us=   36.746 GB/s= 235.42 ms/token=   2.8295 speedup=1.152 bitident=yes activeCTA/SM=7 shared=8448 grid=192x1 peak273_pct=86.23
+  async.cg-R1-B4     us=   36.752 GB/s= 235.38 ms/token=   2.8299 speedup=1.152 bitident=yes activeCTA/SM=7 shared=8448 grid=192x1 peak273_pct=86.22
+  bulk-R1-B8         us=   37.570 GB/s= 230.26 ms/token=   2.8929 speedup=1.127 bitident=yes activeCTA/SM=7 shared=8448 grid=384x1 peak273_pct=84.34
+  async.cg-R1-B8     us=   38.722 GB/s= 223.41 ms/token=   2.9816 speedup=1.093 bitident=yes activeCTA/SM=7 shared=8448 grid=384x1 peak273_pct=81.83
+  bulk-R2-B2         us=   37.349 GB/s= 231.62 ms/token=   2.8759 speedup=1.133 bitident=yes activeCTA/SM=5 shared=16896 grid=96x1 peak273_pct=84.84
+  async.cg-R2-B2     us=   37.260 GB/s= 232.17 ms/token=   2.8690 speedup=1.136 bitident=yes activeCTA/SM=5 shared=16896 grid=96x1 peak273_pct=85.05
+  bulk-R2-B4         us=   37.024 GB/s= 233.65 ms/token=   2.8509 speedup=1.143 bitident=yes activeCTA/SM=5 shared=16896 grid=192x1 peak273_pct=85.59
+  async.cg-R2-B4     us=   37.858 GB/s= 228.50 ms/token=   2.9151 speedup=1.118 bitident=yes activeCTA/SM=5 shared=16896 grid=192x1 peak273_pct=83.70
+  bulk-R2-B8         us=   37.400 GB/s= 231.30 ms/token=   2.8798 speedup=1.132 bitident=yes activeCTA/SM=5 shared=16896 grid=384x1 peak273_pct=84.73
+  async.cg-R2-B8     us=   37.675 GB/s= 229.62 ms/token=   2.9009 speedup=1.124 bitident=yes activeCTA/SM=5 shared=16896 grid=384x1 peak273_pct=84.11
+  bulk-R4-B2         us=   37.418 GB/s= 231.19 ms/token=   2.8812 speedup=1.131 bitident=yes activeCTA/SM=2 shared=33792 grid=96x1 peak273_pct=84.69
+  async.cg-R4-B2     us=   38.217 GB/s= 226.36 ms/token=   2.9427 speedup=1.108 bitident=yes activeCTA/SM=2 shared=33792 grid=96x1 peak273_pct=82.91
+  bulk-R4-B4         us=   38.552 GB/s= 224.39 ms/token=   2.9685 speedup=1.098 bitident=yes activeCTA/SM=2 shared=33792 grid=192x1 peak273_pct=82.20
+  async.cg-R4-B4     us=   37.570 GB/s= 230.26 ms/token=   2.8929 speedup=1.127 bitident=yes activeCTA/SM=2 shared=33792 grid=192x1 peak273_pct=84.34
+  bulk-R4-B8         us=   36.338 GB/s= 238.06 ms/token=   2.7980 speedup=1.165 bitident=yes activeCTA/SM=2 shared=33792 grid=384x1 peak273_pct=87.20
+  async.cg-R4-B8     us=   37.748 GB/s= 229.17 ms/token=   2.9066 speedup=1.122 bitident=yes activeCTA/SM=2 shared=33792 grid=384x1 peak273_pct=83.95
+BEST shape=attn_q_a variant=bulk-R4-B8 stock_us=42.334 best_us=36.338 saving_pct=14.16 GB/s=238.06 peak273_pct=87.20
+  stock              us=   49.690 GB/s= 207.73 ms/token=   0.0497 speedup=1.000 bitident=yes activeCTA/SM=10 shared=0 grid=2048x1 peak273_pct=76.09
+  pipe3-16B          us=   51.904 GB/s= 198.87 ms/token=   0.0519 speedup=0.957 bitident=yes activeCTA/SM=10 shared=5376 grid=2048x1 peak273_pct=72.84
+  bulk-R1-B2         us=   44.106 GB/s= 234.02 ms/token=   0.0441 speedup=1.127 bitident=yes activeCTA/SM=8 shared=10240 grid=96x1 peak273_pct=85.72
+  async.cg-R1-B2     us=   52.283 GB/s= 197.42 ms/token=   0.0523 speedup=0.950 bitident=yes activeCTA/SM=8 shared=10240 grid=96x1 peak273_pct=72.32
+  bulk-R1-B4         us=   44.995 GB/s= 229.40 ms/token=   0.0450 speedup=1.104 bitident=yes activeCTA/SM=8 shared=10240 grid=192x1 peak273_pct=84.03
+  async.cg-R1-B4     us=   56.456 GB/s= 182.83 ms/token=   0.0565 speedup=0.880 bitident=yes activeCTA/SM=8 shared=10240 grid=192x1 peak273_pct=66.97
+  bulk-R1-B8         us=   44.450 GB/s= 232.22 ms/token=   0.0444 speedup=1.118 bitident=yes activeCTA/SM=8 shared=10240 grid=384x1 peak273_pct=85.06
+  async.cg-R1-B8     us=   56.626 GB/s= 182.28 ms/token=   0.0566 speedup=0.878 bitident=yes activeCTA/SM=8 shared=10240 grid=384x1 peak273_pct=66.77
+  bulk-R2-B2         us=   44.086 GB/s= 234.13 ms/token=   0.0441 speedup=1.127 bitident=yes activeCTA/SM=4 shared=20224 grid=96x1 peak273_pct=85.76
+  async.cg-R2-B2     us=   52.042 GB/s= 198.34 ms/token=   0.0520 speedup=0.955 bitident=yes activeCTA/SM=4 shared=20224 grid=96x1 peak273_pct=72.65
+  bulk-R2-B4         us=   44.448 GB/s= 232.22 ms/token=   0.0444 speedup=1.118 bitident=yes activeCTA/SM=4 shared=20224 grid=192x1 peak273_pct=85.06
+  async.cg-R2-B4     us=   52.529 GB/s= 196.50 ms/token=   0.0525 speedup=0.946 bitident=yes activeCTA/SM=4 shared=20224 grid=192x1 peak273_pct=71.98
+  bulk-R2-B8         us=   44.986 GB/s= 229.45 ms/token=   0.0450 speedup=1.105 bitident=yes activeCTA/SM=4 shared=20224 grid=384x1 peak273_pct=84.05
+  async.cg-R2-B8     us=   52.347 GB/s= 197.18 ms/token=   0.0523 speedup=0.949 bitident=yes activeCTA/SM=4 shared=20224 grid=384x1 peak273_pct=72.23
+  bulk-R4-B2         us=   44.741 GB/s= 230.70 ms/token=   0.0447 speedup=1.111 bitident=yes activeCTA/SM=2 shared=40448 grid=96x1 peak273_pct=84.51
+  async.cg-R4-B2     us=   45.951 GB/s= 224.63 ms/token=   0.0460 speedup=1.081 bitident=yes activeCTA/SM=2 shared=40448 grid=96x1 peak273_pct=82.28
+  bulk-R4-B4         us=   45.748 GB/s= 225.62 ms/token=   0.0457 speedup=1.086 bitident=yes activeCTA/SM=2 shared=40448 grid=192x1 peak273_pct=82.65
+  async.cg-R4-B4     us=   45.761 GB/s= 225.56 ms/token=   0.0458 speedup=1.086 bitident=yes activeCTA/SM=2 shared=40448 grid=192x1 peak273_pct=82.62
+  bulk-R4-B8         us=   43.642 GB/s= 236.51 ms/token=   0.0436 speedup=1.139 bitident=yes activeCTA/SM=2 shared=40448 grid=384x1 peak273_pct=86.63
+  async.cg-R4-B8     us=   44.660 GB/s= 231.12 ms/token=   0.0447 speedup=1.113 bitident=yes activeCTA/SM=2 shared=40448 grid=384x1 peak273_pct=84.66
+BEST shape=attn_q_a_exception variant=bulk-R4-B8 stock_us=49.690 best_us=43.642 saving_pct=12.17 GB/s=236.51 peak273_pct=86.63
+  stock              us=  335.185 GB/s= 206.47 ms/token=  25.8093 speedup=1.000 bitident=yes activeCTA/SM=5 shared=0 grid=6144x1 peak273_pct=75.63
+  pipe3-16B          us=  286.847 GB/s= 241.26 ms/token=  22.0872 speedup=1.169 bitident=yes activeCTA/SM=5 shared=8448 grid=6144x1 peak273_pct=88.38
+  bulk-R1-B2         us=  289.066 GB/s= 239.41 ms/token=  22.2581 speedup=1.160 bitident=yes activeCTA/SM=3 shared=22528 grid=96x1 peak273_pct=87.70
+  async.cg-R1-B2     us=  288.929 GB/s= 239.53 ms/token=  22.2475 speedup=1.160 bitident=yes activeCTA/SM=3 shared=22528 grid=96x1 peak273_pct=87.74
+  bulk-R1-B4         us=  291.582 GB/s= 237.35 ms/token=  22.4518 speedup=1.150 bitident=yes activeCTA/SM=3 shared=22528 grid=192x1 peak273_pct=86.94
+  async.cg-R1-B4     us=  290.724 GB/s= 238.05 ms/token=  22.3857 speedup=1.153 bitident=yes activeCTA/SM=3 shared=22528 grid=192x1 peak273_pct=87.20
+  bulk-R1-B8         us=  290.330 GB/s= 238.37 ms/token=  22.3554 speedup=1.154 bitident=yes activeCTA/SM=3 shared=22528 grid=384x1 peak273_pct=87.32
+  async.cg-R1-B8     us=  290.336 GB/s= 238.37 ms/token=  22.3559 speedup=1.154 bitident=yes activeCTA/SM=3 shared=22528 grid=384x1 peak273_pct=87.31
+  bulk-R2-B2         us=  292.751 GB/s= 236.40 ms/token=  22.5418 speedup=1.145 bitident=yes activeCTA/SM=2 shared=45056 grid=96x1 peak273_pct=86.59
+  async.cg-R2-B2     us=  292.211 GB/s= 236.84 ms/token=  22.5002 speedup=1.147 bitident=yes activeCTA/SM=2 shared=45056 grid=96x1 peak273_pct=86.75
+  bulk-R2-B4         us=  293.143 GB/s= 236.08 ms/token=  22.5720 speedup=1.143 bitident=yes activeCTA/SM=2 shared=45056 grid=192x1 peak273_pct=86.48
+  async.cg-R2-B4     us=  292.698 GB/s= 236.44 ms/token=  22.5377 speedup=1.145 bitident=yes activeCTA/SM=2 shared=45056 grid=192x1 peak273_pct=86.61
+  bulk-R2-B8         us=  292.121 GB/s= 236.91 ms/token=  22.4933 speedup=1.147 bitident=yes activeCTA/SM=2 shared=45056 grid=384x1 peak273_pct=86.78
+  async.cg-R2-B8     us=  291.624 GB/s= 237.31 ms/token=  22.4550 speedup=1.149 bitident=yes activeCTA/SM=2 shared=45056 grid=384x1 peak273_pct=86.93
+  bulk-R4-B2         us=  294.113 GB/s= 235.30 ms/token=  22.6467 speedup=1.140 bitident=yes activeCTA/SM=1 shared=90112 grid=96x1 peak273_pct=86.19
+  async.cg-R4-B2     us=  294.720 GB/s= 234.82 ms/token=  22.6935 speedup=1.137 bitident=yes activeCTA/SM=1 shared=90112 grid=96x1 peak273_pct=86.01
+  bulk-R4-B4         us=  292.629 GB/s= 236.50 ms/token=  22.5324 speedup=1.145 bitident=yes activeCTA/SM=1 shared=90112 grid=192x1 peak273_pct=86.63
+  async.cg-R4-B4     us=  292.944 GB/s= 236.24 ms/token=  22.5567 speedup=1.144 bitident=yes activeCTA/SM=1 shared=90112 grid=192x1 peak273_pct=86.54
+  bulk-R4-B8         us=  290.848 GB/s= 237.95 ms/token=  22.3953 speedup=1.152 bitident=yes activeCTA/SM=1 shared=90112 grid=384x1 peak273_pct=87.16
+  async.cg-R4-B8     us=  290.937 GB/s= 237.87 ms/token=  22.4021 speedup=1.152 bitident=yes activeCTA/SM=1 shared=90112 grid=384x1 peak273_pct=87.13
+BEST shape=attn_o variant=pipe3-16B stock_us=335.185 best_us=286.847 saving_pct=14.42 GB/s=241.26 peak273_pct=88.38
+  stock              us=  385.743 GB/s= 214.07 ms/token=   0.3857 speedup=1.000 bitident=yes activeCTA/SM=5 shared=0 grid=6144x1 peak273_pct=78.41
+  pipe3-16B          us=  394.839 GB/s= 209.14 ms/token=   0.3948 speedup=0.977 bitident=yes activeCTA/SM=5 shared=10368 grid=6144x1 peak273_pct=76.61
+  bulk-R1-B2         us=  344.602 GB/s= 239.63 ms/token=   0.3446 speedup=1.119 bitident=yes activeCTA/SM=3 shared=26880 grid=96x1 peak273_pct=87.77
+  async.cg-R1-B2     us=  344.488 GB/s= 239.70 ms/token=   0.3445 speedup=1.120 bitident=yes activeCTA/SM=3 shared=26880 grid=96x1 peak273_pct=87.80
+  bulk-R1-B4         us=  346.448 GB/s= 238.35 ms/token=   0.3464 speedup=1.113 bitident=yes activeCTA/SM=3 shared=26880 grid=192x1 peak273_pct=87.31
+  async.cg-R1-B4     us=  346.586 GB/s= 238.25 ms/token=   0.3466 speedup=1.113 bitident=yes activeCTA/SM=3 shared=26880 grid=192x1 peak273_pct=87.27
+  bulk-R1-B8         us=  346.848 GB/s= 238.07 ms/token=   0.3468 speedup=1.112 bitident=yes activeCTA/SM=3 shared=26880 grid=384x1 peak273_pct=87.21
+  async.cg-R1-B8     us=  347.325 GB/s= 237.75 ms/token=   0.3473 speedup=1.111 bitident=yes activeCTA/SM=3 shared=26880 grid=384x1 peak273_pct=87.09
+  bulk-R2-B2         us=  346.303 GB/s= 238.45 ms/token=   0.3463 speedup=1.114 bitident=yes activeCTA/SM=1 shared=53760 grid=96x1 peak273_pct=87.34
+  async.cg-R2-B2     us=  345.825 GB/s= 238.78 ms/token=   0.3458 speedup=1.115 bitident=yes activeCTA/SM=1 shared=53760 grid=96x1 peak273_pct=87.46
+  bulk-R2-B4         us=  346.110 GB/s= 238.58 ms/token=   0.3461 speedup=1.115 bitident=yes activeCTA/SM=1 shared=53760 grid=192x1 peak273_pct=87.39
+  async.cg-R2-B4     us=  345.810 GB/s= 238.79 ms/token=   0.3458 speedup=1.115 bitident=yes activeCTA/SM=1 shared=53760 grid=192x1 peak273_pct=87.47
+  bulk-R2-B8         us=  349.510 GB/s= 236.26 ms/token=   0.3495 speedup=1.104 bitident=yes activeCTA/SM=1 shared=53760 grid=384x1 peak273_pct=86.54
+  async.cg-R2-B8     us=  346.033 GB/s= 238.63 ms/token=   0.3460 speedup=1.115 bitident=yes activeCTA/SM=1 shared=53760 grid=384x1 peak273_pct=87.41
+BEST shape=attn_o_exception variant=async.cg-R1-B2 stock_us=385.743 best_us=344.488 saving_pct=10.69 GB/s=239.70 peak273_pct=87.80
+pod restored: Running
+=== window hb 23:41
