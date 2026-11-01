@@ -1,0 +1,39 @@
+=== window fdg2 19:15
+error: Could not read 848bbda9041decd87904f7eb5a2990863ecce03b
+FDG2-PATCH-AND-INCREMENTAL-BUILD-PASS
+LEG FDG2-G0 N=1 round=1 flags=none cache=84000 MiB
+FDG2-G0 client=0 byte_equal_G0=True
+FDG2-G0 N=1 round=1 client=A md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.258
+LEG FDG2-G1 N=1 round=1 flags=GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 cache=84000 MiB
+FDG2-G1 client=0 byte_equal_G0=True
+FDG2-G1 N=1 round=1 client=A md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.268
+LEG FDG2-G2 N=1 round=1 flags=GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXACT_ATTN_COLS=1 cache=84000 MiB
+FDG2-G2 client=0 byte_equal_G0=True
+FDG2-G2 N=1 round=1 client=A md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.252
+LEG FDG2-G3 N=1 round=1 flags=GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXACT_ATTN_COLS=1 GGML_CUDA_ARGSORT_EXACT_ROWS=1 cache=84000 MiB
+FDG2-G3 client=0 byte_equal_G0=True
+FDG2-G3 N=1 round=1 client=A md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.181
+LEG FDG2-G4 N=1 round=1 flags=GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXACT_ATTN_COLS=1 GGML_CUDA_ARGSORT_EXACT_ROWS=1 cache=84000 MiB
+FDG2-G4 client=0 byte_equal_G0=True
+FDG2-G4 N=1 round=1 client=A md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.235
+LEG FDG2-G5-r1 N=2 round=1 flags=GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXACT_ATTN_COLS=1 GGML_CUDA_ARGSORT_EXACT_ROWS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 cache=84000 MiB
+FDG2-G5-r1 client=0 byte_equal_G0=False
+FDG2-G5-r1 N=2 round=1 client=A md5=2e8fdf8f3be21093f022e1bf24f62ff0 NOT-GOLD A-vs-G4=DIFF-G4 tok_s=2.746
+FDG2-G5-r1 client=1 byte_equal_G0=False
+FDG2-G5-r1 N=2 round=1 client=B md5=b5933beb8819fbf095280d0a0e5cff37 NOT-GOLD tok_s=2.778
+AGG N=2 name=FDG2-G5-r1 round=1 tokens=256 wall=49.507574 agg_tok_s=5.171 per_stream_mean=2.762
+LEG FDG2-G5-r2 N=2 round=2 flags=GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXACT_ATTN_COLS=1 GGML_CUDA_ARGSORT_EXACT_ROWS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 cache=84000 MiB
+FDG2-G5-r2 client=0 byte_equal_G0=False
+FDG2-G5-r2 N=2 round=2 client=A md5=2e8fdf8f3be21093f022e1bf24f62ff0 NOT-GOLD A-vs-G4=DIFF-G4 tok_s=2.766
+FDG2-G5-r2 client=1 byte_equal_G0=False
+FDG2-G5-r2 N=2 round=2 client=B md5=b5933beb8819fbf095280d0a0e5cff37 NOT-GOLD tok_s=2.797
+AGG N=2 name=FDG2-G5-r2 round=2 tokens=256 wall=49.168476 agg_tok_s=5.207 per_stream_mean=2.781
+LEG FDG2-G5-r3 N=2 round=3 flags=GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXACT_ATTN_COLS=1 GGML_CUDA_ARGSORT_EXACT_ROWS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 cache=84000 MiB
+FDG2-G5-r3 client=0 byte_equal_G0=False
+FDG2-G5-r3 N=2 round=3 client=A md5=2e8fdf8f3be21093f022e1bf24f62ff0 NOT-GOLD A-vs-G4=DIFF-G4 tok_s=2.748
+FDG2-G5-r3 client=1 byte_equal_G0=False
+FDG2-G5-r3 N=2 round=3 client=B md5=b5933beb8819fbf095280d0a0e5cff37 NOT-GOLD tok_s=2.777
+AGG N=2 name=FDG2-G5-r3 round=3 tokens=256 wall=49.466845 agg_tok_s=5.175 per_stream_mean=2.762
+FDG2-ACCEPT FAIL FDG2-G5-r1.c0,FDG2-G5-r1.c1,FDG2-G5-r2.c0,FDG2-G5-r2.c1,FDG2-G5-r3.c0,FDG2-G5-r3.c1
+AssertionError: ['FDG2-G5-r1.c0', 'FDG2-G5-r1.c1', 'FDG2-G5-r2.c0', 'FDG2-G5-r2.c1', 'FDG2-G5-r3.c0', 'FDG2-G5-r3.c1']
+ABORT-WINDOW line 200 failed
