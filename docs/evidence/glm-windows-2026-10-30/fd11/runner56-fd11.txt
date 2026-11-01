@@ -1,0 +1,51 @@
+=== window fd11 00:50
+FD11-INCREMENTAL-BUILD-PASS
+FD11-N1 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FD11-N1 phase=cold N=1 completed=1 agg_tok_s=3.287 wall_s=38.946
+FD11-N1 prime client=0 md5=f675805e5b38e5f7291cecefc3ab0d7e gold=f675805e5b38e5f7291cecefc3ab0d7e tokens=128 PASS
+AGG name=FD11-N1 phase=prime N=1 completed=1 agg_tok_s=4.331 wall_s=29.554
+FD11-N1 warm client=0 md5=f675805e5b38e5f7291cecefc3ab0d7e gold=f675805e5b38e5f7291cecefc3ab0d7e tokens=128 PASS
+AGG name=FD11-N1 phase=warm N=1 completed=1 agg_tok_s=4.953 wall_s=25.841
+exact dispatch: split=724 batched=899 singleton=1435 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=316 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+FD11-N2 cold client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FD11-N2 cold client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FD11-N2 phase=cold N=2 completed=2 agg_tok_s=6.735 wall_s=38.011
+FD11-N2 prime client=0 md5=74d484f84ec89615d6bdafe63fedf27a gold=f675805e5b38e5f7291cecefc3ab0d7e tokens=128 NOT-GOLD
+FD11-N2 prime client=1 md5=74d484f84ec89615d6bdafe63fedf27a gold=f675805e5b38e5f7291cecefc3ab0d7e tokens=128 NOT-GOLD
+AGG name=FD11-N2 phase=prime N=2 completed=2 agg_tok_s=6.738 wall_s=37.994
+FD11-N2 warm client=0 md5=74d484f84ec89615d6bdafe63fedf27a gold=f675805e5b38e5f7291cecefc3ab0d7e tokens=128 NOT-GOLD
+FD11-N2 warm client=1 md5=74d484f84ec89615d6bdafe63fedf27a gold=f675805e5b38e5f7291cecefc3ab0d7e tokens=128 NOT-GOLD
+AGG name=FD11-N2 phase=warm N=2 completed=2 agg_tok_s=7.105 wall_s=36.032
+exact dispatch: split=2156 batched=1798 singleton=3212 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=1212 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=508 batched=0 singleton=630 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=303 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=228 batched=148 singleton=303 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG-FAIL FD11-N2 rc=1; continuing
+FD11-N2-NOFUSION cold client=0 md5=400f1b3bb1af4eadc761d0f246b6e502 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FD11-N2-NOFUSION cold client=1 md5=400f1b3bb1af4eadc761d0f246b6e502 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FD11-N2-NOFUSION phase=cold N=2 completed=2 agg_tok_s=6.403 wall_s=39.983
+FD11-N2-NOFUSION prime client=0 md5=7669259ddb2d2e057275fbcfef1d7d38 gold=f675805e5b38e5f7291cecefc3ab0d7e tokens=128 NOT-GOLD
+FD11-N2-NOFUSION prime client=1 md5=7669259ddb2d2e057275fbcfef1d7d38 gold=f675805e5b38e5f7291cecefc3ab0d7e tokens=128 NOT-GOLD
+AGG name=FD11-N2-NOFUSION phase=prime N=2 completed=2 agg_tok_s=6.799 wall_s=37.653
+FD11-N2-NOFUSION warm client=0 md5=7669259ddb2d2e057275fbcfef1d7d38 gold=f675805e5b38e5f7291cecefc3ab0d7e tokens=128 NOT-GOLD
+FD11-N2-NOFUSION warm client=1 md5=7669259ddb2d2e057275fbcfef1d7d38 gold=f675805e5b38e5f7291cecefc3ab0d7e tokens=128 NOT-GOLD
+AGG name=FD11-N2-NOFUSION phase=warm N=2 completed=2 agg_tok_s=7.113 wall_s=35.993
+exact dispatch: split=2902 batched=1798 singleton=4145 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=1344 batched=444 singleton=1818 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+WIN2FD11-DONE
+pod restored: Running
+ALL-WINDOWS-DONE
