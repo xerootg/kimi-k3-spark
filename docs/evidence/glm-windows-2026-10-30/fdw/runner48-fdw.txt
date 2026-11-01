@@ -1,0 +1,48 @@
+=== window fdw 20:18
+LEG FDW-W1-standard-cold N=1 flags=all-six cache=84000 MiB ctx=65536 matched-history
+LONG-PROMPT tokens=2048 fixed-text tokenizer IDs
+FDW-W1-standard-cold phase=measure client=0 prompt=standard cache_prompt=False md5=9449ae5738f2e56f99ab7ab6e9626eb5 REF-MATCH prefill_ms=1202.984 prompt_n=10 tok_s=5.171
+AGG name=FDW-W1-standard-cold phase=measure N=1 completed=1 agg_tok_s=4.966 wall_s=25.776 ref_matches=1/1
+LEG FDW-W1-standard-warm N=1 flags=all-six cache=84000 MiB ctx=65536 matched-history
+FDW-W1-standard-warm phase=prime client=0 prompt=standard cache_prompt=True md5=9449ae5738f2e56f99ab7ab6e9626eb5 WARMUP prefill_ms=1274.663 prompt_n=10 tok_s=5.263
+AGG name=FDW-W1-standard-warm phase=prime N=1 completed=1 agg_tok_s=5.035 wall_s=25.420 ref_matches=0/1
+FDW-W1-standard-warm phase=measure client=0 prompt=standard cache_prompt=True md5=f675805e5b38e5f7291cecefc3ab0d7e REF-MATCH prefill_ms=157.275 prompt_n=1 tok_s=4.360
+AGG name=FDW-W1-standard-warm phase=measure N=1 completed=1 agg_tok_s=4.368 wall_s=29.301 ref_matches=1/1
+LEG FDW-W1-long-cold N=1 flags=all-six cache=84000 MiB ctx=65536 matched-history
+FDW-W1-long-cold phase=measure client=0 prompt=long cache_prompt=False md5=2f26e1533ef925e8060241f8ecf81f7e REF-MATCH prefill_ms=40568.988 prompt_n=2048 tok_s=5.583
+AGG name=FDW-W1-long-cold phase=measure N=1 completed=1 agg_tok_s=2.021 wall_s=63.331 ref_matches=1/1
+LEG FDW-W1-long-warm N=1 flags=all-six cache=84000 MiB ctx=65536 matched-history
+FDW-W1-long-warm phase=prime client=0 prompt=long cache_prompt=True md5=2f26e1533ef925e8060241f8ecf81f7e WARMUP prefill_ms=39988.524 prompt_n=2048 tok_s=5.555
+AGG name=FDW-W1-long-warm phase=prime N=1 completed=1 agg_tok_s=2.036 wall_s=62.875 ref_matches=0/1
+FDW-W1-long-warm phase=measure client=0 prompt=long cache_prompt=True md5=2f26e1533ef925e8060241f8ecf81f7e REF-MATCH prefill_ms=158.232 prompt_n=1 tok_s=6.367
+AGG name=FDW-W1-long-warm phase=measure N=1 completed=1 agg_tok_s=6.359 wall_s=20.130 ref_matches=1/1
+LEG FDW-W2 N=2 flags=all-six cache=84000 MiB ctx=65536 matched-history
+FDW-W2 phase=measure client=0 prompt=standard cache_prompt=False md5=232e8f4e2fb04d3b77896198db9b0bc4 REF-MISMATCH prefill_ms=1205.38 prompt_n=10 tok_s=1.410
+FDW-W2 phase=measure client=1 prompt=long cache_prompt=False md5=2f26e1533ef925e8060241f8ecf81f7e REF-MATCH prefill_ms=39380.88 prompt_n=2048 tok_s=2.506
+AGG name=FDW-W2 phase=measure N=2 completed=2 agg_tok_s=2.804 wall_s=91.308 ref_matches=1/2
+LEG-FAIL FDW-W2 phase=measure; continuing
+LEG-FAIL FDW-W2 rc=1; continuing
+LEG FDW-W3 N=2 flags=all-six cache=84000 MiB ctx=65536 matched-history
+FDW-W3 phase=prime client=0 prompt=standard cache_prompt=True md5=232e8f4e2fb04d3b77896198db9b0bc4 WARMUP prefill_ms=1216.797 prompt_n=10 tok_s=1.418
+FDW-W3 phase=prime client=1 prompt=long cache_prompt=True md5=2f26e1533ef925e8060241f8ecf81f7e WARMUP prefill_ms=39164.002 prompt_n=2048 tok_s=2.519
+AGG name=FDW-W3 phase=prime N=2 completed=2 agg_tok_s=2.818 wall_s=90.829 ref_matches=0/2
+FDW-W3 phase=measure client=0 prompt=standard cache_prompt=True md5=077218a35a67a621e1363ee24c2aaa2e REF-MISMATCH prefill_ms=227.964 prompt_n=1 tok_s=2.730
+FDW-W3 phase=measure client=1 prompt=long cache_prompt=True md5=2f26e1533ef925e8060241f8ecf81f7e REF-MATCH prefill_ms=178.69 prompt_n=1 tok_s=2.740
+AGG name=FDW-W3 phase=measure N=2 completed=2 agg_tok_s=5.472 wall_s=46.788 ref_matches=1/2
+LEG-FAIL FDW-W3 phase=measure; continuing
+LEG-FAIL FDW-W3 rc=1; continuing
+LEG FDW-W4 N=2 flags=all-six cache=84000 MiB ctx=65536 matched-history
+FDW-W4 phase=measure client=0 prompt=long cache_prompt=False md5=2f26e1533ef925e8060241f8ecf81f7e REF-MATCH prefill_ms=40349.456 prompt_n=2048 tok_s=2.396
+FDW-W4 phase=measure client=1 prompt=standard cache_prompt=False md5=232e8f4e2fb04d3b77896198db9b0bc4 REF-MISMATCH prefill_ms=1215.252 prompt_n=10 tok_s=2.452
+AGG name=FDW-W4 phase=measure N=2 completed=2 agg_tok_s=2.742 wall_s=93.374 ref_matches=1/2
+LEG-FAIL FDW-W4 phase=measure; continuing
+LEG-FAIL FDW-W4 rc=1; continuing
+LEG FDW-W5 N=4 flags=all-six cache=84000 MiB ctx=65536 matched-history
+FDW-W5 phase=measure client=1 prompt=standard cache_prompt=False md5=232e8f4e2fb04d3b77896198db9b0bc4 REF-MISMATCH prefill_ms=389.585 prompt_n=10 tok_s=0.861
+FDW-W5 phase=measure client=0 prompt=standard cache_prompt=False md5=232e8f4e2fb04d3b77896198db9b0bc4 REF-MISMATCH prefill_ms=1213.97 prompt_n=10 tok_s=0.858
+FDW-W5 phase=measure client=2 prompt=long cache_prompt=False md5=2f26e1533ef925e8060241f8ecf81f7e REF-MATCH prefill_ms=39887.624 prompt_n=2048 tok_s=1.180
+FDW-W5 phase=measure client=3 prompt=long cache_prompt=False md5=2f26e1533ef925e8060241f8ecf81f7e REF-MATCH prefill_ms=39519.39 prompt_n=2048 tok_s=1.864
+AGG name=FDW-W5 phase=measure N=4 completed=4 agg_tok_s=3.432 wall_s=149.204 ref_matches=2/4
+LEG-FAIL FDW-W5 phase=measure; continuing
+LEG-FAIL FDW-W5 rc=1; continuing
+WIN2FDW-DONE
