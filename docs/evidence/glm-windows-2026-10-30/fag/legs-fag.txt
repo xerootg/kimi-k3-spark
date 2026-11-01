@@ -1,0 +1,77 @@
+BUILD-FAGEOM OK /srv/glm-5.3/fageom-20261101T040128Z-159249/fattn-geometry
+ggml_cuda_init: found 1 CUDA devices (Total VRAM: 124609 MiB):
+ggml_cuda_init: device 0: host bank enabled (integrated = 1, host pointer for registered memory = 1, pageable access = 1, host page tables = 1)
+  Device 0: NVIDIA GB10, compute capability 12.1, VMM: yes, VRAM: 124609 MiB
+FAGEOM backend=CUDA0 seed=12345678/87654321 Q=[576,1,64,1] K=f16[576,E,1,1] V=K[:512] scale=0.0625
+Prediction assumes supplied production dispatcher on sm_121; partition/fixup depends on SM occupancy (not traced).
+FA E=256 valid=10 K=256 mode=production predicted=mma_f16_dense_tile1x16 effective_KV=256 ids=2411a8011b688395 sorted_ids=8084b7f6c938af25 valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=256 K=256 baseline_E=256 equal=1 max_abs=0
+FA E=256 valid=10 K=256 mode=valid_pad256 predicted=mma_f16_dense_tile1x16 effective_KV=256 ids=2411a8011b688395 sorted_ids=8084b7f6c938af25 valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=256 K=256 baseline_E=256 equal=1 max_abs=0
+FA E=512 valid=10 K=512 mode=production predicted=mma_f16_dense_tile1x16 effective_KV=512 ids=32c8acade9093e95 sorted_ids=f1a76199f5a84e25 valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=512 K=512 baseline_E=256 equal=1 max_abs=0
+FA E=512 valid=10 K=256 mode=valid_pad256 predicted=mma_f16_dense_tile1x16 effective_KV=512 ids=2411a8011b688395 sorted_ids=8084b7f6c938af25 valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=512 K=256 baseline_E=256 equal=1 max_abs=0
+FA E=2048 valid=10 K=2048 mode=production predicted=mma_f16_dense_tile1x16 effective_KV=2048 ids=edf39786e5cc3395 sorted_ids=a684a9f7204da525 valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=2048 K=2048 baseline_E=256 equal=1 max_abs=0
+FA E=2048 valid=10 K=256 mode=valid_pad256 predicted=mma_f16_dense_tile1x16 effective_KV=2048 ids=6702c98294af3795 sorted_ids=8084b7f6c938af25 valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=2048 K=256 baseline_E=256 equal=1 max_abs=0
+FA E=4096 valid=10 K=2048 mode=production predicted=mma_f16_sparse_tile1x16 effective_KV=2048 ids=edf39786e5cc3395 sorted_ids=a684a9f7204da525 valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=4096 K=2048 baseline_E=256 equal=1 max_abs=0
+FA E=4096 valid=10 K=256 mode=valid_pad256 predicted=mma_f16_sparse_tile1x16 effective_KV=256 ids=6702c98294af3795 sorted_ids=8084b7f6c938af25 valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=4096 K=256 baseline_E=256 equal=1 max_abs=0
+FA E=32768 valid=10 K=2048 mode=production predicted=mma_f16_sparse_tile1x16 effective_KV=2048 ids=333475cf6cdb6bcd sorted_ids=0c8d09593f8d9b4d valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=32768 K=2048 baseline_E=256 equal=1 max_abs=0
+FA E=32768 valid=10 K=256 mode=valid_pad256 predicted=mma_f16_sparse_tile1x16 effective_KV=256 ids=01315e5664d05b79 sorted_ids=2684b57783b82239 valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=32768 K=256 baseline_E=256 equal=1 max_abs=0
+FA E=65536 valid=10 K=2048 mode=production predicted=mma_f16_sparse_tile1x16 effective_KV=2048 ids=7fe223d6d3af55ed sorted_ids=7a0fab91a5313cad valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=65536 K=2048 baseline_E=256 equal=1 max_abs=0
+FA E=65536 valid=10 K=256 mode=valid_pad256 predicted=mma_f16_sparse_tile1x16 effective_KV=256 ids=525515b7037feb85 sorted_ids=06a4f7fd4503d385 valid_members=43633e3ff0f885b4 output=ce21ea733c24f7ec
+COMPARE valid=10 E=65536 K=256 baseline_E=256 equal=1 max_abs=0
+FA E=256 valid=138 K=256 mode=production predicted=mma_f16_dense_tile1x16 effective_KV=256 ids=e1f811b1172cc985 sorted_ids=8084b7f6c938af25 valid_members=8f73968d3ecc94b4 output=dc9c89c66d03b3fe
+COMPARE valid=138 E=256 K=256 baseline_E=256 equal=1 max_abs=0
+FA E=256 valid=138 K=256 mode=valid_pad256 predicted=mma_f16_dense_tile1x16 effective_KV=256 ids=e1f811b1172cc985 sorted_ids=8084b7f6c938af25 valid_members=8f73968d3ecc94b4 output=dc9c89c66d03b3fe
+COMPARE valid=138 E=256 K=256 baseline_E=256 equal=1 max_abs=0
+FA E=512 valid=138 K=512 mode=production predicted=mma_f16_dense_tile1x16 effective_KV=512 ids=4b7c07c02cda6685 sorted_ids=f1a76199f5a84e25 valid_members=8f73968d3ecc94b4 output=4523b24f03fb3a6f
+COMPARE valid=138 E=512 K=512 baseline_E=256 equal=0 max_abs=6.44996762e-05
+FA E=512 valid=138 K=256 mode=valid_pad256 predicted=mma_f16_dense_tile1x16 effective_KV=512 ids=e1f811b1172cc985 sorted_ids=8084b7f6c938af25 valid_members=8f73968d3ecc94b4 output=4523b24f03fb3a6f
+COMPARE valid=138 E=512 K=256 baseline_E=256 equal=0 max_abs=6.44996762e-05
+FA E=2048 valid=138 K=2048 mode=production predicted=mma_f16_dense_tile1x16 effective_KV=2048 ids=1752f44ed43d8aa5 sorted_ids=a684a9f7204da525 valid_members=8f73968d3ecc94b4 output=96228b95a8565d18
+COMPARE valid=138 E=2048 K=2048 baseline_E=256 equal=0 max_abs=0.000164904632
+FA E=2048 valid=138 K=256 mode=valid_pad256 predicted=mma_f16_dense_tile1x16 effective_KV=2048 ids=b9d98e3b9d0b30a5 sorted_ids=8084b7f6c938af25 valid_members=8f73968d3ecc94b4 output=96228b95a8565d18
+COMPARE valid=138 E=2048 K=256 baseline_E=256 equal=0 max_abs=0.000164904632
+FA E=4096 valid=138 K=2048 mode=production predicted=mma_f16_sparse_tile1x16 effective_KV=2048 ids=1752f44ed43d8aa5 sorted_ids=a684a9f7204da525 valid_members=8f73968d3ecc94b4 output=96228b95a8565d18
+COMPARE valid=138 E=4096 K=2048 baseline_E=256 equal=0 max_abs=0.000164904632
+FA E=4096 valid=138 K=256 mode=valid_pad256 predicted=mma_f16_sparse_tile1x16 effective_KV=256 ids=b9d98e3b9d0b30a5 sorted_ids=8084b7f6c938af25 valid_members=8f73968d3ecc94b4 output=dc9c89c66d03b3fe
+COMPARE valid=138 E=4096 K=256 baseline_E=256 equal=1 max_abs=0
+FA E=32768 valid=138 K=2048 mode=production predicted=mma_f16_sparse_tile1x16 effective_KV=2048 ids=63a3288e3ae83a8d sorted_ids=b28f9e8207d57acd valid_members=8f73968d3ecc94b4 output=96228b95a8565d18
+COMPARE valid=138 E=32768 K=2048 baseline_E=256 equal=0 max_abs=0.000164904632
+FA E=32768 valid=138 K=256 mode=valid_pad256 predicted=mma_f16_sparse_tile1x16 effective_KV=256 ids=6c205db469ce635d sorted_ids=b5c43352c9782c9d valid_members=8f73968d3ecc94b4 output=dc9c89c66d03b3fe
+COMPARE valid=138 E=32768 K=256 baseline_E=256 equal=1 max_abs=0
+FA E=65536 valid=138 K=2048 mode=production predicted=mma_f16_sparse_tile1x16 effective_KV=2048 ids=744bf6e89fcf1979 sorted_ids=c8563769d5e2fdb9 valid_members=8f73968d3ecc94b4 output=96228b95a8565d18
+COMPARE valid=138 E=65536 K=2048 baseline_E=256 equal=0 max_abs=0.000164904632
+FA E=65536 valid=138 K=256 mode=valid_pad256 predicted=mma_f16_sparse_tile1x16 effective_KV=256 ids=97a7fb04e890daa5 sorted_ids=509d0ba8b63008e5 valid_members=8f73968d3ecc94b4 output=dc9c89c66d03b3fe
+COMPARE valid=138 E=65536 K=256 baseline_E=256 equal=1 max_abs=0
+SKIP E=256 valid=300 reason=valid_exceeds_extent
+FA E=512 valid=300 K=512 mode=production predicted=mma_f16_dense_tile1x16 effective_KV=512 ids=bf0c778d7ce11011 sorted_ids=f1a76199f5a84e25 valid_members=ed6a8b24f7b464f1 output=871ec2958a170306
+COMPARE valid=300 E=512 K=512 baseline_E=512 equal=1 max_abs=0
+FA E=512 valid=300 K=512 mode=valid_pad256 predicted=mma_f16_dense_tile1x16 effective_KV=512 ids=bf0c778d7ce11011 sorted_ids=f1a76199f5a84e25 valid_members=ed6a8b24f7b464f1 output=871ec2958a170306
+COMPARE valid=300 E=512 K=512 baseline_E=512 equal=1 max_abs=0
+FA E=2048 valid=300 K=2048 mode=production predicted=mma_f16_dense_tile1x16 effective_KV=2048 ids=d965c49d83d2a171 sorted_ids=a684a9f7204da525 valid_members=ed6a8b24f7b464f1 output=2552610c1712d444
+COMPARE valid=300 E=2048 K=2048 baseline_E=512 equal=0 max_abs=9.20072198e-05
+FA E=2048 valid=300 K=512 mode=valid_pad256 predicted=mma_f16_dense_tile1x16 effective_KV=2048 ids=c42e3c4cd66bd071 sorted_ids=f1a76199f5a84e25 valid_members=ed6a8b24f7b464f1 output=2552610c1712d444
+COMPARE valid=300 E=2048 K=512 baseline_E=512 equal=0 max_abs=9.20072198e-05
+FA E=4096 valid=300 K=2048 mode=production predicted=mma_f16_sparse_tile1x16 effective_KV=2048 ids=d965c49d83d2a171 sorted_ids=a684a9f7204da525 valid_members=ed6a8b24f7b464f1 output=2552610c1712d444
+COMPARE valid=300 E=4096 K=2048 baseline_E=512 equal=0 max_abs=9.20072198e-05
+FA E=4096 valid=300 K=512 mode=valid_pad256 predicted=mma_f16_sparse_tile1x16 effective_KV=512 ids=c42e3c4cd66bd071 sorted_ids=f1a76199f5a84e25 valid_members=ed6a8b24f7b464f1 output=871ec2958a170306
+COMPARE valid=300 E=4096 K=512 baseline_E=512 equal=1 max_abs=0
+FA E=32768 valid=300 K=2048 mode=production predicted=mma_f16_sparse_tile1x16 effective_KV=2048 ids=e2b7ceb9557096d5 sorted_ids=88e72d70c7584a95 valid_members=ed6a8b24f7b464f1 output=2552610c1712d444
+COMPARE valid=300 E=32768 K=2048 baseline_E=512 equal=0 max_abs=9.20072198e-05
+FA E=32768 valid=300 K=512 mode=valid_pad256 predicted=mma_f16_sparse_tile1x16 effective_KV=512 ids=3e1a3585926743f9 sorted_ids=8776456207063339 valid_members=ed6a8b24f7b464f1 output=871ec2958a170306
+COMPARE valid=300 E=32768 K=512 baseline_E=512 equal=1 max_abs=0
+FA E=65536 valid=300 K=2048 mode=production predicted=mma_f16_sparse_tile1x16 effective_KV=2048 ids=3667cc4739a04f55 sorted_ids=aa3d82c1fa1e07d5 valid_members=ed6a8b24f7b464f1 output=2552610c1712d444
+COMPARE valid=300 E=65536 K=2048 baseline_E=512 equal=0 max_abs=9.20072198e-05
+FA E=65536 valid=300 K=512 mode=valid_pad256 predicted=mma_f16_sparse_tile1x16 effective_KV=512 ids=694e1dd18e98af75 sorted_ids=3d77b9c732eb52b5 valid_members=ed6a8b24f7b464f1 output=871ec2958a170306
+COMPARE valid=300 E=65536 K=512 baseline_E=512 equal=1 max_abs=0
+SUMMARY configs=34 differing=12 membership=identical repeats=identical verdict=GEOMETRY_SENSITIVE
+WIN2FAG-DONE logs=/srv/glm-5.3/fageom-20261101T040128Z-159249
