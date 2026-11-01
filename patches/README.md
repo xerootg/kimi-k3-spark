@@ -822,3 +822,52 @@ THP valve under pressure. At 84000 MiB, budget growth is 4000 MiB = 3.906 GiB
 (7.438 GiB), above the 4.295 GB reserve by about 3.69 GB. In the requested
 rounded shorthand, 11.6 - 4.0 = 7.6 GB > 4.3 GB. THP release/regrow under
 production pressure at 84000 MiB is still the main risk; keep this opt-in.
+
+## Exact batching set (0030-0038), measured 2026-11-01 (windows fdr, fdq)
+
+Apply the following eight patches lexically after production 0001..0026
+(eleven production patches, nineteen total). Rebuild the image with this set.
+The debug-only 0034 tensor-digest observer is excluded.
+
+| Stack patch | Source / behavior |
+| --- | --- |
+| 0030-nsplit | 0030 v3hot, N<=8; 0032 union/recall folded; retained sync jobs and cached hook stats |
+| 0031-exact-mmvq-cols | 0008.hot, singleton quantized column dispatch |
+| 0033-exact-cols | 0035 v8, v7hot allocation/dispatch changes and padded split-bank MoE weighted reduction |
+| 0034-exact-attn | 0036 v5hot, physical stream extents, contiguous Q packing, inline extent/top-k storage |
+| 0035-prefill-isolate | 0037.hot, isolated prompts and retained scheduler scratch / templated callbacks |
+| 0036-exact-rows | 0038, singleton SUM_ROWS geometry / wide unmasked softmax |
+| 0037-exact-guards | 0039, N>=2 attention branch and rejection of unified parallel DSA KV |
+| 0038-exact-graph-budget | 0040.hot, exact graph budget with cached flag |
+
+0039's graph hunk is rebased onto v5hot's cached boolean; its guards are unchanged.
+0030 retains v3's eight-column bounds and reservations. The c-tree graph-side
+PREFETCH_WIDE flag is cached; production has no wide-prediction feature and
+retains its fixed eight candidates. Production LFU-specific diagnostics and
+recall accounting are preserved. Older additive joint-MoE fixes remain archived
+outside the apply glob; do not combine them with v8.
+
+Exact rows are retained for parity with the reported measured fd9 ancestry:
+the user reports fd9 found 0038 already applied from fd6, and supplied
+RESULT-REVIEW17 lists it in the prior c-tree sequence. The raw fd9 apply/window
+log and actual runtime tree are absent here; legs-fd6.txt starts at build output
+and cannot independently certify that ancestry. FDQ explicitly applies 0038.
+
+User-reported WINDOW fdr PASS (driver 580.178.04, kernel 7.0): N1 gold at
+5.03 aggregate tok/s; N2 both clients gold in three rounds at 7.07 / 7.16 /
+7.14 aggregate tok/s (about +40%); short+long both exact (long md5 prefix
+e38742e4); parallel=4 with two clients gold at 7.08 aggregate tok/s.
+These measurements precede the complete hot replacement set. FDQ timing and
+full N4/N8 client gates are pending. The proposed manifest v3 uses parallel=4,
+ctx=65536 and all six knobs; parallel=8 requires the Q8 result.
+
+Run `bash stack-exact/verify.sh` from the sandbox root: real production patch
+sequence plus exact stack application and host syntax checks, including a
+separate server-context check. This offline fixture cannot certify the pinned
+commit identity or compile CUDA. Postimage differences retained under
+verification/stack2 reflect production LFU/hook instrumentation and omitted
+c-tree-only PREFETCH_WIDE/SHORT_CTX_SKIP experiments. Shared CUDA and KV leaves
+are compared; host PASS is not a GPU gold result. See ../docs/exact-batching.md.
+
+
+Measured on the Spark (driver 580.178.04, kernel 7.0), window fdq: with the six knobs set (GGML_CUDA_EXACT_COLS, GGML_CUDA_MMVQ_EXACT_COLS, LLAMA_EXACT_ATTN_COLS, GGML_CUDA_ARGSORT_EXACT_ROWS, LLAMA_EXPERT_STORE_SPLIT_COLS, LLAMA_PREFILL_ISOLATE all =1) every client at --parallel 2/4/8 is byte-identical to the single-sequence production output (cold, warm, mixed short and 2048-token prompts, staggered arrivals); aggregate 5.55 (N=1) / 7.14 (N=2) / 8.1 (N=4) / 8.72 (N=8) tok/s. With the knobs unset the set is inert (N=1 gold, same speed). The 0034 digest observer used to find the divergences stays outside this directory (debug only).
