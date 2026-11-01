@@ -1,0 +1,12 @@
+=== window fd 18:24
+error: Could not read 848bbda9041decd87904f7eb5a2990863ecce03b
+-- UI: HF stamp matches 'ggml-org/llama-ui|b0', skipping HF fetch
+/home/xero/llama-k3-par2/ggml/src/ggml-cuda/ggml-cuda.cu(167): error: identifier "ggml_cuda_exact_cols" is undefined
+1 error detected in the compilation of "/home/xero/llama-k3-par2/ggml/src/ggml-cuda/ggml-cuda.cu".
+gmake[3]: *** [ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/build.make:527: ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/ggml-cuda.cu.o] Error 2
+gmake[2]: *** [CMakeFiles/Makefile2:2072: ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:5228: tools/server/CMakeFiles/llama-server.dir/rule] Error 2
+gmake: *** [Makefile:1882: llama-server] Error 2
+ABORT-WINDOW line 86 failed
+pod restored: Running
+ALL-WINDOWS-DONE

@@ -1,0 +1,34 @@
+=== window fd 18:26
+0035 already applied
+error: Could not read 848bbda9041decd87904f7eb5a2990863ecce03b
+-- UI: HF stamp matches 'ggml-org/llama-ui|b0', skipping HF fetch
+FD30 N=1 EXACT_COLS=1 ctx-size=65536 KV splits per slot: 65536 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+FD30: verified two width-1 decode graphs and sampled tokens
+FD31 N=2 EXACT_COLS=1 ctx-size=65536 KV splits per slot: 32768 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+FD31: verified two width-2 decode graphs and sampled tokens
+FIRSTDIFF FD30 vs FD31 column=0
+ALIGN sample=0 N1 step=0 token=481 N2 step=0 token=481
+ALIGN sample=1 N1 step=1 token=468 N2 step=1 token=468
+ALIGN sample=2 N1 step=2 token=952 N2 step=2 token=952
+MATCH N1 step=1 indexer_k-0 op=ROPE type=f32 shape=(128, 1, 1, 1) axis=3 column=0 digest=67712580f7b7ea8c
+      N2 step=1 indexer_k-0 op=ROPE type=f32 shape=(128, 1, 2, 1) axis=2 column=0 digest=67712580f7b7ea8c
+MATCH N1 step=1 indexer_k-0 op=MUL_MAT type=f32 shape=(128, 1, 1, 1) axis=3 column=0 digest=670f83fefb20ed8b
+      N2 step=1 indexer_k-0 op=MUL_MAT type=f32 shape=(128, 1, 2, 1) axis=2 column=0 digest=670f83fefb20ed8b
+MATCH N1 step=1 indexer_k-0 (view) op=VIEW type=f32 shape=(128, 1, 1, 1) axis=3 column=0 digest=670f83fefb20ed8b
+      N2 step=1 indexer_k-0 (view) op=VIEW type=f32 shape=(128, 2, 1, 1) axis=1 column=0 digest=670f83fefb20ed8b
+N1 step=1 cache_k_l0 (view) op=SET_ROWS type=f16 shape=(128, 65536, 1, 1) axis=3 column=0 digest=0a3250507bbae829
+N2 step=1 cache_k_l0 (reshaped) op=RESHAPE type=f16 shape=(128, 65536, 1, 1) axis=-1 column=-1 digest=7fc845aa493eb38d
+FIRSTDIFF FD30 vs FD31 column=1
+ALIGN sample=0 N1 step=0 token=481 N2 step=1 token=481
+ALIGN sample=1 N1 step=1 token=468 N2 step=2 token=468
+MATCH N1 step=1 indexer_k-0 op=ROPE type=f32 shape=(128, 1, 1, 1) axis=3 column=0 digest=67712580f7b7ea8c
+      N2 step=2 indexer_k-0 op=ROPE type=f32 shape=(128, 1, 2, 1) axis=2 column=1 digest=67712580f7b7ea8c
+MATCH N1 step=1 indexer_k-0 op=MUL_MAT type=f32 shape=(128, 1, 1, 1) axis=3 column=0 digest=670f83fefb20ed8b
+      N2 step=2 indexer_k-0 op=MUL_MAT type=f32 shape=(128, 1, 2, 1) axis=2 column=1 digest=670f83fefb20ed8b
+MATCH N1 step=1 indexer_k-0 (view) op=VIEW type=f32 shape=(128, 1, 1, 1) axis=3 column=0 digest=670f83fefb20ed8b
+      N2 step=2 indexer_k-0 (view) op=VIEW type=f32 shape=(128, 2, 1, 1) axis=1 column=1 digest=670f83fefb20ed8b
+N1 step=1 cache_k_l0 (view) op=SET_ROWS type=f16 shape=(128, 65536, 1, 1) axis=3 column=0 digest=0a3250507bbae829
+N2 step=2 cache_k_l0 (reshaped) op=RESHAPE type=f16 shape=(128, 65536, 1, 1) axis=-1 column=-1 digest=396de8e0b74f44ac
+WIN2FD-DONE
+pod restored: Running
+ALL-WINDOWS-DONE
