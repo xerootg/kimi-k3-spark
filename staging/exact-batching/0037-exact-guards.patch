@@ -1,0 +1,39 @@
+diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
+index a8b8272..9116ae2 100644
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@ -3901,7 +3901,7 @@ static std::unique_ptr<llm_graph_input_attn_k_dsa> build_attn_inp_k_dsa_impl(
+ 
+     auto inp = std::make_unique<llm_graph_input_attn_k_dsa>(hparams, cparams, mctx_cur);
+     const char * exact = std::getenv("LLAMA_EXACT_ATTN_COLS");
+-    if (exact && std::strcmp(exact, "1") == 0 && ubatch.n_tokens <= 8 &&
++    if (exact && std::strcmp(exact, "1") == 0 && ubatch.n_tokens >= 2 && ubatch.n_tokens <= 8 &&
+             ubatch.n_tokens == ubatch.n_seqs_unq && ubatch.n_seq_tokens == 1) {
+         const auto ns = mctx_cur->get_mla()->get_n_stream();
+         GGML_ASSERT(ns == ubatch.n_tokens && "exact DSA requires separate KV streams");
+diff --git a/src/llama-kv-cache-dsa.cpp b/src/llama-kv-cache-dsa.cpp
+index 6e5f7d4..4196347 100644
+--- a/src/llama-kv-cache-dsa.cpp
++++ b/src/llama-kv-cache-dsa.cpp
+@@ -6,6 +6,9 @@
+ 
+ #include <algorithm>
+ #include <cassert>
++#include <cstdlib>
++#include <cstring>
++#include <stdexcept>
+ 
+ //
+ // llama_kv_cache_dsa
+@@ -28,6 +31,11 @@ llama_kv_cache_dsa::llama_kv_cache_dsa(
+     const  layer_reuse_cb & reuse) :
+     hparams_lid(model.hparams), n_stream(unified ? 1 : n_seq_max) {
+ 
++    const char * exact = std::getenv("LLAMA_EXACT_ATTN_COLS");
++    if (exact && std::strcmp(exact, "1") == 0 && unified && n_seq_max > 1) {
++        throw std::runtime_error("LLAMA_EXACT_ATTN_COLS requires non-unified DSA KV streams for parallel requests");
++    }
++
+     LLAMA_LOG_INFO("%s: creating main KV cache, size = %u cells\n", __func__, kv_size);
+ 
+     kv_mla = std::make_unique<llama_kv_cache>(

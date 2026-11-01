@@ -1,0 +1,396 @@
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index 2d75f88..e8d15e9 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -279,6 +279,12 @@ static void ggml_cuda_host_prefetch_mul_mat_id(ggml_backend_cuda_context & ctx,
+ #endif
+ }
+ 
++// Replay production singleton arithmetic while retaining row-local fusion.
++static bool ggml_cuda_exact_cols() {
++    static const bool enabled = ggml_cuda_env_flag("GGML_CUDA_EXACT_COLS");
++    return enabled;
++}
++
+ static bool ggml_cuda_fusion_disabled() {
+     static const bool disabled = ggml_cuda_env_flag("GGML_CUDA_DISABLE_FUSION");
+     return disabled;
+@@ -2511,6 +2517,24 @@ static bool ggml_cuda_should_fuse_mul_mat(const ggml_tensor * ffn_up,
+ }
+ 
+ static bool ggml_cuda_should_fuse_mul_mat_vec_f(const ggml_tensor * tensor) {
++    if (ggml_cuda_exact_cols() && tensor->op == GGML_OP_MUL_MAT &&
++            tensor->ne[1] >= 2 && tensor->ne[1] <= 8) {
++        ggml_tensor one = *tensor;
++        ggml_tensor input = *tensor->src[1];
++        one.ne[1] = input.ne[1] = 1;
++        one.src[1] = &input;
++        return ggml_cuda_should_fuse_mul_mat_vec_f(&one);
++    }
++
++    if (ggml_cuda_exact_cols() && tensor->op == GGML_OP_MUL_MAT_ID &&
++            tensor->ne[2] >= 2 && tensor->ne[2] <= 8) {
++        ggml_tensor one = *tensor, input = *tensor->src[1], ids = *tensor->src[2];
++        one.ne[2] = input.ne[2] = ids.ne[1] = 1;
++        one.src[1] = &input;
++        one.src[2] = &ids;
++        return ggml_cuda_should_fuse_mul_mat_vec_f(&one);
++    }
++
+     ggml_tensor *       src0 = tensor->src[0];
+     ggml_tensor *       src1 = tensor->src[1];
+     const ggml_tensor * dst  = tensor;
+@@ -2539,6 +2563,24 @@ static bool ggml_cuda_should_fuse_mul_mat_vec_f(const ggml_tensor * tensor) {
+ }
+ 
+ static bool ggml_cuda_should_fuse_mul_mat_vec_q(const ggml_tensor * tensor) {
++    if (ggml_cuda_exact_cols() && tensor->op == GGML_OP_MUL_MAT &&
++            tensor->ne[1] >= 2 && tensor->ne[1] <= 8) {
++        ggml_tensor one = *tensor;
++        ggml_tensor input = *tensor->src[1];
++        one.ne[1] = input.ne[1] = 1;
++        one.src[1] = &input;
++        return ggml_cuda_should_fuse_mul_mat_vec_q(&one);
++    }
++
++    if (ggml_cuda_exact_cols() && tensor->op == GGML_OP_MUL_MAT_ID &&
++            tensor->ne[2] >= 2 && tensor->ne[2] <= 8) {
++        ggml_tensor one = *tensor, input = *tensor->src[1], ids = *tensor->src[2];
++        one.ne[2] = input.ne[2] = ids.ne[1] = 1;
++        one.src[1] = &input;
++        one.src[2] = &ids;
++        return ggml_cuda_should_fuse_mul_mat_vec_q(&one);
++    }
++
+     ggml_tensor *       src0 = tensor->src[0];
+     ggml_tensor *       src1 = tensor->src[1];
+     const ggml_tensor * dst  = tensor;
+@@ -2622,6 +2664,73 @@ static bool ggml_cuda_match_shared_expert(const ggml_cgraph * graph, int routed_
+ static void ggml_cuda_mul_mat(ggml_backend_cuda_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
+     GGML_TENSOR_BINARY_OP_LOCALS
+ 
++    // Head rows live in ne[1] for the indexer rotation; tokens live in ne[2].
++    // Restrict this rule to a broadcast weight: a per-head weight's ne[2]
++    // is a head axis, not a token axis (wk_b / q_nope_absorbed).
++    if (ggml_cuda_exact_cols() && dst->ne[2] >= 2 && dst->ne[2] <= 8 &&
++        src0->ne[2] == 1 && src1->ne[2] == dst->ne[2]) {
++        const size_t row_bytes = ggml_row_size(dst->type, dst->ne[0]);
++        GGML_ASSERT(dst->nb[0] == ggml_type_size(dst->type));
++        ggml_cuda_pool_alloc<char> packed(ctx.pool(), row_bytes * dst->ne[1] * dst->ne[3]);
++        for (int64_t token = 0; token < dst->ne[2]; ++token) {
++            ggml_tensor input = *src1;
++            ggml_tensor output = *dst;
++            input.ne[2] = output.ne[2] = 1;
++            input.data = (char *) src1->data + token * src1->nb[2];
++            output.nb[1] = row_bytes;
++            output.nb[2] = output.nb[3] = row_bytes * output.ne[1];
++            output.data = packed.get();
++            output.src[0] = const_cast<ggml_tensor *>(src0);
++            output.src[1] = &input;
++            ggml_cuda_mul_mat(ctx, src0, &input, &output);
++            for (int64_t i3 = 0; i3 < output.ne[3]; ++i3) {
++                for (int64_t row = 0; row < output.ne[1]; ++row) {
++                    CUDA_CHECK(cudaMemcpyAsync(
++                        (char *) dst->data + token * dst->nb[2] + row * dst->nb[1] + i3 * dst->nb[3],
++                        packed.get() + row * output.nb[1] + i3 * output.nb[3],
++                        row_bytes, cudaMemcpyDeviceToDevice, ctx.stream()));
++                }
++            }
++        }
++        return;
++    }
++
++    // Deliberately split all 2..8-column ordinary matmuls, including kernels
++    // whose family stays the same but whose reduction geometry changes (MMVQ).
++    // Keep original higher-dimensional strides and broadcast dimensions.
++    if (ggml_cuda_exact_cols() && dst->ne[1] >= 2 && dst->ne[1] <= 8) {
++        GGML_ASSERT(src1->ne[1] == dst->ne[1]);
++        GGML_ASSERT(dst->nb[0] == ggml_type_size(dst->type));
++        ggml_cuda_pool_alloc<char> packed(ctx.pool());
++        const size_t row_bytes = ggml_row_size(dst->type, dst->ne[0]);
++        packed.alloc(row_bytes * dst->ne[2] * dst->ne[3]);
++        for (int64_t col = 0; col < dst->ne[1]; ++col) {
++            ggml_tensor input = *src1;
++            ggml_tensor output = *dst;
++            input.ne[1] = output.ne[1] = 1;
++            input.data = (char *) src1->data + col * src1->nb[1];
++            // A packed singleton destination also supports cuBLAS conversion
++            // buffers, which require contiguous outputs for F16/BF16 compute.
++            output.nb[1] = output.nb[2] = row_bytes;
++            output.nb[3] = row_bytes * output.ne[2];
++            output.data = packed.get();
++            output.src[0] = const_cast<ggml_tensor *>(src0);
++            output.src[1] = &input;
++            // Re-enter before FWHT, padding checks and every backend heuristic.
++            // The singleton branch terminates recursion and preserves precision.
++            ggml_cuda_mul_mat(ctx, src0, &input, &output);
++            for (int64_t i3 = 0; i3 < output.ne[3]; ++i3) {
++                for (int64_t i2 = 0; i2 < output.ne[2]; ++i2) {
++                    CUDA_CHECK(cudaMemcpyAsync(
++                        (char *) dst->data + col * dst->nb[1] + i2 * dst->nb[2] + i3 * dst->nb[3],
++                        packed.get() + i2 * output.nb[2] + i3 * output.nb[3],
++                        row_bytes, cudaMemcpyDeviceToDevice, ctx.stream()));
++                }
++            }
++        }
++        return;
++    }
++
+     if (ggml_cuda_op_mul_mat_use_fwht(dst) && ggml_cuda_op_fwht(ctx, src1, dst)) {
+         return;
+     }
+@@ -4414,6 +4523,147 @@ static bool ggml_cuda_can_fuse(const struct ggml_cgraph *                cgraph,
+     return false;
+ }
+ 
++// Dense fusion uses the production epilogue inside each singleton launch.
++// Split routed fusion before conversion, with optional joint shared output.
++static void ggml_cuda_exact_fused_matvec(
++        bool quantized, ggml_backend_cuda_context & ctx,
++        const ggml_tensor * weight, const ggml_tensor * input, const ggml_tensor * ids,
++        ggml_tensor * dst, const ggml_cuda_mm_fusion_args_host * fusion) {
++    auto launch = [&](const ggml_tensor * x, const ggml_tensor * id, ggml_tensor * y,
++                      const ggml_cuda_mm_fusion_args_host * f) {
++        if (quantized) {
++            ggml_cuda_mul_mat_vec_q(ctx, weight, x, id, y, f);
++        } else {
++            ggml_cuda_mul_mat_vec_f(ctx, weight, x, id, y, f);
++        }
++    };
++    // Preserve singleton conversion and epilogues for every routed fusion.
++    if (ggml_cuda_exact_cols() && ids && dst->ne[2] >= 2 && dst->ne[2] <= 8) {
++        GGML_ASSERT(input->ne[2] == dst->ne[2] && ids->ne[1] == dst->ne[2]);
++        GGML_ASSERT(dst->ne[3] == 1 && input->ne[3] == 1);
++        for (int64_t col = 0; col < dst->ne[2]; ++col) {
++            ggml_tensor x = *input, y = *dst, id = *ids, shared;
++            x.ne[2] = y.ne[2] = id.ne[1] = 1;
++            x.data = (char *) input->data + col * input->nb[2];
++            y.data = (char *) dst->data + col * dst->nb[2];
++            id.data = (char *) ids->data + col * ids->nb[1];
++            y.src[0] = const_cast<ggml_tensor *>(weight);
++            y.src[1] = &x;
++            y.src[2] = &id;
++            auto f = *fusion;
++            if (f.shared_dst) {
++                GGML_ASSERT(quantized && input->ne[1] == 1);
++                GGML_ASSERT(f.shared_dst->ne[1] == dst->ne[2]);
++                shared = *f.shared_dst;
++                shared.ne[1] = 1;
++                shared.data = (char *) shared.data + col * shared.nb[1];
++                f.shared_dst = &shared;
++            }
++            // Biases and scales are expert-indexed; gate/up weights are shared.
++            launch(&x, &id, &y, &f);
++        }
++        return;
++    }
++    if (ggml_cuda_exact_cols() && !ids && weight->ne[2] == 1 &&
++            dst->ne[2] >= 2 && dst->ne[2] <= 8 && input->ne[2] == dst->ne[2]) {
++        const size_t bytes = ggml_row_size(dst->type, dst->ne[0]);
++        ggml_cuda_pool_alloc<char> packed(ctx.pool(), bytes * dst->ne[1] * dst->ne[3]);
++        for (int64_t token = 0; token < dst->ne[2]; ++token) {
++            ggml_tensor x = *input, y = *dst;
++            x.ne[2] = y.ne[2] = 1;
++            x.data = (char *) input->data + token * input->nb[2];
++            y.nb[1] = bytes;
++            y.nb[2] = y.nb[3] = bytes * y.ne[1];
++            y.data = packed.get();
++            y.src[0] = const_cast<ggml_tensor *>(weight);
++            y.src[1] = &x;
++            auto f = *fusion;
++            ggml_tensor bias, gate_bias;
++            auto slice_bias = [&](const ggml_tensor * t, ggml_tensor & one) -> const ggml_tensor * {
++                if (!t || t->ne[2] == 1) { return t; }
++                GGML_ASSERT(t->ne[2] == dst->ne[2]);
++                one = *t;
++                one.ne[2] = 1;
++                one.data = (char *) t->data + token * t->nb[2];
++                return &one;
++            };
++            f.x_bias = slice_bias(f.x_bias, bias);
++            f.gate_bias = slice_bias(f.gate_bias, gate_bias);
++            ggml_cuda_exact_fused_matvec(quantized, ctx, weight, &x, ids, &y, &f);
++            for (int64_t i3 = 0; i3 < y.ne[3]; ++i3) {
++                for (int64_t row = 0; row < y.ne[1]; ++row) {
++                    CUDA_CHECK(cudaMemcpyAsync(
++                        (char *) dst->data + token * dst->nb[2] + row * dst->nb[1] + i3 * dst->nb[3],
++                        packed.get() + row * y.nb[1] + i3 * y.nb[3],
++                        bytes, cudaMemcpyDeviceToDevice, ctx.stream()));
++                }
++            }
++        }
++        return;
++    }
++    if (!ggml_cuda_exact_cols() || ids || dst->ne[1] < 2 || dst->ne[1] > 8) {
++        launch(input, ids, dst, fusion);
++        return;
++    }
++    const size_t row_bytes = ggml_row_size(dst->type, dst->ne[0]);
++    ggml_cuda_pool_alloc<char> packed(ctx.pool(), row_bytes * dst->ne[2] * dst->ne[3]);
++    for (int64_t col = 0; col < dst->ne[1]; ++col) {
++        ggml_tensor x = *input, y = *dst;
++        x.ne[1] = y.ne[1] = 1;
++        x.data = (char *) input->data + col * input->nb[1];
++        y.nb[1] = y.nb[2] = row_bytes;
++        y.nb[3] = row_bytes * y.ne[2];
++        y.data = packed.get();
++        y.src[0] = const_cast<ggml_tensor *>(weight);
++        y.src[1] = &x;
++        auto f = *fusion;
++        ggml_tensor bias, gate_bias;
++        auto slice_bias = [&](const ggml_tensor * t, ggml_tensor & one) -> const ggml_tensor * {
++            if (!t || t->ne[1] == 1) { return t; }
++            GGML_ASSERT(t->ne[1] == dst->ne[1] && t->ne[2] == 1 && t->ne[3] == 1);
++            one = *t;
++            one.ne[1] = 1;
++            one.data = (char *) t->data + col * t->nb[1];
++            return &one;
++        };
++        f.x_bias = slice_bias(f.x_bias, bias);
++        f.gate_bias = slice_bias(f.gate_bias, gate_bias);
++        GGML_ASSERT(!f.shared_dst);
++        launch(&x, ids, &y, &f);
++        for (int64_t i3 = 0; i3 < y.ne[3]; ++i3) {
++            for (int64_t i2 = 0; i2 < y.ne[2]; ++i2) {
++                CUDA_CHECK(cudaMemcpyAsync(
++                    (char *) dst->data + col * dst->nb[1] + i2 * dst->nb[2] + i3 * dst->nb[3],
++                    packed.get() + i2 * y.nb[2] + i3 * y.nb[3],
++                    row_bytes, cudaMemcpyDeviceToDevice, ctx.stream()));
++            }
++        }
++    }
++}
++
++// Routing uses the same production fused kernel, including singleton tie order.
++static void ggml_cuda_exact_topk_moe(
++        ggml_backend_cuda_context & ctx, const ggml_tensor * logits,
++        ggml_tensor * weights, ggml_tensor * ids, const ggml_tensor * clamp,
++        const ggml_tensor * scale, const ggml_tensor * bias,
++        const ggml_cuda_topk_moe_args & args) {
++    const int64_t n = logits->ne[1];
++    if (!ggml_cuda_exact_cols() || n < 2 || n > 8) {
++        ggml_cuda_op_topk_moe(ctx, logits, weights, ids, clamp, scale, bias, args);
++        return;
++    }
++    GGML_ASSERT(logits->ne[2] == 1 && logits->ne[3] == 1);
++    GGML_ASSERT(weights->ne[2] == n && weights->ne[3] == 1 && ids->ne[1] == n);
++    for (int64_t col = 0; col < n; ++col) {
++        ggml_tensor x = *logits, w = *weights, id = *ids;
++        x.ne[1] = w.ne[2] = id.ne[1] = 1;
++        x.data = (char *) logits->data + col * logits->nb[1];
++        w.data = (char *) weights->data + col * weights->nb[2];
++        id.data = (char *) ids->data + col * ids->nb[1];
++        ggml_cuda_op_topk_moe(ctx, &x, &w, &id, clamp, scale, bias, args);
++    }
++}
++
+ // try and fuse nodes and return the number of nodes to skip
+ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph * cgraph, int i) {
+ 
+@@ -4438,7 +4688,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+             fusion.shared_up = shared->src[1]->src[0];
+             fusion.shared_gate = shared->src[0]->src[0];
+             fusion.shared_dst = shared;
+-            ggml_cuda_mul_mat_vec_q(*cuda_ctx, up->src[0], up->src[1], up->src[2], routed, &fusion);
++            ggml_cuda_exact_fused_matvec(true, *cuda_ctx, up->src[0], up->src[1], up->src[2], routed, &fusion);
+             return 5;
+         }
+     }
+@@ -4539,7 +4789,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+                 if (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
+                         ggml_cuda_should_use_topk_moe(node, logits, weights, ids) &&
+                         ggml_cuda_check_fusion_memory_ranges(cgraph, i, ops.size(), out_nodes, 2, /*is_topk_moe=*/true)) {
+-                    ggml_cuda_op_topk_moe(*cuda_ctx, logits, weights, ids, clamp, scale, bias, args);
++                    ggml_cuda_exact_topk_moe(*cuda_ctx, logits, weights, ids, clamp, scale, bias, args);
+                     return ops.size() - 1;
+                 }
+             } else if (!args.norm && !args.prob_bias) {
+@@ -4554,7 +4804,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+                 if (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
+                         ggml_cuda_should_use_topk_moe(softmax, logits, weights, ids) &&
+                         ggml_cuda_check_fusion_memory_ranges(cgraph, i, ops.size(), out_nodes, 2, /*is_topk_moe=*/true)) {
+-                    ggml_cuda_op_topk_moe(*cuda_ctx, logits, weights, ids, clamp, scale, bias, args);
++                    ggml_cuda_exact_topk_moe(*cuda_ctx, logits, weights, ids, clamp, scale, bias, args);
+                     return ops.size() - 1;
+                 }
+             }
+@@ -4786,7 +5036,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+                 fusion_data.glu_limit  = ggml_get_op_params_f32(glu, 3);
+ 
+                 if (ggml_cuda_should_fuse_mul_mat_vec_q(up_n)) {
+-                    ggml_cuda_mul_mat_vec_q(*cuda_ctx, src0, src1, ids, cgraph->nodes[glu_idx], &fusion_data);
++                    ggml_cuda_exact_fused_matvec(true, *cuda_ctx, src0, src1, ids, cgraph->nodes[glu_idx], &fusion_data);
+                     fused_mul_mat_vec = true;
+                     fused_node_count  = n_ops;
+                     break;
+@@ -4880,7 +5130,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+                 fusion_data.glu_limit  = ggml_get_op_params_f32(glu, 3);
+ 
+                 if (ggml_cuda_should_fuse_mul_mat_vec_q(up_n)) {
+-                    ggml_cuda_mul_mat_vec_q(*cuda_ctx, src0, src1, ids, cgraph->nodes[glu_idx], &fusion_data);
++                    ggml_cuda_exact_fused_matvec(true, *cuda_ctx, src0, src1, ids, cgraph->nodes[glu_idx], &fusion_data);
+                     fused_mul_mat_vec = true;
+                     fused_node_count  = n_ops;
+                     break;
+@@ -4936,7 +5186,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+                 fusion_data.glu_op    = ggml_get_glu_op(glu);
+                 fusion_data.glu_limit = ggml_get_op_params_f32(glu, 3);
+ 
+-                ggml_cuda_mul_mat_vec_f(*cuda_ctx, src0, src1, ids, glu, &fusion_data);
++                ggml_cuda_exact_fused_matvec(false, *cuda_ctx, src0, src1, ids, glu, &fusion_data);
+                 fused_mul_mat_vec = true;
+                 fused_node_count  = 5;
+                 break;
+@@ -4950,7 +5200,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+                 fusion_data.glu_op    = ggml_get_glu_op(glu);
+                 fusion_data.glu_limit = ggml_get_op_params_f32(glu, 3);
+ 
+-                ggml_cuda_mul_mat_vec_q(*cuda_ctx, src0, src1, ids, glu, &fusion_data);
++                ggml_cuda_exact_fused_matvec(true, *cuda_ctx, src0, src1, ids, glu, &fusion_data);
+                 fused_mul_mat_vec = true;
+                 fused_node_count  = 5;
+                 break;
+@@ -4977,7 +5227,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+                 fusion_data.glu_op    = ggml_get_glu_op(glu);
+                 fusion_data.glu_limit = ggml_get_op_params_f32(glu, 3);
+ 
+-                ggml_cuda_mul_mat_vec_f(*cuda_ctx, src0, src1, ids, glu, &fusion_data);
++                ggml_cuda_exact_fused_matvec(false, *cuda_ctx, src0, src1, ids, glu, &fusion_data);
+                 fused_mul_mat_vec = true;
+                 fused_node_count  = 3;
+                 break;
+@@ -4989,7 +5239,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+                 fusion_data.glu_op    = ggml_get_glu_op(glu);
+                 fusion_data.glu_limit = ggml_get_op_params_f32(glu, 3);
+ 
+-                ggml_cuda_mul_mat_vec_q(*cuda_ctx, src0, src1, ids, glu, &fusion_data);
++                ggml_cuda_exact_fused_matvec(true, *cuda_ctx, src0, src1, ids, glu, &fusion_data);
+                 fused_mul_mat_vec = true;
+                 fused_node_count  = 3;
+                 break;
+@@ -5077,7 +5327,7 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+             fusion_data.x_scale = scale;
+ 
+             if (ggml_cuda_should_fuse_mul_mat_vec_q(mm_node)) {
+-                ggml_cuda_mul_mat_vec_q(*cuda_ctx, src0, src1, ids, out_node, &fusion_data);
++                ggml_cuda_exact_fused_matvec(true, *cuda_ctx, src0, src1, ids, out_node, &fusion_data);
+                 fused_mul_mat_vec = true;
+                 fused_node_count  = n_ops;
+                 break;
+@@ -5135,14 +5385,14 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+         fusion_data.x_bias = bias_tensor;
+ 
+         if (ggml_cuda_should_fuse_mul_mat_vec_f(mm_node)) {
+-            ggml_cuda_mul_mat_vec_f(*cuda_ctx, src0, src1, ids, bias_node, &fusion_data);
++            ggml_cuda_exact_fused_matvec(false, *cuda_ctx, src0, src1, ids, bias_node, &fusion_data);
+             fused_mul_mat_vec = true;
+             fused_node_count  = 2;
+             break;
+         }
+ 
+         if (ggml_cuda_should_fuse_mul_mat_vec_q(mm_node)) {
+-            ggml_cuda_mul_mat_vec_q(*cuda_ctx, src0, src1, ids, bias_node, &fusion_data);
++            ggml_cuda_exact_fused_matvec(true, *cuda_ctx, src0, src1, ids, bias_node, &fusion_data);
+             fused_mul_mat_vec = true;
+             fused_node_count  = 2;
+             break;

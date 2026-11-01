@@ -1,0 +1,74 @@
+diff --git a/ggml/src/ggml-cuda/softmax.cu b/ggml/src/ggml-cuda/softmax.cu
+index f320c6f..fa3b563 100644
+--- a/ggml/src/ggml-cuda/softmax.cu
++++ b/ggml/src/ggml-cuda/softmax.cu
+@@ -10,6 +10,7 @@
+ #endif // GGML_USE_HIP
+ 
+ #include <cstdint>
++#include <cstdlib>
+ #include <utility>
+ 
+ template <typename T>
+@@ -346,6 +347,24 @@ static void soft_max_f32_cuda(const float *                                x,
+     const size_t smpbo = ggml_cuda_info().devices[id].smpbo;
+ 
+ 
++    // Wide unmasked rows can otherwise cross the cooperative-launch threshold as N changes.
++    static const bool exact_cols = [] {
++        const char * value = std::getenv("GGML_CUDA_EXACT_COLS");
++        return value && value[0] == '1' && value[1] == '\0';
++    }();
++    const int64_t nrows = params.ne01 * params.ne02 * params.ne03;
++    if (exact_cols && nrows > 1 && nbytes_shared > smpbo && ncols_x > 8192 &&
++        ggml_cuda_info().devices[id].supports_cooperative_launch &&
++        mask == nullptr && sinks == nullptr && params.scale == 1.0f && params.max_bias == 0.0f) {
++        soft_max_params row_params = params;
++        row_params.ne01 = row_params.ne02 = row_params.ne03 = 1;
++        row_params.nrows_x = row_params.nrows_y = 1;
++        for (int64_t row = 0; row < nrows; ++row) {
++            soft_max_f32_cuda(x + row*ncols_x, mask, sinks, dst + row*ncols_x, row_params, stream, ctx);
++        }
++        return;
++    }
++
+     if (nbytes_shared <= smpbo) {
+         launch_soft_max_kernels<32, 64, 128, 256, 512, 1024, 2048, 4096>(x, mask, sinks, dst, params, stream, block_dims, block_nums, nbytes_shared);
+     } else {
+diff --git a/ggml/src/ggml-cuda/sumrows.cu b/ggml/src/ggml-cuda/sumrows.cu
+index aa8342b..c7f5290 100644
+--- a/ggml/src/ggml-cuda/sumrows.cu
++++ b/ggml/src/ggml-cuda/sumrows.cu
+@@ -1,11 +1,21 @@
+ #include "reduce_rows.cuh"
+ #include "sumrows.cuh"
++#include <cstdlib>
++
++static bool sum_rows_exact_cols() {
++    static const bool enabled = [] {
++        const char * value = std::getenv("GGML_CUDA_EXACT_COLS");
++        return value && value[0] == '1' && value[1] == '\0';
++    }();
++    return enabled;
++}
+ 
+ void sum_rows_f32_cuda(const float * x, float * dst, const int ncols, const int nrows, cudaStream_t stream) {
+     const int  id  = ggml_cuda_get_device();
+     const int  nsm = ggml_cuda_info().devices[id].nsm;
+     const dim3 block_nums(nrows, 1, 1);
+-    if ((nrows / nsm) < 2) {
++    // Keep the singleton reduction tree, including for strided rows.
++    if ((nrows > 1 && sum_rows_exact_cols()) || (nrows / nsm) < 2) {
+         const dim3 block_dims(512, 1, 1);
+         const ggml_cuda_kernel_launch_params launch_params = ggml_cuda_kernel_launch_params(block_nums, block_dims, 0, stream);
+         ggml_cuda_kernel_launch(reduce_rows_f32</*norm=*/false>, launch_params, x, dst, ncols);
+@@ -39,7 +49,8 @@ void ggml_cuda_op_sum_rows(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+     const int id  = ggml_cuda_get_device();
+     const int nsm = ggml_cuda_info().devices[id].nsm;
+     dim3 block_dims;
+-    if ((nrows / nsm) < 2) {
++    // Keep the singleton reduction tree, including for strided rows.
++    if ((nrows > 1 && sum_rows_exact_cols()) || (nrows / nsm) < 2) {
+         // Increase num threads to 512 for small nrows to better hide the latency
+         block_dims = dim3(512, 1, 1);
+     } else {

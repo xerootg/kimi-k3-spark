@@ -1,0 +1,43 @@
+# manifest-exact.diff v2 — NOT FOR ROLLOUT until fd9 passes
+--- a/configs/kimi-k3/glm53-spark.yaml
++++ b/configs/kimi-k3/glm53-spark.yaml
+@@ -74,12 +74,13 @@
+             - 0.0.0.0
+             - --port
+             - "8080"
+-            # One slot of 64k: MLA KV is ~90 KB per token here, and RAM is the
+-            # expert cache. Raise once the remote tier takes experts off the box.
++            # Exact N=2: 65536 total context, 32768 per slot. Requires an image
++            # rebuilt from this full seven-patch exact stack; retain fusion.
++            # NOT FOR ROLLOUT until fd9 gold/timing/throughput gates pass.
+             - --ctx-size
+             - "65536"
+             - --parallel
+-            - "1"
++            - "2"
+             - --batch-size
+             - "2048"
+             # Prefill passes over the expert store once per ubatch, so the
+@@ -121,6 +122,22 @@
+             - -lv
+             - "4"
+           env:
++            # Exact per-sequence arithmetic and isolated prefill (all six knobs).
++            # 0030 splits expert columns; 0031/0033 preserve singleton kernels;
++            # 0034 uses stream extents; 0035 isolates prompts; 0036/37 rows/guards.
++            # ARGSORT knob is inert in v4; prefill ~2x cost awaits a fix.
++            - name: GGML_CUDA_EXACT_COLS
++              value: "1"
++            - name: GGML_CUDA_MMVQ_EXACT_COLS
++              value: "1"
++            - name: LLAMA_EXACT_ATTN_COLS
++              value: "1"
++            - name: GGML_CUDA_ARGSORT_EXACT_ROWS
++              value: "1"
++            - name: LLAMA_EXPERT_STORE_SPLIT_COLS
++              value: "1"
++            - name: LLAMA_PREFILL_ISOLATE
++              value: "1"
+             - name: LLAMA_LOG_COLORS
+               value: "0"
+             - name: LLAMA_EXPERT_STORE

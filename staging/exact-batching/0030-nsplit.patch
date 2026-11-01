@@ -1,0 +1,395 @@
+diff --git a/ggml/src/ggml-cuda/mmvq.cu b/ggml/src/ggml-cuda/mmvq.cu
+index 4c2f239..ba46885 100644
+--- a/ggml/src/ggml-cuda/mmvq.cu
++++ b/ggml/src/ggml-cuda/mmvq.cu
+@@ -1963,6 +1963,20 @@ void ggml_cuda_mul_mat_vec_q(
+ 
+     const int64_t ids_stride = ids ? ids->nb[1] / ggml_type_size(ids->type) : 0;
+ 
++    static const bool split_cols = [] { const char * e = getenv("LLAMA_EXPERT_STORE_SPLIT_COLS"); return e && strcmp(e, "1") == 0; }();
++    if (split_cols && ids && zero_slot >= 0 && zero_slot == ne02 - 1 && ncols_dst > 1 && ncols_dst <= 8) {
++        GGML_ASSERT(!fusion_local.shared_up && ne03 == 1 && ne3 == 1);
++        for (int64_t col = 0; col < ncols_dst; ++col) {
++            mul_mat_vec_q_switch_type(
++                src0->data, src0->type, src1_q8_1.get() + col*stride_col_y*sizeof(block_q8_1),
++                ids_d + col*ids_stride, fusion_local, dst_d + col*stride_col_dst, ne00,
++                ne01, 1, s01, stride_col_y, stride_col_dst,
++                ne02, nchannels_y, nchannels_dst, s02, stride_channel_y, stride_channel_dst,
++                ne03, ne3, s03, s13, s3, ids_stride, stream);
++        }
++        return;
++    }
++
+     mul_mat_vec_q_switch_type(
+         src0->data, src0->type, src1_q8_1.get(), ids_d, fusion_local, dst_d, ne00,
+         ne01,              ncols_dst,     s01, stride_col_y,     stride_col_dst,
+diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
+index 7a7236f..000550f 100644
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@ -2538,15 +2538,15 @@ ggml_tensor * llm_graph_context::build_moe_ffn(
+         }
+         ggml_tensor * e_late = run_experts(cur, split_late); // [n_embd, n_late, 1]
+         moe_split_bank = false;
+-        ggml_tensor * e17 = ggml_reshape_2d(ctx0, e_early, n_embd, n_expert_used + 1);
+-        ggml_tensor * e16 = ggml_reshape_2d(ctx0, e_late,  n_embd, split_late->ne[0]);
++        ggml_tensor * e17 = ggml_reshape_2d(ctx0, e_early, n_embd, (n_expert_used + 1)*n_tokens);
++        ggml_tensor * e16 = ggml_reshape_2d(ctx0, e_late,  n_embd, ggml_nelements(split_late));
+         ggml_tensor * merged = ggml_set_rows(ctx0, e17, e16, split_merge); // in place in e17
+         if (split_rrows != nullptr) {
+             // remote experts: their rows came back from the remote server (or, on a deadline miss, the late matmul
+             // computed them and every remote merge position is the scratch row)
+             merged = ggml_set_rows(ctx0, merged, split_rrows, split_rmerge);
+         }
+-        experts = ggml_view_3d(ctx0, merged, n_embd, n_expert_used, 1, merged->nb[1], merged->nb[1]*n_expert_used, 0);
++        experts = ggml_view_3d(ctx0, merged, n_embd, n_expert_used, n_tokens, merged->nb[1], merged->nb[1]*(n_expert_used + (n_tokens > 1 ? 1 : 0)), 0);
+         cb(experts, "ffn_moe_down_merged", il);
+     } else {
+         experts = run_experts(cur, slots);
+@@ -2627,7 +2627,34 @@ ggml_tensor * llm_graph_context::build_moe_cache_slots(
+     // not need the routed experts and the early matmuls run while the misses are read; the real lookup (late map),
+     // left in moe_split_late for build_moe_ffn, waits for them and yields the misses' slots.
+     ggml_tensor * early_map = moe_split_allowed ? moe_cache->get_split_map(il, selected_experts->ne[1], 1) : nullptr;
+-    if (early_map != nullptr) {
++    if (early_map != nullptr && selected_experts->ne[1] > 1) {
++        const int64_t nc = selected_experts->ne[1];
++        const int64_t nk = selected_experts->ne[0];
++        ggml_tensor * early = ggml_get_rows(ctx0, early_map, ids);
++        ggml_tensor * late = ggml_get_rows(ctx0, moe_cache->get_split_map(il, nc, 2), ids);
++        ggml_tensor * pos = ggml_view_1d(ctx0, moe_cache->get_split_map(il, nc, 5), nk*nc, 0);
++        ggml_tensor * merge = ggml_get_rows(ctx0, moe_cache->get_split_map(il, nc, 3), pos);
++        if (ggml_backend_supports_op(moe_cache->backend(il), early) && ggml_backend_supports_op(moe_cache->backend(il), late)) {
++            ggml_format_name(early, "moe_early-%d", il);
++            ggml_backend_sched_set_tensor_backend(sched, early, moe_cache->backend(il));
++            ggml_build_forward_expand(gf, early);
++            for (ggml_tensor * t : moe_overlap) { ggml_build_forward_expand(gf, t); }
++            moe_overlap.clear();
++            early = ggml_reshape_2d(ctx0, early, nk, nc);
++            ggml_tensor * dummy = ggml_repeat_4d(ctx0, moe_cache->get_split_map(il, nc, 4), 1, nc, 1, 1);
++            ggml_tensor * early_ids = ggml_concat(ctx0, early, dummy, 0);
++            ggml_backend_sched_set_tensor_backend(sched, early_ids, moe_cache->backend(il));
++            cb(late, "ffn_moe_slots", il);
++            ggml_backend_sched_set_tensor_backend(sched, late, moe_cache->backend(il));
++            ggml_format_name(merge, "moe_nowait_merge-%d", il);
++            ggml_backend_sched_set_tensor_backend(sched, merge, moe_cache->backend(il));
++            moe_split_late = ggml_reshape_2d(ctx0, late, nk, nc);
++            moe_split_merge = ggml_reshape_1d(ctx0, merge, nk*nc);
++            moe_split_pf = pf_next;
++            return early_ids;
++        }
++    }
++    if (early_map != nullptr && selected_experts->ne[1] == 1) {
+         const int64_t n_late = moe_cache->split_late_rows();
+         ggml_tensor * early = ggml_get_rows(ctx0, early_map, ids); // [1, n_expert_used]
+         ggml_tensor * pos   = ggml_view_1d(ctx0, moe_cache->get_split_map(il, 1, 5), n_late, 0); // 0, 1, ..., n_late - 1
+@@ -2740,8 +2767,8 @@ llama_expert_gating_func_type gating_op,
+         router_in = router_in_alt;
+     }
+     const int64_t n_tok = router_in->ne[1];
+-    if (n_tok != 1) {
+-        return; // predictions are only valid for single-token decode
++    if (n_tok != 1 && moe_cache->get_split_map(il_next, n_tok, 1) == nullptr) {
++        return;
+     }
+     ggml_tensor * slot_map = moe_cache->get_slot_map(il_next, n_tok, n_expert_used);
+     if (slot_map == nullptr) {
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index c7aaf65..8163978 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -129,6 +129,19 @@ static void store_pin_thread() {
+     }
+ }
+ 
++// Stable union preserves the first column's prediction priority.
++static size_t store_split_union(const int32_t * ids, size_t n, int32_t * out, size_t cap, int32_t n_expert) {
++    size_t used = 0;
++    for (size_t i = 0; i < n; ++i) {
++        GGML_ASSERT(ids[i] >= 0 && ids[i] < n_expert);
++        if (std::find(out, out + used, ids[i]) == out + used) {
++            GGML_ASSERT(used < cap);
++            out[used++] = ids[i];
++        }
++    }
++    return used;
++}
++
+ // LRU of the experts of a group of layers, the slot of each expert is kept in the slot map of its layer
+ struct moe_cache_lru {
+     int32_t n_expert = 0;
+@@ -2139,6 +2152,8 @@ struct llama_moe_cache::impl {
+         // lookup (the rest the zero record); by position j < split_late_max, the slot of the j-th miss (the rest the
+         // zero record) and the row it takes in the merge (its position among the selected experts; n_expert_used,
+         // the scratch row, for the zero record)
++        ggml_tensor * cols_late = nullptr;
++        ggml_tensor * cols_merge = nullptr;
+         ggml_tensor * early_map = nullptr;  // I32 [1, n_expert], by expert
+         ggml_tensor * late_map  = nullptr;  // I32 [1, n_expert], by position
+         ggml_tensor * merge_map = nullptr;  // I32 [1, n_expert], by position
+@@ -2259,6 +2274,11 @@ struct llama_moe_cache::impl {
+     bool     split     = false;      // and the configuration allows it
+     std::unordered_map<const ggml_tensor *, int32_t> map_kind; // early/late/merge map -> 1/2/3 (slot maps are absent)
+     int32_t  split_il  = -1;         // layer of the early lookup whose reads are in flight (-1: none)
++    bool split_cols = [] { const char * e = getenv("LLAMA_EXPERT_STORE_SPLIT_COLS"); return e && strcmp(e, "1") == 0; }();
++    uint64_t cols_calls[9] = {}, cols_union = 0, cols_reads = 0;
++    int32_t cols_ids[8*8] = {};
++    int32_t cols_predict[8*12] = {};
++    ggml_tensor * cols_iota = nullptr;
+     int      split_late_max = 8;     // LLAMA_EXPERT_STORE_SPLIT_LATE: rows of the late matmul; more misses than this make the early lookup wait
+     std::vector<int32_t> split_ids;  // the selected experts of the early lookup, in position order
+     ggml_tensor * split_iota = nullptr; // I32 [1, n_expert_used] = 0, 1, ...: the ids of the late and merge lookups (position-indexed maps)
+@@ -3419,7 +3439,7 @@ struct llama_moe_cache::impl {
+             }
+             n_tensors_host  += g.layers.size()*(prefill_bank ? 2 : 1);
+             if (split_req && use_store) {
+-                n_tensors_host += 3*g.layers.size() + 2; // early, late and merge maps, the zero record's slot, the iota
++                n_tensors_host += (split_cols ? 5 : 3)*g.layers.size() + (split_cols ? 3 : 2); // early, late and merge maps, the zero record's slot, the iota
+                 for (int32_t il : g.layers) {
+                     n_tensors_host += layer_has_remote(il) ? 4 : 0; // remote post map, input, rows, merge map
+                 }
+@@ -3542,7 +3562,7 @@ struct llama_moe_cache::impl {
+                         ggml_backend_view_init(cached_split);
+                         bindings[l.experts[ip]].cached_split = cached_split;
+                         const char * skip_zero = getenv("LLAMA_EXPERT_STORE_SPLIT_SKIP_ZERO");
+-                        if (skip_zero != nullptr && strcmp(skip_zero, "1") == 0) {
++                        if (split_cols || (skip_zero != nullptr && strcmp(skip_zero, "1") == 0)) {
+                             // src0 op_params[8]: zero slot + 1; CUDA mmvq only, ordinary banks stay unmarked.
+                             cached_split->op_params[8] = g.n_slots + 1;
+                         }
+@@ -3568,6 +3588,22 @@ struct llama_moe_cache::impl {
+                         map_kind[*maps[k]] = k + 1;
+                         buf_host_size += GGML_PAD(ggml_nbytes(*maps[k]), alignment_host);
+                     }
++                    if (split_cols) {
++                        l.cols_late = ggml_new_tensor_2d(ctx_host.get(), GGML_TYPE_I32, 1, g.ref[0]->ne[2]);
++                        l.cols_merge = ggml_new_tensor_2d(ctx_host.get(), GGML_TYPE_I32, 1, 8*8);
++                        ggml_format_name(l.cols_late, "moe_cache.cols_late-%d", il);
++                        ggml_format_name(l.cols_merge, "moe_cache.cols_merge-%d", il);
++                        layer_of[l.cols_late] = layer_of[l.cols_merge] = il;
++                        map_kind[l.cols_late] = 2;
++                        map_kind[l.cols_merge] = 3;
++                        buf_host_size += GGML_PAD(ggml_nbytes(l.cols_late), alignment_host);
++                        buf_host_size += GGML_PAD(ggml_nbytes(l.cols_merge), alignment_host);
++                        if (cols_iota == nullptr) {
++                            cols_iota = ggml_new_tensor_1d(ctx_host.get(), GGML_TYPE_I32, 8*8);
++                            ggml_format_name(cols_iota, "moe_cache.cols_iota");
++                            buf_host_size += GGML_PAD(ggml_nbytes(cols_iota), alignment_host);
++                        }
++                    }
+                     if (g.dummy_const == nullptr) {
+                         g.dummy_const = ggml_new_tensor_2d(ctx_host.get(), GGML_TYPE_I32, 1, 1);
+                         ggml_format_name(g.dummy_const, "moe_cache.dummy_slot-%zu", ig);
+@@ -3715,6 +3751,20 @@ struct llama_moe_cache::impl {
+                     ggml_backend_tensor_set(split_iota, io.data(), 0, ggml_nbytes(split_iota));
+                 }
+                 split_miss.assign((size_t) store.n_expert, 0);
++                if (split_cols) {
++                    if (n_expert_used != 8) {
++                        throw std::runtime_error("LLAMA_EXPERT_STORE_SPLIT_COLS requires 8 selected experts");
++                    }
++                    int32_t io[8*8];
++                    for (int i = 0; i < 8*8; ++i) { io[i] = i; }
++                    ggml_backend_tensor_set(cols_iota, io, 0, sizeof(io));
++                    split_ids.reserve(8*8);
++                    fills.reserve(8*12);
++                    jobs.reserve(8*12);
++                    filler.jobs.reserve(8*8);
++                    for (group & g : groups) { g.lru.uniq.reserve(8*12); }
++                    LLAMA_LOG_INFO("%s: split columns enabled, N <= 8, union reads, one-column MMVQ launches\n", __func__);
++                }
+                 if (getenv("LLAMA_EXPERT_STORE_SPLIT_LATE") != nullptr) {
+                     split_late_max = std::min(std::max(1, atoi(getenv("LLAMA_EXPERT_STORE_SPLIT_LATE"))), n_expert_used);
+                 }
+@@ -3888,6 +3938,11 @@ struct llama_moe_cache::impl {
+                 prefetched.assign(model.layers.size()*(size_t) store.n_expert, 0);
+                 spec_ids.assign(model.layers.size(), {});
+                 prediction_ids.assign(model.layers.size(), {});
++                if (split_cols) {
++                    for (auto & v : prediction_ids) { v.reserve(8*12); }
++                    for (auto & v : spec_ids) { v.reserve(store.n_expert); }
++                    spec_recs.reserve(8*12);
++                }
+                 if (getenv("LLAMA_EXPERT_STORE_PREFETCH_DEPTH") != nullptr) {
+                     spec_depth = (unsigned) std::max(1, atoi(getenv("LLAMA_EXPERT_STORE_PREFETCH_DEPTH")));
+                 }
+@@ -4493,6 +4548,55 @@ struct llama_moe_cache::impl {
+         t_fill_io_us   = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+     }
+ 
++    // Plan the union once; each column keeps its own merge positions and scratch row.
++    void fill_early_cols(int32_t il, const int32_t * ids_data, size_t n_ids) {
++        lock_memory_once();
++        GGML_ASSERT(split_cols && n_ids > 8 && n_ids <= 8*8 && n_ids % 8 == 0);
++        layer & l = layers[il];
++        group & g = groups[l.ig];
++        if (split_il >= 0) {
++            filler.wait();
++            if (filler.failed.load()) { GGML_ABORT("expert store: split columns read failed"); }
++            fill_adopt(split_il);
++            split_il = -1;
++            n_split_fallback++;
++        }
++        const auto t0 = std::chrono::steady_clock::now();
++        const size_t n_union = store_split_union(ids_data, n_ids, cols_ids, 8*8, store.n_expert);
++        prediction_measure(il, cols_ids, n_union);
++        size_t n_hit = 0;
++        fill_plan(il, cols_ids, n_union, true, n_hit);
++        split_ids.assign(cols_ids, cols_ids + n_union);
++        for (const auto & f : fills) { split_miss[f.expert] = 1; }
++        int32_t * early = (int32_t *) l.early_map->data;
++        int32_t * late = (int32_t *) l.cols_late->data;
++        int32_t * merge = (int32_t *) l.cols_merge->data;
++        size_t missing = 0;
++        for (size_t i = 0; i < n_union; ++i) {
++            const int32_t x = cols_ids[i];
++            const int32_t slot = g.lru.slot_map[il][x];
++            const bool miss = split_miss[x] || (spec_ok() && g.spec_state[slot].load(std::memory_order_acquire) != 0);
++            early[x] = miss ? g.n_slots : slot;
++            late[x] = miss ? slot : g.n_slots;
++            missing += miss;
++            split_miss[x] = 0;
++        }
++        for (size_t i = 0; i < n_ids; ++i) {
++            const size_t col = i/8;
++            merge[i] = (int32_t) (col*9 + (late[ids_data[i]] != g.n_slots ? i%8 : 8));
++        }
++        remote_il = -1;
++        cols_calls[n_ids/8]++;
++        cols_union += n_union;
++        cols_reads += jobs.size();
++        n_split_early_hits += n_union - missing;
++        n_split_late += missing;
++        n_split_calls++;
++        if (!jobs.empty()) { filler.submit(store.fd, jobs); }
++        split_il = il;
++        t_split_plan_us += std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - t0).count();
++    }
++
+     // the early lookup of the split GEMV ("moe_early-<il>", single-token decode): plan the fill, publish which
+     // selected experts are complete in the bank (early map, by expert: their slot, the others the zero record), the
+     // misses' slots and merge rows (late and merge maps, by position; the GPU reads them only after the real lookup),
+@@ -4500,6 +4604,10 @@ struct llama_moe_cache::impl {
+     // are read. Experts the speculative reader is still writing count as misses and are adopted by the real lookup.
+     // More misses than the late matmul has rows: the reads run here, synchronously, and every expert is complete.
+     void fill_early(int32_t il, const int32_t * ids_data, size_t n_ids) {
++        if (split_cols && n_ids > (size_t) n_expert_used) {
++            fill_early_cols(il, ids_data, n_ids);
++            return;
++        }
+         lock_memory_once();
+         layer & l = layers[il];
+         group & g = groups[l.ig];
+@@ -4996,12 +5104,12 @@ struct llama_moe_cache::impl {
+         if (!prefetch || prediction_ids[il].empty()) {
+             return;
+         }
+-        GGML_ASSERT(n_ids == (size_t) n_expert_used);
++        GGML_ASSERT(n_ids == (size_t) n_expert_used || (split_cols && n_ids > (size_t) n_expert_used && n_ids <= 8*8));
+         const auto & predicted = prediction_ids[il];
+         n_prediction_pairs++;
+-        n_prediction_ids += predicted.size();
+-        for (int32_t x : predicted) {
+-            n_prediction_hits += std::find(ids_data, ids_data + n_ids, x) != ids_data + n_ids;
++        n_prediction_ids += n_ids; // Recall of the actual selection, also for column unions.
++        for (size_t i = 0; i < n_ids; ++i) {
++            n_prediction_hits += std::find(predicted.begin(), predicted.end(), ids_data[i]) != predicted.end();
+         }
+         prediction_ids[il].clear();
+     }
+@@ -5099,7 +5207,9 @@ struct llama_moe_cache::impl {
+     // real fill and are far from the eviction end, so the reads cannot land in a slot the GPU is reading.
+     void prefetch_decode(int32_t il, const int32_t * ids_data, size_t n_ids) {
+         la_finish();
+-        if (n_ids != (size_t) n_expert_used) {
++        const size_t n_predict = (size_t) n_expert_used;
++        const bool columns = split_cols && n_ids > n_predict && n_ids <= 8*n_predict && n_ids % n_predict == 0;
++        if (n_ids != n_predict && !columns) {
+             prediction_discard();
+             return;
+         }
+@@ -5112,6 +5222,11 @@ struct llama_moe_cache::impl {
+         if (e == nullptr || g.region == nullptr) {
+             return;
+         }
++        const size_t predict_cap = (size_t) spec_max * (columns ? n_ids/n_predict : 1);
++        if (columns) {
++            n_ids = store_split_union(ids_data, n_ids, cols_predict, 8*12, store.n_expert);
++            ids_data = cols_predict;
++        }
+         prediction_ids[il].assign(ids_data, ids_data + n_ids);
+         spec_reclaim(); // a prediction not started by now is stale
+         if (remote_on() && !remote_shadow && l.rpost_map != nullptr) {
+@@ -5172,7 +5287,7 @@ struct llama_moe_cache::impl {
+             }
+             return n_ids;
+         };
+-        if (store_hook_lean() && fills.size() <= 8) {
++        if ((split_cols && fills.size() <= 8*12) || (store_hook_lean() && fills.size() <= 8)) {
+             // Keep the same stable order without stable_sort's temporary allocation.
+             for (size_t i = 1; i < fills.size(); ++i) {
+                 const auto f = fills[i];
+@@ -5186,7 +5301,7 @@ struct llama_moe_cache::impl {
+         } else {
+             std::stable_sort(fills.begin(), fills.end(), [&](const moe_cache_lru::fill & a, const moe_cache_lru::fill & b) { return rank(a.expert) < rank(b.expert); });
+         }
+-        while (fills.size() > (size_t) spec_max) {
++        while (fills.size() > predict_cap) {
+             const moe_cache_lru::fill & f = fills.back();
+             g.lru.slot_map[il][f.expert] = -1;
+             g.lru.key_of[f.slot] = -1;
+@@ -5440,6 +5555,11 @@ struct llama_moe_cache::impl {
+             LLAMA_LOG_INFO("%s: expert store: HBM tier: %.1f%% of decode lookups served from it, %llu promotions (%.3f ms each)\n", func,
+                 100.0*n_hbm_lookups/n_lookups, (unsigned long long) n_promotions, n_promotions ? t_promote_us/1e3/n_promotions : 0.0);
+         }
++        if (split_cols) {
++            LLAMA_LOG_INFO("%s: split columns: N2=%llu N3=%llu N4=%llu N5=%llu N6=%llu N7=%llu N8=%llu ubatch layers, union=%llu experts, reads=%llu distinct missing records; MMVQ one-column dispatch\n", func,
++                (unsigned long long) cols_calls[2], (unsigned long long) cols_calls[3], (unsigned long long) cols_calls[4], (unsigned long long) cols_calls[5], (unsigned long long) cols_calls[6], (unsigned long long) cols_calls[7], (unsigned long long) cols_calls[8],
++                (unsigned long long) cols_union, (unsigned long long) cols_reads);
++        }
+         if (split && n_split_calls > 0) {
+             LLAMA_LOG_INFO("%s: expert store: split GEMV: %llu early lookups, %.1f of %d experts complete at the early lookup, %.2f read under the early matmul (%d rows), %llu lookups with more misses (%.2f records read at the early lookup), plan %.3f ms, wait at the real lookup %.2f ms, %llu early lookups without a real one\n", func,
+                 (unsigned long long) n_split_calls, (double) n_split_early_hits/n_split_calls, n_expert_used, (double) n_split_late/n_split_calls, split_late_max,
+@@ -5618,10 +5738,20 @@ struct llama_moe_cache::impl {
+     // the maps of the split GEMV for a single-token decode of layer il (kind 1 early, 2 late, 3 merge, 4 the group's
+     // zero-record slot), nullptr if the split does not apply
+     ggml_tensor * get_split_map(int32_t il, int64_t n_tokens, int kind) const {
+-        if (!split || n_tokens != 1 || il < 0 || il >= (int32_t) layers.size() || layers[il].ig < 0) {
++        if (!split || n_tokens < 1 || (n_tokens != 1 && (!split_cols || n_tokens > 8 || n_expert_used != 8 || remote_on())) || il < 0 || il >= (int32_t) layers.size() || layers[il].ig < 0) {
+             return nullptr;
+         }
+         const layer & l = layers[il];
++        if (n_tokens > 1) {
++            switch (kind) {
++                case 1: return l.early_map;
++                case 2: return l.cols_late;
++                case 3: return l.cols_merge;
++                case 4: return groups[l.ig].dummy_const;
++                case 5: return cols_iota;
++                default: return nullptr;
++            }
++        }
+         switch (kind) {
+             case 1: return l.early_map;
+             case 2: return l.late_map;
+diff --git a/src/models/glm-dsa.cpp b/src/models/glm-dsa.cpp
+index 485724e..aeea3c7 100644
+--- a/src/models/glm-dsa.cpp
++++ b/src/models/glm-dsa.cpp
+@@ -464,7 +464,7 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
+ 
+             moe_overlap.clear();
+             moe_split_partial_cb = nullptr;
+-            if (moe_cache != nullptr && moe_cache->prefetch_enabled() && cur->ne[1] == 1 && il + 1 < n_layer &&
++            if (moe_cache != nullptr && moe_cache->prefetch_enabled() && (cur->ne[1] == 1 || moe_cache->get_split_map(il, cur->ne[1], 1) != nullptr) && il + 1 < n_layer &&
+                     model.layers[il + 1].ffn_gate_inp != nullptr) {
+                 moe_overlap.push_back(ffn_shexp);
+                 const int mode = moe_cache->prefetch_input();
+@@ -486,7 +486,7 @@ llama_model_glm_dsa::graph::graph(const llama_model & model, const llm_graph_par
+                 };
+                 // Keep the fallback if the cache cannot use the split path for this layer.
+                 moe_prefetch_node = predict(nullptr);
+-                if (mode == 3 && moe_cache->split_enabled() && cur->ne[1] == 1) {
++                if (mode == 3 && moe_cache->split_enabled() && (cur->ne[1] == 1 || moe_cache->get_split_map(il, cur->ne[1], 1) != nullptr)) {
+                     moe_split_partial_cb = predict;
+                 }
+             }

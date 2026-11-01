@@ -1,0 +1,60 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index a18b754..3ebdab9 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -20,6 +20,7 @@
+ 
+ #include <algorithm>
+ #include <cstddef>
++#include <cstdlib>
+ #include <cinttypes>
+ #include <exception>
+ #include <memory>
+@@ -3438,12 +3439,34 @@ private:
+         // track if given slot can be batched with slots already in the batch
+         auto & slot_batched = batch.slot_batched;
+ 
++        // Opt-in exact prefill: select before collecting any decode/draft tokens.
++        // Continue an in-flight prompt before starting another one. Each batch
++        // then has the same capacity and split origin as a standalone request.
++        static const bool prefill_isolate = []() {
++            const char * value = std::getenv("LLAMA_PREFILL_ISOLATE");
++            return value && std::string(value) == "1";
++        }();
++        server_slot * slot_prefill = nullptr;
++        if (prefill_isolate) {
++            for (auto state : { SLOT_STATE_PROCESSING_PROMPT, SLOT_STATE_STARTED }) {
++                for (auto & slot : slots) {
++                    if (slot.state == state) {
++                        slot_prefill = &slot;
++                        break;
++                    }
++                }
++                if (slot_prefill) {
++                    break;
++                }
++            }
++        }
++
+         std::vector<server_slot *> generating;
+         std::vector<server_slot *> drafting;
+ 
+         // determine which slots are generating and drafting
+         iterate(slots, [&](server_slot & slot) {
+-            if (slot.state != SLOT_STATE_GENERATING) {
++            if (slot_prefill || slot.state != SLOT_STATE_GENERATING) {
+                 return;
+             }
+ 
+@@ -3581,6 +3604,11 @@ private:
+             bool add_ok = true; // false means the batch is full, skip remaining slots
+ 
+             iterate(slots, [&](server_slot & slot) {
++                // A prompt owns the entire batch, including its final token.
++                // With no pending prompt the usual decode batching is unchanged.
++                if (slot_prefill && slot_prefill != &slot) {
++                    return;
++                }
+                 if (!add_ok || batch.size() >= n_batch) {
+                     return; // batch is full, skip remaining slots
+                 }
