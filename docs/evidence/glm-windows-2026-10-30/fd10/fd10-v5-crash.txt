@@ -1,0 +1,17 @@
+1.13.611.624 I impl:  3 layers, iq4_xs:   287 slots (37.4%), 0 of them on the HBM node, stride 13959168 B (bytes)
+1.13.611.630 I sched_reserve: reserving ...
+1.13.613.666 I resolve_fused_ops: resolving fused DeepSeek V4 HC support:
+1.13.616.057 W ggml_new_object: not enough space in the context's memory pool (needed 5875232, available 5874864)
+/home/xero/llama-k3-fd9/ggml/src/ggml.c:1825: GGML_ASSERT(obj_new) failed
+[New LWP 1043215]
+[New LWP 1042315]
+#2  0x0000e3caa4f3365c in ggml_abort () from /home/xero/llama-k3-fd9/build-fd4/bin/libggml-base.so.0
+#3  0x0000e3caa4f3452c in ggml_new_tensor_impl.constprop () from /home/xero/llama-k3-fd9/build-fd4/bin/libggml-base.so.0
+#4  0x0000e3caa4f3aefc in ggml_view_4d () from /home/xero/llama-k3-fd9/build-fd4/bin/libggml-base.so.0
+#5  0x0000e3caa5271cb8 in llm_graph_context::build_attn_mha(ggml_tensor*, ggml_tensor*, ggml_tensor*, ggml_tensor*, ggml_tensor*, ggml_tensor*, ggml_tensor*, lo
+#6  0x0000e3caa5275830 in llm_graph_context::build_attn(llm_graph_input_attn_k_dsa*, ggml_tensor*, ggml_tensor*, ggml_tensor*, ggml_tensor*, ggml_tensor*, ggml_
+#7  0x0000e3caa51b20e0 in llama_model_glm_dsa::graph::graph(llama_model const&, llm_graph_params const&) () from /home/xero/llama-k3-fd9/build-fd4/bin/libllama.
+#8  0x0000e3caa51b3144 in llama_model_glm_dsa::build_arch_graph(llm_graph_params const&) const () from /home/xero/llama-k3-fd9/build-fd4/bin/libllama.so.0
+#9  0x0000e3caa533571c in llama_model::build_graph(llm_graph_params const&) const () from /home/xero/llama-k3-fd9/build-fd4/bin/libllama.so.0
+#10 0x0000e3caa52324c4 in llama_context::graph_reserve(unsigned int, unsigned int, unsigned int, llama_memory_context_i const*, bool, unsigned long*) () from /h
+#11 0x0000e3caa5233fc0 in llama_context::resolve_fused_ops(llama_memory_context_i const*, unsigned int) () from /home/xero/llama-k3-fd9/build-fd4/bin/libllama.s

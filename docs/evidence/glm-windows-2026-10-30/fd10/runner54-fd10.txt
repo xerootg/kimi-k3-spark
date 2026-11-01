@@ -1,0 +1,13 @@
+=== window fd10 00:29
+FIRST-COMPUTE-DIVERGENCE column=0: none among aligned observed compute pairs; see SUMMARY for alignment/output failures
+SUMMARY column=0: PASS; layout/copy/cache/anonymous/slot-map bookkeeping excluded; expected scratch differences are not exact matches
+FIRST-COMPUTE-DIVERGENCE column=1: none among aligned observed compute pairs; see SUMMARY for alignment/output failures
+SUMMARY column=1: PASS; layout/copy/cache/anonymous/slot-map bookkeeping excluded; expected scratch differences are not exact matches
+FIRST-COMPUTE-DIVERGENCE N1 step=1 norm-10 op=RMS_NORM type=f32 shape=(6144, 1, 1, 1) axis=3 column=0 digest=79c2079610b8d29c
+SUMMARY column=0: FAIL; layout/copy/cache/anonymous/slot-map bookkeeping excluded; expected scratch differences are not exact matches
+LEG-FAIL compare FD10-V3N1/FD10-V3N2 col=0 rc=1; continuing
+FIRST-COMPUTE-DIVERGENCE N1 step=1 norm-4 op=RMS_NORM type=f32 shape=(6144, 1, 1, 1) axis=3 column=0 digest=f7bc6d5067e64654
+SUMMARY column=1: FAIL; layout/copy/cache/anonymous/slot-map bookkeeping excluded; expected scratch differences are not exact matches
+LEG-FAIL compare FD10-V3N1/FD10-V3N2 col=1 rc=1; continuing
+LEG-FAIL FD10-V5G2 rc=1; continuing
+WIN2FD10-DONE
