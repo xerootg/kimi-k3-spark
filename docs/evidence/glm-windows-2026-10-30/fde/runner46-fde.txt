@@ -1,0 +1,83 @@
+=== window fde 19:36
+error: Could not read 848bbda9041decd87904f7eb5a2990863ecce03b
+E8: 0030 v2 get_split_map returns nullptr for n_tokens > 4: ordinary MoE fallback, no abort; md5 informational (draining batches <=4 can split).
+LEG FDE-E1 N=1 flags=none cache=84000 MiB ctx=65536 warm=1 measured=3
+FDE-E1 round=0 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.280 informational=False
+FDE-E1 round=1 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.724 informational=False
+AGG name=FDE-E1 N=1 round=1 agg_tok_s=5.451 per_stream_mean=5.724 gold=1/1
+FDE-E1 round=2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.824 informational=False
+AGG name=FDE-E1 N=1 round=2 agg_tok_s=5.537 per_stream_mean=5.824 gold=1/1
+FDE-E1 round=3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.832 informational=False
+AGG name=FDE-E1 N=1 round=3 agg_tok_s=5.547 per_stream_mean=5.832 gold=1/1
+LEG FDE-E1x N=1 flags=GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXACT_ATTN_COLS=1 GGML_CUDA_ARGSORT_EXACT_ROWS=1 cache=84000 MiB ctx=65536 warm=1 measured=3
+FDE-E1x round=0 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.252 informational=False
+FDE-E1x round=1 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.747 informational=False
+AGG name=FDE-E1x N=1 round=1 agg_tok_s=5.469 per_stream_mean=5.747 gold=1/1
+FDE-E1x round=2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.851 informational=False
+AGG name=FDE-E1x N=1 round=2 agg_tok_s=5.567 per_stream_mean=5.851 gold=1/1
+FDE-E1x round=3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.867 informational=False
+AGG name=FDE-E1x N=1 round=3 agg_tok_s=5.566 per_stream_mean=5.867 gold=1/1
+LEG FDE-E2 N=2 flags=GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXACT_ATTN_COLS=1 GGML_CUDA_ARGSORT_EXACT_ROWS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_PREFILL_ISOLATE=1 cache=84000 MiB ctx=65536 warm=1 measured=3
+FDE-E2 round=0 client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=3.570 informational=False
+FDE-E2 round=0 client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=3.532 informational=False
+LEG-FAIL FDE-E2 round=0 gold=0/2; continuing
+FDE-E2 round=1 client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=3.578 informational=False
+FDE-E2 round=1 client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=3.686 informational=False
+AGG name=FDE-E2 N=2 round=1 agg_tok_s=6.966 per_stream_mean=3.632 gold=0/2
+LEG-FAIL FDE-E2 round=1 gold=0/2; continuing
+FDE-E2 round=2 client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=3.573 informational=False
+FDE-E2 round=2 client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=3.688 informational=False
+AGG name=FDE-E2 N=2 round=2 agg_tok_s=6.953 per_stream_mean=3.631 gold=0/2
+LEG-FAIL FDE-E2 round=2 gold=0/2; continuing
+FDE-E2 round=3 client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=3.697 informational=False
+FDE-E2 round=3 client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=3.578 informational=False
+AGG name=FDE-E2 N=2 round=3 agg_tok_s=6.958 per_stream_mean=3.638 gold=0/2
+LEG-FAIL FDE-E2 round=3 gold=0/2; continuing
+LEG FDE-E4 N=4 flags=GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXACT_ATTN_COLS=1 GGML_CUDA_ARGSORT_EXACT_ROWS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_PREFILL_ISOLATE=1 cache=84000 MiB ctx=65536 warm=1 measured=3
+FDE-E4 round=0 client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.078 informational=False
+FDE-E4 round=0 client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.052 informational=False
+FDE-E4 round=0 client=2 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.091 informational=False
+FDE-E4 round=0 client=3 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.065 informational=False
+LEG-FAIL FDE-E4 round=0 gold=0/4; continuing
+FDE-E4 round=1 client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.059 informational=False
+FDE-E4 round=1 client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.084 informational=False
+FDE-E4 round=1 client=2 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.030 informational=False
+FDE-E4 round=1 client=3 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.104 informational=False
+AGG name=FDE-E4 N=4 round=1 agg_tok_s=8.051 per_stream_mean=2.069 gold=0/4
+LEG-FAIL FDE-E4 round=1 gold=0/4; continuing
+FDE-E4 round=2 client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.079 informational=False
+FDE-E4 round=2 client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.017 informational=False
+FDE-E4 round=2 client=2 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.106 informational=False
+FDE-E4 round=2 client=3 md5=232e8f4e2fb04d3b77896198db9b0bc4 NOT-GOLD tok_s=2.050 informational=False
+AGG name=FDE-E4 N=4 round=2 agg_tok_s=7.994 per_stream_mean=2.063 gold=0/4
+LEG-FAIL FDE-E4 round=2 gold=0/4; continuing
+LEG-FAIL FDE-E4 round=3 client failed
+LEG-FAIL FDE-E4 rc=1; continuing
+LEG FDE-E8 N=8 flags=GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXACT_ATTN_COLS=1 GGML_CUDA_ARGSORT_EXACT_ROWS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_PREFILL_ISOLATE=1 cache=84000 MiB ctx=65536 warm=1 measured=3
+FDE-E8 round=0 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=1.032 informational=True
+FDE-E8 round=0 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=1.019 informational=True
+FDE-E8 round=0 client=2 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=1.029 informational=True
+FDE-E8 round=0 client=3 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=1.039 informational=True
+FDE-E8 round=0 client=4 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=1.042 informational=True
+FDE-E8 round=0 client=5 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=1.023 informational=True
+FDE-E8 round=0 client=6 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=1.026 informational=True
+FDE-E8 round=0 client=7 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=1.035 informational=True
+LEG-FAIL FDE-E8 round=1 client failed
+LEG-FAIL FDE-E8 rc=1; continuing
+LEG FDE-E1b N=1 flags=none cache=84000 MiB ctx=65536 warm=1 measured=3
+FDE-E1b round=0 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.266 informational=False
+FDE-E1b round=1 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.720 informational=False
+AGG name=FDE-E1b N=1 round=1 agg_tok_s=5.440 per_stream_mean=5.720 gold=1/1
+FDE-E1b round=2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.813 informational=False
+AGG name=FDE-E1b N=1 round=2 agg_tok_s=5.533 per_stream_mean=5.813 gold=1/1
+FDE-E1b round=3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.827 informational=False
+AGG name=FDE-E1b N=1 round=3 agg_tok_s=5.543 per_stream_mean=5.827 gold=1/1
+GATE E1 gold_clients=1/1 measured_matches=3/3 rounds=3/3 agg_tok_s=5.511 PASS warm_gold=True
+GATE E1x gold_clients=1/1 measured_matches=3/3 rounds=3/3 agg_tok_s=5.534 PASS warm_gold=True
+GATE E2 gold_clients=0/2 measured_matches=0/6 rounds=3/3 agg_tok_s=6.959 FAIL warm_gold=False
+GATE E4 gold_clients=0/4 measured_matches=0/12 rounds=2/3 agg_tok_s=8.022 FAIL warm_gold=False
+GATE E8 gold_clients=0/8 measured_matches=0/24 rounds=0/3 agg_tok_s=NA INFORMATIONAL warm_gold=True
+GATE E1b gold_clients=1/1 measured_matches=3/3 rounds=3/3 agg_tok_s=5.505 PASS warm_gold=True
+WIN2FDE-DONE
+pod restored: Running
+ALL-WINDOWS-DONE
