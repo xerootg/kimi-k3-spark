@@ -1,0 +1,15 @@
+=== window fd 18:12
+0034 v2 applied
+error: Could not read 848bbda9041decd87904f7eb5a2990863ecce03b
+-- UI: HF stamp matches 'ggml-org/llama-ui|b0', skipping HF fetch
+FD10 N=1 EXACT_COLS=0 ctx-size=65536 KV splits per slot: 65536 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+FD10: verified two width-1 decode graphs and sampled tokens
+FD20 N=2 EXACT_COLS=0 ctx-size=65536 KV splits per slot: 32768 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+AssertionError: FD20: missing/duplicate @logits step=0 col=1; archive and retry
+FD11 N=1 EXACT_COLS=1 ctx-size=65536 KV splits per slot: 65536 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+FD11: verified two width-1 decode graphs and sampled tokens
+FD21 N=2 EXACT_COLS=1 ctx-size=65536 KV splits per slot: 32768 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+AssertionError: FD21: missing/duplicate @logits step=0 col=1; archive and retry
+WIN2FD-DONE
+pod restored: Running
+ALL-WINDOWS-DONE
