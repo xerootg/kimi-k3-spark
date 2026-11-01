@@ -1,0 +1,7 @@
+Before (2026-10-31 23:40 PDT, driver 580.159.03, kernel 6.17.0-1018, EC 0x03000302, SoC 0x0200980f, USB-PD 0x516, vbios 9A.0B.25):
+PRODCHECK r0 5.248 tok/s md5 9449ae5738 / r1 5.771 tok/s md5 9449ae5738
+PREFILLCHECK r0 2048 tokens pp=105.8 tok/s decode=2.47 md5=aa6d55b8e3 / r1 pp=106.7 decode=3.19 md5=aa6d55b8e3
+After (2026-11-01 02:25 PDT, OTA 26.09.3, driver 580.178.04, kernel 7.0.0-1024, EC 0x03000d07, SoC 0x02009e0f, USB-PD 0x519, vbios 9A.0B.34; first requests after a reboot with an empty page cache):
+PRODCHECK r0 5.011 md5 9449ae5738 / r1 5.804 md5 9449ae5738
+PREFILLCHECK r0 pp=109.9 decode=2.53 md5=aa6d55b8e3 / r1 pp=110.4 decode=3.40 md5=aa6d55b8e3
+PRODCHECK (repeat) r0 5.488 md5 9449ae5738 / r1 5.711 md5 9449ae5738

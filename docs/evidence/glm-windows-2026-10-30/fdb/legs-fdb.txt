@@ -1,0 +1,297 @@
+0040 already present
+[  0%] Provisioning UI assets
+[  0%] Built target llama-common-base
+[  1%] Built target vendor-hash
+-- UI: HF stamp matches 'ggml-org/llama-ui|b0', skipping HF fetch
+[  1%] Built target cpp-httplib
+[  4%] Built target ggml-base
+-- UI: assets unchanged, skipping embedding
+[  9%] Built target ggml-cpu
+[  9%] Built target llama-ui-assets
+[  9%] Built target llama-ui
+[  9%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/ggml-cuda.cu.o
+[  9%] Linking CUDA shared library ../../../bin/libggml-cuda.so
+[ 50%] Built target ggml-cuda
+[ 50%] Linking CXX shared library ../../bin/libggml.so
+[ 50%] Built target ggml
+[ 50%] Linking CXX shared library ../bin/libllama.so
+[ 63%] Built target llama
+[ 63%] Linking CXX shared library ../../bin/libmtmd.so
+[ 63%] Linking CXX shared library ../bin/libllama-common.so
+[ 78%] Built target mtmd
+[ 95%] Built target llama-common
+[ 98%] Built target server-context
+[ 98%] Linking CXX shared library ../../bin/libllama-server-impl.so
+[100%] Built target llama-server-impl
+[100%] Linking CXX executable ../../bin/llama-server
+[100%] Built target llama-server
+FDB-INCREMENTAL-BUILD-PASS
+SKIP classes=rms_norm_scale,ssm_conv,gdn_cache,ssm_scan_cache,snake,relu_sqr,softcap (absent GLM patterns); DSV4_HC standalone ops
+LEG FDB-none-N1 N=1 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-none-N1 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDB-none-N1 phase=cold N=1 completed=1 agg_tok_s=3.623 wall_s=35.329
+exact dispatch: split=724 batched=899 singleton=1435 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=316 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-none-N2 N=2 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-none-N2 cold client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-none-N2 cold client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-none-N2 phase=cold N=2 completed=2 agg_tok_s=6.696 wall_s=38.231
+exact dispatch: split=2016 batched=1714 singleton=360 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=6 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=none n1=9449ae5738f2e56f99ab7ab6e9626eb5 n2=232e8f4e2fb04d3b77896198db9b0bc4 equal=0 n2_client1=232e8f4e2fb04d3b77896198db9b0bc4
+CONTROL class=none expected_prefixes=9449ae5738/232e8f4e pass=1
+LEG FDB-all_off-N1 N=1 fusion_disabled=1 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-all_off-N1 cold client=0 md5=400f1b3bb1af4eadc761d0f246b6e502 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-all_off-N1 phase=cold N=1 completed=1 agg_tok_s=4.237 wall_s=30.213
+exact dispatch: split=952 batched=899 singleton=1903 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=444 batched=222 singleton=912 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-all_off-N2 N=2 fusion_disabled=1 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-all_off-N2 cold client=0 md5=400f1b3bb1af4eadc761d0f246b6e502 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-all_off-N2 cold client=1 md5=400f1b3bb1af4eadc761d0f246b6e502 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-all_off-N2 phase=cold N=2 completed=2 agg_tok_s=6.408 wall_s=39.949
+exact dispatch: split=2710 batched=1714 singleton=369 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=1344 batched=444 singleton=18 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=all_off n1=400f1b3bb1af4eadc761d0f246b6e502 n2=400f1b3bb1af4eadc761d0f246b6e502 equal=1 n2_client1=400f1b3bb1af4eadc761d0f246b6e502
+CONTROL class=all_off expected_prefixes=400f1b3bb1/400f1b3bb1 pass=1
+LEG FDB-rms_norm-N1 N=1 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-rms_norm-N1 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDB-rms_norm-N1 phase=cold N=1 completed=1 agg_tok_s=4.843 wall_s=26.429
+exact dispatch: split=724 batched=899 singleton=1435 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=316 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-rms_norm-N2 N=2 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-rms_norm-N2 cold client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-rms_norm-N2 cold client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-rms_norm-N2 phase=cold N=2 completed=2 agg_tok_s=6.674 wall_s=38.360
+exact dispatch: split=2016 batched=1714 singleton=360 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=6 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=rms_norm n1=9449ae5738f2e56f99ab7ab6e9626eb5 n2=232e8f4e2fb04d3b77896198db9b0bc4 equal=0 n2_client1=232e8f4e2fb04d3b77896198db9b0bc4
+LEG FDB-rms_norm_rope-N1 N=1 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-rms_norm_rope-N1 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDB-rms_norm_rope-N1 phase=cold N=1 completed=1 agg_tok_s=4.907 wall_s=26.088
+exact dispatch: split=724 batched=899 singleton=1435 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=316 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-rms_norm_rope-N2 N=2 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-rms_norm_rope-N2 cold client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-rms_norm_rope-N2 cold client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-rms_norm_rope-N2 phase=cold N=2 completed=2 agg_tok_s=6.746 wall_s=37.951
+exact dispatch: split=2016 batched=1714 singleton=360 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=6 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=rms_norm_rope n1=9449ae5738f2e56f99ab7ab6e9626eb5 n2=232e8f4e2fb04d3b77896198db9b0bc4 equal=0 n2_client1=232e8f4e2fb04d3b77896198db9b0bc4
+LEG FDB-rope_set_rows-N1 N=1 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-rope_set_rows-N1 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDB-rope_set_rows-N1 phase=cold N=1 completed=1 agg_tok_s=4.897 wall_s=26.141
+exact dispatch: split=724 batched=899 singleton=1435 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=316 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-rope_set_rows-N2 N=2 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-rope_set_rows-N2 cold client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-rope_set_rows-N2 cold client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-rope_set_rows-N2 phase=cold N=2 completed=2 agg_tok_s=6.749 wall_s=37.934
+exact dispatch: split=2016 batched=1714 singleton=360 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=6 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=rope_set_rows n1=9449ae5738f2e56f99ab7ab6e9626eb5 n2=232e8f4e2fb04d3b77896198db9b0bc4 equal=0 n2_client1=232e8f4e2fb04d3b77896198db9b0bc4
+LEG FDB-multi_add-N1 N=1 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-multi_add-N1 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDB-multi_add-N1 phase=cold N=1 completed=1 agg_tok_s=4.823 wall_s=26.540
+exact dispatch: split=724 batched=899 singleton=1435 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=316 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-multi_add-N2 N=2 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-multi_add-N2 cold client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-multi_add-N2 cold client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-multi_add-N2 phase=cold N=2 completed=2 agg_tok_s=6.741 wall_s=37.976
+exact dispatch: split=2016 batched=1714 singleton=360 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=6 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=multi_add n1=9449ae5738f2e56f99ab7ab6e9626eb5 n2=232e8f4e2fb04d3b77896198db9b0bc4 equal=0 n2_client1=232e8f4e2fb04d3b77896198db9b0bc4
+LEG FDB-multi_mul-N1 N=1 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-multi_mul-N1 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDB-multi_mul-N1 phase=cold N=1 completed=1 agg_tok_s=4.865 wall_s=26.309
+exact dispatch: split=724 batched=899 singleton=1435 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=316 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-multi_mul-N2 N=2 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-multi_mul-N2 cold client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-multi_mul-N2 cold client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-multi_mul-N2 phase=cold N=2 completed=2 agg_tok_s=6.682 wall_s=38.313
+exact dispatch: split=2016 batched=1714 singleton=360 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=6 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=multi_mul n1=9449ae5738f2e56f99ab7ab6e9626eb5 n2=232e8f4e2fb04d3b77896198db9b0bc4 equal=0 n2_client1=232e8f4e2fb04d3b77896198db9b0bc4
+LEG FDB-moe_weighted_reduction-N1 N=1 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-moe_weighted_reduction-N1 cold client=0 md5=f451f8a585d64b87de535154365d7ff6 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-moe_weighted_reduction-N1 phase=cold N=1 completed=1 agg_tok_s=4.591 wall_s=27.879
+exact dispatch: split=724 batched=899 singleton=1437 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=315 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-moe_weighted_reduction-N2 N=2 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-moe_weighted_reduction-N2 cold client=0 md5=f451f8a585d64b87de535154365d7ff6 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-moe_weighted_reduction-N2 cold client=1 md5=f451f8a585d64b87de535154365d7ff6 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-moe_weighted_reduction-N2 phase=cold N=2 completed=2 agg_tok_s=6.727 wall_s=38.056
+exact dispatch: split=2016 batched=1714 singleton=364 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=4 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=moe_weighted_reduction n1=f451f8a585d64b87de535154365d7ff6 n2=f451f8a585d64b87de535154365d7ff6 equal=1 n2_client1=f451f8a585d64b87de535154365d7ff6
+LEG FDB-unary_mul-N1 N=1 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-unary_mul-N1 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDB-unary_mul-N1 phase=cold N=1 completed=1 agg_tok_s=4.910 wall_s=26.067
+exact dispatch: split=724 batched=899 singleton=1435 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=316 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-unary_mul-N2 N=2 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-unary_mul-N2 cold client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-unary_mul-N2 cold client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-unary_mul-N2 phase=cold N=2 completed=2 agg_tok_s=6.758 wall_s=37.883
+exact dispatch: split=2016 batched=1714 singleton=360 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=6 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=unary_mul n1=9449ae5738f2e56f99ab7ab6e9626eb5 n2=232e8f4e2fb04d3b77896198db9b0bc4 equal=0 n2_client1=232e8f4e2fb04d3b77896198db9b0bc4
+LEG FDB-topk_moe-N1 N=1 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-topk_moe-N1 cold client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-topk_moe-N1 phase=cold N=1 completed=1 agg_tok_s=4.592 wall_s=27.874
+exact dispatch: split=724 batched=899 singleton=1439 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=314 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-topk_moe-N2 N=2 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-topk_moe-N2 cold client=0 md5=b5933beb8819fbf095280d0a0e5cff37 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-topk_moe-N2 cold client=1 md5=b5933beb8819fbf095280d0a0e5cff37 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-topk_moe-N2 phase=cold N=2 completed=2 agg_tok_s=6.554 wall_s=39.058
+exact dispatch: split=2016 batched=1714 singleton=366 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=3 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=topk_moe n1=232e8f4e2fb04d3b77896198db9b0bc4 n2=b5933beb8819fbf095280d0a0e5cff37 equal=0 n2_client1=b5933beb8819fbf095280d0a0e5cff37
+LEG FDB-matvec-N1 N=1 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-matvec-N1 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDB-matvec-N1 phase=cold N=1 completed=1 agg_tok_s=4.822 wall_s=26.544
+exact dispatch: split=952 batched=899 singleton=1903 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=444 batched=222 singleton=912 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-matvec-N2 N=2 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-matvec-N2 cold client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-matvec-N2 cold client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-matvec-N2 phase=cold N=2 completed=2 agg_tok_s=6.645 wall_s=38.525
+exact dispatch: split=2710 batched=1714 singleton=369 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=1344 batched=444 singleton=18 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=matvec n1=9449ae5738f2e56f99ab7ab6e9626eb5 n2=232e8f4e2fb04d3b77896198db9b0bc4 equal=0 n2_client1=232e8f4e2fb04d3b77896198db9b0bc4
+LEG FDB-shared_expert-N1 N=1 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-shared_expert-N1 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDB-shared_expert-N1 phase=cold N=1 completed=1 agg_tok_s=4.893 wall_s=26.161
+exact dispatch: split=724 batched=899 singleton=1435 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=316 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+LEG FDB-shared_expert-N2 N=2 fusion_disabled=0 predict=128 stats=1 isolation=1 md5_informational=1 ubatch=2048
+FDB-shared_expert-N2 cold client=0 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+FDB-shared_expert-N2 cold client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 NOT-GOLD
+AGG name=FDB-shared_expert-N2 phase=cold N=2 completed=2 agg_tok_s=6.745 wall_s=37.953
+exact dispatch: split=2016 batched=1714 singleton=360 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=6 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+BISECT class=shared_expert n1=9449ae5738f2e56f99ab7ab6e9626eb5 n2=232e8f4e2fb04d3b77896198db9b0bc4 equal=0 n2_client1=232e8f4e2fb04d3b77896198db9b0bc4
+FDB status=0
+WIN2FDB-DONE
