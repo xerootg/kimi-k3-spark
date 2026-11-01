@@ -1,0 +1,243 @@
+=== window fd4 18:36
+NS composition: full 0030 v2 (0032 folded in or separately applied)
+0036 applied
+error: Could not read 848bbda9041decd87904f7eb5a2990863ecce03b
+-- UI: download dist.tar.gz.sha256 from b0 failed: "HTTP response code said error"
+ALIGN sample=0 N1 step=0 token=481 N2 step=0 token=481
+ALIGN sample=1 N1 step=1 token=468 N2 step=1 token=468
+ALIGN sample=2 N1 step=2 token=952 N2 step=2 token=952
+UNALIGNED first20: node_42[FILL], node_53[ARGSORT], node_57[FILL], node_61[ADD], node_62[FLASH_ATTN_EXT], node_68[MUL_MAT], node_115[FILL], node_126[ARGSORT], node_130[FILL], node_134[ADD], node_135[FLASH_ATTN_EXT], node_141[MUL_MAT], node_188[FILL], node_199[ARGSORT], node_203[FILL], node_207[ADD], node_208[FLASH_ATTN_EXT], node_214[MUL_MAT], node_252[FILL], node_254[FILL]
+SUMMARY step=1 column=0 layer=ALL aligned=4303 matches=3830 diffs=473 unobserved=0 unaligned=3986
+DIFF first20: moe_early-3[GET_ROWS], ffn_moe_slots-3[GET_ROWS], moe_prefetch-4[GET_ROWS], ffn_moe_gate-3[MUL_MAT_ID], ffn_moe_up-3[MUL_MAT_ID], ffn_moe_swiglu-3[GLU], ffn_moe_down-3[MUL_MAT_ID], moe_nowait_merge-3[GET_ROWS], moe_early-4[GET_ROWS], ffn_moe_slots-4[GET_ROWS], moe_prefetch-5[GET_ROWS], ffn_moe_gate-4[MUL_MAT_ID], ffn_moe_up-4[MUL_MAT_ID], ffn_moe_swiglu-4[GLU], ffn_moe_down-4[MUL_MAT_ID], moe_nowait_merge-4[GET_ROWS], moe_early-5[GET_ROWS], ffn_moe_slots-5[GET_ROWS], moe_prefetch-6[GET_ROWS], moe_nowait_merge-5[GET_ROWS]
+SUMMARY step=1 column=0 layer=unscoped aligned=211 matches=83 diffs=128 unobserved=0
+DIFF first20: node_777[ADD], node_995[ADD], node_1135[ADD], node_1137[ADD], node_1139[ADD], node_1141[ADD], node_1143[ADD], node_1145[ADD], node_1181[ADD], node_1182[ADD], node_1183[ADD], node_1184[ADD], node_1287[ADD], node_1296[ADD], node_1608[ADD], node_1610[ADD], node_1612[ADD], node_1652[ADD], node_1901[ADD], node_2079[ADD]
+SUMMARY step=1 column=0 layer=0 aligned=37 matches=37 diffs=0 unobserved=0
+SUMMARY step=1 column=0 layer=1 aligned=37 matches=37 diffs=0 unobserved=0
+SUMMARY step=1 column=0 layer=2 aligned=36 matches=36 diffs=0 unobserved=0
+SUMMARY step=1 column=0 layer=5 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-5[GET_ROWS], moe_early-5[GET_ROWS], ffn_moe_slots-5[GET_ROWS], moe_nowait_merge-5[GET_ROWS]
+SUMMARY step=1 column=0 layer=3 aligned=47 matches=40 diffs=7 unobserved=0
+DIFF first20: moe_early-3[GET_ROWS], ffn_moe_slots-3[GET_ROWS], ffn_moe_gate-3[MUL_MAT_ID], ffn_moe_up-3[MUL_MAT_ID], ffn_moe_swiglu-3[GLU], ffn_moe_down-3[MUL_MAT_ID], moe_nowait_merge-3[GET_ROWS]
+SUMMARY step=1 column=0 layer=4 aligned=50 matches=42 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-4[GET_ROWS], moe_early-4[GET_ROWS], ffn_moe_slots-4[GET_ROWS], ffn_moe_gate-4[MUL_MAT_ID], ffn_moe_up-4[MUL_MAT_ID], ffn_moe_swiglu-4[GLU], ffn_moe_down-4[MUL_MAT_ID], moe_nowait_merge-4[GET_ROWS]
+SUMMARY step=1 column=0 layer=6 aligned=62 matches=54 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-6[GET_ROWS], moe_early-6[GET_ROWS], ffn_moe_slots-6[GET_ROWS], ffn_moe_gate-6[MUL_MAT_ID], ffn_moe_up-6[MUL_MAT_ID], ffn_moe_swiglu-6[GLU], ffn_moe_down-6[MUL_MAT_ID], moe_nowait_merge-6[GET_ROWS]
+SUMMARY step=1 column=0 layer=9 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-9[GET_ROWS], moe_early-9[GET_ROWS], ffn_moe_slots-9[GET_ROWS], moe_nowait_merge-9[GET_ROWS]
+SUMMARY step=1 column=0 layer=7 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-7[GET_ROWS], moe_early-7[GET_ROWS], ffn_moe_slots-7[GET_ROWS], moe_nowait_merge-7[GET_ROWS]
+SUMMARY step=1 column=0 layer=8 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-8[GET_ROWS], moe_early-8[GET_ROWS], ffn_moe_slots-8[GET_ROWS], moe_nowait_merge-8[GET_ROWS]
+SUMMARY step=1 column=0 layer=10 aligned=62 matches=54 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-10[GET_ROWS], moe_early-10[GET_ROWS], ffn_moe_slots-10[GET_ROWS], ffn_moe_gate-10[MUL_MAT_ID], ffn_moe_up-10[MUL_MAT_ID], ffn_moe_swiglu-10[GLU], ffn_moe_down-10[MUL_MAT_ID], moe_nowait_merge-10[GET_ROWS]
+SUMMARY step=1 column=0 layer=13 aligned=51 matches=43 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-13[GET_ROWS], moe_early-13[GET_ROWS], ffn_moe_slots-13[GET_ROWS], ffn_moe_gate-13[MUL_MAT_ID], ffn_moe_up-13[MUL_MAT_ID], ffn_moe_swiglu-13[GLU], ffn_moe_down-13[MUL_MAT_ID], moe_nowait_merge-13[GET_ROWS]
+SUMMARY step=1 column=0 layer=11 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-11[GET_ROWS], moe_early-11[GET_ROWS], ffn_moe_slots-11[GET_ROWS], moe_nowait_merge-11[GET_ROWS]
+SUMMARY step=1 column=0 layer=12 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-12[GET_ROWS], moe_early-12[GET_ROWS], ffn_moe_slots-12[GET_ROWS], moe_nowait_merge-12[GET_ROWS]
+SUMMARY step=1 column=0 layer=14 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-14[GET_ROWS], moe_early-14[GET_ROWS], ffn_moe_slots-14[GET_ROWS], moe_nowait_merge-14[GET_ROWS]
+SUMMARY step=1 column=0 layer=17 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-17[GET_ROWS], moe_early-17[GET_ROWS], ffn_moe_slots-17[GET_ROWS], moe_nowait_merge-17[GET_ROWS]
+SUMMARY step=1 column=0 layer=15 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-15[GET_ROWS], moe_early-15[GET_ROWS], ffn_moe_slots-15[GET_ROWS], moe_nowait_merge-15[GET_ROWS]
+SUMMARY step=1 column=0 layer=16 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-16[GET_ROWS], moe_early-16[GET_ROWS], ffn_moe_slots-16[GET_ROWS], moe_nowait_merge-16[GET_ROWS]
+SUMMARY step=1 column=0 layer=18 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-18[GET_ROWS], moe_early-18[GET_ROWS], ffn_moe_slots-18[GET_ROWS], moe_nowait_merge-18[GET_ROWS]
+SUMMARY step=1 column=0 layer=21 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-21[GET_ROWS], moe_early-21[GET_ROWS], ffn_moe_slots-21[GET_ROWS], moe_nowait_merge-21[GET_ROWS]
+SUMMARY step=1 column=0 layer=19 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-19[GET_ROWS], moe_early-19[GET_ROWS], ffn_moe_slots-19[GET_ROWS], moe_nowait_merge-19[GET_ROWS]
+SUMMARY step=1 column=0 layer=20 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-20[GET_ROWS], moe_early-20[GET_ROWS], ffn_moe_slots-20[GET_ROWS], moe_nowait_merge-20[GET_ROWS]
+SUMMARY step=1 column=0 layer=22 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-22[GET_ROWS], moe_early-22[GET_ROWS], ffn_moe_slots-22[GET_ROWS], moe_nowait_merge-22[GET_ROWS]
+SUMMARY step=1 column=0 layer=25 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-25[GET_ROWS], moe_early-25[GET_ROWS], ffn_moe_slots-25[GET_ROWS], moe_nowait_merge-25[GET_ROWS]
+SUMMARY step=1 column=0 layer=23 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-23[GET_ROWS], moe_early-23[GET_ROWS], ffn_moe_slots-23[GET_ROWS], moe_nowait_merge-23[GET_ROWS]
+SUMMARY step=1 column=0 layer=24 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-24[GET_ROWS], moe_early-24[GET_ROWS], ffn_moe_slots-24[GET_ROWS], moe_nowait_merge-24[GET_ROWS]
+SUMMARY step=1 column=0 layer=26 aligned=62 matches=54 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-26[GET_ROWS], moe_early-26[GET_ROWS], ffn_moe_slots-26[GET_ROWS], ffn_moe_gate-26[MUL_MAT_ID], ffn_moe_up-26[MUL_MAT_ID], ffn_moe_swiglu-26[GLU], ffn_moe_down-26[MUL_MAT_ID], moe_nowait_merge-26[GET_ROWS]
+SUMMARY step=1 column=0 layer=29 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-29[GET_ROWS], moe_early-29[GET_ROWS], ffn_moe_slots-29[GET_ROWS], moe_nowait_merge-29[GET_ROWS]
+SUMMARY step=1 column=0 layer=27 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-27[GET_ROWS], moe_early-27[GET_ROWS], ffn_moe_slots-27[GET_ROWS], moe_nowait_merge-27[GET_ROWS]
+SUMMARY step=1 column=0 layer=28 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-28[GET_ROWS], moe_early-28[GET_ROWS], ffn_moe_slots-28[GET_ROWS], moe_nowait_merge-28[GET_ROWS]
+SUMMARY step=1 column=0 layer=30 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-30[GET_ROWS], moe_early-30[GET_ROWS], ffn_moe_slots-30[GET_ROWS], moe_nowait_merge-30[GET_ROWS]
+SUMMARY step=1 column=0 layer=33 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-33[GET_ROWS], moe_early-33[GET_ROWS], ffn_moe_slots-33[GET_ROWS], moe_nowait_merge-33[GET_ROWS]
+SUMMARY step=1 column=0 layer=31 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-31[GET_ROWS], moe_early-31[GET_ROWS], ffn_moe_slots-31[GET_ROWS], moe_nowait_merge-31[GET_ROWS]
+SUMMARY step=1 column=0 layer=32 aligned=50 matches=42 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-32[GET_ROWS], moe_early-32[GET_ROWS], ffn_moe_slots-32[GET_ROWS], ffn_moe_gate-32[MUL_MAT_ID], ffn_moe_up-32[MUL_MAT_ID], ffn_moe_swiglu-32[GLU], ffn_moe_down-32[MUL_MAT_ID], moe_nowait_merge-32[GET_ROWS]
+SUMMARY step=1 column=0 layer=34 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-34[GET_ROWS], moe_early-34[GET_ROWS], ffn_moe_slots-34[GET_ROWS], moe_nowait_merge-34[GET_ROWS]
+SUMMARY step=1 column=0 layer=37 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-37[GET_ROWS], moe_early-37[GET_ROWS], ffn_moe_slots-37[GET_ROWS], moe_nowait_merge-37[GET_ROWS]
+SUMMARY step=1 column=0 layer=35 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-35[GET_ROWS], moe_early-35[GET_ROWS], ffn_moe_slots-35[GET_ROWS], moe_nowait_merge-35[GET_ROWS]
+SUMMARY step=1 column=0 layer=36 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-36[GET_ROWS], moe_early-36[GET_ROWS], ffn_moe_slots-36[GET_ROWS], moe_nowait_merge-36[GET_ROWS]
+SUMMARY step=1 column=0 layer=38 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-38[GET_ROWS], moe_early-38[GET_ROWS], ffn_moe_slots-38[GET_ROWS], moe_nowait_merge-38[GET_ROWS]
+SUMMARY step=1 column=0 layer=41 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-41[GET_ROWS], moe_early-41[GET_ROWS], ffn_moe_slots-41[GET_ROWS], moe_nowait_merge-41[GET_ROWS]
+SUMMARY step=1 column=0 layer=39 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-39[GET_ROWS], moe_early-39[GET_ROWS], ffn_moe_slots-39[GET_ROWS], moe_nowait_merge-39[GET_ROWS]
+SUMMARY step=1 column=0 layer=40 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-40[GET_ROWS], moe_early-40[GET_ROWS], ffn_moe_slots-40[GET_ROWS], moe_nowait_merge-40[GET_ROWS]
+SUMMARY step=1 column=0 layer=42 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-42[GET_ROWS], moe_early-42[GET_ROWS], ffn_moe_slots-42[GET_ROWS], moe_nowait_merge-42[GET_ROWS]
+SUMMARY step=1 column=0 layer=45 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-45[GET_ROWS], moe_early-45[GET_ROWS], ffn_moe_slots-45[GET_ROWS], moe_nowait_merge-45[GET_ROWS]
+SUMMARY step=1 column=0 layer=43 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-43[GET_ROWS], moe_early-43[GET_ROWS], ffn_moe_slots-43[GET_ROWS], moe_nowait_merge-43[GET_ROWS]
+SUMMARY step=1 column=0 layer=44 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-44[GET_ROWS], moe_early-44[GET_ROWS], ffn_moe_slots-44[GET_ROWS], moe_nowait_merge-44[GET_ROWS]
+SUMMARY step=1 column=0 layer=46 aligned=62 matches=54 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-46[GET_ROWS], moe_early-46[GET_ROWS], ffn_moe_slots-46[GET_ROWS], ffn_moe_gate-46[MUL_MAT_ID], ffn_moe_up-46[MUL_MAT_ID], ffn_moe_swiglu-46[GLU], ffn_moe_down-46[MUL_MAT_ID], moe_nowait_merge-46[GET_ROWS]
+SUMMARY step=1 column=0 layer=49 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-49[GET_ROWS], moe_early-49[GET_ROWS], ffn_moe_slots-49[GET_ROWS], moe_nowait_merge-49[GET_ROWS]
+SUMMARY step=1 column=0 layer=47 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-47[GET_ROWS], moe_early-47[GET_ROWS], ffn_moe_slots-47[GET_ROWS], moe_nowait_merge-47[GET_ROWS]
+SUMMARY step=1 column=0 layer=48 aligned=50 matches=42 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-48[GET_ROWS], moe_early-48[GET_ROWS], ffn_moe_slots-48[GET_ROWS], ffn_moe_gate-48[MUL_MAT_ID], ffn_moe_up-48[MUL_MAT_ID], ffn_moe_swiglu-48[GLU], ffn_moe_down-48[MUL_MAT_ID], moe_nowait_merge-48[GET_ROWS]
+SUMMARY step=1 column=0 layer=50 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-50[GET_ROWS], moe_early-50[GET_ROWS], ffn_moe_slots-50[GET_ROWS], moe_nowait_merge-50[GET_ROWS]
+SUMMARY step=1 column=0 layer=53 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-53[GET_ROWS], moe_early-53[GET_ROWS], ffn_moe_slots-53[GET_ROWS], moe_nowait_merge-53[GET_ROWS]
+SUMMARY step=1 column=0 layer=51 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-51[GET_ROWS], moe_early-51[GET_ROWS], ffn_moe_slots-51[GET_ROWS], moe_nowait_merge-51[GET_ROWS]
+SUMMARY step=1 column=0 layer=52 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-52[GET_ROWS], moe_early-52[GET_ROWS], ffn_moe_slots-52[GET_ROWS], moe_nowait_merge-52[GET_ROWS]
+SUMMARY step=1 column=0 layer=54 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-54[GET_ROWS], moe_early-54[GET_ROWS], ffn_moe_slots-54[GET_ROWS], moe_nowait_merge-54[GET_ROWS]
+SUMMARY step=1 column=0 layer=57 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-57[GET_ROWS], moe_early-57[GET_ROWS], ffn_moe_slots-57[GET_ROWS], moe_nowait_merge-57[GET_ROWS]
+SUMMARY step=1 column=0 layer=55 aligned=50 matches=42 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-55[GET_ROWS], moe_early-55[GET_ROWS], ffn_moe_slots-55[GET_ROWS], ffn_moe_gate-55[MUL_MAT_ID], ffn_moe_up-55[MUL_MAT_ID], ffn_moe_swiglu-55[GLU], ffn_moe_down-55[MUL_MAT_ID], moe_nowait_merge-55[GET_ROWS]
+SUMMARY step=1 column=0 layer=56 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-56[GET_ROWS], moe_early-56[GET_ROWS], ffn_moe_slots-56[GET_ROWS], moe_nowait_merge-56[GET_ROWS]
+SUMMARY step=1 column=0 layer=58 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-58[GET_ROWS], moe_early-58[GET_ROWS], ffn_moe_slots-58[GET_ROWS], moe_nowait_merge-58[GET_ROWS]
+SUMMARY step=1 column=0 layer=61 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-61[GET_ROWS], moe_early-61[GET_ROWS], ffn_moe_slots-61[GET_ROWS], moe_nowait_merge-61[GET_ROWS]
+SUMMARY step=1 column=0 layer=59 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-59[GET_ROWS], moe_early-59[GET_ROWS], ffn_moe_slots-59[GET_ROWS], moe_nowait_merge-59[GET_ROWS]
+SUMMARY step=1 column=0 layer=60 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-60[GET_ROWS], moe_early-60[GET_ROWS], ffn_moe_slots-60[GET_ROWS], moe_nowait_merge-60[GET_ROWS]
+SUMMARY step=1 column=0 layer=62 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-62[GET_ROWS], moe_early-62[GET_ROWS], ffn_moe_slots-62[GET_ROWS], moe_nowait_merge-62[GET_ROWS]
+SUMMARY step=1 column=0 layer=65 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-65[GET_ROWS], moe_early-65[GET_ROWS], ffn_moe_slots-65[GET_ROWS], moe_nowait_merge-65[GET_ROWS]
+SUMMARY step=1 column=0 layer=63 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-63[GET_ROWS], moe_early-63[GET_ROWS], ffn_moe_slots-63[GET_ROWS], moe_nowait_merge-63[GET_ROWS]
+SUMMARY step=1 column=0 layer=64 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-64[GET_ROWS], moe_early-64[GET_ROWS], ffn_moe_slots-64[GET_ROWS], moe_nowait_merge-64[GET_ROWS]
+SUMMARY step=1 column=0 layer=66 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-66[GET_ROWS], moe_early-66[GET_ROWS], ffn_moe_slots-66[GET_ROWS], moe_nowait_merge-66[GET_ROWS]
+SUMMARY step=1 column=0 layer=69 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-69[GET_ROWS], moe_early-69[GET_ROWS], ffn_moe_slots-69[GET_ROWS], moe_nowait_merge-69[GET_ROWS]
+SUMMARY step=1 column=0 layer=67 aligned=50 matches=42 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-67[GET_ROWS], moe_early-67[GET_ROWS], ffn_moe_slots-67[GET_ROWS], ffn_moe_gate-67[MUL_MAT_ID], ffn_moe_up-67[MUL_MAT_ID], ffn_moe_swiglu-67[GLU], ffn_moe_down-67[MUL_MAT_ID], moe_nowait_merge-67[GET_ROWS]
+SUMMARY step=1 column=0 layer=68 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-68[GET_ROWS], moe_early-68[GET_ROWS], ffn_moe_slots-68[GET_ROWS], moe_nowait_merge-68[GET_ROWS]
+SUMMARY step=1 column=0 layer=70 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-70[GET_ROWS], moe_early-70[GET_ROWS], ffn_moe_slots-70[GET_ROWS], moe_nowait_merge-70[GET_ROWS]
+SUMMARY step=1 column=0 layer=73 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-73[GET_ROWS], moe_early-73[GET_ROWS], ffn_moe_slots-73[GET_ROWS], moe_nowait_merge-73[GET_ROWS]
+SUMMARY step=1 column=0 layer=71 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-71[GET_ROWS], moe_early-71[GET_ROWS], ffn_moe_slots-71[GET_ROWS], moe_nowait_merge-71[GET_ROWS]
+SUMMARY step=1 column=0 layer=72 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-72[GET_ROWS], moe_early-72[GET_ROWS], ffn_moe_slots-72[GET_ROWS], moe_nowait_merge-72[GET_ROWS]
+SUMMARY step=1 column=0 layer=74 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-74[GET_ROWS], moe_early-74[GET_ROWS], ffn_moe_slots-74[GET_ROWS], moe_nowait_merge-74[GET_ROWS]
+SUMMARY step=1 column=0 layer=77 aligned=51 matches=49 diffs=2 unobserved=0
+DIFF first20: moe_prefetch-77[GET_ROWS], ffn_moe_slots-77[GET_ROWS]
+SUMMARY step=1 column=0 layer=75 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-75[GET_ROWS], moe_early-75[GET_ROWS], ffn_moe_slots-75[GET_ROWS], moe_nowait_merge-75[GET_ROWS]
+SUMMARY step=1 column=0 layer=76 aligned=50 matches=42 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-76[GET_ROWS], moe_early-76[GET_ROWS], ffn_moe_slots-76[GET_ROWS], ffn_moe_gate-76[MUL_MAT_ID], ffn_moe_up-76[MUL_MAT_ID], ffn_moe_swiglu-76[GLU], ffn_moe_down-76[MUL_MAT_ID], moe_nowait_merge-76[GET_ROWS]
+UNALIGNED first20: node_42[FILL], node_53[ARGSORT], node_57[FILL], node_61[ADD], node_62[FLASH_ATTN_EXT], node_68[MUL_MAT], node_115[FILL], node_126[ARGSORT], node_130[FILL], node_134[ADD], node_135[FLASH_ATTN_EXT], node_141[MUL_MAT], node_188[FILL], node_199[ARGSORT], node_203[FILL], node_207[ADD], node_208[FLASH_ATTN_EXT], node_214[MUL_MAT], node_252[FILL], node_254[FILL]
+SUMMARY step=2 column=0 layer=ALL aligned=4303 matches=3808 diffs=495 unobserved=0 unaligned=3988
+DIFF first20: moe_early-3[GET_ROWS], ffn_moe_slots-3[GET_ROWS], moe_prefetch-4[GET_ROWS], ffn_moe_gate-3[MUL_MAT_ID], ffn_moe_up-3[MUL_MAT_ID], ffn_moe_swiglu-3[GLU], ffn_moe_down-3[MUL_MAT_ID], moe_nowait_merge-3[GET_ROWS], moe_early-4[GET_ROWS], ffn_moe_slots-4[GET_ROWS], moe_prefetch-5[GET_ROWS], moe_nowait_merge-4[GET_ROWS], moe_early-5[GET_ROWS], ffn_moe_slots-5[GET_ROWS], moe_prefetch-6[GET_ROWS], moe_nowait_merge-5[GET_ROWS], moe_early-6[GET_ROWS], ffn_moe_slots-6[GET_ROWS], moe_prefetch-7[GET_ROWS], moe_nowait_merge-6[GET_ROWS]
+SUMMARY step=2 column=0 layer=unscoped aligned=211 matches=83 diffs=128 unobserved=0
+DIFF first20: node_777[ADD], node_995[ADD], node_1135[ADD], node_1137[ADD], node_1139[ADD], node_1141[ADD], node_1143[ADD], node_1145[ADD], node_1181[ADD], node_1182[ADD], node_1183[ADD], node_1184[ADD], node_1287[ADD], node_1296[ADD], node_1608[ADD], node_1610[ADD], node_1612[ADD], node_1652[ADD], node_1901[ADD], node_2079[ADD]
+SUMMARY step=2 column=0 layer=0 aligned=37 matches=37 diffs=0 unobserved=0
+SUMMARY step=2 column=0 layer=1 aligned=37 matches=37 diffs=0 unobserved=0
+SUMMARY step=2 column=0 layer=2 aligned=36 matches=36 diffs=0 unobserved=0
+SUMMARY step=2 column=0 layer=5 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-5[GET_ROWS], moe_early-5[GET_ROWS], ffn_moe_slots-5[GET_ROWS], moe_nowait_merge-5[GET_ROWS]
+SUMMARY step=2 column=0 layer=3 aligned=47 matches=40 diffs=7 unobserved=0
+DIFF first20: moe_early-3[GET_ROWS], ffn_moe_slots-3[GET_ROWS], ffn_moe_gate-3[MUL_MAT_ID], ffn_moe_up-3[MUL_MAT_ID], ffn_moe_swiglu-3[GLU], ffn_moe_down-3[MUL_MAT_ID], moe_nowait_merge-3[GET_ROWS]
+SUMMARY step=2 column=0 layer=4 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-4[GET_ROWS], moe_early-4[GET_ROWS], ffn_moe_slots-4[GET_ROWS], moe_nowait_merge-4[GET_ROWS]
+SUMMARY step=2 column=0 layer=6 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-6[GET_ROWS], moe_early-6[GET_ROWS], ffn_moe_slots-6[GET_ROWS], moe_nowait_merge-6[GET_ROWS]
+SUMMARY step=2 column=0 layer=9 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-9[GET_ROWS], moe_early-9[GET_ROWS], ffn_moe_slots-9[GET_ROWS], moe_nowait_merge-9[GET_ROWS]
+SUMMARY step=2 column=0 layer=7 aligned=50 matches=42 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-7[GET_ROWS], moe_early-7[GET_ROWS], ffn_moe_slots-7[GET_ROWS], ffn_moe_gate-7[MUL_MAT_ID], ffn_moe_up-7[MUL_MAT_ID], ffn_moe_swiglu-7[GLU], ffn_moe_down-7[MUL_MAT_ID], moe_nowait_merge-7[GET_ROWS]
+SUMMARY step=2 column=0 layer=8 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-8[GET_ROWS], moe_early-8[GET_ROWS], ffn_moe_slots-8[GET_ROWS], moe_nowait_merge-8[GET_ROWS]
+SUMMARY step=2 column=0 layer=10 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-10[GET_ROWS], moe_early-10[GET_ROWS], ffn_moe_slots-10[GET_ROWS], moe_nowait_merge-10[GET_ROWS]
+SUMMARY step=2 column=0 layer=13 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-13[GET_ROWS], moe_early-13[GET_ROWS], ffn_moe_slots-13[GET_ROWS], moe_nowait_merge-13[GET_ROWS]
+SUMMARY step=2 column=0 layer=11 aligned=50 matches=42 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-11[GET_ROWS], moe_early-11[GET_ROWS], ffn_moe_slots-11[GET_ROWS], ffn_moe_gate-11[MUL_MAT_ID], ffn_moe_up-11[MUL_MAT_ID], ffn_moe_swiglu-11[GLU], ffn_moe_down-11[MUL_MAT_ID], moe_nowait_merge-11[GET_ROWS]
+SUMMARY step=2 column=0 layer=12 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-12[GET_ROWS], moe_early-12[GET_ROWS], ffn_moe_slots-12[GET_ROWS], moe_nowait_merge-12[GET_ROWS]
+SUMMARY step=2 column=0 layer=14 aligned=62 matches=54 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-14[GET_ROWS], moe_early-14[GET_ROWS], ffn_moe_slots-14[GET_ROWS], ffn_moe_gate-14[MUL_MAT_ID], ffn_moe_up-14[MUL_MAT_ID], ffn_moe_swiglu-14[GLU], ffn_moe_down-14[MUL_MAT_ID], moe_nowait_merge-14[GET_ROWS]
+SUMMARY step=2 column=0 layer=17 aligned=51 matches=43 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-17[GET_ROWS], moe_early-17[GET_ROWS], ffn_moe_slots-17[GET_ROWS], ffn_moe_gate-17[MUL_MAT_ID], ffn_moe_up-17[MUL_MAT_ID], ffn_moe_swiglu-17[GLU], ffn_moe_down-17[MUL_MAT_ID], moe_nowait_merge-17[GET_ROWS]
+SUMMARY step=2 column=0 layer=15 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-15[GET_ROWS], moe_early-15[GET_ROWS], ffn_moe_slots-15[GET_ROWS], moe_nowait_merge-15[GET_ROWS]
+SUMMARY step=2 column=0 layer=16 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-16[GET_ROWS], moe_early-16[GET_ROWS], ffn_moe_slots-16[GET_ROWS], moe_nowait_merge-16[GET_ROWS]
+SUMMARY step=2 column=0 layer=18 aligned=62 matches=54 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-18[GET_ROWS], moe_early-18[GET_ROWS], ffn_moe_slots-18[GET_ROWS], ffn_moe_gate-18[MUL_MAT_ID], ffn_moe_up-18[MUL_MAT_ID], ffn_moe_swiglu-18[GLU], ffn_moe_down-18[MUL_MAT_ID], moe_nowait_merge-18[GET_ROWS]
+SUMMARY step=2 column=0 layer=21 aligned=51 matches=43 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-21[GET_ROWS], moe_early-21[GET_ROWS], ffn_moe_slots-21[GET_ROWS], ffn_moe_gate-21[MUL_MAT_ID], ffn_moe_up-21[MUL_MAT_ID], ffn_moe_swiglu-21[GLU], ffn_moe_down-21[MUL_MAT_ID], moe_nowait_merge-21[GET_ROWS]
+SUMMARY step=2 column=0 layer=19 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-19[GET_ROWS], moe_early-19[GET_ROWS], ffn_moe_slots-19[GET_ROWS], moe_nowait_merge-19[GET_ROWS]
+SUMMARY step=2 column=0 layer=20 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-20[GET_ROWS], moe_early-20[GET_ROWS], ffn_moe_slots-20[GET_ROWS], moe_nowait_merge-20[GET_ROWS]
+SUMMARY step=2 column=0 layer=22 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-22[GET_ROWS], moe_early-22[GET_ROWS], ffn_moe_slots-22[GET_ROWS], moe_nowait_merge-22[GET_ROWS]
+SUMMARY step=2 column=0 layer=25 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-25[GET_ROWS], moe_early-25[GET_ROWS], ffn_moe_slots-25[GET_ROWS], moe_nowait_merge-25[GET_ROWS]
+SUMMARY step=2 column=0 layer=23 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-23[GET_ROWS], moe_early-23[GET_ROWS], ffn_moe_slots-23[GET_ROWS], moe_nowait_merge-23[GET_ROWS]
+SUMMARY step=2 column=0 layer=24 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-24[GET_ROWS], moe_early-24[GET_ROWS], ffn_moe_slots-24[GET_ROWS], moe_nowait_merge-24[GET_ROWS]
+SUMMARY step=2 column=0 layer=26 aligned=62 matches=54 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-26[GET_ROWS], moe_early-26[GET_ROWS], ffn_moe_slots-26[GET_ROWS], ffn_moe_gate-26[MUL_MAT_ID], ffn_moe_up-26[MUL_MAT_ID], ffn_moe_swiglu-26[GLU], ffn_moe_down-26[MUL_MAT_ID], moe_nowait_merge-26[GET_ROWS]
+SUMMARY step=2 column=0 layer=29 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-29[GET_ROWS], moe_early-29[GET_ROWS], ffn_moe_slots-29[GET_ROWS], moe_nowait_merge-29[GET_ROWS]
+SUMMARY step=2 column=0 layer=27 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-27[GET_ROWS], moe_early-27[GET_ROWS], ffn_moe_slots-27[GET_ROWS], moe_nowait_merge-27[GET_ROWS]
+SUMMARY step=2 column=0 layer=28 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-28[GET_ROWS], moe_early-28[GET_ROWS], ffn_moe_slots-28[GET_ROWS], moe_nowait_merge-28[GET_ROWS]
+SUMMARY step=2 column=0 layer=30 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-30[GET_ROWS], moe_early-30[GET_ROWS], ffn_moe_slots-30[GET_ROWS], moe_nowait_merge-30[GET_ROWS]
+SUMMARY step=2 column=0 layer=33 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-33[GET_ROWS], moe_early-33[GET_ROWS], ffn_moe_slots-33[GET_ROWS], moe_nowait_merge-33[GET_ROWS]
+SUMMARY step=2 column=0 layer=31 aligned=50 matches=46 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-31[GET_ROWS], moe_early-31[GET_ROWS], ffn_moe_slots-31[GET_ROWS], moe_nowait_merge-31[GET_ROWS]
+SUMMARY step=2 column=0 layer=32 aligned=50 matches=42 diffs=8 unobserved=0
+DIFF first20: moe_prefetch-32[GET_ROWS], moe_early-32[GET_ROWS], ffn_moe_slots-32[GET_ROWS], ffn_moe_gate-32[MUL_MAT_ID], ffn_moe_up-32[MUL_MAT_ID], ffn_moe_swiglu-32[GLU], ffn_moe_down-32[MUL_MAT_ID], moe_nowait_merge-32[GET_ROWS]
+SUMMARY step=2 column=0 layer=34 aligned=62 matches=58 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-34[GET_ROWS], moe_early-34[GET_ROWS], ffn_moe_slots-34[GET_ROWS], moe_nowait_merge-34[GET_ROWS]
+SUMMARY step=2 column=0 layer=37 aligned=51 matches=47 diffs=4 unobserved=0
+DIFF first20: moe_prefetch-37[GET_ROWS], moe_early-37[GET_ROWS], ffn_moe_slots-37[GET_ROWS], moe_nowait_merge-37[GET_ROWS]
+SUMMARY step=2 column=0 layer=35 aligned=50 matches=46 diffs=4 unobserved=0
+pod restored: Running
+ALL-WINDOWS-DONE
