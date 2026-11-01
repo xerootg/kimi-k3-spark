@@ -1,0 +1,406 @@
+build30=0
+Traceback (most recent call last):
+  File "<stdin>", line 5, in <module>
+AssertionError: ambiguous/missing 0018 knobs: [], []
+WARN: LFU knob strings not found in the x3 binary by this check; the knobs are LLAMA_EXPERT_STORE_POLICY and LLAMA_EXPERT_STORE_LFU_HALF_LIFE (window l); continuing
+using the window-l knob names
+WIN2NS production x3 LLAMA_EXPERT_STORE_POLICY=lfu LLAMA_EXPERT_STORE_LFU_HALF_LIFE=262144 PREFILL_BANK=1 THP=0 cache=84000 MiB ROUNDS=3
+NS1 N=1 SPLIT_COLS=0 ctx-size=65536 KV splits per slot: 65536 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+NS1 N=1 round=0 client=1 5.296 tok/s md5 9449ae5738f2e56f99ab7ab6e9626eb5
+NS1 N=1 round=1 client=1 5.720 tok/s md5 9449ae5738f2e56f99ab7ab6e9626eb5
+AGG N=1 name=NS1 round=1 tokens=128 wall=23.485400 agg_tok_s=5.450 per_stream_mean=5.720
+NS1 first concurrent decode: mul_mat_id/moe/split GEMV/ncols log evidence
+1.50.734.298 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.32 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.59.894.406 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.21 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+NS1 kernel choice requires explicit engine evidence; absent dispatch lines mean unknown; inspect split columns summaries.
+NS1 N=1 round=2 client=1 5.844 tok/s md5 9449ae5738f2e56f99ab7ab6e9626eb5
+AGG N=1 name=NS1 round=2 tokens=128 wall=23.036104 agg_tok_s=5.556 per_stream_mean=5.844
+NS1 N=1 round=3 client=1 5.883 tok/s md5 9449ae5738f2e56f99ab7ab6e9626eb5
+AGG N=1 name=NS1 round=3 tokens=128 wall=22.893662 agg_tok_s=5.591 per_stream_mean=5.883
+1.29.243.878 I fill_late: expert store: 35483 lookups, hit rate 92.6%, 32.3 GB read for decode, 0.0 GB for prefill
+1.29.243.893 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.27 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+1.39.515.587 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.4 GB read for decode, 0.0 GB for prefill
+1.39.515.598 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.50.734.287 I fill_late: expert store: 103733 lookups, hit rate 92.5%, 96.1 GB read for decode, 0.0 GB for prefill
+1.50.734.298 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.32 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.59.894.394 I fill_late: expert store: 136501 lookups, hit rate 93.3%, 113.4 GB read for decode, 0.0 GB for prefill
+1.59.894.406 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.21 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+2.11.256.441 I fill_late: expert store: 171983 lookups, hit rate 92.9%, 149.9 GB read for decode, 0.0 GB for prefill
+2.11.256.453 I fill_late: expert store: split GEMV: 20184 early lookups, 6.8 of 8 experts complete at the early lookup, 1.23 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+2.20.062.847 I fill_late: expert store: 204751 lookups, hit rate 93.5%, 163.9 GB read for decode, 0.0 GB for prefill
+2.20.062.858 I fill_late: expert store: split GEMV: 24280 early lookups, 6.9 of 8 experts complete at the early lookup, 1.15 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.29.786.473 I fill_late: expert store: 237519 lookups, hit rate 93.6%, 186.5 GB read for decode, 0.0 GB for prefill
+2.29.786.484 I fill_late: expert store: split GEMV: 28376 early lookups, 6.9 of 8 experts complete at the early lookup, 1.15 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.40.022.550 I fill_late: expert store: 273001 lookups, hit rate 93.6%, 213.9 GB read for decode, 0.0 GB for prefill
+2.40.022.563 I fill_late: expert store: split GEMV: 32398 early lookups, 6.9 of 8 experts complete at the early lookup, 1.12 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+2.49.263.067 I fill_late: expert store: 305769 lookups, hit rate 93.8%, 232.2 GB read for decode, 0.0 GB for prefill
+2.49.263.079 I fill_late: expert store: split GEMV: 36494 early lookups, 6.9 of 8 experts complete at the early lookup, 1.09 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.44 ms, 0 early lookups without a real one
+2.53.390.283 I llama_moe_cache: ubatch <= 8: hits = 289371, misses = 16062, hit rate = 94.74%, uploaded = 189071.06 MiB
+2.53.390.287 I llama_moe_cache: ubatch  > 8: hits = 9631, misses = 3593, hit rate = 72.83%, uploaded = 41977.03 MiB
+2.53.390.296 I llama_moe_cache: expert store: split GEMV: 38105 early lookups, 6.9 of 8 experts complete at the early lookup, 1.10 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+2.53.604.702 I host bank hooks: early=38105/226.396ms real=38475/21134.261ms post=37666/1453.362ms idle_sleeps=271755 lean=1
+2.53.606.662 I host bank real readiness: calls=38475 split=38105 resident_entry_split=22523 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.53.606.665 I host bank real bucket: a_ready_latency=15878/20421.551ms
+2.53.606.666 I host bank real bucket: b_early_read=11502/14465.277ms
+2.53.606.667 I host bank real bucket: b_predict_read=6748/2520.057ms
+2.53.606.667 I host bank real bucket: c_real_read=296/3355.281ms
+2.53.606.667 I host bank real bucket: d_lock=38456/1.152ms
+2.53.606.668 I host bank real bucket: e_other=38475/789.329ms
+2.53.606.672 I host bank real histogram: ready_p50/p90/p99=0.000/1.550/5.380ms abc_p50/p90/p99=0.000/3.100/10.760ms (a overlaps b+c; overflow is lower bound)
+NS1 startup/first decode kernel evidence (first 16 matches):
+1.16.397.806 I impl:        CPU MoE cache size = 87978.19 MiB for 223800.00 MiB of host experts
+1.29.243.893 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.27 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+1.39.515.598 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.50.734.298 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.32 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.59.894.406 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.21 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+2.11.256.453 I fill_late: expert store: split GEMV: 20184 early lookups, 6.8 of 8 experts complete at the early lookup, 1.23 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+2.20.062.858 I fill_late: expert store: split GEMV: 24280 early lookups, 6.9 of 8 experts complete at the early lookup, 1.15 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.29.786.484 I fill_late: expert store: split GEMV: 28376 early lookups, 6.9 of 8 experts complete at the early lookup, 1.15 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.40.022.563 I fill_late: expert store: split GEMV: 32398 early lookups, 6.9 of 8 experts complete at the early lookup, 1.12 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+2.49.263.079 I fill_late: expert store: split GEMV: 36494 early lookups, 6.9 of 8 experts complete at the early lookup, 1.09 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.44 ms, 0 early lookups without a real one
+2.53.390.283 I llama_moe_cache: ubatch <= 8: hits = 289371, misses = 16062, hit rate = 94.74%, uploaded = 189071.06 MiB
+2.53.390.287 I llama_moe_cache: ubatch  > 8: hits = 9631, misses = 3593, hit rate = 72.83%, uploaded = 41977.03 MiB
+2.53.390.288 I llama_moe_cache: expert store: 242.27 GB read for decode, 0.00 GB read for prefill
+2.53.390.289 I llama_moe_cache: expert store: per layer fill: plan 0.00 ms, reads 0.09 ms (0.5 records, 72.20 GB/s), between fills 7.43 ms
+2.53.390.292 I llama_moe_cache: expert store: memory valve: host MemAvailable 10.03 GB (lowest 9.95, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.53.390.296 I llama_moe_cache: expert store: split GEMV: 38105 early lookups, 6.9 of 8 experts complete at the early lookup, 1.10 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+NS1 MemAvailable 121052 MiB
+NS2 N=2 SPLIT_COLS=1 ctx-size=65536 KV splits per slot: 32768 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+NS2 N=1 round=0 client=1 5.314 tok/s md5 9449ae5738f2e56f99ab7ab6e9626eb5
+NS2 N=2 round=1 client=1 2.670 tok/s md5 19ee5eafb78ddbbd5dffb483dff0dd73
+NS2 N=2 round=1 client=2 2.729 tok/s md5 c592f33e7cb82023526c56ba605ab504
+AGG N=2 name=NS2 round=1 tokens=256 wall=49.070646 agg_tok_s=5.217 per_stream_mean=2.699
+GOLD-MISMATCH client=1 md5=19ee5eafb78ddbbd5dffb483dff0dd73; batching changed bytes
+GOLD-MISMATCH client=2 md5=c592f33e7cb82023526c56ba605ab504; batching changed bytes
+Traceback (most recent call last):
+  File "<stdin>", line 23, in <module>
+AssertionError: quality/timings gate failed
+QUALITY-FAIL NS2 round 1 (see gate output); continuing remaining legs
+NS2 first concurrent decode: mul_mat_id/moe/split GEMV/ncols log evidence
+1.53.975.375 I fill_late: expert store: split GEMV: 12066 early lookups, 7.7 of 8 experts complete at the early lookup, 1.60 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.006 ms, wait at the real lookup 0.68 ms, 0 early lookups without a real one
+2.15.786.511 I fill_late: expert store: split GEMV: 16162 early lookups, 8.6 of 8 experts complete at the early lookup, 2.26 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.008 ms, wait at the real lookup 1.16 ms, 0 early lookups without a real one
+NS2 kernel choice requires explicit engine evidence; absent dispatch lines mean unknown; inspect split columns summaries.
+NS2 N=2 round=2 client=1 2.985 tok/s md5 c592f33e7cb82023526c56ba605ab504
+NS2 N=2 round=2 client=2 2.900 tok/s md5 19ee5eafb78ddbbd5dffb483dff0dd73
+AGG N=2 name=NS2 round=2 tokens=256 wall=45.430719 agg_tok_s=5.635 per_stream_mean=2.943
+GOLD-MISMATCH client=1 md5=c592f33e7cb82023526c56ba605ab504; batching changed bytes
+GOLD-MISMATCH client=2 md5=19ee5eafb78ddbbd5dffb483dff0dd73; batching changed bytes
+Traceback (most recent call last):
+  File "<stdin>", line 23, in <module>
+AssertionError: quality/timings gate failed
+QUALITY-FAIL NS2 round 2 (see gate output); continuing remaining legs
+NS2 N=2 round=3 client=1 2.946 tok/s md5 19ee5eafb78ddbbd5dffb483dff0dd73
+NS2 N=2 round=3 client=2 3.039 tok/s md5 c592f33e7cb82023526c56ba605ab504
+AGG N=2 name=NS2 round=3 tokens=256 wall=44.840608 agg_tok_s=5.709 per_stream_mean=2.993
+GOLD-MISMATCH client=1 md5=19ee5eafb78ddbbd5dffb483dff0dd73; batching changed bytes
+GOLD-MISMATCH client=2 md5=c592f33e7cb82023526c56ba605ab504; batching changed bytes
+Traceback (most recent call last):
+  File "<stdin>", line 23, in <module>
+AssertionError: quality/timings gate failed
+QUALITY-FAIL NS2 round 3 (see gate output); continuing remaining legs
+1.08.730.074 I impl: split columns enabled, N <= 4, union reads, one-column MMVQ launches
+1.28.202.607 I fill_late: expert store: 35482 lookups, hit rate 92.6%, 32.4 GB read for decode, 0.0 GB for prefill
+1.28.202.620 I fill_late: split columns: N2=74 N3=0 N4=0 ubatch layers, union=592 experts, reads=0 distinct missing records; MMVQ one-column dispatch
+1.28.202.625 I fill_late: expert store: split GEMV: 4022 early lookups, 6.8 of 8 experts complete at the early lookup, 1.25 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.004 ms, wait at the real lookup 0.49 ms, 0 early lookups without a real one
+1.38.435.634 I fill_late: expert store: 68250 lookups, hit rate 92.8%, 60.6 GB read for decode, 0.0 GB for prefill
+1.38.435.643 I fill_late: split columns: N2=74 N3=0 N4=0 ubatch layers, union=592 experts, reads=0 distinct missing records; MMVQ one-column dispatch
+1.38.435.646 I fill_late: expert store: split GEMV: 8118 early lookups, 6.7 of 8 experts complete at the early lookup, 1.32 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.53.975.363 I fill_late: expert store: 122200 lookups, hit rate 91.1%, 134.0 GB read for decode, 0.0 GB for prefill
+1.53.975.371 I fill_late: split columns: N2=2536 N3=0 N4=0 ubatch layers, union=36511 experts, reads=3336 distinct missing records; MMVQ one-column dispatch
+1.53.975.375 I fill_late: expert store: split GEMV: 12066 early lookups, 7.7 of 8 experts complete at the early lookup, 1.60 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.006 ms, wait at the real lookup 0.68 ms, 0 early lookups without a real one
+2.15.786.501 I fill_late: expert store: 184726 lookups, hit rate 87.1%, 292.3 GB read for decode, 0.0 GB for prefill
+2.15.786.508 I fill_late: split columns: N2=6632 N3=0 N4=0 ubatch layers, union=99037 experts, reads=16219 distinct missing records; MMVQ one-column dispatch
+2.15.786.511 I fill_late: expert store: split GEMV: 16162 early lookups, 8.6 of 8 experts complete at the early lookup, 2.26 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.008 ms, wait at the real lookup 1.16 ms, 0 early lookups without a real one
+2.37.827.753 I fill_late: expert store: 249533 lookups, hit rate 85.5%, 445.6 GB read for decode, 0.0 GB for prefill
+2.37.827.760 I fill_late: split columns: N2=10502 N3=0 N4=0 ubatch layers, union=157077 experts, reads=26873 distinct missing records; MMVQ one-column dispatch
+2.37.827.764 I fill_late: expert store: split GEMV: 20110 early lookups, 9.1 of 8 experts complete at the early lookup, 2.57 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.008 ms, wait at the real lookup 1.36 ms, 0 early lookups without a real one
+2.55.318.328 I fill_late: expert store: 311326 lookups, hit rate 85.8%, 543.0 GB read for decode, 0.0 GB for prefill
+2.55.318.336 I fill_late: split columns: N2=14598 N3=0 N4=0 ubatch layers, union=218870 experts, reads=34782 distinct missing records; MMVQ one-column dispatch
+2.55.318.340 I fill_late: expert store: split GEMV: 24206 early lookups, 9.6 of 8 experts complete at the early lookup, 2.64 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.009 ms, wait at the real lookup 1.39 ms, 0 early lookups without a real one
+3.15.149.747 I fill_late: expert store: 374327 lookups, hit rate 85.3%, 674.4 GB read for decode, 0.0 GB for prefill
+3.15.149.755 I fill_late: split columns: N2=18694 N3=0 N4=0 ubatch layers, union=281871 experts, reads=45465 distinct missing records; MMVQ one-column dispatch
+3.15.149.760 I fill_late: expert store: split GEMV: 28302 early lookups, 9.9 of 8 experts complete at the early lookup, 2.79 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.009 ms, wait at the real lookup 1.49 ms, 0 early lookups without a real one
+3.33.883.745 I fill_late: expert store: 438204 lookups, hit rate 85.4%, 783.7 GB read for decode, 0.0 GB for prefill
+3.33.883.753 I fill_late: split columns: N2=22564 N3=0 N4=0 ubatch layers, union=338981 experts, reads=52375 distinct missing records; MMVQ one-column dispatch
+3.33.883.758 I fill_late: expert store: split GEMV: 32250 early lookups, 10.1 of 8 experts complete at the early lookup, 2.79 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.009 ms, wait at the real lookup 1.47 ms, 0 early lookups without a real one
+3.52.426.590 I fill_late: expert store: 501062 lookups, hit rate 85.4%, 897.3 GB read for decode, 0.0 GB for prefill
+3.52.426.597 I fill_late: split columns: N2=26660 N3=0 N4=0 ubatch layers, union=401839 experts, reads=61613 distinct missing records; MMVQ one-column dispatch
+3.52.426.602 I fill_late: expert store: split GEMV: 36346 early lookups, 10.3 of 8 experts complete at the early lookup, 2.85 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.010 ms, wait at the real lookup 1.50 ms, 0 early lookups without a real one
+4.02.272.788 I llama_moe_cache: ubatch <= 8: hits = 438237, misses = 72029, hit rate = 85.88%, uploaded = 844422.38 MiB
+4.02.272.792 I llama_moe_cache: ubatch  > 8: hits = 15680, misses = 6055, hit rate = 72.14%, uploaded = 70464.94 MiB
+4.02.272.799 I llama_moe_cache: split columns: N2=28646 N3=0 N4=0 ubatch layers, union=432178 experts, reads=66606 distinct missing records; MMVQ one-column dispatch
+4.02.272.802 I llama_moe_cache: expert store: split GEMV: 38407 early lookups, 10.4 of 8 experts complete at the early lookup, 2.89 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.010 ms, wait at the real lookup 1.53 ms, 0 early lookups without a real one
+4.02.544.439 I host bank hooks: early=38407/1239.813ms real=38925/64476.024ms post=37888/2884.266ms idle_sleeps=581647 lean=1
+4.02.546.350 I host bank real readiness: calls=38925 split=38407 resident_entry_split=11378 resident_locked_other=0 histogram_bin_us=10 overflow_gt_ms=100
+4.02.546.353 I host bank real bucket: a_ready_latency=27547/64465.506ms
+4.02.546.354 I host bank real bucket: b_early_read=25632/57013.569ms
+4.02.546.354 I host bank real bucket: b_predict_read=5784/1654.786ms
+4.02.546.355 I host bank real bucket: c_real_read=518/5648.098ms
+4.02.546.355 I host bank real bucket: d_lock=38906/1.513ms
+4.02.546.355 I host bank real bucket: e_other=38925/154.798ms
+4.02.546.360 I host bank real histogram: ready_p50/p90/p99=0.970/4.080/10.960ms abc_p50/p90/p99=1.930/8.160/21.840ms (a overlaps b+c; overflow is lower bound)
+NS2 startup/first decode kernel evidence (first 16 matches):
+1.15.058.890 I impl:        CPU MoE cache size = 87978.19 MiB for 223800.00 MiB of host experts
+1.28.202.625 I fill_late: expert store: split GEMV: 4022 early lookups, 6.8 of 8 experts complete at the early lookup, 1.25 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.004 ms, wait at the real lookup 0.49 ms, 0 early lookups without a real one
+1.38.435.646 I fill_late: expert store: split GEMV: 8118 early lookups, 6.7 of 8 experts complete at the early lookup, 1.32 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.53.975.375 I fill_late: expert store: split GEMV: 12066 early lookups, 7.7 of 8 experts complete at the early lookup, 1.60 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.006 ms, wait at the real lookup 0.68 ms, 0 early lookups without a real one
+2.15.786.511 I fill_late: expert store: split GEMV: 16162 early lookups, 8.6 of 8 experts complete at the early lookup, 2.26 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.008 ms, wait at the real lookup 1.16 ms, 0 early lookups without a real one
+2.37.827.764 I fill_late: expert store: split GEMV: 20110 early lookups, 9.1 of 8 experts complete at the early lookup, 2.57 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.008 ms, wait at the real lookup 1.36 ms, 0 early lookups without a real one
+2.55.318.340 I fill_late: expert store: split GEMV: 24206 early lookups, 9.6 of 8 experts complete at the early lookup, 2.64 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.009 ms, wait at the real lookup 1.39 ms, 0 early lookups without a real one
+3.15.149.760 I fill_late: expert store: split GEMV: 28302 early lookups, 9.9 of 8 experts complete at the early lookup, 2.79 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.009 ms, wait at the real lookup 1.49 ms, 0 early lookups without a real one
+3.33.883.758 I fill_late: expert store: split GEMV: 32250 early lookups, 10.1 of 8 experts complete at the early lookup, 2.79 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.009 ms, wait at the real lookup 1.47 ms, 0 early lookups without a real one
+3.52.426.602 I fill_late: expert store: split GEMV: 36346 early lookups, 10.3 of 8 experts complete at the early lookup, 2.85 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.010 ms, wait at the real lookup 1.50 ms, 0 early lookups without a real one
+4.02.272.788 I llama_moe_cache: ubatch <= 8: hits = 438237, misses = 72029, hit rate = 85.88%, uploaded = 844422.38 MiB
+4.02.272.792 I llama_moe_cache: ubatch  > 8: hits = 15680, misses = 6055, hit rate = 72.14%, uploaded = 70464.94 MiB
+4.02.272.793 I llama_moe_cache: expert store: 959.33 GB read for decode, 0.00 GB read for prefill
+4.02.272.794 I llama_moe_cache: expert store: per layer fill: plan 0.00 ms, reads 0.15 ms (2.0 records, 169.85 GB/s), between fills 5.44 ms
+4.02.272.798 I llama_moe_cache: expert store: memory valve: host MemAvailable 10.10 GB (lowest 10.09, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.02.272.799 I llama_moe_cache: split columns: N2=28646 N3=0 N4=0 ubatch layers, union=432178 experts, reads=66606 distinct missing records; MMVQ one-column dispatch
+NS2 MemAvailable 121049 MiB
+NS4 N=4 SPLIT_COLS=1 ctx-size=65536 KV splits per slot: 16384 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+NS4 N=1 round=0 client=1 5.317 tok/s md5 9449ae5738f2e56f99ab7ab6e9626eb5
+NS4 N=4 round=1 client=1 2.510 tok/s md5 8595ab2421e350c67eb08068d7a1d572
+NS4 N=4 round=1 client=2 2.510 tok/s md5 8595ab2421e350c67eb08068d7a1d572
+NS4 N=4 round=1 client=3 2.460 tok/s md5 232e8f4e2fb04d3b77896198db9b0bc4
+NS4 N=4 round=1 client=4 2.460 tok/s md5 232e8f4e2fb04d3b77896198db9b0bc4
+AGG N=4 name=NS4 round=1 tokens=512 wall=53.406319 agg_tok_s=9.587 per_stream_mean=2.485
+GOLD-MISMATCH client=1 md5=8595ab2421e350c67eb08068d7a1d572; batching changed bytes
+GOLD-MISMATCH client=2 md5=8595ab2421e350c67eb08068d7a1d572; batching changed bytes
+GOLD-MISMATCH client=3 md5=232e8f4e2fb04d3b77896198db9b0bc4; batching changed bytes
+GOLD-MISMATCH client=4 md5=232e8f4e2fb04d3b77896198db9b0bc4; batching changed bytes
+Traceback (most recent call last):
+  File "<stdin>", line 23, in <module>
+AssertionError: quality/timings gate failed
+QUALITY-FAIL NS4 round 1 (see gate output); continuing remaining legs
+NS4 first concurrent decode: mul_mat_id/moe/split GEMV/ncols log evidence
+1.52.987.208 I fill_late: expert store: split GEMV: 12068 early lookups, 7.8 of 8 experts complete at the early lookup, 1.46 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.006 ms, wait at the real lookup 0.54 ms, 0 early lookups without a real one
+2.14.437.479 I fill_late: expert store: split GEMV: 16164 early lookups, 8.9 of 8 experts complete at the early lookup, 1.88 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.007 ms, wait at the real lookup 0.68 ms, 0 early lookups without a real one
+NS4 kernel choice requires explicit engine evidence; absent dispatch lines mean unknown; inspect split columns summaries.
+NS4 N=4 round=2 client=1 2.682 tok/s md5 b5933beb8819fbf095280d0a0e5cff37
+NS4 N=4 round=2 client=2 2.616 tok/s md5 f65bacc29899ee7242c65dc651c8b7c2
+NS4 N=4 round=2 client=3 2.682 tok/s md5 b5933beb8819fbf095280d0a0e5cff37
+NS4 N=4 round=2 client=4 2.682 tok/s md5 b5933beb8819fbf095280d0a0e5cff37
+AGG N=4 name=NS4 round=2 tokens=512 wall=50.202474 agg_tok_s=10.199 per_stream_mean=2.665
+GOLD-MISMATCH client=1 md5=b5933beb8819fbf095280d0a0e5cff37; batching changed bytes
+GOLD-MISMATCH client=2 md5=f65bacc29899ee7242c65dc651c8b7c2; batching changed bytes
+GOLD-MISMATCH client=3 md5=b5933beb8819fbf095280d0a0e5cff37; batching changed bytes
+GOLD-MISMATCH client=4 md5=b5933beb8819fbf095280d0a0e5cff37; batching changed bytes
+Traceback (most recent call last):
+  File "<stdin>", line 23, in <module>
+AssertionError: quality/timings gate failed
+QUALITY-FAIL NS4 round 2 (see gate output); continuing remaining legs
+NS4 N=4 round=3 client=1 2.755 tok/s md5 b5933beb8819fbf095280d0a0e5cff37
+NS4 N=4 round=3 client=2 2.755 tok/s md5 b5933beb8819fbf095280d0a0e5cff37
+NS4 N=4 round=3 client=3 2.755 tok/s md5 b5933beb8819fbf095280d0a0e5cff37
+NS4 N=4 round=3 client=4 2.686 tok/s md5 f65bacc29899ee7242c65dc651c8b7c2
+AGG N=4 name=NS4 round=3 tokens=512 wall=48.879501 agg_tok_s=10.475 per_stream_mean=2.738
+GOLD-MISMATCH client=1 md5=b5933beb8819fbf095280d0a0e5cff37; batching changed bytes
+GOLD-MISMATCH client=2 md5=b5933beb8819fbf095280d0a0e5cff37; batching changed bytes
+GOLD-MISMATCH client=3 md5=b5933beb8819fbf095280d0a0e5cff37; batching changed bytes
+GOLD-MISMATCH client=4 md5=f65bacc29899ee7242c65dc651c8b7c2; batching changed bytes
+Traceback (most recent call last):
+  File "<stdin>", line 23, in <module>
+AssertionError: quality/timings gate failed
+QUALITY-FAIL NS4 round 3 (see gate output); continuing remaining legs
+1.06.464.657 I impl: split columns enabled, N <= 4, union reads, one-column MMVQ launches
+1.25.148.803 I fill_late: expert store: 35482 lookups, hit rate 92.6%, 32.4 GB read for decode, 0.0 GB for prefill
+1.25.148.816 I fill_late: split columns: N2=74 N3=0 N4=0 ubatch layers, union=592 experts, reads=0 distinct missing records; MMVQ one-column dispatch
+1.25.148.819 I fill_late: expert store: split GEMV: 4022 early lookups, 6.7 of 8 experts complete at the early lookup, 1.25 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.004 ms, wait at the real lookup 0.49 ms, 0 early lookups without a real one
+1.35.399.614 I fill_late: expert store: 68250 lookups, hit rate 92.8%, 60.8 GB read for decode, 0.0 GB for prefill
+1.35.399.622 I fill_late: split columns: N2=74 N3=0 N4=0 ubatch layers, union=592 experts, reads=0 distinct missing records; MMVQ one-column dispatch
+1.35.399.626 I fill_late: expert store: split GEMV: 8118 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.52.987.195 I fill_late: expert store: 120512 lookups, hit rate 91.7%, 122.9 GB read for decode, 0.0 GB for prefill
+1.52.987.203 I fill_late: split columns: N2=77 N3=0 N4=2464 ubatch layers, union=34963 experts, reads=2462 distinct missing records; MMVQ one-column dispatch
+1.52.987.208 I fill_late: expert store: split GEMV: 12068 early lookups, 7.8 of 8 experts complete at the early lookup, 1.46 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.006 ms, wait at the real lookup 0.54 ms, 0 early lookups without a real one
+2.14.437.466 I fill_late: expert store: 182870 lookups, hit rate 89.7%, 232.0 GB read for decode, 0.0 GB for prefill
+2.14.437.474 I fill_late: split columns: N2=77 N3=0 N4=6560 ubatch layers, union=97321 experts, reads=11328 distinct missing records; MMVQ one-column dispatch
+2.14.437.479 I fill_late: expert store: split GEMV: 16164 early lookups, 8.9 of 8 experts complete at the early lookup, 1.88 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.007 ms, wait at the real lookup 0.68 ms, 0 early lookups without a real one
+2.39.724.680 I fill_late: expert store: 247842 lookups, hit rate 87.4%, 383.9 GB read for decode, 0.0 GB for prefill
+2.39.724.688 I fill_late: split columns: N2=152 N3=1 N4=10431 ubatch layers, union=156185 experts, reads=22082 distinct missing records; MMVQ one-column dispatch
+2.39.724.691 I fill_late: expert store: split GEMV: 20113 early lookups, 9.3 of 8 experts complete at the early lookup, 2.25 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.009 ms, wait at the real lookup 0.86 ms, 0 early lookups without a real one
+2.58.951.616 I fill_late: expert store: 307469 lookups, hit rate 88.0%, 452.6 GB read for decode, 0.0 GB for prefill
+2.58.951.624 I fill_late: split columns: N2=152 N3=1 N4=14527 ubatch layers, union=215812 experts, reads=27660 distinct missing records; MMVQ one-column dispatch
+2.58.951.629 I fill_late: expert store: split GEMV: 24209 early lookups, 9.8 of 8 experts complete at the early lookup, 2.22 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.009 ms, wait at the real lookup 0.81 ms, 0 early lookups without a real one
+3.20.900.326 I fill_late: expert store: 370672 lookups, hit rate 87.5%, 568.1 GB read for decode, 0.0 GB for prefill
+3.20.900.335 I fill_late: split columns: N2=152 N3=1 N4=18623 ubatch layers, union=279015 experts, reads=37059 distinct missing records; MMVQ one-column dispatch
+3.20.900.340 I fill_late: expert store: split GEMV: 28305 early lookups, 10.2 of 8 experts complete at the early lookup, 2.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.010 ms, wait at the real lookup 0.86 ms, 0 early lookups without a real one
+3.41.175.236 I fill_late: expert store: 432088 lookups, hit rate 87.9%, 640.5 GB read for decode, 0.0 GB for prefill
+3.41.175.245 I fill_late: split columns: N2=152 N3=77 N4=22494 ubatch layers, union=334323 experts, reads=41368 distinct missing records; MMVQ one-column dispatch
+3.41.175.249 I fill_late: expert store: split GEMV: 32254 early lookups, 10.4 of 8 experts complete at the early lookup, 2.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.010 ms, wait at the real lookup 0.80 ms, 0 early lookups without a real one
+4.01.731.353 I fill_late: expert store: 495229 lookups, hit rate 88.0%, 733.3 GB read for decode, 0.0 GB for prefill
+4.01.731.361 I fill_late: split columns: N2=152 N3=77 N4=26590 ubatch layers, union=397464 experts, reads=48896 distinct missing records; MMVQ one-column dispatch
+4.01.731.365 I fill_late: expert store: split GEMV: 36350 early lookups, 10.7 of 8 experts complete at the early lookup, 2.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.010 ms, wait at the real lookup 0.80 ms, 0 early lookups without a real one
+4.12.424.604 I llama_moe_cache: ubatch <= 8: hits = 446519, misses = 58247, hit rate = 88.46%, uploaded = 683116.78 MiB
+4.12.424.608 I llama_moe_cache: ubatch  > 8: hits = 15993, misses = 5524, hit rate = 74.33%, uploaded = 64235.25 MiB
+4.12.424.614 I llama_moe_cache: split columns: N2=152 N3=152 N4=28572 ubatch layers, union=428518 experts, reads=52996 distinct missing records; MMVQ one-column dispatch
+4.12.424.617 I llama_moe_cache: expert store: split GEMV: 38407 early lookups, 10.8 of 8 experts complete at the early lookup, 2.36 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.010 ms, wait at the real lookup 0.81 ms, 0 early lookups without a real one
+4.12.588.347 I host bank hooks: early=38407/1123.936ms real=38921/36529.619ms post=37888/2777.532ms idle_sleeps=1136819 lean=1
+4.12.589.336 I host bank real readiness: calls=38921 split=38407 resident_entry_split=20764 resident_locked_other=1 histogram_bin_us=10 overflow_gt_ms=100
+4.12.589.339 I host bank real bucket: a_ready_latency=18156/36511.024ms
+4.12.589.340 I host bank real bucket: b_early_read=16060/29987.192ms
+4.12.589.340 I host bank real bucket: b_predict_read=4129/1230.114ms
+4.12.589.341 I host bank real bucket: c_real_read=513/5154.489ms
+4.12.589.341 I host bank real bucket: d_lock=38915/3.714ms
+4.12.589.341 I host bank real bucket: e_other=38921/150.955ms
+4.12.589.346 I host bank real histogram: ready_p50/p90/p99=0.000/2.810/9.940ms abc_p50/p90/p99=0.000/5.620/19.730ms (a overlaps b+c; overflow is lower bound)
+NS4 startup/first decode kernel evidence (first 16 matches):
+1.12.861.549 I impl:        CPU MoE cache size = 87978.19 MiB for 223800.00 MiB of host experts
+1.25.148.819 I fill_late: expert store: split GEMV: 4022 early lookups, 6.7 of 8 experts complete at the early lookup, 1.25 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.004 ms, wait at the real lookup 0.49 ms, 0 early lookups without a real one
+1.35.399.626 I fill_late: expert store: split GEMV: 8118 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.52.987.208 I fill_late: expert store: split GEMV: 12068 early lookups, 7.8 of 8 experts complete at the early lookup, 1.46 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.006 ms, wait at the real lookup 0.54 ms, 0 early lookups without a real one
+2.14.437.479 I fill_late: expert store: split GEMV: 16164 early lookups, 8.9 of 8 experts complete at the early lookup, 1.88 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.007 ms, wait at the real lookup 0.68 ms, 0 early lookups without a real one
+2.39.724.691 I fill_late: expert store: split GEMV: 20113 early lookups, 9.3 of 8 experts complete at the early lookup, 2.25 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.009 ms, wait at the real lookup 0.86 ms, 0 early lookups without a real one
+2.58.951.629 I fill_late: expert store: split GEMV: 24209 early lookups, 9.8 of 8 experts complete at the early lookup, 2.22 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.009 ms, wait at the real lookup 0.81 ms, 0 early lookups without a real one
+3.20.900.340 I fill_late: expert store: split GEMV: 28305 early lookups, 10.2 of 8 experts complete at the early lookup, 2.37 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.010 ms, wait at the real lookup 0.86 ms, 0 early lookups without a real one
+3.41.175.249 I fill_late: expert store: split GEMV: 32254 early lookups, 10.4 of 8 experts complete at the early lookup, 2.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.010 ms, wait at the real lookup 0.80 ms, 0 early lookups without a real one
+4.01.731.365 I fill_late: expert store: split GEMV: 36350 early lookups, 10.7 of 8 experts complete at the early lookup, 2.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.010 ms, wait at the real lookup 0.80 ms, 0 early lookups without a real one
+4.12.424.604 I llama_moe_cache: ubatch <= 8: hits = 446519, misses = 58247, hit rate = 88.46%, uploaded = 683116.78 MiB
+4.12.424.608 I llama_moe_cache: ubatch  > 8: hits = 15993, misses = 5524, hit rate = 74.33%, uploaded = 64235.25 MiB
+4.12.424.609 I llama_moe_cache: expert store: 783.66 GB read for decode, 0.00 GB read for prefill
+4.12.424.610 I llama_moe_cache: expert store: per layer fill: plan 0.00 ms, reads 0.13 ms (1.6 records, 152.03 GB/s), between fills 7.09 ms
+4.12.424.613 I llama_moe_cache: expert store: memory valve: host MemAvailable 10.34 GB (lowest 9.98, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.12.424.614 I llama_moe_cache: split columns: N2=152 N3=152 N4=28572 ubatch layers, union=428518 experts, reads=52996 distinct missing records; MMVQ one-column dispatch
+NS4 MemAvailable 121183 MiB
+NS2off N=2 SPLIT_COLS=0 ctx-size=65536 KV splits per slot: 32768 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+NS2off N=1 round=0 client=1 5.300 tok/s md5 9449ae5738f2e56f99ab7ab6e9626eb5
+NS2off N=2 round=1 client=1 2.230 tok/s md5 232e8f4e2fb04d3b77896198db9b0bc4
+NS2off N=2 round=1 client=2 2.187 tok/s md5 b5933beb8819fbf095280d0a0e5cff37
+AGG N=2 name=NS2off round=1 tokens=256 wall=59.569854 agg_tok_s=4.297 per_stream_mean=2.209
+GOLD-MISMATCH client=1 md5=232e8f4e2fb04d3b77896198db9b0bc4; batching changed bytes
+GOLD-MISMATCH client=2 md5=b5933beb8819fbf095280d0a0e5cff37; batching changed bytes
+Traceback (most recent call last):
+  File "<stdin>", line 23, in <module>
+AssertionError: quality/timings gate failed
+QUALITY-FAIL NS2off round 1 (see gate output); continuing remaining legs
+NS2off first concurrent decode: mul_mat_id/moe/split GEMV/ncols log evidence
+1.59.796.982 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+2.25.946.787 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+NS2off kernel choice requires explicit engine evidence; absent dispatch lines mean unknown; inspect split columns summaries.
+NS2off N=2 round=2 client=1 2.359 tok/s md5 b5933beb8819fbf095280d0a0e5cff37
+NS2off N=2 round=2 client=2 2.414 tok/s md5 232e8f4e2fb04d3b77896198db9b0bc4
+AGG N=2 name=NS2off round=2 tokens=256 wall=55.386677 agg_tok_s=4.622 per_stream_mean=2.386
+GOLD-MISMATCH client=1 md5=b5933beb8819fbf095280d0a0e5cff37; batching changed bytes
+GOLD-MISMATCH client=2 md5=232e8f4e2fb04d3b77896198db9b0bc4; batching changed bytes
+Traceback (most recent call last):
+  File "<stdin>", line 23, in <module>
+AssertionError: quality/timings gate failed
+QUALITY-FAIL NS2off round 2 (see gate output); continuing remaining legs
+NS2off N=2 round=3 client=1 2.388 tok/s md5 b5933beb8819fbf095280d0a0e5cff37
+NS2off N=2 round=3 client=2 2.449 tok/s md5 232e8f4e2fb04d3b77896198db9b0bc4
+AGG N=2 name=NS2off round=3 tokens=256 wall=54.767939 agg_tok_s=4.674 per_stream_mean=2.419
+GOLD-MISMATCH client=1 md5=b5933beb8819fbf095280d0a0e5cff37; batching changed bytes
+GOLD-MISMATCH client=2 md5=232e8f4e2fb04d3b77896198db9b0bc4; batching changed bytes
+Traceback (most recent call last):
+  File "<stdin>", line 23, in <module>
+AssertionError: quality/timings gate failed
+QUALITY-FAIL NS2off round 3 (see gate output); continuing remaining legs
+1.32.179.104 I fill_late: expert store: 35483 lookups, hit rate 92.6%, 32.4 GB read for decode, 0.0 GB for prefill
+1.32.179.119 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.42.435.413 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.3 GB read for decode, 0.0 GB for prefill
+1.42.435.424 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.34 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+1.59.796.969 I fill_decode: expert store: 120759 lookups, hit rate 91.1%, 132.0 GB read for decode, 0.0 GB for prefill
+1.59.796.982 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+2.25.946.764 I fill_decode: expert store: 183199 lookups, hit rate 91.6%, 188.0 GB read for decode, 0.0 GB for prefill
+2.25.946.787 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+2.52.935.037 I fill_decode: expert store: 247747 lookups, hit rate 89.1%, 330.3 GB read for decode, 0.0 GB for prefill
+2.52.935.051 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+3.14.055.397 I fill_decode: expert store: 308174 lookups, hit rate 90.2%, 368.7 GB read for decode, 0.0 GB for prefill
+3.14.055.416 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+3.38.922.468 I fill_decode: expert store: 370906 lookups, hit rate 91.0%, 407.9 GB read for decode, 0.0 GB for prefill
+3.38.922.486 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+4.00.716.279 I fill_decode: expert store: 433188 lookups, hit rate 91.1%, 474.9 GB read for decode, 0.0 GB for prefill
+4.00.716.299 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+4.24.315.889 I fill_decode: expert store: 496127 lookups, hit rate 90.4%, 585.3 GB read for decode, 0.0 GB for prefill
+4.24.315.909 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+4.36.631.686 I llama_moe_cache: ubatch <= 8: hits = 462430, misses = 42626, hit rate = 91.56%, uploaded = 498593.53 MiB
+4.36.631.691 I llama_moe_cache: ubatch  > 8: hits = 16142, misses = 5605, hit rate = 74.23%, uploaded = 65255.44 MiB
+4.36.631.700 I llama_moe_cache: expert store: split GEMV: 9761 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+4.37.105.123 I host bank hooks: early=9761/58.761ms real=38925/49384.676ms post=38266/63016.119ms idle_sleeps=418120 lean=1
+4.37.106.707 I host bank real readiness: calls=38925 split=9761 resident_entry_split=4722 resident_locked_other=18570 histogram_bin_us=10 overflow_gt_ms=100
+4.37.106.711 I host bank real bucket: a_ready_latency=15633/48567.048ms
+4.37.106.711 I host bank real bucket: b_early_read=3700/5122.827ms
+4.37.106.712 I host bank real bucket: b_predict_read=2588/912.795ms
+4.37.106.712 I host bank real bucket: c_real_read=10594/41721.299ms
+4.37.106.713 I host bank real bucket: d_lock=38920/1.736ms
+4.37.106.713 I host bank real bucket: e_other=38925/1618.717ms
+4.37.106.718 I host bank real histogram: ready_p50/p90/p99=0.000/4.200/8.990ms abc_p50/p90/p99=0.000/8.320/17.830ms (a overlaps b+c; overflow is lower bound)
+NS2off startup/first decode kernel evidence (first 16 matches):
+1.19.572.918 I impl:        CPU MoE cache size = 87978.19 MiB for 223800.00 MiB of host experts
+1.32.179.119 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.28 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.42.435.424 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.34 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+1.59.796.982 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+2.25.946.787 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+2.52.935.051 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+3.14.055.416 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+3.38.922.486 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.61 ms, 0 early lookups without a real one
+4.00.716.299 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+4.24.315.909 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.6 of 8 experts complete at the early lookup, 1.43 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+4.36.631.686 I llama_moe_cache: ubatch <= 8: hits = 462430, misses = 42626, hit rate = 91.56%, uploaded = 498593.53 MiB
+4.36.631.691 I llama_moe_cache: ubatch  > 8: hits = 16142, misses = 5605, hit rate = 74.23%, uploaded = 65255.44 MiB
+4.36.631.691 I llama_moe_cache: expert store: 591.24 GB read for decode, 0.00 GB read for prefill
+4.36.631.692 I llama_moe_cache: expert store: per layer fill: plan 0.02 ms, reads 1.07 ms (1.2 records, 14.17 GB/s), between fills 4.41 ms
+4.36.631.696 I llama_moe_cache: expert store: memory valve: host MemAvailable 11.40 GB (lowest 10.30, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.36.631.700 I llama_moe_cache: expert store: split GEMV: 9761 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+NS2off MemAvailable 121194 MiB
+NS1b N=1 SPLIT_COLS=0 ctx-size=65536 KV splits per slot: 65536 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+NS1b N=1 round=0 client=1 5.283 tok/s md5 9449ae5738f2e56f99ab7ab6e9626eb5
+NS1b N=1 round=1 client=1 5.759 tok/s md5 9449ae5738f2e56f99ab7ab6e9626eb5
+AGG N=1 name=NS1b round=1 tokens=128 wall=23.333886 agg_tok_s=5.486 per_stream_mean=5.759
+NS1b first concurrent decode: mul_mat_id/moe/split GEMV/ncols log evidence
+1.50.712.338 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+1.59.873.839 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.22 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+NS1b kernel choice requires explicit engine evidence; absent dispatch lines mean unknown; inspect split columns summaries.
+NS1b N=1 round=2 client=1 5.861 tok/s md5 9449ae5738f2e56f99ab7ab6e9626eb5
+AGG N=1 name=NS1b round=2 tokens=128 wall=22.955980 agg_tok_s=5.576 per_stream_mean=5.861
+NS1b N=1 round=3 client=1 5.819 tok/s md5 9449ae5738f2e56f99ab7ab6e9626eb5
+AGG N=1 name=NS1b round=3 tokens=128 wall=23.138914 agg_tok_s=5.532 per_stream_mean=5.819
+1.29.101.843 I fill_late: expert store: 35483 lookups, hit rate 92.6%, 32.3 GB read for decode, 0.0 GB for prefill
+1.29.101.859 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.27 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+1.39.444.069 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.6 GB read for decode, 0.0 GB for prefill
+1.39.444.081 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+1.50.712.328 I fill_late: expert store: 103733 lookups, hit rate 92.4%, 96.8 GB read for decode, 0.0 GB for prefill
+1.50.712.338 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+1.59.873.828 I fill_late: expert store: 136501 lookups, hit rate 93.2%, 114.2 GB read for decode, 0.0 GB for prefill
+1.59.873.839 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.22 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+2.10.987.343 I fill_late: expert store: 171983 lookups, hit rate 92.9%, 150.1 GB read for decode, 0.0 GB for prefill
+2.10.987.355 I fill_late: expert store: split GEMV: 20184 early lookups, 6.8 of 8 experts complete at the early lookup, 1.23 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+2.19.762.902 I fill_late: expert store: 204751 lookups, hit rate 93.5%, 164.3 GB read for decode, 0.0 GB for prefill
+2.19.762.913 I fill_late: expert store: split GEMV: 24280 early lookups, 6.8 of 8 experts complete at the early lookup, 1.15 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.29.495.533 I fill_late: expert store: 237519 lookups, hit rate 93.6%, 187.2 GB read for decode, 0.0 GB for prefill
+2.29.495.544 I fill_late: expert store: split GEMV: 28376 early lookups, 6.9 of 8 experts complete at the early lookup, 1.15 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.39.765.075 I fill_late: expert store: 273001 lookups, hit rate 93.6%, 215.1 GB read for decode, 0.0 GB for prefill
+2.39.765.087 I fill_late: expert store: split GEMV: 32398 early lookups, 6.9 of 8 experts complete at the early lookup, 1.12 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.46 ms, 0 early lookups without a real one
+2.49.190.535 I fill_late: expert store: 305769 lookups, hit rate 93.8%, 234.7 GB read for decode, 0.0 GB for prefill
+2.49.190.546 I fill_late: expert store: split GEMV: 36494 early lookups, 6.9 of 8 experts complete at the early lookup, 1.10 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+2.53.327.954 I llama_moe_cache: ubatch <= 8: hits = 289168, misses = 16265, hit rate = 94.67%, uploaded = 191403.28 MiB
+2.53.327.958 I llama_moe_cache: ubatch  > 8: hits = 9623, misses = 3601, hit rate = 72.77%, uploaded = 42063.47 MiB
+2.53.327.969 I llama_moe_cache: expert store: split GEMV: 38105 early lookups, 6.9 of 8 experts complete at the early lookup, 1.11 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.46 ms, 0 early lookups without a real one
+2.53.598.469 I host bank hooks: early=38105/217.565ms real=38475/21427.614ms post=37666/1442.147ms idle_sleeps=261062 lean=1
+2.53.600.404 I host bank real readiness: calls=38475 split=38105 resident_entry_split=22391 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.53.600.407 I host bank real bucket: a_ready_latency=16010/20840.931ms
+2.53.600.407 I host bank real bucket: b_early_read=11600/14659.130ms
+2.53.600.407 I host bank real bucket: b_predict_read=6911/2727.556ms
+2.53.600.408 I host bank real bucket: c_real_read=296/3380.338ms
+2.53.600.408 I host bank real bucket: d_lock=38464/1.151ms
+2.53.600.409 I host bank real bucket: e_other=38475/656.716ms
+2.53.600.412 I host bank real histogram: ready_p50/p90/p99=0.000/1.580/5.440ms abc_p50/p90/p99=0.000/3.160/10.870ms (a overlaps b+c; overflow is lower bound)
+NS1b startup/first decode kernel evidence (first 16 matches):
+1.17.011.121 I impl:        CPU MoE cache size = 87978.19 MiB for 223800.00 MiB of host experts
+1.29.101.859 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.27 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+1.39.444.081 I fill_late: expert store: split GEMV: 8044 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+1.50.712.338 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.33 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+1.59.873.839 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.22 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+2.10.987.355 I fill_late: expert store: split GEMV: 20184 early lookups, 6.8 of 8 experts complete at the early lookup, 1.23 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+2.19.762.913 I fill_late: expert store: split GEMV: 24280 early lookups, 6.8 of 8 experts complete at the early lookup, 1.15 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.29.495.544 I fill_late: expert store: split GEMV: 28376 early lookups, 6.9 of 8 experts complete at the early lookup, 1.15 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.39.765.087 I fill_late: expert store: split GEMV: 32398 early lookups, 6.9 of 8 experts complete at the early lookup, 1.12 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.46 ms, 0 early lookups without a real one
+2.49.190.546 I fill_late: expert store: split GEMV: 36494 early lookups, 6.9 of 8 experts complete at the early lookup, 1.10 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+2.53.327.954 I llama_moe_cache: ubatch <= 8: hits = 289168, misses = 16265, hit rate = 94.67%, uploaded = 191403.28 MiB
+2.53.327.958 I llama_moe_cache: ubatch  > 8: hits = 9623, misses = 3601, hit rate = 72.77%, uploaded = 42063.47 MiB
+2.53.327.959 I llama_moe_cache: expert store: 244.81 GB read for decode, 0.00 GB read for prefill
+2.53.327.960 I llama_moe_cache: expert store: per layer fill: plan 0.00 ms, reads 0.09 ms (0.5 records, 72.42 GB/s), between fills 5.70 ms
+2.53.327.964 I llama_moe_cache: expert store: memory valve: host MemAvailable 10.18 GB (lowest 10.17, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.53.327.969 I llama_moe_cache: expert store: split GEMV: 38105 early lookups, 6.9 of 8 experts complete at the early lookup, 1.11 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.46 ms, 0 early lookups without a real one
+NS1b MemAvailable 121182 MiB
+WIN2NS-DONE
+ABORT-WINDOW one or more response/md5 gates failed; see QUALITY-FAIL
