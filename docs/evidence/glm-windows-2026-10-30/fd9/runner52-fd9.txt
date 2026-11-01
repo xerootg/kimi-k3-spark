@@ -1,0 +1,27 @@
+=== window fd9 00:03
+error: Could not read 848bbda9041decd87904f7eb5a2990863ecce03b
+LEG FD9-P0s N=1 kinds=standard all-six no-observer non-unified own-extent 600s-cap
+FD9-P0s cold client=0 kind=standard md5=9449ae5738f2e56f99ab7ab6e9626eb5 PASS
+AGG name=FD9-P0s phase=cold N=1 completed=1 agg_tok_s=4.889 wall_s=26.181
+LEG FD9-P0 N=1 kinds=long all-six no-observer non-unified own-extent 600s-cap
+FD9-P0 cold client=0 kind=long md5=5e7a436f7e62fd45dc65adda40c2b251 PASS
+AGG name=FD9-P0 phase=cold N=1 completed=1 agg_tok_s=2.339 wall_s=54.720
+LEG FD9-F1 N=1 kinds=standard all-six no-observer non-unified own-extent 600s-cap
+FD9-F1 cold client=0 kind=standard md5=9449ae5738f2e56f99ab7ab6e9626eb5 PASS
+AGG name=FD9-F1 phase=cold N=1 completed=1 agg_tok_s=4.890 wall_s=26.176
+FD9-F1 prime client=0 kind=standard md5=f675805e5b38e5f7291cecefc3ab0d7e PASS
+AGG name=FD9-F1 phase=prime N=1 completed=1 agg_tok_s=4.365 wall_s=29.325
+FD9-F1 warm client=0 kind=standard md5=f675805e5b38e5f7291cecefc3ab0d7e PASS
+AGG name=FD9-F1 phase=warm N=1 completed=1 agg_tok_s=4.893 wall_s=26.159
+LEG FD9-L1 N=1 kinds=long all-six no-observer non-unified own-extent 600s-cap
+FD9-L1 cold client=0 kind=long md5=5e7a436f7e62fd45dc65adda40c2b251 PASS
+AGG name=FD9-L1 phase=cold N=1 completed=1 agg_tok_s=2.360 wall_s=54.244
+FD9-L1 prime client=0 kind=long md5=5e7a436f7e62fd45dc65adda40c2b251 PASS
+AGG name=FD9-L1 phase=prime N=1 completed=1 agg_tok_s=6.677 wall_s=19.171
+FD9-L1 warm client=0 kind=long md5=5e7a436f7e62fd45dc65adda40c2b251 PASS
+AGG name=FD9-L1 phase=warm N=1 completed=1 agg_tok_s=6.709 wall_s=19.078
+PREFILL ratio=0.988627 limit=1.05
+LEG FD9-F2 N=2 kinds=standard,standard all-six no-observer non-unified own-extent 600s-cap
+LEG-FAIL FD9-F2 rc=1; stopping
+pod restored: Running
+ALL-WINDOWS-DONE
