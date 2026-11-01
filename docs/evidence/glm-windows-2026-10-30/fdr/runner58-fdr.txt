@@ -1,0 +1,59 @@
+=== window fdr 01:24
+FDR-INCREMENTAL-BUILD-PASS
+FDR-N1 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDR-N1 phase=cold N=1 completed=1 agg_tok_s=5.031 wall_s=25.440
+exact dispatch: split=724 batched=899 singleton=1435 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=316 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+FDR-N2 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+FDR-N2 cold client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDR-N2 phase=cold N=2 completed=2 agg_tok_s=7.067 wall_s=36.224
+FDR-N2 round2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+FDR-N2 round2 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDR-N2 phase=round2 N=2 completed=2 agg_tok_s=7.156 wall_s=35.772
+FDR-N2 round3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+FDR-N2 round3 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDR-N2 phase=round3 N=2 completed=2 agg_tok_s=7.141 wall_s=35.849
+exact dispatch: split=2156 batched=5142 singleton=484 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=1332 singleton=28 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=508 batched=0 singleton=14 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=7 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=228 batched=444 singleton=7 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+FDR-LONGREF cold client=0 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 tokens=128 PASS
+AGG name=FDR-LONGREF phase=cold N=1 completed=1 agg_tok_s=4.068 wall_s=31.461
+exact dispatch: split=724 batched=899 singleton=1441 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=296 batched=222 singleton=608 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=154 batched=0 singleton=313 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=0 singleton=152 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=74 batched=74 singleton=152 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+FDR-MIX cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+FDR-MIX cold client=1 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 tokens=128 PASS
+AGG name=FDR-MIX phase=cold N=2 completed=2 agg_tok_s=4.753 wall_s=53.858
+exact dispatch: split=2016 batched=1714 singleton=362 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=900 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=5 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=222 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+FDR-N4 cold client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+FDR-N4 cold client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 tokens=128 PASS
+AGG name=FDR-N4 phase=cold N=2 completed=2 agg_tok_s=7.075 wall_s=36.185
+exact dispatch: split=2016 batched=1714 singleton=360 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=444 singleton=12 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=468 batched=0 singleton=6 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=3 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=148 singleton=3 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+WIN2FDR-DONE
+pod restored: Running
+ALL-WINDOWS-DONE

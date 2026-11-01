@@ -22,19 +22,19 @@ The larger ubatch amortizes repeated weight passes. The detailed prefill analysi
 
 ## Batching
 
-0030/0032 N-column split works mechanically: union reads and read/compute overlap are restored.
-Measured aggregate tok/s: ordinary N=2 **4.3–4.7**, split N=2 **5.2–5.7**, split N=4 **9.6–10.5**.
-Dense/attention/other work amortises, but bank GEMV stays ~53 ms/generated token;
-15.1 distinct experts of 16 leave traffic approximately linear in N. The C2C-only ceiling
-is ~19 aggregate tok/s; N=4 ~10.4 already reaches about half. 0033 was designed and
-shelved (only 2–7 % expected from the small overlap).
-
-**Blocked on exactness:** N>1 bytes depend on column position even with 0008's per-column
-exact dense and MoE MMVQ. The open question is the first divergent intermediate outside
-MMVQ; 0034's first-differing-tensor tool, window fd, is next. Production batching has not
-passed the quality rule. The single-sequence floor remains **5.76 tok/s warm**.
-See the [evening outcome](streaming-decode-2026-10-31.md#outcome-2026-10-31-evening)
-and [ledger](experiments.md) (par/par2/ns/m2); the outcome supersedes m2's optimistic 0033 projection.
+**Exact at N=2, +40 %; N=4/8 pending.** Window fdr (01:24), on the updated
+Spark (driver 580.178.04, kernel 7.0), fixes the MoE weighted-reduction matcher in
+0035 v8: the nine-row-per-token split-bank view now uses the N=1 fused fold per token.
+With all exact flags, prefill isolation and N-column split enabled, both N=2 clients
+match production gold `9449ae5738` in all three rounds: **7.07 / 7.16 / 7.14 aggregate
+tok/s**, versus **5.03** at N=1. Each tested client receives byte-identical output to
+a single-sequence production run. The mixed short+2048-token-long pair also matches
+both references (`9449ae5738` / `e38742e4`), at 4.75 aggregate tok/s including prefill.
+`--parallel 4` with only two active clients is gold at 7.08; four-client throughput
+is still unmeasured. Window fdq will measure N=4/8 on a clean tree with the hot-path
+patches and without the debug observer, then comes a production decision.
+See the [ledger](experiments.md), [legs](evidence/glm-windows-2026-10-30/fdr/legs-fdr.txt)
+and [runner log](evidence/glm-windows-2026-10-30/fdr/runner58-fdr.txt).
 
 ## Where a token's time goes, and the remaining levers
 

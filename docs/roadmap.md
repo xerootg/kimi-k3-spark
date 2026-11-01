@@ -171,7 +171,7 @@ gold md5 `9449ae5738`; 2048-token prefill **108.7 / 109.2 tok/s**, versus ~72 pr
 The server tokenised the windows' generator text with `cache_prompt: false`; the next 32 tokens decoded at
 2.65 / 3.52 tok/s in cold context, md5 `aa6d55b8e3` both passes. This exact fixture has no prior reference;
 x3 on the same binary matched the long-prompt golds. Valve minimum 6.90 GB against 4.29 GB reserve, 0 releases.
-Sources: [public decode](../evidence/prodcheck4.txt), [public prefill](../evidence/prefillcheck1.txt), [ledger](experiments.md).
+Sources: [public decode](evidence/glm-windows-2026-10-30/prodcheck4.txt), [public prefill](evidence/glm-windows-2026-10-30/prefillcheck1.txt), [ledger](experiments.md).
 Patches 0009 (split dummy-row skip), 0012 (hook lean) and 0018 v2 (LFU) remain on;
 predictor input 3 and prefetch top-8 stay. Combined 0009/0012 measured +13.1 %, LFU +5.49 %,
 and the capacity window +2.7 %; these are separate A/Bs, not additive gains.
@@ -208,14 +208,16 @@ estimates in [next-floor §5](next-floor-2026-10-31.md#5-owner-ranking-and-decid
 | 3. Smaller dense spine | Inspect a Q4_K_M header and run paired quality/loss tests (~6.5 tok/s conditional model). |
 | 4. Second independent NVMe | Require loaded-latency/engine A/B; ~28 ms exposed wait is a planning target. |
 | 5. GH200 Q5 | Defer until Q2-in-RAM is measured; actual warm hit rate and miss waits decide. |
-| batching / --parallel | **measured: not exact, bank-bound; blocked on exactness (0034)**. N=2 ordinary 4.3–4.7, split 5.2–5.7; N=4 split 9.6–10.5 aggregate tok/s. |
+| batching / --parallel | **exact at N=2, +40 %; N=4/8 pending**. Window fdr: both clients production gold in all three rounds, 7.07 / 7.16 / 7.14 aggregate tok/s versus N=1 5.03; 0035 v8 fixes the split-bank MoE weighted reduction. |
 
-Batching is an exactness investigation, with 0034/window fd next. Bank GEMV remains
-~53 ms/generated token, so the C2C-only ceiling is ~19 aggregate tok/s; ~10.4 at N=4
-is already half. 0033 was designed and shelved (2–7 % expected: too little expert overlap).
-0008 exact MMVQ still leaves column-position-dependent bytes; the single-sequence floor
-stands at **5.76 tok/s warm**. See the [evening outcome](streaming-decode-2026-10-31.md#outcome-2026-10-31-evening)
-for the capacity-model correction and [ledger](experiments.md) for par/par2/ns/m2.
+Batching has passed the N=2 exactness gate: every tested client matches its
+single-sequence production reference, including the short+2048-token-long pair.
+The updated Spark uses all exact flags, prefill isolation and N-column split.
+Window fdq measures four- and eight-client throughput on a clean tree with the
+hot-path patches and without the debug observer, then comes a production decision.
+The fdr `--parallel 4` leg had only two active clients (both gold, 7.08 aggregate
+tok/s), so it does not establish N=4 throughput. See the [ledger](experiments.md)
+and [fdr evidence](evidence/glm-windows-2026-10-30/fdr/legs-fdr.txt).
 
 **Decode conclusion (2026-10-31):** bg scheduling (−60 %), dma (single copy engine ~58 GB/s,
 ring 3x slower), gm (neutral) and hb allocation (neutral) close the tested host-bank levers.
