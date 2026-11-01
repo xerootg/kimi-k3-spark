@@ -90,11 +90,14 @@ class FirstDiff(unittest.TestCase):
 class EvidenceAlignment(unittest.TestCase):
     def test_real_staggered_prefill_both_modes(self):
         root = Path(__file__).resolve().parents[2]
+        ev = root / 'docs/evidence/glm-windows-2026-10-30/fd'
+        if not (ev / 'FD10.tsv').exists():
+            self.skipTest('fd digest evidence not present')
         for gold, batch in [('FD10', 'FD20'), ('FD11', 'FD21')]:
             for col in (0, 1):
                 out = []
-                code = fd.compare(root/f'evidence/fd-digests/{gold}.tsv',
-                                  root/f'evidence/fd-digests/{batch}.tsv', col, out.append)
+                code = fd.compare(ev/f'{gold}.tsv',
+                                  ev/f'{batch}.tsv', col, out.append)
                 text = '\n'.join(out)
                 self.assertEqual(code, 1)
                 self.assertIn('FIRST-DIFF COMPUTE', text)
