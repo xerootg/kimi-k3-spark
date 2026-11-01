@@ -1,0 +1,63 @@
+=== window m2 17:05
+tokens=32 gpu_busy=145.611529 ms/token gaps=47.646144 ms/token (of which >0.5ms: 38.556232) api=192.044678 ms/token
+Steady estimate: tokens=32 gpu_busy=150.308675 ms/token gaps=49.183117 ms/token (of which >0.5ms: 39.799981) api=198.239667 ms/token
+{"clients": [{"client": 0, "md5": "7c7bb532b26fa3a6fb4ce445554f3f9f", "timings": {"cache_n": 0, "prompt_n": 10, "prompt_ms": 1577.557, "prompt_per_token_ms": 157.7557, "prompt_per_second": 6.338915170735511, "predicted_n": 32, "predicted_ms": 6889.75, "predicted_per_token_ms": 222.25, "predicted_per_second": 4.499437570303712}, "slot": 0, "tokens_cached": 41}, {"client": 1, "md5": "7c7bb532b26fa3a6fb4ce445554f3f9f", "timings": {"cache_n": 0, "prompt_n": 10, "prompt_ms": 1578.22, "prompt_per_token_ms": 157.822, "prompt_per_second": 6.336252233528912, "predicted_n": 32, "predicted_ms": 6889.204, "predicted_per_token_ms": 222.23238709677418, "predicted_per_second": 4.499794170705353}, "slot": 1, "tokens_cached": 41}], "elapsed_s": 8.49959333697916}
+Trace: legs/M2-n2-on prefix=trace
+GPU families: ms/token | % GPU wall (first-to-last kernel per device) | % kernel time
+  norms: 0.860996 | 0.65% | 0.84%
+Bank split: captured ms/token | steady ms/token | launches | captured launches/token | steady launches/token
+  bank total launches: 23260 | captured/token 363.437500 | steady/token 375.161290
+Steady GPU families: ms/token (total / decode-passes)
+  norms: 0.888770
+Gaps: device / following layer / bucket: count | count/token | ms/token
+  NVIDIA GB10 (0) / unassigned / 0.5-5 ms: 415 | 6.484375 | 8.429002
+  NVIDIA GB10 (0) / unassigned / >5 ms: 78 | 1.218750 | 18.796060
+Gap attribution (>0.5ms; nearest bank kernels, per device): count | captured ms/token | steady ms/token
+  early-to-late total: 388 | 8.387304 | 8.657862
+  >0.5ms host-hook wait candidate sanity: 27.225 ms/token; expected ~42; delta -14.775.
+CUDA API: ms/token (host durations; may overlap GPU work)
+tokens=64 gpu_busy=99.790826 ms/token gaps=32.433116 ms/token (of which >0.5ms: 27.225062) api=128.141230 ms/token
+Steady estimate: tokens=64 gpu_busy=103.009885 ms/token gaps=33.479345 ms/token (of which >0.5ms: 28.103290) api=132.274818 ms/token
+{"clients": [{"client": 0, "md5": "169d8f765a184347a9e191ca2c766ab4", "timings": {"cache_n": 0, "prompt_n": 10, "prompt_ms": 712.039, "prompt_per_token_ms": 71.2039, "prompt_per_second": 14.044174546618935, "predicted_n": 32, "predicted_ms": 9875.184, "predicted_per_token_ms": 318.55432258064513, "predicted_per_second": 3.1391820142287985}, "slot": 1, "tokens_cached": 41}, {"client": 1, "md5": "01fc3eb93a5939d96557f063259a7e00", "timings": {"cache_n": 0, "prompt_n": 10, "prompt_ms": 1401.84, "prompt_per_token_ms": 140.184, "prompt_per_second": 7.133481709752897, "predicted_n": 32, "predicted_ms": 10377.067, "predicted_per_token_ms": 334.7440967741935, "predicted_per_second": 2.9873566394049496}, "slot": 0, "tokens_cached": 41}], "elapsed_s": 12.03052081700298}
+Trace: legs/M2-n2-off prefix=trace
+GPU families: ms/token | % GPU wall (first-to-last kernel per device) | % kernel time
+  norms: 0.644874 | 0.34% | 0.70%
+Bank split: captured ms/token | steady ms/token | launches | captured launches/token | steady launches/token
+  bank total launches: 7362 | captured/token 115.031250 | steady/token 118.741935
+Steady GPU families: ms/token (total / decode-passes)
+  norms: 0.665676
+Gaps: device / following layer / bucket: count | count/token | ms/token
+  NVIDIA GB10 (0) / unassigned / 0.5-5 ms: 1863 | 29.109375 | 67.040830
+  NVIDIA GB10 (0) / unassigned / >5 ms: 208 | 3.250000 | 28.610184
+Gap attribution (>0.5ms; nearest bank kernels, per device): count | captured ms/token | steady ms/token
+  early-to-late total: 31 | 0.809018 | 0.835116
+  >0.5ms host-hook wait candidate sanity: 95.651 ms/token; expected ~42; delta +53.651.
+CUDA API: ms/token (host durations; may overlap GPU work)
+tokens=64 gpu_busy=90.419832 ms/token gaps=96.808821 ms/token (of which >0.5ms: 95.651013) api=186.148688 ms/token
+Steady estimate: tokens=64 gpu_busy=93.336601 ms/token gaps=99.931686 ms/token (of which >0.5ms: 98.736530) api=192.153484 ms/token
+{"clients": [{"client": 0, "md5": "01fc3eb93a5939d96557f063259a7e00", "timings": {"cache_n": 0, "prompt_n": 10, "prompt_ms": 821.022, "prompt_per_token_ms": 82.10220000000001, "prompt_per_second": 12.179941585000158, "predicted_n": 32, "predicted_ms": 10256.243, "predicted_per_token_ms": 330.8465483870968, "predicted_per_second": 3.02254929022255}, "slot": 2, "tokens_cached": 41}, {"client": 1, "md5": "01fc3eb93a5939d96557f063259a7e00", "timings": {"cache_n": 0, "prompt_n": 10, "prompt_ms": 821.661, "prompt_per_token_ms": 82.1661, "prompt_per_second": 12.170469329808766, "predicted_n": 32, "predicted_ms": 10255.722, "predicted_per_token_ms": 330.82974193548387, "predicted_per_second": 3.022702838473976}, "slot": 3, "tokens_cached": 41}, {"client": 2, "md5": "7c7bb532b26fa3a6fb4ce445554f3f9f", "timings": {"cache_n": 0, "prompt_n": 10, "prompt_ms": 1308.577, "prompt_per_token_ms": 130.8577, "prompt_per_second": 7.641888860953539, "predicted_n": 32, "predicted_ms": 10815.38, "predicted_per_token_ms": 348.8832258064516, "predicted_per_second": 2.8662885631387898}, "slot": 0, "tokens_cached": 41}, {"client": 3, "md5": "01fc3eb93a5939d96557f063259a7e00", "timings": {"cache_n": 0, "prompt_n": 10, "prompt_ms": 820.383, "prompt_per_token_ms": 82.0383, "prompt_per_second": 12.189428596155699, "predicted_n": 32, "predicted_ms": 10256.752, "predicted_per_token_ms": 330.8629677419355, "predicted_per_second": 3.022399293655535}, "slot": 1, "tokens_cached": 41}], "elapsed_s": 12.447024630004307}
+Trace: legs/M2-n4-on prefix=trace
+GPU families: ms/token | % GPU wall (first-to-last kernel per device) | % kernel time
+  norms: 0.445503 | 0.46% | 0.54%
+Bank split: captured ms/token | steady ms/token | launches | captured launches/token | steady launches/token
+  bank total launches: 47630 | captured/token 372.109375 | steady/token 384.112903
+Steady GPU families: ms/token (total / decode-passes)
+  norms: 0.459874
+Gaps: device / following layer / bucket: count | count/token | ms/token
+  NVIDIA GB10 (0) / unassigned / 0.5-5 ms: 337 | 2.632812 | 3.627368
+  NVIDIA GB10 (0) / unassigned / >5 ms: 84 | 0.656250 | 8.006964
+Gap attribution (>0.5ms; nearest bank kernels, per device): count | captured ms/token | steady ms/token
+  early-to-late total: 208 | 2.935611 | 3.030308
+  >0.5ms host-hook wait candidate sanity: 11.634 ms/token; expected ~42; delta -30.366.
+CUDA API: ms/token (host durations; may overlap GPU work)
+tokens=128 gpu_busy=82.267005 ms/token gaps=14.437190 ms/token (of which >0.5ms: 11.634332) api=95.615597 ms/token
+Steady estimate: tokens=128 gpu_busy=84.920780 ms/token gaps=14.902906 ms/token (of which >0.5ms: 12.009633) api=98.699971 ms/token
+Captured GPU kernel sum ms/generated token; prompt included; total=sum families, excludes gaps.
+leg       dense MMVQ   MMQ/GEMM   bank MMVQ   attention       other       total
+  wall span/token=193.258 ms; kernel union/token=145.612 ms
+  wall span/token=132.224 ms; kernel union/token=99.791 ms
+  wall span/token=187.229 ms; kernel union/token=90.420 ms
+  wall span/token=96.704 ms; kernel union/token=82.267 ms
+WIN2M2-DONE
+pod restored: Running
+ALL-WINDOWS-DONE

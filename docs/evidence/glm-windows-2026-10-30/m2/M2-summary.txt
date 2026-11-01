@@ -1,0 +1,13 @@
+Captured GPU kernel sum ms/generated token; prompt included; total=sum families, excludes gaps.
+leg       dense MMVQ   MMQ/GEMM   bank MMVQ   attention       other       total
+n1             67.728      11.188      54.743       1.673      12.817     148.148
+  wall span/token=193.258 ms; kernel union/token=145.612 ms
+n2-on          34.881       5.718      52.494       1.157       8.007     102.257
+  wall span/token=132.224 ms; kernel union/token=99.791 ms
+n2-off         34.895      10.504      40.332       1.204       4.799      91.733
+  wall span/token=187.229 ms; kernel union/token=90.420 ms
+n4-on          18.761       5.499      53.461       0.691       4.819      83.231
+  wall span/token=96.704 ms; kernel union/token=82.267 ms
+31N normalization counts decode-token passes, not observed ubatches; inspect draining edges and grids.
+Bank identification is type/grid heuristic; MMQ/GEMM includes prompt and has no tensor-role attribution.
+Split-off MoE Y=8 is ordinary batch, not evidence of late split work; early/late gap labels are inapplicable there.

@@ -1,0 +1,58 @@
+
+Trace: legs/M2-n1 prefix=trace
+tokens=32 (explicit --tokens); all captured activity divided by decode tokens
+decode-passes=31; steady estimate = captured per-token value x tokens/passes (1.032258); prompt work is not subtracted
+Missing reports: none
+GPU families: ms/token | % GPU wall (first-to-last kernel per device) | % kernel time
+  host-bank expert GEMV: 54.743091 | 28.33% | 36.95%
+  dense-spine GEMV (device): 67.728488 | 35.05% | 45.72%
+  shared expert: 0.000000 | 0.00% | 0.00%
+  attention / flash-attn: 1.672587 | 0.87% | 1.13%
+  DSA indexer: 0.407688 | 0.21% | 0.28%
+  norms: 1.494485 | 0.77% | 1.01%
+  rope: 0.000000 | 0.00% | 0.00%
+  cpy / get_rows / set_rows: 1.078685 | 0.56% | 0.73%
+  MMQ / GEMM: 11.187627 | 5.79% | 7.55%
+  other: 9.835771 | 5.09% | 6.64%
+Bank split: captured ms/token | steady ms/token | launches | captured launches/token | steady launches/token
+  early (Y=9): 42.905723 | 44.289779 | 6978 | 218.062500 | 225.096774
+  late (Y=8): 11.837368 | 12.219218 | 4652 | 145.375000 | 150.064516
+  bank total launches: 11630 | captured/token 363.437500 | steady/token 375.161290
+Steady GPU families: ms/token (total / decode-passes)
+  host-bank expert GEMV: 56.508997
+  dense-spine GEMV (device): 69.913278
+  shared expert: 0.000000
+  attention / flash-attn: 1.726542
+  DSA indexer: 0.420839
+  norms: 1.542695
+  rope: 0.000000
+  cpy / get_rows / set_rows: 1.113481
+  MMQ / GEMM: 11.548518
+  other: 10.153053
+  Shared experts require identifiable names; MMQ / GEMM names do not establish tensor role or cuBLAS provenance.
+Gaps: device / following layer / bucket: count | count/token | ms/token
+  NVIDIA GB10 (0) / unassigned / <50 us: 56036 | 1751.125000 | 3.439853
+  NVIDIA GB10 (0) / unassigned / 50-500 us: 1496 | 46.750000 | 5.650059
+  NVIDIA GB10 (0) / unassigned / 0.5-5 ms: 460 | 14.375000 | 20.670337
+  NVIDIA GB10 (0) / unassigned / >5 ms: 61 | 1.906250 | 17.885895
+Gap attribution (>0.5ms; nearest bank kernels, per device): count | captured ms/token | steady ms/token
+  pre-first-bank-kernel: 105 | 20.024668 | 20.670625
+  pre-first subset: no preceding bank: 74 | 18.557043 | 19.155657
+  pre-first subset: preceding bank present (includes token boundaries): 31 | 1.467625 | 1.514968
+  early-to-late: real-lookup wait (6144-wide early down): 368 | 16.207620 | 16.730446
+  early-to-late: other early down: 48 | 2.323944 | 2.398910
+  unattributed: 0 | 0.000000 | 0.000000
+  early-to-late total: 416 | 18.531564 | 19.129356
+  Attribution describes temporal placement, not proven CPU/I/O causality; missing grids stay unattributed.
+  Layer labels absent => unassigned. Overlapping kernels merged per device.
+  >0.5ms host-hook wait candidate sanity: 38.556 ms/token; expected ~42; delta -3.444.
+  Long gaps alone do not identify host-hook causes; copies may occupy kernel gaps.
+  GPU busy uses interval union; family times sum kernel durations (can overlap).
+CUDA API: ms/token (host durations; may overlap GPU work)
+  cudaStreamWaitValue / cuStreamWaitValue32: 0.122380
+  cudaGraphLaunch: 7.695027
+  cudaMemcpyAsync: 28.767021
+  cudaEventSynchronize: 0.000000
+  rest: 155.460251
+tokens=32 gpu_busy=145.611529 ms/token gaps=47.646144 ms/token (of which >0.5ms: 38.556232) api=192.044678 ms/token
+Steady estimate: tokens=32 gpu_busy=150.308675 ms/token gaps=49.183117 ms/token (of which >0.5ms: 39.799981) api=198.239667 ms/token
