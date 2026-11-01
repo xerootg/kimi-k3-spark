@@ -1,0 +1,696 @@
+reusing /home/xero/llama-k3-par2
+0008 ctree patch already applied
+-- llama.cpp version: 0.7.0-dev
+CMAKE_BUILD_TYPE=Release
+error: Could not read 848bbda9041decd87904f7eb5a2990863ecce03b
+fatal: Failed to traverse parents of commit 547208dca250ceb3e4c8615598d043f2b602a527
+-- Warning: ccache not found - consider installing it for faster compilation or disable this warning with GGML_CCACHE=OFF
+-- CMAKE_SYSTEM_PROCESSOR: aarch64
+-- GGML_SYSTEM_ARCH: ARM
+-- Including CPU backend
+-- ARM detected
+CMake Warning at ggml/src/ggml-cpu/CMakeLists.txt:155 (message):
+  ARM -march/-mcpu not found, -mcpu=native will be used
+Call Stack (most recent call first):
+  ggml/src/CMakeLists.txt:596 (ggml_add_cpu_backend_variant_impl)
+
+
+-- Checking for ARM features using flags:
+--   -mcpu=native
+-- Adding CPU backend variant ggml-cpu: -mcpu=native 
+-- CUDA Toolkit found
+-- The CUDA compiler identification is NVIDIA 13.0.88
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /usr/local/cuda/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Replacing 121 in CMAKE_CUDA_ARCHITECTURES with 121a
+-- Replacing 121-real in CMAKE_CUDA_ARCHITECTURES_NATIVE with 121a-real
+-- Using CMAKE_CUDA_ARCHITECTURES=121a CMAKE_CUDA_ARCHITECTURES_NATIVE=121a-real
+-- FlashAttention K-V type combinations: f16-f16;q4_0-q4_0;q8_0-q8_0;bf16-bf16
+-- Could NOT find NCCL (missing: NCCL_LIBRARY NCCL_INCLUDE_DIR) 
+-- Warning: NCCL not found, performance for multiple CUDA GPUs will be suboptimal
+-- CUDA host compiler is GNU 13.3.0
+-- Including CUDA backend
+-- ggml version: 0.27.0
+-- ggml commit:  547208d-dirty
+-- Found OpenSSL: /usr/lib/aarch64-linux-gnu/libcrypto.so (found version "3.0.13")  
+-- Performing Test OPENSSL_VERSION_SUPPORTED
+-- Performing Test OPENSSL_VERSION_SUPPORTED - Success
+-- OpenSSL found: 3.0.13
+-- Generating embedded license file for target: llama-app
+-- Configuring done (1.7s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/xero/llama-k3-par2/build-par2
+[  0%] Building CXX object vendor/cpp-httplib/CMakeFiles/cpp-httplib.dir/httplib.cpp.o
+[  0%] Building CXX object vendor/hash/CMakeFiles/vendor-hash.dir/hash.cpp.o
+[  0%] Building C object vendor/hash/CMakeFiles/vendor-hash.dir/sha256/sha256.c.o
+[  0%] Building CXX object vendor/hash/CMakeFiles/vendor-hash.dir/sha1/sha1.c.o
+[  0%] Provisioning UI assets
+[  0%] Building C object vendor/hash/CMakeFiles/vendor-hash.dir/xxhash/xxhash.c.o
+[  1%] Building CXX object common/CMakeFiles/llama-common-base.dir/build-info.cpp.o
+[  1%] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml.c.o
+-- UI: downloading from b0: https://huggingface.co/buckets/ggml-org/llama-ui/resolve/b0/dist.tar.gz
+[  1%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml.cpp.o
+[  1%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-backend.cpp.o
+[  1%] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml-alloc.c.o
+[  1%] Linking CXX static library libllama-common-base.a
+-- UI: download dist.tar.gz.sha256 from b0 failed: "HTTP response code said error"
+-- UI: downloading from latest: https://huggingface.co/buckets/ggml-org/llama-ui/resolve/latest/dist.tar.gz
+[  1%] Built target llama-common-base
+[  1%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-backend-meta.cpp.o
+[  1%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-opt.cpp.o
+[  3%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-threading.cpp.o
+[  3%] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml-quants.c.o
+-- UI: archive verified and extracted
+-- UI: HF download succeeded, stamp updated (ggml-org/llama-ui|b0, resolved: latest)
+[  3%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/gguf.cpp.o
+-- UI: gzip compression applied (/home/xero/llama-k3-par2/build-par2/tools/ui/ui-gzip/_gzip)
+[  4%] Linking CXX static library libvendor-hash.a
+[  4%] Built target vendor-hash
+[  4%] Linking CXX shared library ../../bin/libggml-base.so
+[  4%] Built target ggml-base
+[  4%] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu.c.o
+[  4%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/hbm.cpp.o
+[  4%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu.cpp.o
+[  4%] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/quants.c.o
+[  6%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/repack.cpp.o
+[  6%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/acc.cu.o
+[  6%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/traits.cpp.o
+-- UI: embedded 70 assets
+[  6%] Built target llama-ui-assets
+[  6%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/amx/amx.cpp.o
+[  6%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/amx/mmq.cpp.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/tiled/tiled.cpp.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/tiled/tiled-kernel.cpp.o
+[  8%] Building CXX object tools/ui/CMakeFiles/llama-ui.dir/ui.cpp.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/binary-ops.cpp.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/unary-ops.cpp.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/vec.cpp.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ops.cpp.o
+[  9%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/llamafile/sgemm.cpp.o
+[  9%] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/quants.c.o
+[  9%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/add-id.cu.o
+[  9%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack.cpp.o
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/allreduce.cu.o
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/arange.cu.o
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/argmax.cu.o
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/argsort.cu.o
+[ 11%] Linking CXX static library libllama-ui.a
+[ 11%] Built target llama-ui
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/binbcast.cu.o
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/clamp.cu.o
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/col2im-1d.cu.o
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/concat.cu.o
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/conv-transpose-1d.cu.o
+[ 13%] Linking CXX shared library ../../bin/libggml-cpu.so
+[ 13%] Built target ggml-cpu
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/conv2d-dw.cu.o
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/conv2d-transpose.cu.o
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/conv2d.cu.o
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/conv3d.cu.o
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/convert.cu.o
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/count-equal.cu.o
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/cpy.cu.o
+[ 14%] Linking CXX static library libcpp-httplib.a
+[ 14%] Built target cpp-httplib
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/cross-entropy-loss.cu.o
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/cumsum.cu.o
+[ 16%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/diag.cu.o
+[ 16%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/diagmask.cu.o
+[ 16%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/dsv4-hc.cu.o
+[ 16%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/fattn-tile.cu.o
+[ 16%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/fattn.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/fill.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/fwht.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/gated-delta-net-mma.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/gated_delta_net.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/getrows.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/ggml-cuda.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/gla.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/im2col.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/lightning-indexer.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mean.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mmf.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mmid.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mmq.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mmvf.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mmvq.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/moe-weighted-reduction.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/norm.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/opt-step-adamw.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/opt-step-sgd.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/out-prod.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/pad.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/pad_reflect_1d.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/pool1d.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/pool2d.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/quantize.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/roll.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/rope.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/scale.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/set-rows.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/set.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/snake.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/softcap.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/softmax.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/solve_tri.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/ssm-conv.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/ssm-scan.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/sum.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/sumrows.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/top-k.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/topk-moe.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/tri.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/tsembd.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/unary.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/upscale.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/wkv.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq112-dv112.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq128-dv128.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq192-dv128.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq256-dv256.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq320-dv256.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq40-dv40.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq512-dv512.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq576-dv512.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq64-dv64.cu.o
+[ 32%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq72-dv72.cu.o
+[ 32%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq80-dv80.cu.o
+[ 32%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq96-dv96.cu.o
+[ 32%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_1-ncols2_16.cu.o
+[ 32%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_1-ncols2_32.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_1-ncols2_8.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_1.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_2.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_4.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_16.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_32.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_4.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_8.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_32-ncols2_1.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_32-ncols2_2.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_16.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_2.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_4.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_8.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_64-ncols2_1.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_1.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_2.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_4.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_8.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq1_s.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq2_s.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq2_xs.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq2_xxs.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq3_s.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq3_xxs.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq4_nl.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq4_xs.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-mxfp4.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-nvfp4.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q1_0.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q2_0.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q2_k.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q3_k.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q4_0.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q4_1.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q4_k.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q5_0.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q5_1.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q5_k.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q6_k.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q8_0.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_1.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_10.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_11.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_12.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_13.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_14.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_15.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_16.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_2.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_3.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_4.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_5.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_6.cu.o
+[ 49%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_7.cu.o
+[ 49%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_8.cu.o
+[ 49%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_9.cu.o
+[ 49%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-vec-instance-f16-f16.cu.o
+[ 49%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-vec-instance-q4_0-q4_0.cu.o
+[ 50%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-vec-instance-q8_0-q8_0.cu.o
+[ 50%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-vec-instance-bf16-bf16.cu.o
+[ 50%] Linking CUDA shared library ../../../bin/libggml-cuda.so
+[ 50%] Built target ggml-cuda
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml.dir/ggml-backend-reg.cpp.o
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml.dir/ggml-backend-dl.cpp.o
+[ 50%] Linking CXX shared library ../../bin/libggml.so
+[ 50%] Built target ggml
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_9_cxx.cxx.o
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_8_cxx.cxx.o
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_6_cxx.cxx.o
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_7_cxx.cxx.o
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_10_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_3_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_4_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_5_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_2_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_1_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_0_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/llama.cpp.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/llama-adapter.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-arch.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-batch.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-chat.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-context.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-cparams.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-grammar.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-graph.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-hparams.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-impl.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-io.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache-iswa.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache-dsa.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache-dsa-iswa.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache-msa.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache-dsv4.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-memory.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-moe-cache.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-memory-hybrid.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-memory-hybrid-iswa.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-memory-hybrid-idx.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-memory-recurrent.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-mmap.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-model-loader.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/llama-model-saver.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/llama-model.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/llama-quant.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/llama-sampler.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/llama-vocab.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/unicode-data.cpp.o
+[ 63%] Building CXX object src/CMakeFiles/llama.dir/unicode.cpp.o
+[ 63%] Linking CXX shared library ../bin/libllama.so
+[ 63%] Built target llama
+[ 63%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-helper.cpp.o
+[ 65%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/parsers.cpp.o
+[ 65%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-helper-gen.cpp.o
+[ 65%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd.cpp.o
+[ 67%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/cohere2moe.cpp.o
+[ 67%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-audio.cpp.o
+[ 67%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-image.cpp.o
+[ 67%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/deepseek.cpp.o
+[ 67%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/functionary-v3-2.cpp.o
+[ 67%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/clip.cpp.o
+[ 67%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/cogvlm.cpp.o
+[ 67%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/gemma4.cpp.o
+[ 67%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/conformer.cpp.o
+[ 67%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/deepseek4v.cpp.o
+[ 67%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/gigachat-v3.cpp.o
+[ 67%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/dots3note.cpp.o
+[ 67%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/gpt-oss.cpp.o
+[ 68%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/dotsocr.cpp.o
+[ 68%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/exaone4_5.cpp.o
+[ 68%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/gemma4a.cpp.o
+[ 68%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/gemma4v.cpp.o
+[ 70%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/harmony-xml.cpp.o
+[ 70%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/gemma4ua.cpp.o
+[ 70%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/gemma4uv.cpp.o
+[ 70%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/k2-horizon.cpp.o
+[ 72%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/glm4v.cpp.o
+[ 72%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/granite-speech.cpp.o
+[ 72%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/granite4-vision.cpp.o
+[ 72%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/kimi-k2.cpp.o
+[ 72%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/kimi-k3.cpp.o
+[ 72%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/hunyuanvl.cpp.o
+[ 72%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/internvl.cpp.o
+[ 72%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/kimivl.cpp.o
+[ 73%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/kimik25.cpp.o
+[ 73%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/ling3.cpp.o
+[ 73%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/nemotron-v2-vl.cpp.o
+[ 73%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/lfm2.cpp.o
+[ 75%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/llm-jp-harmony.cpp.o
+[ 75%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/nemotron-omni.cpp.o
+[ 75%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/minicpm5.cpp.o
+[ 75%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/muse-glimmer.cpp.o
+[ 75%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/muse-spark-audio.cpp.o
+[ 75%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/llama4.cpp.o
+[ 77%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/llava.cpp.o
+[ 77%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/minimax-m3.cpp.o
+[ 77%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/ministral3.cpp.o
+[ 77%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/minicpmv.cpp.o
+[ 77%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/muse-glimmer.cpp.o
+[ 77%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/paddleocr.cpp.o
+[ 77%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/muse-spark.cpp.o
+[ 77%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/pixtral.cpp.o
+[ 77%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen2vl.cpp.o
+[ 77%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/minimax-m3.cpp.o
+[ 78%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen3vl.cpp.o
+[ 78%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/ling3vl.cpp.o
+[ 78%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/mimovl.cpp.o
+[ 80%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/qwen3-coder.cpp.o
+[ 80%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/translate-gemma.cpp.o
+[ 80%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen3a.cpp.o
+[ 80%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/mimo-audio.cpp.o
+[ 80%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen3tts-spkenc.cpp.o
+[ 80%] Building CXX object common/CMakeFiles/llama-common.dir/arg.cpp.o
+[ 81%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen3tts-gen.cpp.o
+[ 81%] Building CXX object common/CMakeFiles/llama-common.dir/chat-auto-parser-generator.cpp.o
+[ 81%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/pockettts-seanet.cpp.o
+[ 81%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/pockettts-spkenc.cpp.o
+[ 81%] Building CXX object common/CMakeFiles/llama-common.dir/chat-auto-parser-helpers.cpp.o
+[ 81%] Building CXX object common/CMakeFiles/llama-common.dir/chat-diff-analyzer.cpp.o
+[ 81%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/pockettts-gen.cpp.o
+[ 81%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/step3vl.cpp.o
+[ 83%] Building CXX object common/CMakeFiles/llama-common.dir/chat-peg-parser.cpp.o
+[ 83%] Building CXX object common/CMakeFiles/llama-common.dir/chat.cpp.o
+[ 83%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/siglip.cpp.o
+[ 85%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/whisper-enc.cpp.o
+[ 85%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/voxtral-rt.cpp.o
+[ 85%] Building CXX object common/CMakeFiles/llama-common.dir/common.cpp.o
+[ 85%] Building CXX object common/CMakeFiles/llama-common.dir/console.cpp.o
+[ 85%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/deepseekocr.cpp.o
+[ 85%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/deepseekocr2.cpp.o
+[ 85%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/mobilenetv5.cpp.o
+[ 85%] Building CXX object common/CMakeFiles/llama-common.dir/debug.cpp.o
+[ 85%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/youtuvl.cpp.o
+[ 86%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/yasa2.cpp.o
+[ 86%] Building CXX object common/CMakeFiles/llama-common.dir/download.cpp.o
+[ 86%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/parakeet.cpp.o
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/fit.cpp.o
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/hf-cache.cpp.o
+[ 88%] Linking CXX shared library ../../bin/libmtmd.so
+[ 88%] Built target mtmd
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/imatrix-loader.cpp.o
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/json-schema-to-grammar.cpp.o
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/json-schema.cpp.o
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/json.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/llguidance.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/log.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/ngram-cache.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/ngram-map.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/ngram-mod.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/peg-parser.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/preset.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/reasoning-budget.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/sampling.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/speculative.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/subproc.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/trie.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/unicode.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/lexer.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/parser.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/runtime.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/value.cpp.o
+[ 95%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/string.cpp.o
+[ 95%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/caps.cpp.o
+[ 95%] Linking CXX shared library ../bin/libllama-common.so
+[ 95%] Built target llama-common
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-chat.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-task.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-queue.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-decision.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-stream.cpp.o
+[ 96%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-context.cpp.o
+[ 96%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-common.cpp.o
+[ 96%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-tools.cpp.o
+[ 98%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-mcp.cpp.o
+[ 98%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-schema.cpp.o
+[ 98%] Linking CXX static library libserver-context.a
+[ 98%] Built target server-context
+[ 98%] Building CXX object tools/server/CMakeFiles/llama-server-impl.dir/server.cpp.o
+[ 98%] Building CXX object tools/server/CMakeFiles/llama-server-impl.dir/server-http.cpp.o
+[100%] Building CXX object tools/server/CMakeFiles/llama-server-impl.dir/server-models.cpp.o
+[100%] Linking CXX shared library ../../bin/libllama-server-impl.so
+[100%] Built target llama-server-impl
+[100%] Building CXX object tools/server/CMakeFiles/llama-server.dir/main.cpp.o
+[100%] Linking CXX executable ../../bin/llama-server
+[100%] Built target llama-server
+WIN2PAR2 isolated par2 POLICY=lfu LFU_HALF_LIFE=262144 PREFILL_BANK=1 THP=0 cache=84000 MiB ROUNDS=3
+P21 N=1 EXACT_COLS=0 ctx-size=65536 KV splits per slot: 65536 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+P21 N=1 round=0 client=1 5.378 tok/s md5 9449ae5738
+P21 N=1 round=1 client=1 5.887 tok/s md5 9449ae5738
+AGG N=1 round=1 tokens=128 wall=22.848903 agg_tok_s=5.602 per_stream_mean=5.887
+P21 first concurrent decode: mul_mat_id/moe/split GEMV/ncols log evidence
+1.50.149.271 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+1.59.116.704 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.23 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+P21 source dispatch: ID MMVQ ncols>1 uses MoE when EXACT_COLS=0; singleton per column when EXACT_COLS=1. Logs alone do not prove actual batch widths.
+P21 N=1 round=2 client=1 5.996 tok/s md5 9449ae5738
+AGG N=1 round=2 tokens=128 wall=22.465368 agg_tok_s=5.698 per_stream_mean=5.996
+P21 N=1 round=3 client=1 6.022 tok/s md5 9449ae5738
+AGG N=1 round=3 tokens=128 wall=22.382451 agg_tok_s=5.719 per_stream_mean=6.022
+1.29.021.227 I fill_late: expert store: 35483 lookups, hit rate 92.5%, 32.5 GB read for decode, 0.0 GB for prefill
+1.29.021.244 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.39.138.449 I fill_late: expert store: 68251 lookups, hit rate 92.7%, 61.4 GB read for decode, 0.0 GB for prefill
+1.39.138.457 I fill_late: expert store: split GEMV: 8044 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+1.50.149.256 I fill_late: expert store: 103733 lookups, hit rate 92.4%, 97.6 GB read for decode, 0.0 GB for prefill
+1.50.149.271 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+1.59.116.695 I fill_late: expert store: 136501 lookups, hit rate 93.2%, 115.2 GB read for decode, 0.0 GB for prefill
+1.59.116.704 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.23 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+2.10.111.395 I fill_late: expert store: 171983 lookups, hit rate 92.9%, 151.0 GB read for decode, 0.0 GB for prefill
+2.10.111.406 I fill_late: expert store: split GEMV: 20184 early lookups, 6.8 of 8 experts complete at the early lookup, 1.25 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+2.18.659.655 I fill_late: expert store: 204751 lookups, hit rate 93.5%, 165.1 GB read for decode, 0.0 GB for prefill
+2.18.659.665 I fill_late: expert store: split GEMV: 24280 early lookups, 6.8 of 8 experts complete at the early lookup, 1.16 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.28.152.190 I fill_late: expert store: 237519 lookups, hit rate 93.6%, 187.8 GB read for decode, 0.0 GB for prefill
+2.28.152.197 I fill_late: expert store: split GEMV: 28376 early lookups, 6.8 of 8 experts complete at the early lookup, 1.16 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.38.114.330 I fill_late: expert store: 273001 lookups, hit rate 93.6%, 215.5 GB read for decode, 0.0 GB for prefill
+2.38.114.340 I fill_late: expert store: split GEMV: 32398 early lookups, 6.9 of 8 experts complete at the early lookup, 1.13 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+2.47.099.390 I fill_late: expert store: 305769 lookups, hit rate 93.8%, 234.2 GB read for decode, 0.0 GB for prefill
+2.47.099.398 I fill_late: expert store: split GEMV: 36494 early lookups, 6.9 of 8 experts complete at the early lookup, 1.11 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.44 ms, 0 early lookups without a real one
+2.51.196.957 I llama_moe_cache: ubatch <= 8: hits = 289152, misses = 16281, hit rate = 94.67%, uploaded = 191726.16 MiB
+2.51.196.964 I llama_moe_cache: ubatch  > 8: hits = 9628, misses = 3596, hit rate = 72.81%, uploaded = 42009.84 MiB
+2.51.196.973 I llama_moe_cache: expert store: split GEMV: 38105 early lookups, 6.9 of 8 experts complete at the early lookup, 1.12 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+2.51.246.981 I host bank hooks: early=38105/206.585ms real=38475/21354.199ms post=37666/1422.490ms idle_sleeps=143359 lean=1
+2.51.248.665 I host bank real readiness: calls=38475 split=38105 resident_entry_split=22497 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.51.248.668 I host bank real bucket: a_ready_latency=15904/20428.806ms
+2.51.248.668 I host bank real bucket: b_early_read=11607/14269.176ms
+2.51.248.669 I host bank real bucket: b_predict_read=6796/2736.621ms
+2.51.248.670 I host bank real bucket: c_real_read=296/3360.594ms
+2.51.248.671 I host bank real bucket: d_lock=38457/1.177ms
+2.51.248.672 I host bank real bucket: e_other=38475/984.123ms
+2.51.248.675 I host bank real histogram: ready_p50/p90/p99=0.000/1.570/5.340ms abc_p50/p90/p99=0.000/3.130/10.670ms (a overlaps b+c; overflow is lower bound)
+P21 startup/first decode kernel evidence (first 16 matches):
+1.16.300.805 I impl:        CPU MoE cache size = 87978.19 MiB for 223800.00 MiB of host experts
+1.29.021.244 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.39.138.457 I fill_late: expert store: split GEMV: 8044 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.57 ms, 0 early lookups without a real one
+1.50.149.271 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+1.59.116.704 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.23 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+2.10.111.406 I fill_late: expert store: split GEMV: 20184 early lookups, 6.8 of 8 experts complete at the early lookup, 1.25 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.52 ms, 0 early lookups without a real one
+2.18.659.665 I fill_late: expert store: split GEMV: 24280 early lookups, 6.8 of 8 experts complete at the early lookup, 1.16 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.28.152.197 I fill_late: expert store: split GEMV: 28376 early lookups, 6.8 of 8 experts complete at the early lookup, 1.16 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.38.114.340 I fill_late: expert store: split GEMV: 32398 early lookups, 6.9 of 8 experts complete at the early lookup, 1.13 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+2.47.099.398 I fill_late: expert store: split GEMV: 36494 early lookups, 6.9 of 8 experts complete at the early lookup, 1.11 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.44 ms, 0 early lookups without a real one
+2.51.196.957 I llama_moe_cache: ubatch <= 8: hits = 289152, misses = 16281, hit rate = 94.67%, uploaded = 191726.16 MiB
+2.51.196.964 I llama_moe_cache: ubatch  > 8: hits = 9628, misses = 3596, hit rate = 72.81%, uploaded = 42009.84 MiB
+2.51.196.965 I llama_moe_cache: expert store: 245.09 GB read for decode, 0.00 GB read for prefill
+2.51.196.966 I llama_moe_cache: expert store: per layer fill: plan 0.00 ms, reads 0.09 ms (0.5 records, 72.93 GB/s), between fills 6.76 ms
+2.51.196.969 I llama_moe_cache: expert store: memory valve: host MemAvailable 9.96 GB (lowest 9.91, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.51.196.973 I llama_moe_cache: expert store: split GEMV: 38105 early lookups, 6.9 of 8 experts complete at the early lookup, 1.12 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+P21 MemAvailable 121178 MiB
+P22exact N=2 EXACT_COLS=1 ctx-size=65536 KV splits per slot: 32768 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+P22exact N=1 round=0 client=1 5.395 tok/s md5 9449ae5738
+P22exact N=2 round=1 client=1 2.129 tok/s md5 400f1b3bb1
+P22exact N=2 round=1 client=2 2.171 tok/s md5 f451f8a585
+AGG N=2 round=1 tokens=256 wall=61.160909 agg_tok_s=4.186 per_stream_mean=2.150
+GOLD-MISMATCH client=1 md5=400f1b3bb1; batching changed bytes
+GOLD-MISMATCH client=2 md5=f451f8a585; batching changed bytes
+QUALITY-GATE-FAIL P22exact round 1 (retained; completing all four legs)
+P22exact first concurrent decode: mul_mat_id/moe/split GEMV/ncols log evidence
+1.57.878.354 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+2.23.170.054 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+P22exact source dispatch: ID MMVQ ncols>1 uses MoE when EXACT_COLS=0; singleton per column when EXACT_COLS=1. Logs alone do not prove actual batch widths.
+P22exact N=2 round=2 client=1 2.353 tok/s md5 f451f8a585
+P22exact N=2 round=2 client=2 2.299 tok/s md5 400f1b3bb1
+AGG N=2 round=2 tokens=256 wall=56.797936 agg_tok_s=4.507 per_stream_mean=2.326
+GOLD-MISMATCH client=1 md5=f451f8a585; batching changed bytes
+GOLD-MISMATCH client=2 md5=400f1b3bb1; batching changed bytes
+QUALITY-GATE-FAIL P22exact round 2 (retained; completing all four legs)
+P22exact N=2 round=3 client=1 2.369 tok/s md5 f451f8a585
+P22exact N=2 round=3 client=2 2.310 tok/s md5 400f1b3bb1
+AGG N=2 round=3 tokens=256 wall=56.601510 agg_tok_s=4.523 per_stream_mean=2.339
+GOLD-MISMATCH client=1 md5=f451f8a585; batching changed bytes
+GOLD-MISMATCH client=2 md5=400f1b3bb1; batching changed bytes
+QUALITY-GATE-FAIL P22exact round 3 (retained; completing all four legs)
+1.30.028.988 I fill_late: expert store: 35482 lookups, hit rate 92.5%, 32.6 GB read for decode, 0.0 GB for prefill
+1.30.029.003 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.40.121.999 I fill_late: expert store: 68250 lookups, hit rate 92.7%, 61.4 GB read for decode, 0.0 GB for prefill
+1.40.122.007 I fill_late: expert store: split GEMV: 8044 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+1.57.878.338 I fill_decode: expert store: 120719 lookups, hit rate 93.5%, 95.9 GB read for decode, 0.0 GB for prefill
+1.57.878.354 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+2.23.170.041 I fill_decode: expert store: 183217 lookups, hit rate 95.5%, 100.1 GB read for decode, 0.0 GB for prefill
+2.23.170.054 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+2.52.324.137 I fill_decode: expert store: 247885 lookups, hit rate 95.9%, 124.0 GB read for decode, 0.0 GB for prefill
+2.52.324.151 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+3.13.527.289 I fill_decode: expert store: 308203 lookups, hit rate 96.6%, 126.9 GB read for decode, 0.0 GB for prefill
+3.13.527.308 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+3.39.168.957 I fill_decode: expert store: 371185 lookups, hit rate 97.1%, 129.8 GB read for decode, 0.0 GB for prefill
+3.39.168.969 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+4.02.103.706 I fill_decode: expert store: 433532 lookups, hit rate 97.1%, 153.9 GB read for decode, 0.0 GB for prefill
+4.02.103.718 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.5 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.63 ms, 0 early lookups without a real one
+4.25.702.820 I fill_decode: expert store: 496358 lookups, hit rate 97.4%, 157.0 GB read for decode, 0.0 GB for prefill
+4.25.702.841 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.5 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.63 ms, 0 early lookups without a real one
+4.39.026.917 I llama_moe_cache: ubatch <= 8: hits = 498235, misses = 7360, hit rate = 98.54%, uploaded = 86088.47 MiB
+4.39.026.921 I llama_moe_cache: ubatch  > 8: hits = 16065, misses = 5646, hit rate = 73.99%, uploaded = 65742.56 MiB
+4.39.026.931 I llama_moe_cache: expert store: split GEMV: 9761 early lookups, 6.5 of 8 experts complete at the early lookup, 1.46 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.63 ms, 0 early lookups without a real one
+4.39.110.629 I host bank hooks: early=9761/58.026ms real=38925/14297.905ms post=38266/99659.964ms idle_sleeps=151288 lean=1
+4.39.112.305 I host bank real readiness: calls=38925 split=9761 resident_entry_split=4695 resident_locked_other=28295 histogram_bin_us=10 overflow_gt_ms=100
+4.39.112.307 I host bank real bucket: a_ready_latency=5935/13391.642ms
+4.39.112.307 I host bank real bucket: b_early_read=3763/5164.211ms
+4.39.112.308 I host bank real bucket: b_predict_read=2591/968.906ms
+4.39.112.308 I host bank real bucket: c_real_read=869/7108.397ms
+4.39.112.309 I host bank real bucket: d_lock=38909/1.408ms
+4.39.112.309 I host bank real bucket: e_other=38925/1048.200ms
+4.39.112.313 I host bank real histogram: ready_p50/p90/p99=0.000/0.590/8.070ms abc_p50/p90/p99=0.000/1.170/15.970ms (a overlaps b+c; overflow is lower bound)
+P22exact startup/first decode kernel evidence (first 16 matches):
+1.17.466.771 I impl:        CPU MoE cache size = 87978.19 MiB for 223800.00 MiB of host experts
+1.30.029.003 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.40.122.007 I fill_late: expert store: split GEMV: 8044 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+1.57.878.354 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+2.23.170.054 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+2.52.324.151 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+3.13.527.308 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+3.39.168.969 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+4.02.103.718 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.5 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.63 ms, 0 early lookups without a real one
+4.25.702.841 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.5 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.63 ms, 0 early lookups without a real one
+4.39.026.917 I llama_moe_cache: ubatch <= 8: hits = 498235, misses = 7360, hit rate = 98.54%, uploaded = 86088.47 MiB
+4.39.026.921 I llama_moe_cache: ubatch  > 8: hits = 16065, misses = 5646, hit rate = 73.99%, uploaded = 65742.56 MiB
+4.39.026.922 I llama_moe_cache: expert store: 159.21 GB read for decode, 0.00 GB read for prefill
+4.39.026.923 I llama_moe_cache: expert store: per layer fill: plan 0.00 ms, reads 0.18 ms (0.3 records, 22.40 GB/s), between fills 5.79 ms
+4.39.026.927 I llama_moe_cache: expert store: memory valve: host MemAvailable 10.14 GB (lowest 10.13, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.39.026.931 I llama_moe_cache: expert store: split GEMV: 9761 early lookups, 6.5 of 8 experts complete at the early lookup, 1.46 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.63 ms, 0 early lookups without a real one
+P22exact MemAvailable 121176 MiB
+P22off N=2 EXACT_COLS=0 ctx-size=65536 KV splits per slot: 32768 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+P22off N=1 round=0 client=1 5.371 tok/s md5 9449ae5738
+P22off N=2 round=1 client=1 2.192 tok/s md5 b5933beb88
+P22off N=2 round=1 client=2 2.236 tok/s md5 232e8f4e2f
+AGG N=2 round=1 tokens=256 wall=59.438959 agg_tok_s=4.307 per_stream_mean=2.214
+GOLD-MISMATCH client=1 md5=b5933beb88; batching changed bytes
+GOLD-MISMATCH client=2 md5=232e8f4e2f; batching changed bytes
+QUALITY-GATE-FAIL P22off round 1 (retained; completing all four legs)
+P22off first concurrent decode: mul_mat_id/moe/split GEMV/ncols log evidence
+1.57.559.529 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+2.23.671.569 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+P22off source dispatch: ID MMVQ ncols>1 uses MoE when EXACT_COLS=0; singleton per column when EXACT_COLS=1. Logs alone do not prove actual batch widths.
+P22off N=2 round=2 client=1 2.365 tok/s md5 b5933beb88
+P22off N=2 round=2 client=2 2.420 tok/s md5 232e8f4e2f
+AGG N=2 round=2 tokens=256 wall=55.251480 agg_tok_s=4.633 per_stream_mean=2.392
+GOLD-MISMATCH client=1 md5=b5933beb88; batching changed bytes
+GOLD-MISMATCH client=2 md5=232e8f4e2f; batching changed bytes
+QUALITY-GATE-FAIL P22off round 2 (retained; completing all four legs)
+P22off N=2 round=3 client=1 2.388 tok/s md5 b5933beb88
+P22off N=2 round=3 client=2 2.450 tok/s md5 232e8f4e2f
+AGG N=2 round=3 tokens=256 wall=54.779113 agg_tok_s=4.673 per_stream_mean=2.419
+GOLD-MISMATCH client=1 md5=b5933beb88; batching changed bytes
+GOLD-MISMATCH client=2 md5=232e8f4e2f; batching changed bytes
+QUALITY-GATE-FAIL P22off round 3 (retained; completing all four legs)
+1.30.062.508 I fill_late: expert store: 35483 lookups, hit rate 92.5%, 32.5 GB read for decode, 0.0 GB for prefill
+1.30.062.522 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.40.204.015 I fill_late: expert store: 68251 lookups, hit rate 92.7%, 61.2 GB read for decode, 0.0 GB for prefill
+1.40.204.026 I fill_late: expert store: split GEMV: 8044 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+1.57.559.509 I fill_decode: expert store: 120759 lookups, hit rate 93.6%, 95.6 GB read for decode, 0.0 GB for prefill
+1.57.559.529 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+2.23.671.557 I fill_decode: expert store: 183199 lookups, hit rate 95.6%, 99.5 GB read for decode, 0.0 GB for prefill
+2.23.671.569 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+2.50.569.978 I fill_decode: expert store: 247747 lookups, hit rate 96.0%, 122.7 GB read for decode, 0.0 GB for prefill
+2.50.569.996 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+3.11.547.844 I fill_decode: expert store: 308174 lookups, hit rate 96.7%, 125.5 GB read for decode, 0.0 GB for prefill
+3.11.547.863 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+3.36.388.699 I fill_decode: expert store: 370906 lookups, hit rate 97.2%, 128.6 GB read for decode, 0.0 GB for prefill
+3.36.388.718 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+3.57.977.147 I fill_decode: expert store: 433188 lookups, hit rate 97.1%, 152.1 GB read for decode, 0.0 GB for prefill
+3.57.977.159 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+4.21.708.400 I fill_decode: expert store: 496127 lookups, hit rate 97.4%, 155.1 GB read for decode, 0.0 GB for prefill
+4.21.708.425 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+4.34.055.389 I llama_moe_cache: ubatch <= 8: hits = 497828, misses = 7228, hit rate = 98.57%, uploaded = 84576.19 MiB
+4.34.055.394 I llama_moe_cache: ubatch  > 8: hits = 16145, misses = 5602, hit rate = 74.24%, uploaded = 65219.06 MiB
+4.34.055.403 I llama_moe_cache: expert store: split GEMV: 9761 early lookups, 6.5 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.63 ms, 0 early lookups without a real one
+4.34.137.585 I host bank hooks: early=9761/60.380ms real=38925/14177.656ms post=38266/98448.176ms idle_sleeps=149614 lean=1
+4.34.139.253 I host bank real readiness: calls=38925 split=9761 resident_entry_split=4712 resident_locked_other=28288 histogram_bin_us=10 overflow_gt_ms=100
+4.34.139.255 I host bank real bucket: a_ready_latency=5925/13225.426ms
+4.34.139.256 I host bank real bucket: b_early_read=3726/5164.570ms
+4.34.139.256 I host bank real bucket: b_predict_read=2587/961.164ms
+4.34.139.257 I host bank real bucket: c_real_read=876/6962.366ms
+4.34.139.257 I host bank real bucket: d_lock=38914/1.545ms
+4.34.139.257 I host bank real bucket: e_other=38925/1080.662ms
+4.34.139.261 I host bank real histogram: ready_p50/p90/p99=0.000/0.580/8.000ms abc_p50/p90/p99=0.000/1.160/15.830ms (a overlaps b+c; overflow is lower bound)
+P22off startup/first decode kernel evidence (first 16 matches):
+1.17.397.746 I impl:        CPU MoE cache size = 87978.19 MiB for 223800.00 MiB of host experts
+1.30.062.522 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+1.40.204.026 I fill_late: expert store: split GEMV: 8044 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+1.57.559.529 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+2.23.671.569 I fill_decode: expert store: split GEMV: 9530 early lookups, 6.6 of 8 experts complete at the early lookup, 1.44 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+2.50.569.996 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+3.11.547.863 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+3.36.388.718 I fill_decode: expert store: split GEMV: 9608 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+3.57.977.159 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+4.21.708.425 I fill_decode: expert store: split GEMV: 9686 early lookups, 6.6 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.62 ms, 0 early lookups without a real one
+4.34.055.389 I llama_moe_cache: ubatch <= 8: hits = 497828, misses = 7228, hit rate = 98.57%, uploaded = 84576.19 MiB
+4.34.055.394 I llama_moe_cache: ubatch  > 8: hits = 16145, misses = 5602, hit rate = 74.24%, uploaded = 65219.06 MiB
+4.34.055.395 I llama_moe_cache: expert store: 157.07 GB read for decode, 0.00 GB read for prefill
+4.34.055.396 I llama_moe_cache: expert store: per layer fill: plan 0.00 ms, reads 0.18 ms (0.3 records, 22.56 GB/s), between fills 5.62 ms
+4.34.055.399 I llama_moe_cache: expert store: memory valve: host MemAvailable 10.14 GB (lowest 10.11, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.34.055.403 I llama_moe_cache: expert store: split GEMV: 9761 early lookups, 6.5 of 8 experts complete at the early lookup, 1.45 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.63 ms, 0 early lookups without a real one
+P22off MemAvailable 121172 MiB
+P21b N=1 EXACT_COLS=0 ctx-size=65536 KV splits per slot: 65536 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+P21b N=1 round=0 client=1 5.390 tok/s md5 9449ae5738
+P21b N=1 round=1 client=1 5.888 tok/s md5 9449ae5738
+AGG N=1 round=1 tokens=128 wall=22.842533 agg_tok_s=5.604 per_stream_mean=5.888
+P21b first concurrent decode: mul_mat_id/moe/split GEMV/ncols log evidence
+1.51.252.695 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.34 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.00.189.602 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.23 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+P21b source dispatch: ID MMVQ ncols>1 uses MoE when EXACT_COLS=0; singleton per column when EXACT_COLS=1. Logs alone do not prove actual batch widths.
+P21b N=1 round=2 client=1 5.956 tok/s md5 9449ae5738
+AGG N=1 round=2 tokens=128 wall=22.611277 agg_tok_s=5.661 per_stream_mean=5.956
+P21b N=1 round=3 client=1 5.996 tok/s md5 9449ae5738
+AGG N=1 round=3 tokens=128 wall=22.469918 agg_tok_s=5.697 per_stream_mean=5.996
+1.30.144.284 I fill_late: expert store: 35483 lookups, hit rate 92.5%, 32.6 GB read for decode, 0.0 GB for prefill
+1.30.144.300 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.004 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+1.40.218.492 I fill_late: expert store: 68251 lookups, hit rate 92.8%, 60.8 GB read for decode, 0.0 GB for prefill
+1.40.218.499 I fill_late: expert store: split GEMV: 8044 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.51.252.684 I fill_late: expert store: 103733 lookups, hit rate 92.4%, 96.9 GB read for decode, 0.0 GB for prefill
+1.51.252.695 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.34 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.00.189.594 I fill_late: expert store: 136501 lookups, hit rate 93.2%, 114.8 GB read for decode, 0.0 GB for prefill
+2.00.189.602 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.23 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+2.11.186.180 I fill_late: expert store: 171983 lookups, hit rate 92.9%, 151.4 GB read for decode, 0.0 GB for prefill
+2.11.186.190 I fill_late: expert store: split GEMV: 20184 early lookups, 6.8 of 8 experts complete at the early lookup, 1.24 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+2.19.798.659 I fill_late: expert store: 204751 lookups, hit rate 93.4%, 165.7 GB read for decode, 0.0 GB for prefill
+2.19.798.670 I fill_late: expert store: split GEMV: 24280 early lookups, 6.8 of 8 experts complete at the early lookup, 1.16 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.29.376.494 I fill_late: expert store: 237519 lookups, hit rate 93.6%, 188.6 GB read for decode, 0.0 GB for prefill
+2.29.376.506 I fill_late: expert store: split GEMV: 28376 early lookups, 6.8 of 8 experts complete at the early lookup, 1.16 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.39.408.842 I fill_late: expert store: 273001 lookups, hit rate 93.6%, 216.1 GB read for decode, 0.0 GB for prefill
+2.39.408.856 I fill_late: expert store: split GEMV: 32398 early lookups, 6.9 of 8 experts complete at the early lookup, 1.13 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+2.48.454.528 I fill_late: expert store: 305769 lookups, hit rate 93.8%, 234.9 GB read for decode, 0.0 GB for prefill
+2.48.454.540 I fill_late: expert store: split GEMV: 36494 early lookups, 6.9 of 8 experts complete at the early lookup, 1.11 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.44 ms, 0 early lookups without a real one
+2.52.499.275 I llama_moe_cache: ubatch <= 8: hits = 289144, misses = 16289, hit rate = 94.67%, uploaded = 191829.56 MiB
+2.52.499.278 I llama_moe_cache: ubatch  > 8: hits = 9630, misses = 3594, hit rate = 72.82%, uploaded = 41978.72 MiB
+2.52.499.287 I llama_moe_cache: expert store: split GEMV: 38105 early lookups, 6.9 of 8 experts complete at the early lookup, 1.12 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+2.52.669.785 I host bank hooks: early=38105/209.507ms real=38475/21106.592ms post=37666/1423.858ms idle_sleeps=149007 lean=1
+2.52.671.512 I host bank real readiness: calls=38475 split=38105 resident_entry_split=22526 resident_locked_other=74 histogram_bin_us=10 overflow_gt_ms=100
+2.52.671.516 I host bank real bucket: a_ready_latency=15875/20411.119ms
+2.52.671.516 I host bank real bucket: b_early_read=11601/14330.885ms
+2.52.671.517 I host bank real bucket: b_predict_read=6727/2662.230ms
+2.52.671.517 I host bank real bucket: c_real_read=296/3358.962ms
+2.52.671.518 I host bank real bucket: d_lock=38459/1.182ms
+2.52.671.518 I host bank real bucket: e_other=38475/750.815ms
+2.52.671.522 I host bank real histogram: ready_p50/p90/p99=0.000/1.570/5.350ms abc_p50/p90/p99=0.000/3.130/10.690ms (a overlaps b+c; overflow is lower bound)
+P21b startup/first decode kernel evidence (first 16 matches):
+1.17.521.902 I impl:        CPU MoE cache size = 87978.19 MiB for 223800.00 MiB of host experts
+1.30.144.300 I fill_late: expert store: split GEMV: 3948 early lookups, 6.7 of 8 experts complete at the early lookup, 1.29 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.004 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+1.40.218.499 I fill_late: expert store: split GEMV: 8044 early lookups, 6.6 of 8 experts complete at the early lookup, 1.35 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.55 ms, 0 early lookups without a real one
+1.51.252.695 I fill_late: expert store: split GEMV: 12066 early lookups, 6.7 of 8 experts complete at the early lookup, 1.34 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.56 ms, 0 early lookups without a real one
+2.00.189.602 I fill_late: expert store: split GEMV: 16162 early lookups, 6.8 of 8 experts complete at the early lookup, 1.23 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.50 ms, 0 early lookups without a real one
+2.11.186.190 I fill_late: expert store: split GEMV: 20184 early lookups, 6.8 of 8 experts complete at the early lookup, 1.24 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.51 ms, 0 early lookups without a real one
+2.19.798.670 I fill_late: expert store: split GEMV: 24280 early lookups, 6.8 of 8 experts complete at the early lookup, 1.16 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.29.376.506 I fill_late: expert store: split GEMV: 28376 early lookups, 6.8 of 8 experts complete at the early lookup, 1.16 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.47 ms, 0 early lookups without a real one
+2.39.408.856 I fill_late: expert store: split GEMV: 32398 early lookups, 6.9 of 8 experts complete at the early lookup, 1.13 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+2.48.454.540 I fill_late: expert store: split GEMV: 36494 early lookups, 6.9 of 8 experts complete at the early lookup, 1.11 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.44 ms, 0 early lookups without a real one
+2.52.499.275 I llama_moe_cache: ubatch <= 8: hits = 289144, misses = 16289, hit rate = 94.67%, uploaded = 191829.56 MiB
+2.52.499.278 I llama_moe_cache: ubatch  > 8: hits = 9630, misses = 3594, hit rate = 72.82%, uploaded = 41978.72 MiB
+2.52.499.279 I llama_moe_cache: expert store: 245.17 GB read for decode, 0.00 GB read for prefill
+2.52.499.281 I llama_moe_cache: expert store: per layer fill: plan 0.00 ms, reads 0.09 ms (0.5 records, 72.99 GB/s), between fills 7.30 ms
+2.52.499.284 I llama_moe_cache: expert store: memory valve: host MemAvailable 9.98 GB (lowest 9.94, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.52.499.287 I llama_moe_cache: expert store: split GEMV: 38105 early lookups, 6.9 of 8 experts complete at the early lookup, 1.12 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.005 ms, wait at the real lookup 0.45 ms, 0 early lookups without a real one
+P21b MemAvailable 121181 MiB
+ABORT-WINDOW one or more client gold/timing gates failed; see QUALITY-GATE-FAIL and GOLD-MISMATCH above
