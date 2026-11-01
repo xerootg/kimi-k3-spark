@@ -1,0 +1,450 @@
+error: patch failed: ggml/src/ggml-cuda/softmax.cu:10
+error: ggml/src/ggml-cuda/softmax.cu: patch does not apply
+error: patch failed: ggml/src/ggml-cuda/sumrows.cu:1
+error: ggml/src/ggml-cuda/sumrows.cu: patch does not apply
+-- llama.cpp version: 0.7.0-dev
+CMAKE_BUILD_TYPE=Release
+error: Could not read 848bbda9041decd87904f7eb5a2990863ecce03b
+fatal: Failed to traverse parents of commit 547208dca250ceb3e4c8615598d043f2b602a527
+-- Warning: ccache not found - consider installing it for faster compilation or disable this warning with GGML_CCACHE=OFF
+-- CMAKE_SYSTEM_PROCESSOR: aarch64
+-- GGML_SYSTEM_ARCH: ARM
+-- Including CPU backend
+-- ARM detected
+CMake Warning at ggml/src/ggml-cpu/CMakeLists.txt:155 (message):
+  ARM -march/-mcpu not found, -mcpu=native will be used
+Call Stack (most recent call first):
+  ggml/src/CMakeLists.txt:596 (ggml_add_cpu_backend_variant_impl)
+
+
+-- Checking for ARM features using flags:
+--   -mcpu=native
+-- Adding CPU backend variant ggml-cpu: -mcpu=native 
+-- CUDA Toolkit found
+-- Replacing 121 in CMAKE_CUDA_ARCHITECTURES with 121a
+-- Replacing 121-real in CMAKE_CUDA_ARCHITECTURES_NATIVE with 121a-real
+-- Using CMAKE_CUDA_ARCHITECTURES=121a CMAKE_CUDA_ARCHITECTURES_NATIVE=121a-real
+-- FlashAttention K-V type combinations: f16-f16;q4_0-q4_0;q8_0-q8_0;bf16-bf16
+-- Could NOT find NCCL (missing: NCCL_LIBRARY NCCL_INCLUDE_DIR) 
+-- Warning: NCCL not found, performance for multiple CUDA GPUs will be suboptimal
+-- CUDA host compiler is GNU 13.3.0
+-- Including CUDA backend
+-- ggml version: 0.27.0
+-- ggml commit:  547208d-dirty
+-- OpenSSL found: 3.0.13
+-- Generating embedded license file for target: llama-app
+-- Configuring done (0.2s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/xero/llama-k3-fd8/build-fd4
+[  0%] Provisioning UI assets
+[  0%] Building CXX object common/CMakeFiles/llama-common-base.dir/build-info.cpp.o
+[  0%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml.cpp.o
+[  0%] Building CXX object vendor/hash/CMakeFiles/vendor-hash.dir/sha1/sha1.c.o
+[  0%] Building CXX object vendor/hash/CMakeFiles/vendor-hash.dir/hash.cpp.o
+[  0%] Building C object vendor/hash/CMakeFiles/vendor-hash.dir/xxhash/xxhash.c.o
+[  1%] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml.c.o
+[  1%] Linking CXX static library libcpp-httplib.a
+-- UI: HF stamp matches 'ggml-org/llama-ui|b0', skipping HF fetch
+-- UI: assets unchanged, skipping embedding
+[  1%] Built target llama-ui-assets
+[  1%] Building C object vendor/hash/CMakeFiles/vendor-hash.dir/sha256/sha256.c.o
+[  1%] Built target cpp-httplib
+[  1%] Building CXX object tools/ui/CMakeFiles/llama-ui.dir/ui.cpp.o
+[  1%] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml-alloc.c.o
+[  1%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-backend.cpp.o
+[  1%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-backend-meta.cpp.o
+[  1%] Linking CXX static library libllama-common-base.a
+[  1%] Built target llama-common-base
+[  1%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-opt.cpp.o
+[  3%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-threading.cpp.o
+[  3%] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml-quants.c.o
+[  3%] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/gguf.cpp.o
+[  4%] Linking CXX static library libvendor-hash.a
+[  4%] Built target vendor-hash
+[  4%] Linking CXX static library libllama-ui.a
+[  4%] Built target llama-ui
+[  4%] Linking CXX shared library ../../bin/libggml-base.so
+[  4%] Built target ggml-base
+[  4%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/hbm.cpp.o
+[  6%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/repack.cpp.o
+[  6%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/traits.cpp.o
+[  6%] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu.c.o
+[  6%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu.cpp.o
+[  6%] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/quants.c.o
+[  6%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/amx/amx.cpp.o
+[  6%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/amx/mmq.cpp.o
+[  6%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/acc.cu.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/tiled/tiled.cpp.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/tiled/tiled-kernel.cpp.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/binary-ops.cpp.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/unary-ops.cpp.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/vec.cpp.o
+[  8%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ops.cpp.o
+[  9%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/llamafile/sgemm.cpp.o
+[  9%] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/quants.c.o
+[  9%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack.cpp.o
+[  9%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/add-id.cu.o
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/allreduce.cu.o
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/arange.cu.o
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/argmax.cu.o
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/argsort.cu.o
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/binbcast.cu.o
+[ 11%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/clamp.cu.o
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/col2im-1d.cu.o
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/concat.cu.o
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/conv-transpose-1d.cu.o
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/conv2d-dw.cu.o
+[ 13%] Linking CXX shared library ../../bin/libggml-cpu.so
+[ 13%] Built target ggml-cpu
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/conv2d-transpose.cu.o
+[ 13%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/conv2d.cu.o
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/conv3d.cu.o
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/convert.cu.o
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/count-equal.cu.o
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/cpy.cu.o
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/cross-entropy-loss.cu.o
+[ 14%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/cumsum.cu.o
+[ 16%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/diag.cu.o
+[ 16%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/diagmask.cu.o
+[ 16%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/dsv4-hc.cu.o
+[ 16%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/fattn-tile.cu.o
+[ 16%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/fattn.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/fill.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/fwht.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/gated-delta-net-mma.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/gated_delta_net.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/getrows.cu.o
+[ 18%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/ggml-cuda.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/gla.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/im2col.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/lightning-indexer.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mean.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mmf.cu.o
+[ 19%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mmid.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mmq.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mmvf.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/mmvq.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/moe-weighted-reduction.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/norm.cu.o
+[ 21%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/opt-step-adamw.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/opt-step-sgd.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/out-prod.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/pad.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/pad_reflect_1d.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/pool1d.cu.o
+[ 22%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/pool2d.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/quantize.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/roll.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/rope.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/scale.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/set-rows.cu.o
+[ 24%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/set.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/snake.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/softcap.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/softmax.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/solve_tri.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/ssm-conv.cu.o
+[ 26%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/ssm-scan.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/sum.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/sumrows.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/top-k.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/topk-moe.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/tri.cu.o
+[ 27%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/tsembd.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/unary.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/upscale.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/wkv.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq112-dv112.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq128-dv128.cu.o
+[ 29%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq192-dv128.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq256-dv256.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq320-dv256.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq40-dv40.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq512-dv512.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq576-dv512.cu.o
+[ 31%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq64-dv64.cu.o
+[ 32%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq72-dv72.cu.o
+[ 32%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq80-dv80.cu.o
+[ 32%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-tile-instance-dkq96-dv96.cu.o
+[ 32%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_1-ncols2_16.cu.o
+[ 32%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_1-ncols2_32.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_1-ncols2_8.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_1.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_2.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_4.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_16.cu.o
+[ 34%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_32.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_4.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_8.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_32-ncols2_1.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_32-ncols2_2.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_16.cu.o
+[ 36%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_2.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_4.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_8.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_64-ncols2_1.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_1.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_2.cu.o
+[ 37%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_4.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_8.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq1_s.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq2_s.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq2_xs.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq2_xxs.cu.o
+[ 39%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq3_s.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq3_xxs.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq4_nl.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-iq4_xs.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-mxfp4.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-nvfp4.cu.o
+[ 40%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q1_0.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q2_0.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q2_k.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q3_k.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q4_0.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q4_1.cu.o
+[ 42%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q4_k.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q5_0.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q5_1.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q5_k.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q6_k.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmq-instance-q8_0.cu.o
+[ 44%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_1.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_10.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_11.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_12.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_13.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_14.cu.o
+[ 45%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_15.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_16.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_2.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_3.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_4.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_5.cu.o
+[ 47%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_6.cu.o
+[ 49%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_7.cu.o
+[ 49%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_8.cu.o
+[ 49%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/mmf-instance-ncols_9.cu.o
+[ 49%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-vec-instance-f16-f16.cu.o
+[ 49%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-vec-instance-q4_0-q4_0.cu.o
+[ 50%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-vec-instance-q8_0-q8_0.cu.o
+[ 50%] Building CUDA object ggml/src/ggml-cuda/CMakeFiles/ggml-cuda.dir/template-instances/fattn-vec-instance-bf16-bf16.cu.o
+[ 50%] Linking CUDA shared library ../../../bin/libggml-cuda.so
+[ 50%] Built target ggml-cuda
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml.dir/ggml-backend-reg.cpp.o
+[ 50%] Building CXX object ggml/src/CMakeFiles/ggml.dir/ggml-backend-dl.cpp.o
+[ 50%] Linking CXX shared library ../../bin/libggml.so
+[ 50%] Built target ggml
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_9_cxx.cxx.o
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_8_cxx.cxx.o
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_7_cxx.cxx.o
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_5_cxx.cxx.o
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_10_cxx.cxx.o
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_6_cxx.cxx.o
+[ 52%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_4_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_3_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_2_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_1_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/Unity/unity_0_cxx.cxx.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/llama.cpp.o
+[ 54%] Building CXX object src/CMakeFiles/llama.dir/llama-adapter.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-arch.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-batch.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-chat.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-context.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-cparams.cpp.o
+[ 55%] Building CXX object src/CMakeFiles/llama.dir/llama-grammar.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-graph.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-hparams.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-impl.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-io.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache.cpp.o
+[ 57%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache-iswa.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache-dsa.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache-dsa-iswa.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache-msa.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache-dsv4.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-memory.cpp.o
+[ 59%] Building CXX object src/CMakeFiles/llama.dir/llama-moe-cache.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-memory-hybrid.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-memory-hybrid-iswa.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-memory-hybrid-idx.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-memory-recurrent.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-mmap.cpp.o
+[ 60%] Building CXX object src/CMakeFiles/llama.dir/llama-model-loader.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/llama-model-saver.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/llama-model.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/llama-quant.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/llama-sampler.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/llama-vocab.cpp.o
+[ 62%] Building CXX object src/CMakeFiles/llama.dir/unicode-data.cpp.o
+[ 63%] Building CXX object src/CMakeFiles/llama.dir/unicode.cpp.o
+[ 63%] Linking CXX shared library ../bin/libllama.so
+[ 63%] Built target llama
+[ 63%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-audio.cpp.o
+[ 63%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-image.cpp.o
+[ 63%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd.cpp.o
+[ 65%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-helper-gen.cpp.o
+[ 65%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/clip.cpp.o
+[ 65%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-helper.cpp.o
+[ 65%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/cogvlm.cpp.o
+[ 65%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/parsers.cpp.o
+[ 65%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/conformer.cpp.o
+[ 67%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/cohere2moe.cpp.o
+[ 67%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/deepseek4v.cpp.o
+[ 67%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/dots3note.cpp.o
+[ 68%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/dotsocr.cpp.o
+[ 68%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/exaone4_5.cpp.o
+[ 68%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/gemma4a.cpp.o
+[ 68%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/gemma4v.cpp.o
+[ 68%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/deepseek.cpp.o
+[ 68%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/functionary-v3-2.cpp.o
+[ 68%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/gemma4ua.cpp.o
+[ 68%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/gemma4uv.cpp.o
+[ 70%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/glm4v.cpp.o
+[ 70%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/granite-speech.cpp.o
+[ 70%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/granite4-vision.cpp.o
+[ 70%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/hunyuanvl.cpp.o
+[ 70%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/internvl.cpp.o
+[ 70%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/kimivl.cpp.o
+[ 72%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/kimik25.cpp.o
+[ 72%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/nemotron-v2-vl.cpp.o
+[ 72%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/nemotron-omni.cpp.o
+[ 72%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/gemma4.cpp.o
+[ 72%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/muse-glimmer.cpp.o
+[ 72%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/muse-spark-audio.cpp.o
+[ 73%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/llava.cpp.o
+[ 73%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/llama4.cpp.o
+[ 73%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/gigachat-v3.cpp.o
+[ 73%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/minicpmv.cpp.o
+[ 73%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/paddleocr.cpp.o
+[ 73%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/pixtral.cpp.o
+[ 73%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen2vl.cpp.o
+[ 73%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/minimax-m3.cpp.o
+[ 75%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen3vl.cpp.o
+[ 75%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/ling3vl.cpp.o
+[ 75%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/mimovl.cpp.o
+[ 75%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/gpt-oss.cpp.o
+[ 75%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen3a.cpp.o
+[ 75%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/mimo-audio.cpp.o
+[ 75%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen3tts-spkenc.cpp.o
+[ 77%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen3tts-gen.cpp.o
+[ 78%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/harmony-xml.cpp.o
+[ 78%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/pockettts-seanet.cpp.o
+[ 78%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/pockettts-spkenc.cpp.o
+[ 78%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/pockettts-gen.cpp.o
+[ 78%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/step3vl.cpp.o
+[ 78%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/siglip.cpp.o
+[ 80%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/whisper-enc.cpp.o
+[ 80%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/k2-horizon.cpp.o
+[ 80%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/voxtral-rt.cpp.o
+[ 80%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/deepseekocr.cpp.o
+[ 80%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/deepseekocr2.cpp.o
+[ 80%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/mobilenetv5.cpp.o
+[ 80%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/youtuvl.cpp.o
+[ 81%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/yasa2.cpp.o
+[ 81%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/kimi-k2.cpp.o
+[ 81%] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/parakeet.cpp.o
+[ 81%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/kimi-k3.cpp.o
+[ 81%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/ling3.cpp.o
+[ 81%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/lfm2.cpp.o
+[ 83%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/llm-jp-harmony.cpp.o
+[ 83%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/minicpm5.cpp.o
+[ 83%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/minimax-m3.cpp.o
+[ 83%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/ministral3.cpp.o
+[ 83%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/muse-glimmer.cpp.o
+[ 83%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/muse-spark.cpp.o
+[ 83%] Linking CXX shared library ../../bin/libmtmd.so
+[ 85%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/qwen3-coder.cpp.o
+[ 85%] Built target mtmd
+[ 85%] Building CXX object common/CMakeFiles/llama-common.dir/parsers/translate-gemma.cpp.o
+[ 85%] Building CXX object common/CMakeFiles/llama-common.dir/arg.cpp.o
+[ 85%] Building CXX object common/CMakeFiles/llama-common.dir/chat-auto-parser-generator.cpp.o
+[ 85%] Building CXX object common/CMakeFiles/llama-common.dir/chat-auto-parser-helpers.cpp.o
+[ 85%] Building CXX object common/CMakeFiles/llama-common.dir/chat-diff-analyzer.cpp.o
+[ 86%] Building CXX object common/CMakeFiles/llama-common.dir/chat.cpp.o
+[ 86%] Building CXX object common/CMakeFiles/llama-common.dir/chat-peg-parser.cpp.o
+[ 86%] Building CXX object common/CMakeFiles/llama-common.dir/common.cpp.o
+[ 86%] Building CXX object common/CMakeFiles/llama-common.dir/console.cpp.o
+[ 86%] Building CXX object common/CMakeFiles/llama-common.dir/debug.cpp.o
+[ 86%] Building CXX object common/CMakeFiles/llama-common.dir/download.cpp.o
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/fit.cpp.o
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/hf-cache.cpp.o
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/imatrix-loader.cpp.o
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/json-schema-to-grammar.cpp.o
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/json-schema.cpp.o
+[ 88%] Building CXX object common/CMakeFiles/llama-common.dir/json.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/llguidance.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/log.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/ngram-cache.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/ngram-map.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/ngram-mod.cpp.o
+[ 90%] Building CXX object common/CMakeFiles/llama-common.dir/peg-parser.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/preset.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/reasoning-budget.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/sampling.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/speculative.cpp.o
+[ 91%] Building CXX object common/CMakeFiles/llama-common.dir/subproc.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/trie.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/unicode.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/lexer.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/parser.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/runtime.cpp.o
+[ 93%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/value.cpp.o
+[ 95%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/string.cpp.o
+[ 95%] Building CXX object common/CMakeFiles/llama-common.dir/jinja/caps.cpp.o
+[ 95%] Linking CXX shared library ../bin/libllama-common.so
+[ 95%] Built target llama-common
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-task.cpp.o
+[ 95%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-queue.cpp.o
+[ 96%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-common.cpp.o
+[ 96%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-decision.cpp.o
+[ 96%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-context.cpp.o
+[ 96%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-chat.cpp.o
+[ 96%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-tools.cpp.o
+[ 96%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-stream.cpp.o
+[ 98%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-mcp.cpp.o
+[ 98%] Building CXX object tools/server/CMakeFiles/server-context.dir/server-schema.cpp.o
+[ 98%] Linking CXX static library libserver-context.a
+[ 98%] Built target server-context
+[ 98%] Building CXX object tools/server/CMakeFiles/llama-server-impl.dir/server.cpp.o
+[ 98%] Building CXX object tools/server/CMakeFiles/llama-server-impl.dir/server-http.cpp.o
+[100%] Building CXX object tools/server/CMakeFiles/llama-server-impl.dir/server-models.cpp.o
+[100%] Linking CXX shared library ../../bin/libllama-server-impl.so
+[100%] Built target llama-server-impl
+[100%] Building CXX object tools/server/CMakeFiles/llama-server.dir/main.cpp.o
+[100%] Linking CXX executable ../../bin/llama-server
+[100%] Built target llama-server
+FD8-PATCH-AND-INCREMENTAL-BUILD-PASS
+LEG FD8-F1 N=1 kinds=standard all-six no-observer non-unified own-extent 600s-cap
+LONG-PROMPT tokens=2048 frozen fd8 token IDs; reference measured at N=1
+FD8-F1 phase=cold client=0 prompt=standard md5=9449ae5738f2e56f99ab7ab6e9626eb5 ref=9449ae5738f2e56f99ab7ab6e9626eb5 REF-MATCH timings={'cache_n': 0, 'prompt_n': 10, 'prompt_ms': 1205.666, 'prompt_per_token_ms': 120.5666, 'prompt_per_second': 8.294171022488815, 'predicted_n': 128, 'predicted_ms': 24354.009, 'predicted_per_token_ms': 191.76385039370078, 'predicted_per_second': 5.2147471900827504}
+FD8-F1 phase=prime client=0 prompt=standard md5=f675805e5b38e5f7291cecefc3ab0d7e PRIME
+FD8-F1 phase=warm client=0 prompt=standard md5=f675805e5b38e5f7291cecefc3ab0d7e ref=f675805e5b38e5f7291cecefc3ab0d7e REF-MATCH timings={'cache_n': 9, 'prompt_n': 1, 'prompt_ms': 161.925, 'prompt_per_token_ms': 161.925, 'prompt_per_second': 6.175698625907056, 'predicted_n': 128, 'predicted_ms': 25760.246, 'predicted_per_token_ms': 202.83658267716535, 'predicted_per_second': 4.93007714289685}
+LEG FD8-L1 N=1 kinds=long all-six no-observer non-unified own-extent 600s-cap
+FD8-L1 phase=cold client=0 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 ref=5e7a436f7e62fd45dc65adda40c2b251 REF-MATCH timings={'cache_n': 0, 'prompt_n': 2048, 'prompt_ms': 34008.449, 'prompt_per_token_ms': 16.60568798828125, 'prompt_per_second': 60.22032936579966, 'predicted_n': 128, 'predicted_ms': 21318.393, 'predicted_per_token_ms': 167.8613622047244, 'predicted_per_second': 5.957297062681977}
+FD8-L1 phase=prime client=0 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 PRIME
+FD8-L1 phase=warm client=0 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 ref=5e7a436f7e62fd45dc65adda40c2b251 REF-MATCH timings={'cache_n': 2047, 'prompt_n': 1, 'prompt_ms': 156.581, 'prompt_per_token_ms': 156.581, 'prompt_per_second': 6.386470900045344, 'predicted_n': 128, 'predicted_ms': 18865.915, 'predicted_per_token_ms': 148.55051181102363, 'predicted_per_second': 6.731716961514985}
+LEG FD8-F2 N=2 kinds=standard,standard all-six no-observer non-unified own-extent 600s-cap
+FD8-F2 phase=cold client=0 prompt=standard md5=9449ae5738f2e56f99ab7ab6e9626eb5 ref=9449ae5738f2e56f99ab7ab6e9626eb5 REF-MATCH timings={'cache_n': 0, 'prompt_n': 10, 'prompt_ms': 1262.882, 'prompt_per_token_ms': 126.2882, 'prompt_per_second': 7.918396176364854, 'predicted_n': 128, 'predicted_ms': 46688.655, 'predicted_per_token_ms': 367.62720472440947, 'predicted_per_second': 2.7201468964998026}
+FD8-F2 phase=cold client=1 prompt=standard md5=9449ae5738f2e56f99ab7ab6e9626eb5 ref=9449ae5738f2e56f99ab7ab6e9626eb5 REF-MATCH timings={'cache_n': 0, 'prompt_n': 10, 'prompt_ms': 389.325, 'prompt_per_token_ms': 38.9325, 'prompt_per_second': 25.685481281705517, 'predicted_n': 128, 'predicted_ms': 46299.459, 'predicted_per_token_ms': 364.5626692913386, 'predicted_per_second': 2.743012612739168}
+FD8-F2 phase=prime client=0 prompt=standard md5=f675805e5b38e5f7291cecefc3ab0d7e PRIME
+FD8-F2 phase=prime client=1 prompt=standard md5=f675805e5b38e5f7291cecefc3ab0d7e PRIME
+FD8-F2 phase=warm client=0 prompt=standard md5=f675805e5b38e5f7291cecefc3ab0d7e ref=f675805e5b38e5f7291cecefc3ab0d7e REF-MATCH timings={'cache_n': 9, 'prompt_n': 1, 'prompt_ms': 169.12, 'prompt_per_token_ms': 169.12, 'prompt_per_second': 5.912961210974456, 'predicted_n': 128, 'predicted_ms': 50549.249, 'predicted_per_token_ms': 398.0255826771654, 'predicted_per_second': 2.5124013217288352}
+FD8-F2 phase=warm client=1 prompt=standard md5=f675805e5b38e5f7291cecefc3ab0d7e ref=f675805e5b38e5f7291cecefc3ab0d7e REF-MATCH timings={'cache_n': 9, 'prompt_n': 1, 'prompt_ms': 199.314, 'prompt_per_token_ms': 199.314, 'prompt_per_second': 5.017209026962481, 'predicted_n': 128, 'predicted_ms': 50718.597, 'predicted_per_token_ms': 399.359031496063, 'predicted_per_second': 2.5040124828374095}
+LEG FD8-F2m N=2 kinds=standard,long all-six no-observer non-unified own-extent 600s-cap
+FD8-F2m phase=cold client=0 prompt=standard md5=9449ae5738f2e56f99ab7ab6e9626eb5 ref=9449ae5738f2e56f99ab7ab6e9626eb5 REF-MATCH timings={'cache_n': 0, 'prompt_n': 10, 'prompt_ms': 1200.326, 'prompt_per_token_ms': 120.0326, 'prompt_per_second': 8.331070059300556, 'predicted_n': 128, 'predicted_ms': 54370.031, 'predicted_per_token_ms': 428.1104803149606, 'predicted_per_second': 2.3358456426114595}
+FD8-F2m phase=cold client=1 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 ref=5e7a436f7e62fd45dc65adda40c2b251 REF-MATCH timings={'cache_n': 0, 'prompt_n': 2048, 'prompt_ms': 34471.218, 'prompt_per_token_ms': 16.8316494140625, 'prompt_per_second': 59.411883850463305, 'predicted_n': 128, 'predicted_ms': 55570.601, 'predicted_per_token_ms': 437.5637874015748, 'predicted_per_second': 2.2853810776673082}
+FD8-F2m phase=prime client=0 prompt=standard md5=f675805e5b38e5f7291cecefc3ab0d7e PRIME
+FD8-F2m phase=prime client=1 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 PRIME
+FD8-F2m phase=warm client=0 prompt=standard md5=f675805e5b38e5f7291cecefc3ab0d7e ref=f675805e5b38e5f7291cecefc3ab0d7e REF-MATCH timings={'cache_n': 9, 'prompt_n': 1, 'prompt_ms': 224.854, 'prompt_per_token_ms': 224.854, 'prompt_per_second': 4.447330267640336, 'predicted_n': 128, 'predicted_ms': 53374.848, 'predicted_per_token_ms': 420.2743937007874, 'predicted_per_second': 2.3793978766927824}
+FD8-F2m phase=warm client=1 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 ref=5e7a436f7e62fd45dc65adda40c2b251 REF-MATCH timings={'cache_n': 2047, 'prompt_n': 1, 'prompt_ms': 164.331, 'prompt_per_token_ms': 164.331, 'prompt_per_second': 6.085279101325983, 'predicted_n': 128, 'predicted_ms': 53599.907, 'predicted_per_token_ms': 422.0465118110236, 'predicted_per_second': 2.3694070961727602}
+LEG FD8-L2 N=2 kinds=long,long all-six no-observer non-unified own-extent 600s-cap
+FD8-L2 phase=cold client=0 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 ref=5e7a436f7e62fd45dc65adda40c2b251 REF-MATCH timings={'cache_n': 0, 'prompt_n': 2048, 'prompt_ms': 34151.625, 'prompt_per_token_ms': 16.67559814453125, 'prompt_per_second': 59.967863901058884, 'predicted_n': 128, 'predicted_ms': 75359.879, 'predicted_per_token_ms': 593.384874015748, 'predicted_per_second': 1.6852468672355483}
+FD8-L2 phase=cold client=1 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 ref=5e7a436f7e62fd45dc65adda40c2b251 REF-MATCH timings={'cache_n': 0, 'prompt_n': 2048, 'prompt_ms': 34185.361, 'prompt_per_token_ms': 16.69207080078125, 'prompt_per_second': 59.908684304957326, 'predicted_n': 128, 'predicted_ms': 41174.676, 'predicted_per_token_ms': 324.2100472440945, 'predicted_per_second': 3.0844201421281374}
+FD8-L2 phase=prime client=0 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 PRIME
+FD8-L2 phase=prime client=1 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 PRIME
+FD8-L2 phase=warm client=0 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 ref=5e7a436f7e62fd45dc65adda40c2b251 REF-MATCH timings={'cache_n': 2047, 'prompt_n': 1, 'prompt_ms': 155.054, 'prompt_per_token_ms': 155.054, 'prompt_per_second': 6.449366027319514, 'predicted_n': 128, 'predicted_ms': 39040.701, 'predicted_per_token_ms': 307.407094488189, 'predicted_per_second': 3.253015359534656}
+FD8-L2 phase=warm client=1 prompt=long md5=5e7a436f7e62fd45dc65adda40c2b251 ref=5e7a436f7e62fd45dc65adda40c2b251 REF-MATCH timings={'cache_n': 2047, 'prompt_n': 1, 'prompt_ms': 153.696, 'prompt_per_token_ms': 153.696, 'prompt_per_second': 6.506350197793046, 'predicted_n': 128, 'predicted_ms': 38887.177, 'predicted_per_token_ms': 306.1982440944882, 'predicted_per_second': 3.2658580487855926}
+FD8 status=0
+WIN2FD8-DONE
