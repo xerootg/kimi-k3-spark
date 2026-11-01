@@ -1,0 +1,26 @@
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 81aebd3..6e27134 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -2543,6 +2543,21 @@ uint32_t llama_context::graph_max_nodes(uint32_t n_tokens) const {
+         }
+     }
+ 
++    // 0035v5/v6 CUDA slices allocate zero GGML objects. 0036v5's DSA
++    // indexer + attention needs <= 64 objects per layer/stream (see budget note).
++    // Reserve independently of n_tokens: resolve_fused_ops also builds small
++    // multi-sequence graphs against the same metadata arena and scheduler.
++    static const bool exact_attn = [] {
++        const char * value = std::getenv("LLAMA_EXACT_ATTN_COLS");
++        return value && std::strcmp(value, "1") == 0;
++    }();
++    if (exact_attn) {
++        const uint64_t streams = std::min<uint32_t>(8, cparams.n_seq_max);
++        const uint64_t extra = uint64_t(model.hparams.n_layer()) * (64 * streams + 16);
++        GGML_ASSERT(uint64_t(res) + extra <= UINT32_MAX);
++        res += static_cast<uint32_t>(extra);
++    }
++
+     // every sampler builds n_outputs_max_per_seq chains, see llm_graph_context::build_sampling
+     for (const auto & [seq_id, sampler] : sampling.samplers) {
+         res += llama_sampler_backend_n_nodes(sampler) * cparams.n_outputs_max_per_seq;
