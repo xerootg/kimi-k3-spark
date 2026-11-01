@@ -1,0 +1,16 @@
+=== window fdg 18:48
+FDG-G0 N=1 round=1 client=A md5=9449ae5738f2e56f99ab7ab6e9626eb5 GOLD tok_s=5.227
+FDG-G1 N=1 round=1 client=A md5=400f1b3bb1af4eadc761d0f246b6e502 NOT-GOLD tok_s=4.501
+FDG-G2 N=1 round=1 client=A md5=400f1b3bb1af4eadc761d0f246b6e502 NOT-GOLD tok_s=4.433
+FDG-G3 N=1 round=1 client=A md5=400f1b3bb1af4eadc761d0f246b6e502 NOT-GOLD tok_s=4.399
+FDG-G4 N=1 round=1 client=A md5=400f1b3bb1af4eadc761d0f246b6e502 NOT-GOLD tok_s=4.474
+FDG-G5-r1 N=2 round=1 client=A md5=400f1b3bb1af4eadc761d0f246b6e502 NOT-GOLD A-vs-G4=MATCH-G4 tok_s=2.775
+FDG-G5-r1 N=2 round=1 client=B md5=03bdde826541bd2076c95377e75034e2 NOT-GOLD tok_s=2.796
+AGG N=2 name=FDG-G5-r1 round=1 tokens=256 wall=49.166076 agg_tok_s=5.207 per_stream_mean=2.785
+FDG-G5-r2 N=2 round=2 client=A md5=400f1b3bb1af4eadc761d0f246b6e502 NOT-GOLD A-vs-G4=MATCH-G4 tok_s=2.767
+FDG-G5-r2 N=2 round=2 client=B md5=03bdde826541bd2076c95377e75034e2 NOT-GOLD tok_s=2.789
+AGG N=2 name=FDG-G5-r2 round=2 tokens=256 wall=49.315756 agg_tok_s=5.191 per_stream_mean=2.778
+FDG-G5-r3 N=2 round=3 client=A md5=400f1b3bb1af4eadc761d0f246b6e502 NOT-GOLD A-vs-G4=MATCH-G4 tok_s=2.755
+FDG-G5-r3 N=2 round=3 client=B md5=03bdde826541bd2076c95377e75034e2 NOT-GOLD tok_s=2.773
+AGG N=2 name=FDG-G5-r3 round=3 tokens=256 wall=49.539700 agg_tok_s=5.168 per_stream_mean=2.764
+WIN2FDG-DONE
