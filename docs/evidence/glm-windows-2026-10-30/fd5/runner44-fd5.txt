@@ -1,0 +1,21 @@
+=== window fd5 19:06
+error: Could not read 848bbda9041decd87904f7eb5a2990863ecce03b
+-- UI: download dist.tar.gz.sha256 from b0 failed: "HTTP response code said error"
+FD50 N=1 EXACT_COLS=1 PREFILL_ISOLATE=0 ctx-size=65536 KV splits per slot: 65536 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+FD51 N=2 EXACT_COLS=1 PREFILL_ISOLATE=1 ctx-size=65536 KV splits per slot: 32768 tokens; SZ=1 HL=1 GPU_SLOTS=1 ASYNC=1 PREFETCH_WIDE=0
+PREFILL: preserved raw TSV; labeled isolated output pairs as columns 0 and 1
+ALIGN sample=0 N1 step=0 token=481 N2 step=0 token=481
+ALIGN sample=1 N1 step=1 token=468 N2 step=1 token=468
+ALIGN sample=2 N1 step=2 token=952 N2 step=2 token=952
+ALIGNMENT: missing/reordered node (name + occurrence order within step)
+PREFILL column=0: 2/2 output records match (logits + sampled token)
+SUMMARY column=0: 14/23204 observed decode records match (0.060334%); 0 skipped pairs unobserved
+LEG-FAIL compare FD50 FD51 column=0 rc=1
+ALIGN sample=0 N1 step=0 token=481 N2 step=0 token=481
+ALIGN sample=1 N1 step=1 token=468 N2 step=1 token=468
+ALIGN sample=2 N1 step=2 token=952 N2 step=2 token=952
+ALIGNMENT: missing/reordered node (name + occurrence order within step)
+PREFILL column=1: 2/2 output records match (logits + sampled token)
+SUMMARY column=1: 14/23204 observed decode records match (0.060334%); 0 skipped pairs unobserved
+LEG-FAIL compare FD50 FD51 column=1 rc=1
+WIN2FD5-DONE status=1
