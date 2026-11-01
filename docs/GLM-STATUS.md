@@ -19,6 +19,22 @@ The Spark serves full GLM-5.3 UD-Q2_K_XL, chosen as the smallest quant above the
 
 The larger ubatch amortizes repeated weight passes. The detailed prefill analysis measured the larger-ubatch legs with the experimental miss-only patch; it explicitly left the unpatched large-ubatch comparison open. The later ledger records the production setting and rejection of that patch, but does not supply a separate unpatched large-ubatch timing table. Treat the headline as the reported rollout result with that provenance caveat, rather than proof that every production prompt sustains it. Sources: [analysis](experimental/0007-prefill-analysis.md), [latest ledger](experiments.md).
 
+## Batching
+
+0030/0032 N-column split works mechanically: union reads and read/compute overlap are restored.
+Measured aggregate tok/s: ordinary N=2 **4.3–4.7**, split N=2 **5.2–5.7**, split N=4 **9.6–10.5**.
+Dense/attention/other work amortises, but bank GEMV stays ~53 ms/generated token;
+15.1 distinct experts of 16 leave traffic approximately linear in N. The C2C-only ceiling
+is ~19 aggregate tok/s; N=4 ~10.4 already reaches about half. 0033 was designed and
+shelved (only 2–7 % expected from the small overlap).
+
+**Blocked on exactness:** N>1 bytes depend on column position even with 0008's per-column
+exact dense and MoE MMVQ. The open question is the first divergent intermediate outside
+MMVQ; 0034's first-differing-tensor tool, window fd, is next. Production batching has not
+passed the quality rule. The single-sequence floor remains **5.76 tok/s warm**.
+See the [evening outcome](streaming-decode-2026-10-31.md#outcome-2026-10-31-evening)
+and [ledger](experiments.md) (par/par2/ns/m2); the outcome supersedes m2's optimistic 0033 projection.
+
 ## Where a token's time goes, and the remaining levers
 
 The unprofiled budget is about 204 ms/token. These four large classes come from instrumented node intervals, not an exact partition of uninstrumented wall time. The profiler reduced throughput from 4.90 to 4.75 tok/s, and its class totals must not be corrected by subtracting a uniform overhead. Source: [per-token profile](glm-floor-profile-2026-10-30.md). Window m (clean tree, LFU off, 64-token nsys captures): **Three buckets of similar size: dense-spine GEMV ~68 ms (0027 standalone target ~7 ms did not survive window gm), host-bank expert GEMV ~56 ms at ~132 GB/s (scheduling and DMA ring closed by bg/dma), read waits ~40 ms (top-k cut neutral, hedge parked; z rejected); the 124 ms / 59 GB/s first reading was a classification error, corrected the same night.** Source: [window m breakdown](experiments.md#glm-53-the-candidate-windows-second-pass-2026-10-30-evening).

@@ -198,6 +198,25 @@ and the capacity window +2.7 %; these are separate A/Bs, not additive gains.
 | z: late-GEMV ready flags | 2026-10-31: c4 completed, −7 %, gold. GPU spinning costs more than it hides; rejected, idea closed. |
 | thp: 0026 bank-only huge pages | 2026-10-31: fixed checker, OFF 5.36850 → ON 5.44175 tok/s (+1.36 %), gold; 100 % huge backing, no record mismatch. Fill-side gain; GPU bank reads remain ~160 GB/s. Next: pending `LLAMA_EXPERT_STORE_THP_BANK=1` production flip, expected +1.3 %. |
 
+**Ranked next-floor levers (2026-10-31 evening):** retain the order and conditional
+estimates in [next-floor §5](next-floor-2026-10-31.md#5-owner-ranking-and-deciding-measurement).
+
+| rank / lever | status / next gate |
+|---|---|
+| 1. GH200 GLM-Q2 fully in RAM | Prepare a reversible test; measure GLM with zero expert reads before claiming speed. |
+| 2. Smaller routed-expert quant on Spark | IQ2_XXS quality first (~6.54 tok/s model); IQ1_S (~7.44) is more aggressive. |
+| 3. Smaller dense spine | Inspect a Q4_K_M header and run paired quality/loss tests (~6.5 tok/s conditional model). |
+| 4. Second independent NVMe | Require loaded-latency/engine A/B; ~28 ms exposed wait is a planning target. |
+| 5. GH200 Q5 | Defer until Q2-in-RAM is measured; actual warm hit rate and miss waits decide. |
+| batching / --parallel | **measured: not exact, bank-bound; blocked on exactness (0034)**. N=2 ordinary 4.3–4.7, split 5.2–5.7; N=4 split 9.6–10.5 aggregate tok/s. |
+
+Batching is an exactness investigation, with 0034/window fd next. Bank GEMV remains
+~53 ms/generated token, so the C2C-only ceiling is ~19 aggregate tok/s; ~10.4 at N=4
+is already half. 0033 was designed and shelved (2–7 % expected: too little expert overlap).
+0008 exact MMVQ still leaves column-position-dependent bytes; the single-sequence floor
+stands at **5.76 tok/s warm**. See the [evening outcome](streaming-decode-2026-10-31.md#outcome-2026-10-31-evening)
+for the capacity-model correction and [ledger](experiments.md) for par/par2/ns/m2.
+
 **Decode conclusion (2026-10-31):** bg scheduling (−60 %), dma (single copy engine ~58 GB/s,
 ring 3x slower), gm (neutral) and hb allocation (neutral) close the tested host-bank levers.
 The corrected nsys buckets remain dense spine ~68 ms/token, host-bank GEMV ~56 ms at ~132 GB/s,

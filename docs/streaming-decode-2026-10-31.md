@@ -88,3 +88,31 @@ Record actual ubatch token counts, per-client latency/fairness, routing union/mi
 Trace bank dispatch, split/dummy eligibility, hook waits and LPDDR traffic: correctness plus throughput alone cannot prove overlap.
 Decide whether spine amortizes, ordinary batch fills regress, or NVMe saturates near N=4; then prioritize N-column split/union reuse.
 Only consider two in-flight ubatches if substantial exposed waits remain while NVMe and LPDDR have spare service capacity.
+
+## Outcome (2026-10-31 evening)
+
+The [ledger](experiments.md) rows par, par2, ns and m2 and their “Batching, …” paragraphs
+supersede the queued-window discussion above. The capacity model predicted aggregate
+7.49/8.70/9.25 tok/s at N=2/4/8, assuming bank cost scales with distinct experts.
+Measured ordinary N=2 is 4.3–4.7, split N=2 is 5.2–5.7, and split N=4 is 9.6–10.5
+aggregate tok/s; these N>1 results fail the byte-identity gate.
+
+Window m2 nsys shows dense/attention/other work amortising as modelled: dense MMVQ
+falls 67.7 → 34.9 → 18.8 ms/generated token at N=1/2/4. Host-bank GEMV stays
+~53 ms/generated token (~105/214 ms per N=2/4 step). This supersedes ns's tentative
+fixed-cost explanation. The union is nearly disjoint: 15.1 distinct experts of 16
+selected at N=2. Even one stream per distinct expert therefore leaves bank traffic
+approximately linear in N by nature; repeated launches are not the main opportunity.
+The C2C-bandwidth-only ceiling is ~1000/53 = 19 aggregate tok/s, before other work
+and read waits; measured N=4 ~10.4 is already about half of it.
+
+0033's N-column exact bank kernel was designed and shelved: expected gain is only
+2–7 %, because overlap is too small. The ledger's earlier ~55/60 ms bank-step and
+16–36 aggregate tok/s projections are superseded; distinct experts still cost bytes.
+The quality rule is the real blocker: N>1 output bytes follow column position even
+with per-column exact dense and MoE MMVQ (0008, par2). That leaves attention,
+packing, norm/RoPE and indexing as candidates, not an identified cause.
+Next is the first-differing-tensor tool (0034, window fd) to locate the first divergence
+against singleton execution before attempting a fix or production batching.
+The single-sequence floor stands at **5.76 tok/s warm**; batching changes aggregate
+capacity, not that single-sequence result.
