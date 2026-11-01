@@ -22,19 +22,21 @@ The larger ubatch amortizes repeated weight passes. The detailed prefill analysi
 
 ## Batching
 
-**Exact at N=2, +40 %; N=4/8 pending.** Window fdr (01:24), on the updated
-Spark (driver 580.178.04, kernel 7.0), fixes the MoE weighted-reduction matcher in
-0035 v8: the nine-row-per-token split-bank view now uses the N=1 fused fold per token.
-With all exact flags, prefill isolation and N-column split enabled, both N=2 clients
-match production gold `9449ae5738` in all three rounds: **7.07 / 7.16 / 7.14 aggregate
-tok/s**, versus **5.03** at N=1. Each tested client receives byte-identical output to
-a single-sequence production run. The mixed short+2048-token-long pair also matches
-both references (`9449ae5738` / `e38742e4`), at 4.75 aggregate tok/s including prefill.
-`--parallel 4` with only two active clients is gold at 7.08; four-client throughput
-is still unmeasured. Window fdq will measure N=4/8 on a clean tree with the hot-path
-patches and without the debug observer, then comes a production decision.
-See the [ledger](experiments.md), [legs](evidence/glm-windows-2026-10-30/fdr/legs-fdr.txt)
-and [runner log](evidence/glm-windows-2026-10-30/fdr/runner58-fdr.txt).
+**Exact at N=2/4/8, +29 % / +46 % / +57 % aggregate; flags free at N=1.**
+Window fdq (01:43) uses a fresh clean production x3 build with the hot-path patches
+and no digest observer on the updated Spark (driver 580.178.04, kernel 7.0).
+N=1 without flags gives 5.47 / 5.55 / 5.58 aggregate tok/s; all exact flags give
+5.42 / 5.55 / 5.58. N=2 gives **7.14 / 7.14 / 7.15**, N=4 **8.16 / 8.09 / 8.06**,
+and N=8 **8.72 / 8.72 / 8.71**. Every tested client matches its single-sequence
+reference, including mixed short/long prompts and staggered arrivals (102 PASS
+completions). The six warm N=2 FAIL lines compare against the wrong cold gold:
+both clients return the standalone warm reference `f675805e`; warm N=2 is exact
+too, at 6.653 / 7.145 / 7.168 aggregate tok/s. Per-stream rates are ~3.6 / ~2.0 /
+~1.1 tok/s at N=2/4/8. Per-column expert launches flatten gains beyond N=4 (m2);
+prefill isolation serialises prompts, and context per slot is 65536/N.
+**Exact batching on the production stack: every client bit-identical at N=2/4/8, +29 % / +46 % / +57 % aggregate over single-stream, flags free at N=1. Production candidate: --parallel 4 (or 2 for per-user latency), pending the owner's go.**
+See the [ledger](experiments.md), [legs](evidence/glm-windows-2026-10-30/fdq/legs-fdq.txt)
+and [runner log](evidence/glm-windows-2026-10-30/fdq/runner59-fdq.txt).
 
 ## Where a token's time goes, and the remaining levers
 

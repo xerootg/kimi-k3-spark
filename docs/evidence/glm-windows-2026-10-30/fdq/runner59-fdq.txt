@@ -1,0 +1,180 @@
+=== window fdq 01:43
+FDQ-COMPARATOR-SELFTEST-PASS
+FDQ-APPLIED 0030-nsplit.v3hot.ctree.patch
+FDQ-APPLIED 0008-exact-mmvq-cols.hot.ctree.patch
+FDQ-APPLIED 0035-exact-float-cols.v8.ctree.patch
+FDQ-APPLIED 0036-exact-attn-cols.v5hot.ctree.patch
+FDQ-APPLIED 0037-prefill-isolate.hot.ctree.patch
+FDQ-APPLIED 0038-exact-rows.ctree.patch
+FDQ-APPLIED 0039-reject-unified-exact.hot.ctree.patch
+FDQ-APPLIED 0040-exact-graph-budget.hot.ctree.patch
+FDQ-PATCH-AND-BUILD-PASS
+LEG FDQ-Q1 N=1 mode=short exact=0 stats=0 ctx=65536 batch=2048 ubatch=2048 cap=600
+FDQ-Q1 warm client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=5.232 prefill_ms=1244.754 client_wall_s=25.533
+AGG name=FDQ-Q1 phase=warm N=1 completed=1 agg_tok_s=5.013 wall_s=25.533
+FDQ-Q1 round1 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=5.744 prefill_ms=1292.472 client_wall_s=23.403
+AGG name=FDQ-Q1 phase=round1 N=1 completed=1 agg_tok_s=5.469 wall_s=23.403
+FDQ-Q1 round2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=5.841 prefill_ms=1304.693 client_wall_s=23.050
+AGG name=FDQ-Q1 phase=round2 N=1 completed=1 agg_tok_s=5.553 wall_s=23.050
+FDQ-Q1 round3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=5.871 prefill_ms=1319.838 client_wall_s=22.952
+AGG name=FDQ-Q1 phase=round3 N=1 completed=1 agg_tok_s=5.577 wall_s=22.952
+LONG-REFERENCE N=1 no_flags=1 md5=e38742e42d4e465dd16ae006f531e671
+FDQ-LONGREF warm client=0 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=4.403 prefill_ms=9445.308 client_wall_s=38.312
+AGG name=FDQ-LONGREF phase=warm N=1 completed=1 agg_tok_s=3.341 wall_s=38.313
+FDQ-LONGREF round1 client=0 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=5.727 prefill_ms=8955.518 client_wall_s=31.131
+AGG name=FDQ-LONGREF phase=round1 N=1 completed=1 agg_tok_s=4.112 wall_s=31.131
+FDQ-LONGREF round2 client=0 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=6.157 prefill_ms=8823.454 client_wall_s=29.453
+AGG name=FDQ-LONGREF phase=round2 N=1 completed=1 agg_tok_s=4.346 wall_s=29.454
+FDQ-LONGREF round3 client=0 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=6.370 prefill_ms=8757.443 client_wall_s=28.696
+AGG name=FDQ-LONGREF phase=round3 N=1 completed=1 agg_tok_s=4.460 wall_s=28.696
+LEG FDQ-Q1x N=1 mode=short exact=1 stats=0 ctx=65536 batch=2048 ubatch=2048 cap=600
+FDQ-Q1x warm client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=5.228 prefill_ms=1250.700 client_wall_s=25.558
+AGG name=FDQ-Q1x phase=warm N=1 completed=1 agg_tok_s=5.006 wall_s=25.568
+FDQ-Q1x round1 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=5.689 prefill_ms=1308.125 client_wall_s=23.634
+AGG name=FDQ-Q1x phase=round1 N=1 completed=1 agg_tok_s=5.416 wall_s=23.634
+FDQ-Q1x round2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=5.841 prefill_ms=1323.997 client_wall_s=23.069
+AGG name=FDQ-Q1x phase=round2 N=1 completed=1 agg_tok_s=5.549 wall_s=23.069
+FDQ-Q1x round3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=5.875 prefill_ms=1325.242 client_wall_s=22.945
+AGG name=FDQ-Q1x phase=round3 N=1 completed=1 agg_tok_s=5.579 wall_s=22.945
+LEG FDQ-Q2 N=2 mode=short exact=1 stats=0 ctx=65536 batch=2048 ubatch=2048 cap=600
+FDQ-Q2 warm client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.647 prefill_ms=387.072 client_wall_s=36.516
+FDQ-Q2 warm client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.607 prefill_ms=1255.594 client_wall_s=36.517
+AGG name=FDQ-Q2 phase=warm N=2 completed=2 agg_tok_s=7.010 wall_s=36.517
+FDQ-Q2 round1 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.666 prefill_ms=1225.763 client_wall_s=35.867
+FDQ-Q2 round1 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.775 prefill_ms=998.542 client_wall_s=35.867
+AGG name=FDQ-Q2 phase=round1 N=2 completed=2 agg_tok_s=7.138 wall_s=35.867
+FDQ-Q2 round2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.670 prefill_ms=1241.299 client_wall_s=35.850
+FDQ-Q2 round2 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.791 prefill_ms=1108.566 client_wall_s=35.851
+AGG name=FDQ-Q2 phase=round2 N=2 completed=2 agg_tok_s=7.141 wall_s=35.851
+FDQ-Q2 round3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.675 prefill_ms=1241.636 client_wall_s=35.797
+FDQ-Q2 round3 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.799 prefill_ms=1124.108 client_wall_s=35.797
+AGG name=FDQ-Q2 phase=round3 N=2 completed=2 agg_tok_s=7.151 wall_s=35.797
+LEG FDQ-Q4 N=4 mode=short exact=1 stats=0 ctx=65536 batch=2048 ubatch=2048 cap=600
+FDQ-Q4 warm client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.069 prefill_ms=1248.024 client_wall_s=62.726
+FDQ-Q4 warm client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.082 prefill_ms=386.264 client_wall_s=62.725
+FDQ-Q4 warm client=2 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.095 prefill_ms=384.498 client_wall_s=62.726
+FDQ-Q4 warm client=3 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.108 prefill_ms=385.406 client_wall_s=62.726
+AGG name=FDQ-Q4 phase=warm N=4 completed=4 agg_tok_s=8.162 wall_s=62.727
+FDQ-Q4 round1 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.056 prefill_ms=1003.839 client_wall_s=62.773
+FDQ-Q4 round1 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.084 prefill_ms=831.789 client_wall_s=62.773
+FDQ-Q4 round1 client=2 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.106 prefill_ms=618.030 client_wall_s=62.773
+FDQ-Q4 round1 client=3 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.119 prefill_ms=389.232 client_wall_s=62.773
+AGG name=FDQ-Q4 phase=round1 N=4 completed=4 agg_tok_s=8.156 wall_s=62.773
+FDQ-Q4 round2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.040 prefill_ms=1031.373 client_wall_s=63.303
+FDQ-Q4 round2 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.069 prefill_ms=894.412 client_wall_s=63.303
+FDQ-Q4 round2 client=2 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.095 prefill_ms=768.660 client_wall_s=63.303
+FDQ-Q4 round2 client=3 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.121 prefill_ms=725.632 client_wall_s=63.304
+AGG name=FDQ-Q4 phase=round2 N=4 completed=4 agg_tok_s=8.088 wall_s=63.304
+FDQ-Q4 round3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.065 prefill_ms=935.321 client_wall_s=63.500
+FDQ-Q4 round3 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.034 prefill_ms=1053.311 client_wall_s=63.499
+FDQ-Q4 round3 client=2 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.094 prefill_ms=852.715 client_wall_s=63.500
+FDQ-Q4 round3 client=3 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=2.121 prefill_ms=779.321 client_wall_s=63.500
+AGG name=FDQ-Q4 phase=round3 N=4 completed=4 agg_tok_s=8.063 wall_s=63.500
+LEG FDQ-Q8 N=8 mode=short exact=1 stats=0 ctx=65536 batch=2048 ubatch=2048 cap=600
+FDQ-Q8 warm client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.083 prefill_ms=1251.973 client_wall_s=118.686
+FDQ-Q8 warm client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.086 prefill_ms=388.758 client_wall_s=118.686
+FDQ-Q8 warm client=2 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.090 prefill_ms=386.277 client_wall_s=118.685
+FDQ-Q8 warm client=3 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.094 prefill_ms=389.035 client_wall_s=118.686
+FDQ-Q8 warm client=4 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.097 prefill_ms=385.483 client_wall_s=118.686
+FDQ-Q8 warm client=5 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.101 prefill_ms=385.064 client_wall_s=118.686
+FDQ-Q8 warm client=6 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.105 prefill_ms=381.474 client_wall_s=118.686
+FDQ-Q8 warm client=7 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.108 prefill_ms=385.304 client_wall_s=118.687
+AGG name=FDQ-Q8 phase=warm N=8 completed=8 agg_tok_s=8.628 wall_s=118.687
+FDQ-Q8 round1 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.091 prefill_ms=384.736 client_wall_s=117.432
+FDQ-Q8 round1 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.094 prefill_ms=387.580 client_wall_s=117.432
+FDQ-Q8 round1 client=2 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.087 prefill_ms=589.714 client_wall_s=117.433
+FDQ-Q8 round1 client=3 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.098 prefill_ms=388.273 client_wall_s=117.433
+FDQ-Q8 round1 client=4 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.102 prefill_ms=384.358 client_wall_s=117.433
+FDQ-Q8 round1 client=5 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.105 prefill_ms=387.004 client_wall_s=117.433
+FDQ-Q8 round1 client=6 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.109 prefill_ms=387.513 client_wall_s=117.433
+FDQ-Q8 round1 client=7 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.113 prefill_ms=385.987 client_wall_s=117.433
+AGG name=FDQ-Q8 phase=round1 N=8 completed=8 agg_tok_s=8.720 wall_s=117.434
+FDQ-Q8 round2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.090 prefill_ms=386.803 client_wall_s=117.456
+FDQ-Q8 round2 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.094 prefill_ms=385.252 client_wall_s=117.456
+FDQ-Q8 round2 client=2 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.087 prefill_ms=588.241 client_wall_s=117.455
+FDQ-Q8 round2 client=3 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.098 prefill_ms=386.299 client_wall_s=117.456
+FDQ-Q8 round2 client=4 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.101 prefill_ms=385.982 client_wall_s=117.455
+FDQ-Q8 round2 client=5 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.105 prefill_ms=383.915 client_wall_s=117.456
+FDQ-Q8 round2 client=6 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.109 prefill_ms=383.462 client_wall_s=117.456
+FDQ-Q8 round2 client=7 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.112 prefill_ms=386.297 client_wall_s=117.457
+AGG name=FDQ-Q8 phase=round2 N=8 completed=8 agg_tok_s=8.718 wall_s=117.457
+FDQ-Q8 round3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.090 prefill_ms=386.267 client_wall_s=117.536
+FDQ-Q8 round3 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.094 prefill_ms=388.216 client_wall_s=117.536
+FDQ-Q8 round3 client=2 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.086 prefill_ms=627.541 client_wall_s=117.536
+FDQ-Q8 round3 client=3 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.097 prefill_ms=386.596 client_wall_s=117.536
+FDQ-Q8 round3 client=4 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.101 prefill_ms=383.770 client_wall_s=117.536
+FDQ-Q8 round3 client=5 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.105 prefill_ms=383.606 client_wall_s=117.537
+FDQ-Q8 round3 client=6 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.108 prefill_ms=384.325 client_wall_s=117.537
+FDQ-Q8 round3 client=7 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.112 prefill_ms=386.487 client_wall_s=117.537
+AGG name=FDQ-Q8 phase=round3 N=8 completed=8 agg_tok_s=8.712 wall_s=117.538
+LEG FDQ-Q4m N=4 mode=mixed exact=1 stats=0 ctx=65536 batch=2048 ubatch=2048 cap=600
+FDQ-Q4m warm client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.556 prefill_ms=386.042 client_wall_s=83.374
+FDQ-Q4m warm client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.548 prefill_ms=1257.162 client_wall_s=83.373
+FDQ-Q4m warm client=2 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=1.753 prefill_ms=9202.324 client_wall_s=83.374
+FDQ-Q4m warm client=3 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=2.008 prefill_ms=9188.468 client_wall_s=83.375
+AGG name=FDQ-Q4m phase=warm N=4 completed=4 agg_tok_s=6.140 wall_s=83.384
+FDQ-Q4m round1 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.588 prefill_ms=1201.926 client_wall_s=82.501
+FDQ-Q4m round1 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.564 prefill_ms=1322.989 client_wall_s=82.501
+FDQ-Q4m round1 client=2 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=1.784 prefill_ms=8784.472 client_wall_s=82.501
+FDQ-Q4m round1 client=3 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=2.036 prefill_ms=8803.568 client_wall_s=82.502
+AGG name=FDQ-Q4m phase=round1 N=4 completed=4 agg_tok_s=6.206 wall_s=82.502
+FDQ-Q4m round2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.558 prefill_ms=1340.361 client_wall_s=82.842
+FDQ-Q4m round2 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.582 prefill_ms=1231.567 client_wall_s=82.842
+FDQ-Q4m round2 client=2 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=1.777 prefill_ms=8791.366 client_wall_s=82.842
+FDQ-Q4m round2 client=3 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=2.038 prefill_ms=9173.541 client_wall_s=82.842
+AGG name=FDQ-Q4m phase=round2 N=4 completed=4 agg_tok_s=6.180 wall_s=82.842
+FDQ-Q4m round3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.565 prefill_ms=1331.209 client_wall_s=82.459
+FDQ-Q4m round3 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=1.590 prefill_ms=1231.358 client_wall_s=82.458
+FDQ-Q4m round3 client=2 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=1.786 prefill_ms=8795.391 client_wall_s=82.458
+FDQ-Q4m round3 client=3 md5=e38742e42d4e465dd16ae006f531e671 gold=e38742e42d4e465dd16ae006f531e671 PASS tokens=128 decode_tok_s=2.038 prefill_ms=8794.103 client_wall_s=82.459
+AGG name=FDQ-Q4m phase=round3 N=4 completed=4 agg_tok_s=6.209 wall_s=82.459
+LEG FDQ-Q2s N=2 mode=stagger exact=1 stats=0 ctx=65536 batch=2048 ubatch=2048 cap=600
+FDQ-Q2s warm client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.419 prefill_ms=1273.186 client_wall_s=38.442
+FDQ-Q2s warm client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.459 prefill_ms=422.503 client_wall_s=37.222
+AGG name=FDQ-Q2s phase=warm N=2 completed=2 agg_tok_s=6.063 wall_s=42.222
+FDQ-Q2s round1 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.516 prefill_ms=1331.255 client_wall_s=37.450
+FDQ-Q2s round1 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.636 prefill_ms=1218.538 client_wall_s=36.273
+AGG name=FDQ-Q2s phase=round1 N=2 completed=2 agg_tok_s=6.203 wall_s=41.273
+FDQ-Q2s round2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.524 prefill_ms=1353.077 client_wall_s=37.389
+FDQ-Q2s round2 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.653 prefill_ms=1248.903 client_wall_s=36.180
+AGG name=FDQ-Q2s phase=round2 N=2 completed=2 agg_tok_s=6.217 wall_s=41.180
+FDQ-Q2s round3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.529 prefill_ms=1356.237 client_wall_s=37.341
+FDQ-Q2s round3 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.661 prefill_ms=1275.342 client_wall_s=36.138
+AGG name=FDQ-Q2s phase=round3 N=2 completed=2 agg_tok_s=6.223 wall_s=41.138
+LEG FDQ-Q2w N=2 mode=warm exact=1 stats=0 ctx=65536 batch=2048 ubatch=2048 cap=600
+FDQ-Q2w warm client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.664 prefill_ms=386.675 client_wall_s=36.380
+FDQ-Q2w warm client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.623 prefill_ms=1281.422 client_wall_s=36.380
+AGG name=FDQ-Q2w phase=warm N=2 completed=2 agg_tok_s=7.037 wall_s=36.381
+FDQ-Q2w round1 client=0 md5=f675805e5b38e5f7291cecefc3ab0d7e gold=9449ae5738f2e56f99ab7ab6e9626eb5 FAIL tokens=128 decode_tok_s=3.314 prefill_ms=160.915 client_wall_s=38.479
+FDQ-Q2w round1 client=1 md5=f675805e5b38e5f7291cecefc3ab0d7e gold=9449ae5738f2e56f99ab7ab6e9626eb5 FAIL tokens=128 decode_tok_s=3.327 prefill_ms=148.802 client_wall_s=38.480
+AGG name=FDQ-Q2w phase=round1 N=2 completed=2 agg_tok_s=6.653 wall_s=38.480
+FDQ-Q2w round2 client=0 md5=f675805e5b38e5f7291cecefc3ab0d7e gold=9449ae5738f2e56f99ab7ab6e9626eb5 FAIL tokens=128 decode_tok_s=3.577 prefill_ms=155.889 client_wall_s=35.829
+FDQ-Q2w round2 client=1 md5=f675805e5b38e5f7291cecefc3ab0d7e gold=9449ae5738f2e56f99ab7ab6e9626eb5 FAIL tokens=128 decode_tok_s=3.561 prefill_ms=164.777 client_wall_s=35.829
+AGG name=FDQ-Q2w phase=round2 N=2 completed=2 agg_tok_s=7.145 wall_s=35.829
+FDQ-Q2w round3 client=0 md5=f675805e5b38e5f7291cecefc3ab0d7e gold=9449ae5738f2e56f99ab7ab6e9626eb5 FAIL tokens=128 decode_tok_s=3.573 prefill_ms=167.014 client_wall_s=35.712
+FDQ-Q2w round3 client=1 md5=f675805e5b38e5f7291cecefc3ab0d7e gold=9449ae5738f2e56f99ab7ab6e9626eb5 FAIL tokens=128 decode_tok_s=3.589 prefill_ms=160.646 client_wall_s=35.713
+AGG name=FDQ-Q2w phase=round3 N=2 completed=2 agg_tok_s=7.168 wall_s=35.713
+LEG-FAIL FDQ-Q2w rc=1; continuing
+LEG FDQ-STATS N=2 mode=short exact=1 stats=1 ctx=65536 batch=2048 ubatch=2048 cap=600
+FDQ-STATS warm client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.627 prefill_ms=1243.992 client_wall_s=36.305
+FDQ-STATS warm client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.668 prefill_ms=386.556 client_wall_s=36.305
+AGG name=FDQ-STATS phase=warm N=2 completed=2 agg_tok_s=7.051 wall_s=36.305
+FDQ-STATS round1 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.671 prefill_ms=1225.909 client_wall_s=35.826
+FDQ-STATS round1 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.780 prefill_ms=1000.972 client_wall_s=35.826
+AGG name=FDQ-STATS phase=round1 N=2 completed=2 agg_tok_s=7.146 wall_s=35.826
+FDQ-STATS round2 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.671 prefill_ms=1226.836 client_wall_s=35.824
+FDQ-STATS round2 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.790 prefill_ms=1084.402 client_wall_s=35.825
+AGG name=FDQ-STATS phase=round2 N=2 completed=2 agg_tok_s=7.146 wall_s=35.825
+FDQ-STATS round3 client=0 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.675 prefill_ms=1257.538 client_wall_s=35.814
+FDQ-STATS round3 client=1 md5=9449ae5738f2e56f99ab7ab6e9626eb5 gold=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=3.797 prefill_ms=1110.886 client_wall_s=35.814
+AGG name=FDQ-STATS phase=round3 N=2 completed=2 agg_tok_s=7.148 wall_s=35.815
+exact dispatch: split=2226 batched=6856 singleton=546 class=MUL_MAT (host calls; includes capture, excludes replay)
+exact dispatch: split=896 batched=1776 singleton=36 class=MUL_MAT_ID (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_F (host calls; includes capture, excludes replay)
+exact dispatch: split=528 batched=0 singleton=18 class=FUSED_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=0 batched=0 singleton=0 class=FUSED_ID_F (host calls; includes capture, excludes replay)
+exact dispatch: split=224 batched=0 singleton=9 class=FUSED_ID_Q (host calls; includes capture, excludes replay)
+exact dispatch: split=230 batched=592 singleton=9 class=FUSED_TOPK (host calls; includes capture, excludes replay)
+WIN2FDQ-DONE
+pod restored: Running
+ALL-WINDOWS-DONE

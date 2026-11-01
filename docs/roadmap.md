@@ -208,16 +208,23 @@ estimates in [next-floor §5](next-floor-2026-10-31.md#5-owner-ranking-and-decid
 | 3. Smaller dense spine | Inspect a Q4_K_M header and run paired quality/loss tests (~6.5 tok/s conditional model). |
 | 4. Second independent NVMe | Require loaded-latency/engine A/B; ~28 ms exposed wait is a planning target. |
 | 5. GH200 Q5 | Defer until Q2-in-RAM is measured; actual warm hit rate and miss waits decide. |
-| batching / --parallel | **exact at N=2, +40 %; N=4/8 pending**. Window fdr: both clients production gold in all three rounds, 7.07 / 7.16 / 7.14 aggregate tok/s versus N=1 5.03; 0035 v8 fixes the split-bank MoE weighted reduction. |
+| batching / --parallel | **exact at N=2/4/8, +29 % / +46 % / +57 %**. Clean-tree fdq: N=1 5.47–5.58 tok/s, exact flags free; N=2 7.14–7.15, N=4 8.06–8.16, N=8 8.71–8.72 aggregate tok/s. Every tested client matches its reference; production candidate `--parallel 4` (or 2 for per-user latency), pending the owner's go. |
 
-Batching has passed the N=2 exactness gate: every tested client matches its
-single-sequence production reference, including the short+2048-token-long pair.
-The updated Spark uses all exact flags, prefill isolation and N-column split.
-Window fdq measures four- and eight-client throughput on a clean tree with the
-hot-path patches and without the debug observer, then comes a production decision.
-The fdr `--parallel 4` leg had only two active clients (both gold, 7.08 aggregate
-tok/s), so it does not establish N=4 throughput. See the [ledger](experiments.md)
-and [fdr evidence](evidence/glm-windows-2026-10-30/fdr/legs-fdr.txt).
+**Exact at N=2/4/8, +29 % / +46 % / +57 % aggregate; flags free at N=1.**
+Window fdq (01:43) uses a fresh clean production x3 build with the hot-path patches
+and no digest observer on the updated Spark (driver 580.178.04, kernel 7.0).
+N=1 without flags gives 5.47 / 5.55 / 5.58 aggregate tok/s; all exact flags give
+5.42 / 5.55 / 5.58. N=2 gives **7.14 / 7.14 / 7.15**, N=4 **8.16 / 8.09 / 8.06**,
+and N=8 **8.72 / 8.72 / 8.71**. Every tested client matches its single-sequence
+reference, including mixed short/long prompts and staggered arrivals (102 PASS
+completions). The six warm N=2 FAIL lines compare against the wrong cold gold:
+both clients return the standalone warm reference `f675805e`; warm N=2 is exact
+too, at 6.653 / 7.145 / 7.168 aggregate tok/s. Per-stream rates are ~3.6 / ~2.0 /
+~1.1 tok/s at N=2/4/8. Per-column expert launches flatten gains beyond N=4 (m2);
+prefill isolation serialises prompts, and context per slot is 65536/N.
+**Exact batching on the production stack: every client bit-identical at N=2/4/8, +29 % / +46 % / +57 % aggregate over single-stream, flags free at N=1. Production candidate: --parallel 4 (or 2 for per-user latency), pending the owner's go.**
+See the [ledger](experiments.md), [legs](evidence/glm-windows-2026-10-30/fdq/legs-fdq.txt)
+and [runner log](evidence/glm-windows-2026-10-30/fdq/runner59-fdq.txt).
 
 **Decode conclusion (2026-10-31):** bg scheduling (−60 %), dma (single copy engine ~58 GB/s,
 ring 3x slower), gm (neutral) and hb allocation (neutral) close the tested host-bank levers.
