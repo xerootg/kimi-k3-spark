@@ -1,0 +1,36 @@
+LEG LC-64 ctx=65536 cache_MiB=84000 parallel=1 02:31:30
+READY LC-64 after 56s
+{"leg": "LC-64", "kind": "std1", "prompt_n": 10, "cache_n": 0, "prefill_tps": 4.6, "prefill_s": 2.2, "decode_n": 128, "decode_tps": 5.118, "md5": "9449ae5738f2e56f99ab7ab6e9626eb5", "wall_s": 27.0}
+{"leg": "LC-64", "kind": "std2", "prompt_n": 10, "cache_n": 0, "prefill_tps": 7.7, "prefill_s": 1.3, "decode_n": 128, "decode_tps": 5.7, "md5": "9449ae5738f2e56f99ab7ab6e9626eb5", "wall_s": 23.6}
+KV LC-64: 0.25.920.647 I llama_kv_cache:      CUDA0 KV buffer size =  5616.00 MiB
+KV LC-64: 0.25.951.196 I llama_kv_cache: size = 5616.00 MiB ( 65536 cells,  78 layers,  1/1 seqs), K (f16): 5616.00 MiB, V (f16):    0.00 MiB
+KV LC-64: 0.25.963.261 I llama_kv_cache:      CUDA0 KV buffer size =   336.00 MiB
+STORE LC-64: 1.46.073.436 I llama_moe_cache: ubatch  > 8: hits = 3913, misses = 2699, hit rate = 59.18%, uploaded = 31466.06 MiB
+LEG LC-128 ctx=131072 cache_MiB=78000 parallel=1 02:33:24
+READY LC-128 after 55s
+{"leg": "LC-128", "kind": "std1", "prompt_n": 10, "cache_n": 0, "prefill_tps": 4.48, "prefill_s": 2.2, "decode_n": 128, "decode_tps": 4.904, "md5": "9449ae5738f2e56f99ab7ab6e9626eb5", "wall_s": 28.1}
+{"leg": "LC-128", "kind": "std2", "prompt_n": 10, "cache_n": 0, "prefill_tps": 7.29, "prefill_s": 1.4, "decode_n": 128, "decode_tps": 5.472, "md5": "9449ae5738f2e56f99ab7ab6e9626eb5", "wall_s": 24.6}
+{"leg": "LC-128", "kind": "std3", "prompt_n": 10, "cache_n": 0, "prefill_tps": 7.21, "prefill_s": 1.4, "decode_n": 128, "decode_tps": 5.556, "md5": "9449ae5738f2e56f99ab7ab6e9626eb5", "wall_s": 24.2}
+{"leg": "LC-128", "kind": "depth8192", "prompt_n": 8189, "cache_n": 0, "prefill_tps": 105.78, "prefill_s": 77.4, "decode_n": 64, "decode_tps": 4.111, "md5": "0dc9dac23ca5d5504cb37c9e6cfe5667", "wall_s": 92.8, "target": 8192}
+{"leg": "LC-128", "kind": "depth32768", "prompt_n": 32617, "cache_n": 0, "prefill_tps": 102.43, "prefill_s": 318.4, "decode_n": 64, "decode_tps": 5.663, "md5": "52cc46ac2cea131986db955a2f83aafb", "wall_s": 329.6, "target": 32768}
+{"leg": "LC-128", "kind": "depth65536", "prompt_n": 65243, "cache_n": 0, "prefill_tps": 100.17, "prefill_s": 651.3, "decode_n": 64, "decode_tps": 5.99, "md5": "52cc46ac2cea131986db955a2f83aafb", "wall_s": 661.8, "target": 65536}
+{"leg": "LC-128", "kind": "depth100000", "prompt_n": 99676, "cache_n": 0, "prefill_tps": 97.37, "prefill_s": 1023.7, "decode_n": 64, "decode_tps": 5.815, "md5": "2c4ea336aee19859054c53ddb08d8f4c", "wall_s": 1034.6, "target": 100000}
+{"leg": "LC-128", "kind": "reuse-first", "prompt_n": 1, "cache_n": 65242, "prefill_tps": 3.11, "prefill_s": 0.3, "decode_n": 32, "decode_tps": 6.258, "md5": "683ac13cf2088330d7a3110796171cf2", "wall_s": 5.3, "target": 65536}
+{"leg": "LC-128", "kind": "reuse-followup", "prompt_n": 320, "cache_n": 65243, "prefill_tps": 30.63, "prefill_s": 10.4, "decode_n": 32, "decode_tps": 3.797, "md5": "fc8574eadfabcc710c0b857eaa4360e0", "wall_s": 18.7, "target": 65536}
+KV LC-128: 0.25.979.050 I llama_kv_cache:      CUDA0 KV buffer size = 11232.00 MiB
+KV LC-128: 0.26.039.524 I llama_kv_cache: size = 11232.00 MiB (131072 cells,  78 layers,  1/1 seqs), K (f16): 11232.00 MiB, V (f16):    0.00 MiB
+KV LC-128: 0.26.063.884 I llama_kv_cache:      CUDA0 KV buffer size =   672.00 MiB
+STORE LC-128: 37.54.459.497 I llama_moe_cache: ubatch  > 8: hits = 6037, misses = 3881, hit rate = 60.87%, uploaded = 45264.00 MiB
+SUM LC-64 std1            prompt=    10 cache_n=0 prefill=    4.6 tok/s (2.2 s) decode=5.118 tok/s md5=9449ae5738 GOLD
+SUM LC-64 std2            prompt=    10 cache_n=0 prefill=    7.7 tok/s (1.3 s) decode=5.7 tok/s md5=9449ae5738 GOLD
+SUM LC-128 std1            prompt=    10 cache_n=0 prefill=   4.48 tok/s (2.2 s) decode=4.904 tok/s md5=9449ae5738 GOLD
+SUM LC-128 std2            prompt=    10 cache_n=0 prefill=   7.29 tok/s (1.4 s) decode=5.472 tok/s md5=9449ae5738 GOLD
+SUM LC-128 std3            prompt=    10 cache_n=0 prefill=   7.21 tok/s (1.4 s) decode=5.556 tok/s md5=9449ae5738 GOLD
+SUM LC-128 depth8192       prompt=  8189 cache_n=0 prefill= 105.78 tok/s (77.4 s) decode=4.111 tok/s md5=0dc9dac23c 
+SUM LC-128 depth32768      prompt= 32617 cache_n=0 prefill= 102.43 tok/s (318.4 s) decode=5.663 tok/s md5=52cc46ac2c 
+SUM LC-128 depth65536      prompt= 65243 cache_n=0 prefill= 100.17 tok/s (651.3 s) decode=5.99 tok/s md5=52cc46ac2c 
+SUM LC-128 depth100000     prompt= 99676 cache_n=0 prefill=  97.37 tok/s (1023.7 s) decode=5.815 tok/s md5=2c4ea336ae 
+SUM LC-128 reuse-first     prompt=     1 cache_n=65242 prefill=   3.11 tok/s (0.3 s) decode=6.258 tok/s md5=683ac13cf2 
+SUM LC-128 reuse-followup  prompt=   320 cache_n=65243 prefill=  30.63 tok/s (10.4 s) decode=3.797 tok/s md5=fc8574eadf 
+LC status=0
+WIN2LC-DONE
