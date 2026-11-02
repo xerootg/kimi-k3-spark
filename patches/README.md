@@ -871,3 +871,29 @@ are compared; host PASS is not a GPU gold result. See ../docs/exact-batching.md.
 
 
 Measured on the Spark (driver 580.178.04, kernel 7.0), window fdq: with the six knobs set (GGML_CUDA_EXACT_COLS, GGML_CUDA_MMVQ_EXACT_COLS, LLAMA_EXACT_ATTN_COLS, GGML_CUDA_ARGSORT_EXACT_ROWS, LLAMA_EXPERT_STORE_SPLIT_COLS, LLAMA_PREFILL_ISOLATE all =1) every client at --parallel 2/4/8 is byte-identical to the single-sequence production output (cold, warm, mixed short and 2048-token prompts, staggered arrivals); aggregate 5.55 (N=1) / 7.14 (N=2) / 8.1 (N=4) / 8.72 (N=8) tok/s. With the knobs unset the set is inert (N=1 gold, same speed). The 0034 digest observer used to find the divergences stays outside this directory (debug only).
+
+## 0042-ordered-expert-list
+
+Patch 0003 compacts the experts that have columns in a MUL_MAT_ID into a list (`k_mmq_compact_experts`) so the MMQ
+kernel's z dimension does not walk tens of thousands of empty slots. The compaction used `atomicAdd`, so the list
+order changed from run to run. The stream-k decomposition walks the list in order, which moves an expert's K split
+points, and therefore its float summation order. On the GH200 (prefill bank off, so prefill MoE goes through this
+path) the tensor digest showed a layer's `ffn_moe_up` output differing between two identical requests in one process
+while its activations, slot ids and the slot bytes (hashed before and after the matmul) were identical. The kernel
+is now one 1024-thread block doing a stable ballot/prefix compaction in ascending slot order. With it, repeated
+requests in one process are byte-identical (5/5, md5 `b533bf356d`). The list is tiny and n_experts is ~20k, so the
+cost is a few microseconds per prefill MUL_MAT_ID.
+
+## 0043-mmq-id-tiling
+
+With 0042 the list order is stable inside a process, but the slot an expert occupies still differs between
+processes (the expert store's mapping): the cross-process digest first differs at `ffn_moe_slots-3` (same experts,
+different slots). The list is in slot order, so an expert's position, and with it its stream-k split, still varied
+between processes. `GGML_CUDA_MMQ_ID_TILING=1` (exact value `1`, read once) launches the MUL_MAT_ID MMQ kernel with
+one block per tile, the existing tiling mode of the stream-k kernel: every tile is summed over its full K range in
+one order, independent of its position, and no fixup pass runs. Inert when unset. Measured on the GH200
+(2026-11-02, full residency, production env): three processes x two standard requests all md5 `c592f33e7c` at
+22.9 tok/s; a 24k-token prompt prefills at 584.8 tok/s with and without the switch. Without it, every process
+gave a different md5 (`b533bf356d`, `b5933beb88`, ...). Spark: its prefill uses the prefill bank's map, not the
+compacted list, and its decode uses MMVQ, so neither patch is expected to touch the Spark gold; confirm the gold
+before the Spark adopts an image with them.

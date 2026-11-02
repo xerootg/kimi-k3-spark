@@ -1,0 +1,28 @@
+diff --git a/ggml/src/ggml-cuda/mmq.cuh b/ggml/src/ggml-cuda/mmq.cuh
+index ec9bca2..1a7a0bd 100644
+--- a/ggml/src/ggml-cuda/mmq.cuh
++++ b/ggml/src/ggml-cuda/mmq.cuh
+@@ -1,6 +1,7 @@
+ #pragma once
+ 
+ #include "common.cuh"
++#include <cstdlib>
+ 
+ #include <climits>
+ #include <cstdint>
+@@ -1455,7 +1456,14 @@ static void launch_mul_mat_q(ggml_backend_cuda_context & ctx, const mmq_args & a
+     const int ntiles_dst = ntx * nty * ntzw;
+     const int tiles_nwaves = (ntiles_dst + nsm - 1) / nsm;
+     const int tiles_efficiency_percent = 100 * ntiles_dst / (nsm*tiles_nwaves);
+-    const dim3 block_nums_stream_k(GGML_CUDA_CC_IS_NVIDIA(cc) && tiles_efficiency_percent >= 90 ? ntiles_dst : nsm, 1, 1);
++    // Patch 0043: GGML_CUDA_MMQ_ID_TILING=1 forces one block per tile for MUL_MAT_ID (expert_bounds set), so an expert's
++    // K summation order does not depend on its (slot-mapping-dependent) position in the launch. Read once.
++    static const bool id_tiling = [] {
++        const char * e = getenv("GGML_CUDA_MMQ_ID_TILING");
++        return e != nullptr && e[0] == '1' && e[1] == '\0';
++    }();
++    const bool force_tiles = id_tiling && args.expert_bounds != nullptr;
++    const dim3 block_nums_stream_k(force_tiles || (GGML_CUDA_CC_IS_NVIDIA(cc) && tiles_efficiency_percent >= 90) ? ntiles_dst : nsm, 1, 1);
+ 
+     GGML_ASSERT(ntiles_dst * blocks_per_ne00_fd.z < (1 << 30)); // Assert that variable kbc will not overflow.
+ 
