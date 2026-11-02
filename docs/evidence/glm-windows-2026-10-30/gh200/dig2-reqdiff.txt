@@ -1,0 +1,82 @@
+== BASE=1
+requests: 5 graphs per request: [1, 4, 4, 4, 4]
+req2 graph 0 node 14753: STRUCTURE differs: ['ffn_moe_gate-13@slots@pre', 'SLOT', 'i32', '52,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-13@slot3871@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req2 graph 0: node count 88151 vs 88115
+req2 graph 1 node 280: STRUCTURE differs: ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot3208@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req2 graph 2 node 279: STRUCTURE differs: ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot3422@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req2 graph 3 node 282: STRUCTURE differs: ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot3650@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req2: diff nodes per graph [1841, 24, 24, 5]
+req2: FIRST DIFF graph 0 node 360
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	7	055f98be47a003d2
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	8	0d1aaab017d193e3
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	9	0606986e4bb8e9b2
+   req1  cache_k_l0 (view)	VIEW	f16	576,1,256,1	-1	-1	cc523a10dc8108b8	
+   req2  cache_k_l0 (view)	VIEW	f16	576,1,256,1	-1	-1	259c3801fd4c92b2	
+req2: differing ops (first-diff onward) [('VIEW', 386), ('ADD', 308), ('MUL_MAT', 169), ('RESHAPE', 160), ('MUL', 130), ('PERMUTE', 127), ('RMS_NORM', 102), ('MUL_MAT_ID', 84)]
+req3 graph 0 node 20557: STRUCTURE differs: ['ffn_moe_gate-18@slot1194@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-18@slot1195@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req3 graph 0: node count 88151 vs 88109
+req3 graph 1 node 280: STRUCTURE differs: ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot3208@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req3 graph 2 node 279: STRUCTURE differs: ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot3422@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req3 graph 3 node 282: STRUCTURE differs: ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot3650@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req3: diff nodes per graph [5595, 24, 24, 5]
+req3: FIRST DIFF graph 0 node 360
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	7	055f98be47a003d2
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	8	0d1aaab017d193e3
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	9	0606986e4bb8e9b2
+   req1  cache_k_l0 (view)	VIEW	f16	576,1,256,1	-1	-1	cc523a10dc8108b8	
+   req3  cache_k_l0 (view)	VIEW	f16	576,1,256,1	-1	-1	259c3801fd4c92b2	
+req3: differing ops (first-diff onward) [('VIEW', 1100), ('ADD', 831), ('MUL_MAT', 720), ('RESHAPE', 484), ('MUL', 385), ('PERMUTE', 371), ('RMS_NORM', 294), ('MUL_MAT_ID', 209)]
+req4 graph 0 node 20557: STRUCTURE differs: ['ffn_moe_gate-18@slot1194@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-18@slot1195@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req4 graph 0: node count 88151 vs 88109
+req4 graph 1 node 280: STRUCTURE differs: ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot3208@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req4 graph 2 node 279: STRUCTURE differs: ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot3422@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req4 graph 3 node 282: STRUCTURE differs: ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot3650@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req4: diff nodes per graph [5589, 24, 24, 5]
+req4: FIRST DIFF graph 0 node 360
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	7	055f98be47a003d2
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	8	0d1aaab017d193e3
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	9	0606986e4bb8e9b2
+   req1  cache_k_l0 (view)	VIEW	f16	576,1,256,1	-1	-1	cc523a10dc8108b8	
+   req4  cache_k_l0 (view)	VIEW	f16	576,1,256,1	-1	-1	259c3801fd4c92b2	
+req4: differing ops (first-diff onward) [('VIEW', 1098), ('ADD', 831), ('MUL_MAT', 720), ('RESHAPE', 482), ('MUL', 385), ('PERMUTE', 371), ('RMS_NORM', 294), ('MUL_MAT_ID', 209)]
+== BASE=2
+requests: 5 graphs per request: [1, 4, 4, 4, 4]
+req1 graph 0 node 14753: STRUCTURE differs: ['ffn_moe_gate-13@slot3871@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-13@slots@pre', 'SLOT', 'i32', '52,1,1,1', '-1', '-1']
+req1 graph 0: node count 88115 vs 88151
+req1 graph 1 node 280: STRUCTURE differs: ['ffn_moe_gate-3@slot3208@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req1 graph 2 node 279: STRUCTURE differs: ['ffn_moe_gate-3@slot3422@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req1 graph 3 node 282: STRUCTURE differs: ['ffn_moe_gate-3@slot3650@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-3@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req1: diff nodes per graph [1841, 24, 24, 5]
+req1: FIRST DIFF graph 0 node 360
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	7	055f98be47a003d2
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	8	0d1aaab017d193e3
+   same  Qcur-0 (view) (permuted)	PERMUTE	f32	576,10,64,1	1	9	0606986e4bb8e9b2
+   req2  cache_k_l0 (view)	VIEW	f16	576,1,256,1	-1	-1	259c3801fd4c92b2	
+   req1  cache_k_l0 (view)	VIEW	f16	576,1,256,1	-1	-1	cc523a10dc8108b8	
+req1: differing ops (first-diff onward) [('VIEW', 386), ('ADD', 308), ('MUL_MAT', 169), ('RESHAPE', 160), ('MUL', 130), ('PERMUTE', 127), ('RMS_NORM', 102), ('MUL_MAT_ID', 84)]
+req3 graph 0 node 14753: STRUCTURE differs: ['ffn_moe_gate-13@slot3871@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-13@slots@pre', 'SLOT', 'i32', '52,1,1,1', '-1', '-1']
+req3 graph 0: node count 88115 vs 88109
+req3 graph 1 node 2593: STRUCTURE differs: ['ffn_moe_gate-16@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-16@slot3267@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req3 graph 2 node 4895: STRUCTURE differs: ['ffn_moe_gate-29@slot1600@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-29@slot1593@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req3 graph 3 node 7938: STRUCTURE differs: ['ffn_moe_gate-46@slot2163@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-46@slot2168@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req3: diff nodes per graph [1632, 376, 1487, 2967]
+req3: FIRST DIFF graph 0 node 11537
+   same  ffn_moe_up-10@slot936@post	SLOT	iq2_xs	12124160,1,1,1	-1	-1	324368c64d27b8bd
+   same  ffn_moe_up-10@slot937@post	SLOT	iq2_xs	12124160,1,1,1	-1	-1	962e5ffc3e88de12
+   same  ffn_moe_up-10@slots@post	SLOT	i32	44,1,1,1	-1	-1	14c8f4e833440820
+   req2  ffn_moe_up-10	MUL_MAT_ID	f32	2048,8,10,1	2	0	55521dc002a5e882	
+   req3  ffn_moe_up-10	MUL_MAT_ID	f32	2048,8,10,1	2	0	fef3f6fd9c84bcd1	
+req3: differing ops (first-diff onward) [('VIEW', 1353), ('ADD', 931), ('MUL_MAT', 784), ('RESHAPE', 605), ('PERMUTE', 481), ('MUL', 419), ('RMS_NORM', 322), ('MUL_MAT_ID', 239)]
+req4 graph 0 node 14753: STRUCTURE differs: ['ffn_moe_gate-13@slot3871@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-13@slots@pre', 'SLOT', 'i32', '52,1,1,1', '-1', '-1']
+req4 graph 0: node count 88115 vs 88109
+req4 graph 1 node 2593: STRUCTURE differs: ['ffn_moe_gate-16@slot8098@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-16@slot3267@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req4 graph 2 node 7226: STRUCTURE differs: ['ffn_moe_gate-42@slot2040@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-42@slot2037@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req4 graph 3 node 7938: STRUCTURE differs: ['ffn_moe_gate-46@slot2163@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1'] vs ['ffn_moe_gate-46@slot2168@pre', 'SLOT', 'iq2_xs', '12124160,1,1,1', '-1', '-1']
+req4: diff nodes per graph [1632, 376, 2616, 2970]
+req4: FIRST DIFF graph 0 node 11537
+   same  ffn_moe_up-10@slot936@post	SLOT	iq2_xs	12124160,1,1,1	-1	-1	324368c64d27b8bd
+   same  ffn_moe_up-10@slot937@post	SLOT	iq2_xs	12124160,1,1,1	-1	-1	962e5ffc3e88de12
+   same  ffn_moe_up-10@slots@post	SLOT	i32	44,1,1,1	-1	-1	14c8f4e833440820
+   req2  ffn_moe_up-10	MUL_MAT_ID	f32	2048,8,10,1	2	0	55521dc002a5e882	
+   req4  ffn_moe_up-10	MUL_MAT_ID	f32	2048,8,10,1	2	0	fef3f6fd9c84bcd1	
+req4: differing ops (first-diff onward) [('VIEW', 1600), ('ADD', 1078), ('MUL_MAT', 934), ('RESHAPE', 706), ('PERMUTE', 572), ('MUL', 488), ('RMS_NORM', 374), ('MUL_MAT_ID', 278)]

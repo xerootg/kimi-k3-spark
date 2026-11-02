@@ -1,0 +1,19 @@
+=== window gpt 13:01
+version: 0.7.0-dev (build 0, commit unknown)
+built with GNU 13.3.0 for Linux aarch64
+tokenize-2048 HTTP 200 elapsed_s 0.121
+bench-2048 HTTP 200 elapsed_s 3.228
+BENCH 2048 {"cache_n": 0, "prompt_n": 2048, "prompt_ms": 903.591, "prompt_per_token_ms": 0.44120654296875, "prompt_per_second": 2266.512171989318, "predicted_n": 128, "predicted_ms": 2322.953, "predicted_per_token_ms": 18.29096850393701, "predicted_per_second": 54.67179060445907}
+tokenize-16384 HTTP 200 elapsed_s 0.096
+bench-16384 HTTP 200 elapsed_s 8.548
+BENCH 16384 {"cache_n": 0, "prompt_n": 16384, "prompt_ms": 5924.313, "prompt_per_token_ms": 0.36159136962890626, "prompt_per_second": 2765.5527315994277, "predicted_n": 128, "predicted_ms": 2618.191, "predicted_per_token_ms": 20.61567716535433, "predicted_per_second": 48.50677433388168}
+chat-tool HTTP 200 elapsed_s 1.102
+CHAT tool_calls True
+chat-roundtrip HTTP 200 elapsed_s 0.402
+messages-tool HTTP 200 elapsed_s 0.727
+MESSAGES HTTP 200 tool_use True
+messages-roundtrip HTTP 200 elapsed_s 0.849
+Evidence: /srv/glm-5.3/win2gpt-20261101-140119 (timings, responses, process RSS/HWM, host and GPU memory)
+WIN2GPT-DONE
+pod restored: Running
+ALL-WINDOWS-DONE

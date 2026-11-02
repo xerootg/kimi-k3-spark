@@ -1,0 +1,9 @@
+requests: 4 graphs per request: [1, 4, 1, 4]
+req2: diff nodes per graph [55848, 6351, 6339, 6362]
+req2: FIRST DIFF graph 0 node 2567
+   same  ffn_moe_topk-3 (cont)	CONT	i32	8,10,1,1	1	8	82e5a856a2bea226
+   same  ffn_moe_topk-3 (cont)	CONT	i32	8,10,1,1	1	9	021dd3ca181bfbca
+   same  ffn_moe_topk-3 (cont) (reshaped)	RESHAPE	i32	80,1,1,1	-1	-1	3763ae3309fa1777
+   req1  ffn_moe_slots-3	GET_ROWS	i32	1,80,1,1	-1	-1	65b54d21182be40b	
+   req2  ffn_moe_slots-3	GET_ROWS	i32	1,80,1,1	-1	-1	f93a04f206779a40	
+req2: differing ops (first-diff onward) [('VIEW', 14995), ('ADD', 10323), ('MUL_MAT', 10018), ('RESHAPE', 7198), ('PERMUTE', 5023), ('MUL', 4782), ('RMS_NORM', 3639), ('MUL_MAT_ID', 2766)]

@@ -1,0 +1,40 @@
+LEG FDC-C64-long2 ctx=131072 per_slot=65536 cache_MiB=78000 parallel=2 mode=long cap=2400
+FDC-C64-long2 warm long-mixed md5=1a3356a4daae38627a73adf3e1a2b410 reference=informational PASS tokens=64 decode_tok_s=2.257 prefill_tok_s=107.489 prefill_ms=446556.399
+FDC-C64-long2 warm short md5=9449ae5738f2e56f99ab7ab6e9626eb5 reference=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=0.259 prefill_tok_s=7.014 prefill_ms=1425.760
+FDC-C64-long2 warm long-standalone md5=1a3356a4daae38627a73adf3e1a2b410 reference=informational PASS tokens=64 decode_tok_s=4.313 prefill_tok_s=111.819 prefill_ms=429263.608
+LONG-GATE FDC-C64-long2 warm prompt_tokens=48000 target=48000 md5=1a3356a4daae38627a73adf3e1a2b410 reference=1a3356a4daae38627a73adf3e1a2b410 PASS
+ISOLATION FDC-C64-long2 warm prefill_observed_s=446.769 short_events_during_prefill=1 short_observed_tok_s=0.002238 stall_s=447.460738320995
+FDC-C64-long2 round1 long-mixed md5=1a3356a4daae38627a73adf3e1a2b410 reference=informational PASS tokens=64 decode_tok_s=2.629 prefill_tok_s=114.834 prefill_ms=417995.284
+FDC-C64-long2 round1 short md5=9449ae5738f2e56f99ab7ab6e9626eb5 reference=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=0.278 prefill_tok_s=5.418 prefill_ms=1845.679
+FDC-C64-long2 round1 long-standalone md5=1a3356a4daae38627a73adf3e1a2b410 reference=informational PASS tokens=64 decode_tok_s=4.573 prefill_tok_s=113.117 prefill_ms=424337.916
+LONG-GATE FDC-C64-long2 round1 prompt_tokens=48000 target=48000 md5=1a3356a4daae38627a73adf3e1a2b410 reference=1a3356a4daae38627a73adf3e1a2b410 PASS
+ISOLATION FDC-C64-long2 round1 prefill_observed_s=418.245 short_events_during_prefill=1 short_observed_tok_s=0.002391 stall_s=418.7051861479995
+FDC-C64-long2 round2 long-mixed md5=1a3356a4daae38627a73adf3e1a2b410 reference=informational PASS tokens=64 decode_tok_s=2.637 prefill_tok_s=114.518 prefill_ms=419149.639
+FDC-C64-long2 round2 short md5=9449ae5738f2e56f99ab7ab6e9626eb5 reference=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=0.277 prefill_tok_s=5.534 prefill_ms=1806.925
+Traceback (most recent call last):
+  File "/srv/glm-5.3/fdc/clients.py", line 120, in <module>
+    sys.exit(run(sys.argv[1], sys.argv[2], int(sys.argv[3])))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3/fdc/clients.py", line 96, in run
+    alone = request(Path(str(stem)+'.reference'), body(prompt, 0, 64))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3/fdc/clients.py", line 43, in request
+    assert final is not None, 'missing final SSE event'
+           ^^^^^^^^^^^^^^^^^
+AssertionError: missing final SSE event
+/srv/glm-5.3/win2fdcl.sh: line 71: 1267459 Killed                  timeout --signal=KILL ${FDC_CAP:-900} env LLAMA_LOG_COLORS=0 LLAMA_EXPERT_STORE="$PWD/store/glm53-q2-v1.k3xs" LLAMA_EXPERT_STORE_SNAPSHOT="$PWD/legs/$name.k3sn" LLAMA_EXPERT_STORE_THREADS=16 LLAMA_EXPERT_STORE_SELF_PREFETCH=1 LLAMA_EXPERT_STORE_SPLIT=1 LLAMA_EXPERT_STORE_SECOND_CHANCE=3 LLAMA_EXPERT_STORE_RESERVE_MIB=4096 LLAMA_EXPERT_STORE_BYTE_STRIDE=1 LLAMA_EXPERT_STORE_PREFETCH=1 LLAMA_EXPERT_STORE_PREFETCH_INPUT=3 LLAMA_EXPERT_STORE_SPLIT_SKIP_ZERO=1 LLAMA_DSA_SHORT_CTX_SKIP=0 LLAMA_EXPERT_STORE_HOOK_LEAN=1 LLAMA_EXPERT_STORE_HOOK_STATS=1 LLAMA_EXPERT_STORE_GPU_SLOTS=1 GGML_CUDA_HOST_BANK_ASYNC=1 LLAMA_EXPERT_STORE_PREFETCH_WIDE=0 LLAMA_EXPERT_STORE_PREFILL_BANK=1 LLAMA_EXPERT_STORE_THP=0 "$BUILD/bin/llama-server" -m models/GLM-5.3-UD-Q2_K_XL-00001-of-00007.gguf --host 127.0.0.1 --port 18080 --ctx-size "$ctx" --parallel 2 --batch-size 2048 --ubatch-size 2048 -ngl 999 --n-cpu-moe 999 --moe-cache-mib "$cache" --cache-ram 0 --threads 8 --threads-batch 20 --flash-attn on --no-warmup --fit off --load-mode mmap -lv 4 > "legs/$name.log" 2>&1
+KV legs/FDC-C64-long2.log components_MiB=[11232.0, 672.0] total_MiB=11904.00
+8.45.145.434 I fill_late: expert store: memory valve: host MemAvailable 5.89 GB (lowest 5.89, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+8.59.557.198 I fill_late: expert store: memory valve: host MemAvailable 5.84 GB (lowest 5.84, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+16.22.145.649 I fill_late: expert store: memory valve: host MemAvailable 5.75 GB (lowest 5.73, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+23.38.123.561 I fill_late: expert store: memory valve: host MemAvailable 5.85 GB (lowest 5.73, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+23.56.035.843 I fill_late: expert store: memory valve: host MemAvailable 5.80 GB (lowest 5.73, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+31.13.394.611 I fill_late: expert store: memory valve: host MemAvailable 5.79 GB (lowest 5.73, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+31.25.210.711 I fill_late: expert store: memory valve: host MemAvailable 5.79 GB (lowest 5.73, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+38.46.480.382 I fill_late: expert store: memory valve: host MemAvailable 5.78 GB (lowest 5.73, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+39.00.314.469 I fill_late: expert store: memory valve: host MemAvailable 5.78 GB (lowest 5.73, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+MEMORY legs/FDC-C64-long2.log lowest_MemAvailable_GB=5.73
+LEG-FAIL FDC-C64-long2 rc=1; continuing
+FDC status=1
+FDC status=1
+WIN2FDC-DONE

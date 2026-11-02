@@ -1,0 +1,20 @@
+=== window fdcl 12:03
+LEG FDC-C64-long2 ctx=131072 per_slot=65536 cache_MiB=78000 parallel=2 mode=long cap=2400
+FDC-C64-long2 warm long-mixed md5=1a3356a4daae38627a73adf3e1a2b410 reference=informational PASS tokens=64 decode_tok_s=2.257 prefill_tok_s=107.489 prefill_ms=446556.399
+FDC-C64-long2 warm short md5=9449ae5738f2e56f99ab7ab6e9626eb5 reference=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=0.259 prefill_tok_s=7.014 prefill_ms=1425.760
+FDC-C64-long2 warm long-standalone md5=1a3356a4daae38627a73adf3e1a2b410 reference=informational PASS tokens=64 decode_tok_s=4.313 prefill_tok_s=111.819 prefill_ms=429263.608
+LONG-GATE FDC-C64-long2 warm prompt_tokens=48000 target=48000 md5=1a3356a4daae38627a73adf3e1a2b410 reference=1a3356a4daae38627a73adf3e1a2b410 PASS
+FDC-C64-long2 round1 long-mixed md5=1a3356a4daae38627a73adf3e1a2b410 reference=informational PASS tokens=64 decode_tok_s=2.629 prefill_tok_s=114.834 prefill_ms=417995.284
+FDC-C64-long2 round1 short md5=9449ae5738f2e56f99ab7ab6e9626eb5 reference=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=0.278 prefill_tok_s=5.418 prefill_ms=1845.679
+FDC-C64-long2 round1 long-standalone md5=1a3356a4daae38627a73adf3e1a2b410 reference=informational PASS tokens=64 decode_tok_s=4.573 prefill_tok_s=113.117 prefill_ms=424337.916
+LONG-GATE FDC-C64-long2 round1 prompt_tokens=48000 target=48000 md5=1a3356a4daae38627a73adf3e1a2b410 reference=1a3356a4daae38627a73adf3e1a2b410 PASS
+FDC-C64-long2 round2 long-mixed md5=1a3356a4daae38627a73adf3e1a2b410 reference=informational PASS tokens=64 decode_tok_s=2.637 prefill_tok_s=114.518 prefill_ms=419149.639
+FDC-C64-long2 round2 short md5=9449ae5738f2e56f99ab7ab6e9626eb5 reference=9449ae5738f2e56f99ab7ab6e9626eb5 PASS tokens=128 decode_tok_s=0.277 prefill_tok_s=5.534 prefill_ms=1806.925
+AssertionError: missing final SSE event
+KV legs/FDC-C64-long2.log components_MiB=[11232.0, 672.0] total_MiB=11904.00
+MEMORY legs/FDC-C64-long2.log lowest_MemAvailable_GB=5.73
+LEG-FAIL FDC-C64-long2 rc=1; continuing
+FDC status=1
+FDC status=1
+pod restored: Running
+ALL-WINDOWS-DONE

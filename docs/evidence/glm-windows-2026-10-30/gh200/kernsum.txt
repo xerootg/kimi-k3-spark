@@ -1,0 +1,17 @@
+kernels total GPU ms 5072.6 distinct 46
+ 26.2%  n=  15979 avg=    83.2us  void mul_mat_vec_q<(ggml_type)17, (int)1, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, 
+ 24.8%  n=  15552 avg=    80.8us  void mul_mat_vec_q<(ggml_type)18, (int)1, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, 
+  6.6%  n=   9611 avg=    34.9us  void mul_mat_vec_q<(ggml_type)13, (int)1, (bool)1, (bool)0, (bool)0>(const void *, const void *, const int *, 
+  6.4%  n=  21380 avg=    15.2us  void mul_mat_vec_q<(ggml_type)8, (int)1, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, g
+  5.2%  n= 119520 avg=     2.2us  quantize_q8_1(const float *, void *, long, long, long, long, long, unsigned int, uint3)
+  3.8%  n=  22239 avg=     8.6us  void mul_mat_vec_q<(ggml_type)13, (int)1, (bool)0, (bool)0, (bool)0>(const void *, const void *, const int *, 
+  3.6%  n=   8422 avg=    21.7us  void flash_attn_ext_f16<(int)576, (int)512, (int)1, (int)16, (bool)0, (bool)1, (bool)0>(const char *, const ch
+  3.5%  n=  16844 avg=    10.7us  void mul_mat_vec_q<(ggml_type)8, (int)1, (bool)0, (bool)1, (bool)0>(const void *, const void *, const int *, g
+  3.5%  n=   7989 avg=    21.9us  void mul_mat_vec_q<(ggml_type)17, (int)1, (bool)1, (bool)0, (bool)0>(const void *, const void *, const int *, 
+  2.1%  n=   8421 avg=    12.9us  void mul_mat_vec_q<(ggml_type)14, (int)1, (bool)1, (bool)0, (bool)0>(const void *, const void *, const int *, 
+  1.3%  n=    858 avg=    76.9us  void mul_mat_vec_q<(ggml_type)23, (int)1, (bool)0, (bool)1, (bool)0>(const void *, const void *, const int *, 
+  1.2%  n=  24292 avg=     2.5us  void k_get_rows_float<int, int>(const T1 *, const int *, T2 *, long, long, uint3, unsigned long, unsigned long
+  1.1%  n=  10366 avg=     5.5us  void mul_mat_vec_f<float, float, (int)1, (int)256, (bool)0, (bool)0>(const T1 *, const float *, const int *, g
+  1.1%  n=  16951 avg=     3.3us  void rms_norm_f32<(int)1024, (int)4, (bool)1, (bool)1, (bool)0, (bool)0>(const float *, float *, int, int, int
+  1.1%  n=   8422 avg=     6.4us  void flash_attn_stream_k_fixup_uniform<(int)512, (int)1, (int)16>(float *, const float2 *, int, int, int, int,
+  1.0%  n=  16195 avg=     3.2us  k_bank_request(const int *, long, ggml_cuda_bank_mailbox *, unsigned long, unsigned int)
