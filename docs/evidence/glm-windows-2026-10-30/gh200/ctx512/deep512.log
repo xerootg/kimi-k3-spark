@@ -1,0 +1,5 @@
+{"tag": "A-first", "prompt_n": 457428, "cache_n": 0, "prefill_tps": 324.8, "prefill_s": 1408.3, "decode_tps": 17.04, "wall_s": 1410.4}
+{"tag": "B-other", "prompt_n": 101669, "cache_n": 4, "prefill_tps": 543.7, "prefill_s": 187.0, "decode_tps": 24.94, "wall_s": 190.2}
+{"tag": "A-return", "prompt_n": 324, "cache_n": 457428, "prefill_tps": 139.0, "prefill_s": 2.3, "decode_tps": 17.48, "wall_s": 5.3}
+PEAK-HBM-MiB 89314 of 97871; MIN-HOST-MemAvailable-GiB 164
+DEEP-DONE

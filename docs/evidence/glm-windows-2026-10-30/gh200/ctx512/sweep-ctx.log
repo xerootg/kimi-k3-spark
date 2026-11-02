@@ -1,0 +1,13 @@
+=== ctx262144-hbm40960 10:35:43
+BENCH ctx262144-hbm40960 prefill 99676 tok 553.0 tok/s decode-at-depth 24.07
+BENCH ctx262144-hbm40960 decode 27.57 tok/s md5 c592f33e7c
+PEAK ctx262144-hbm40960 86099 MiB of 97871
+=== ctx393216-hbm28672 10:39:46
+BENCH ctx393216-hbm28672 prefill 99676 tok 551.8 tok/s decode-at-depth 26.23
+BENCH ctx393216-hbm28672 decode 28.09 tok/s md5 c592f33e7c
+PEAK ctx393216-hbm28672 87765 MiB of 97871
+=== ctx524288-hbm16384 10:43:48
+BENCH ctx524288-hbm16384 prefill 99676 tok 538.2 tok/s decode-at-depth 25.84
+BENCH ctx524288-hbm16384 decode 27.63 tok/s md5 c592f33e7c
+PEAK ctx524288-hbm16384 86677 MiB of 97871
+SWEEP-DONE
