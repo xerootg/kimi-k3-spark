@@ -1,0 +1,17 @@
+=== mtp-n2-p0.7 02:08:06
+{"tag": "mtp-n2-p0.7", "req": "std-t0", "n": 256, "tps": 27.91, "draft_n": 158, "draft_accepted": 148, "wall": 10.1}
+{"tag": "mtp-n2-p0.7", "req": "std-t1", "n": 256, "tps": 28.89, "draft_n": 165, "draft_accepted": 154, "wall": 9.1}
+{"tag": "mtp-n2-p0.7", "req": "agent", "n": 40, "tps": 30.52, "draft_n": 25, "draft_accepted": 25, "wall": 3.4, "finish": "tool_calls"}
+PEAK mtp-n2-p0.7 92836 MiB
+1.03.053.978 I slot print_timing: id  0 | task 0 | draft acceptance = 0.93671 (  148 accepted /   158 generated), mean len =  2.64
+1.12.181.601 I slot print_timing: id  0 | task 109 | draft acceptance = 0.93333 (  154 accepted /   165 generated), mean len =  2.66
+1.15.610.962 I slot print_timing: id  0 | task 212 | draft acceptance = 1.00000 (   25 accepted /    25 generated), mean len =  2.92
+=== mtp-n3-p0.7 02:09:23
+{"tag": "mtp-n3-p0.7", "req": "std-t0", "n": 256, "tps": 29.1, "draft_n": 185, "draft_accepted": 167, "wall": 9.7}
+{"tag": "mtp-n3-p0.7", "req": "std-t1", "n": 256, "tps": 29.06, "draft_n": 198, "draft_accepted": 167, "wall": 9.1}
+{"tag": "mtp-n3-p0.7", "req": "agent", "n": 40, "tps": 30.07, "draft_n": 30, "draft_accepted": 26, "wall": 3.3, "finish": "tool_calls"}
+PEAK mtp-n3-p0.7 93010 MiB
+1.02.253.987 I slot print_timing: id  0 | task 0 | draft acceptance = 0.90270 (  167 accepted /   185 generated), mean len =  3.11
+1.11.325.568 I slot print_timing: id  0 | task 90 | draft acceptance = 0.84343 (  167 accepted /   198 generated), mean len =  3.14
+1.14.587.576 I slot print_timing: id  0 | task 180 | draft acceptance = 0.86667 (   26 accepted /    30 generated), mean len =  3.17
+MTP2-DONE

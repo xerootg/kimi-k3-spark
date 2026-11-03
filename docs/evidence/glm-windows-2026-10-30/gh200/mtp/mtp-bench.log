@@ -1,0 +1,30 @@
+=== none 02:02:38
+{"tag": "none", "req": "std-t0", "n": 256, "tps": 25.07, "draft_n": null, "draft_accepted": null, "wall": 10.6}
+{"tag": "none", "req": "std-t1", "n": 256, "tps": 26.21, "draft_n": null, "draft_accepted": null, "wall": 10.0}
+{"tag": "none", "req": "agent", "n": 40, "tps": 25.29, "draft_n": null, "draft_accepted": null, "wall": 3.1, "finish": "tool_calls"}
+PEAK none 87097 MiB
+=== mtp-n1 02:03:56
+{"tag": "mtp-n1", "req": "std-t0", "n": 256, "tps": 8.84, "draft_n": 135, "draft_accepted": 120, "wall": 33.2}
+{"tag": "mtp-n1", "req": "std-t1", "n": 256, "tps": 21.59, "draft_n": 158, "draft_accepted": 97, "wall": 12.1}
+{"tag": "mtp-n1", "req": "agent", "n": 40, "tps": 26.27, "draft_n": 20, "draft_accepted": 20, "wall": 4.1, "finish": "tool_calls"}
+PEAK mtp-n1 86897 MiB
+1.01.745.877 I slot print_timing: id  0 | task 0 | draft acceptance = 0.88889 (  120 accepted /   135 generated), mean len =  1.89
+1.13.858.146 I slot print_timing: id  0 | task 137 | draft acceptance = 0.61392 (   97 accepted /   158 generated), mean len =  1.61
+1.18.003.734 I slot print_timing: id  0 | task 297 | draft acceptance = 1.00000 (   20 accepted /    20 generated), mean len =  2.00
+=== mtp-n2 02:05:15
+{"tag": "mtp-n2", "req": "std-t0", "n": 256, "tps": 27.62, "draft_n": 202, "draft_accepted": 154, "wall": 10.1}
+{"tag": "mtp-n2", "req": "std-t1", "n": 256, "tps": 24.28, "draft_n": 257, "draft_accepted": 126, "wall": 10.8}
+{"tag": "mtp-n2", "req": "agent", "n": 40, "tps": 33.92, "draft_n": 26, "draft_accepted": 26, "wall": 3.0, "finish": "tool_calls"}
+PEAK mtp-n2 93002 MiB
+1.02.826.723 I slot print_timing: id  0 | task 0 | draft acceptance = 0.76238 (  154 accepted /   202 generated), mean len =  2.52
+1.13.625.693 I slot print_timing: id  0 | task 103 | draft acceptance = 0.49027 (  126 accepted /   257 generated), mean len =  1.98
+1.16.619.907 I slot print_timing: id  0 | task 234 | draft acceptance = 1.00000 (   26 accepted /    26 generated), mean len =  3.00
+=== mtp-n3 02:06:33
+{"tag": "mtp-n3", "req": "std-t0", "n": 256, "tps": 26.45, "draft_n": 251, "draft_accepted": 171, "wall": 10.5}
+{"tag": "mtp-n3", "req": "std-t1", "n": 256, "tps": 23.91, "draft_n": 295, "draft_accepted": 156, "wall": 11.0}
+{"tag": "mtp-n3", "req": "agent", "n": 39, "tps": 32.51, "draft_n": 30, "draft_accepted": 29, "wall": 3.1, "finish": "tool_calls"}
+PEAK mtp-n3 86807 MiB
+1.02.877.456 I slot print_timing: id  0 | task 0 | draft acceptance = 0.68127 (  171 accepted /   251 generated), mean len =  3.04
+1.13.839.561 I slot print_timing: id  0 | task 86 | draft acceptance = 0.52881 (  156 accepted /   295 generated), mean len =  2.58
+1.16.956.502 I slot print_timing: id  0 | task 187 | draft acceptance = 0.96667 (   29 accepted /    30 generated), mean len =  3.90
+MTP-DONE
