@@ -1,0 +1,50 @@
+43 MoE layers x 288 experts, store = 101.66 GB, records 8060928..10878976 bytes
+  blk. 3: gate IQ2_XS 2424832 B, up IQ2_XS 2424832 B, down IQ3_XXS 3211264 B -> record 8060928 B
+  blk. 4: gate IQ2_XS 2424832 B, up IQ2_XS 2424832 B, down IQ3_XXS 3211264 B -> record 8060928 B
+  blk. 5: gate IQ2_XS 2424832 B, up IQ2_XS 2424832 B, down IQ3_XXS 3211264 B -> record 8060928 B
+  blk.45: gate Q2_K 2752512 B, up Q2_K 2752512 B, down Q3_K 3604480 B -> record 9109504 B
+blk. 3 done: 2.32 GB in 1 s (2.33 GB/s), total 2 GB, elapsed 0 min
+blk. 4 done: 2.32 GB in 1 s (2.76 GB/s), total 5 GB, elapsed 0 min
+blk. 5 done: 2.32 GB in 1 s (2.73 GB/s), total 7 GB, elapsed 0 min
+blk. 6 done: 2.32 GB in 1 s (2.76 GB/s), total 9 GB, elapsed 0 min
+blk. 7 done: 2.32 GB in 1 s (2.71 GB/s), total 12 GB, elapsed 0 min
+blk. 8 done: 2.32 GB in 1 s (2.65 GB/s), total 14 GB, elapsed 0 min
+blk. 9 done: 2.32 GB in 1 s (2.67 GB/s), total 16 GB, elapsed 0 min
+blk.10 done: 2.32 GB in 1 s (2.69 GB/s), total 19 GB, elapsed 0 min
+blk.11 done: 3.13 GB in 1 s (2.62 GB/s), total 22 GB, elapsed 0 min
+blk.12 done: 2.68 GB in 1 s (2.75 GB/s), total 24 GB, elapsed 0 min
+blk.13 done: 2.32 GB in 1 s (2.72 GB/s), total 27 GB, elapsed 0 min
+blk.14 done: 2.32 GB in 1 s (2.72 GB/s), total 29 GB, elapsed 0 min
+blk.15 done: 2.32 GB in 1 s (2.73 GB/s), total 31 GB, elapsed 0 min
+blk.16 done: 2.32 GB in 1 s (2.72 GB/s), total 34 GB, elapsed 0 min
+blk.17 done: 2.32 GB in 1 s (2.72 GB/s), total 36 GB, elapsed 0 min
+blk.18 done: 2.32 GB in 1 s (2.72 GB/s), total 38 GB, elapsed 0 min
+blk.19 done: 2.32 GB in 1 s (2.74 GB/s), total 41 GB, elapsed 0 min
+blk.20 done: 2.32 GB in 1 s (2.68 GB/s), total 43 GB, elapsed 0 min
+blk.21 done: 2.32 GB in 1 s (2.64 GB/s), total 45 GB, elapsed 0 min
+blk.22 done: 2.32 GB in 1 s (2.67 GB/s), total 48 GB, elapsed 0 min
+blk.23 done: 2.32 GB in 1 s (2.73 GB/s), total 50 GB, elapsed 0 min
+blk.24 done: 2.32 GB in 1 s (2.65 GB/s), total 52 GB, elapsed 0 min
+blk.25 done: 2.32 GB in 1 s (2.69 GB/s), total 55 GB, elapsed 0 min
+blk.26 done: 2.32 GB in 1 s (2.75 GB/s), total 57 GB, elapsed 0 min
+blk.27 done: 2.32 GB in 1 s (2.73 GB/s), total 59 GB, elapsed 0 min
+blk.28 done: 2.32 GB in 1 s (2.73 GB/s), total 62 GB, elapsed 0 min
+blk.29 done: 2.32 GB in 1 s (2.77 GB/s), total 64 GB, elapsed 0 min
+blk.30 done: 2.32 GB in 1 s (2.74 GB/s), total 66 GB, elapsed 0 min
+blk.31 done: 2.32 GB in 1 s (2.69 GB/s), total 68 GB, elapsed 0 min
+blk.32 done: 2.32 GB in 1 s (2.73 GB/s), total 71 GB, elapsed 0 min
+blk.33 done: 2.32 GB in 1 s (2.74 GB/s), total 73 GB, elapsed 0 min
+blk.34 done: 2.32 GB in 1 s (2.69 GB/s), total 75 GB, elapsed 0 min
+blk.35 done: 2.32 GB in 1 s (2.66 GB/s), total 78 GB, elapsed 0 min
+blk.36 done: 2.32 GB in 1 s (2.65 GB/s), total 80 GB, elapsed 0 min
+blk.37 done: 2.32 GB in 1 s (2.62 GB/s), total 82 GB, elapsed 1 min
+blk.38 done: 2.32 GB in 1 s (2.66 GB/s), total 85 GB, elapsed 1 min
+blk.39 done: 2.32 GB in 1 s (2.70 GB/s), total 87 GB, elapsed 1 min
+blk.40 done: 2.32 GB in 1 s (2.73 GB/s), total 89 GB, elapsed 1 min
+blk.41 done: 2.32 GB in 1 s (2.73 GB/s), total 92 GB, elapsed 1 min
+blk.42 done: 2.32 GB in 1 s (2.70 GB/s), total 94 GB, elapsed 1 min
+blk.43 done: 2.32 GB in 1 s (2.65 GB/s), total 96 GB, elapsed 1 min
+blk.44 done: 2.68 GB in 1 s (2.74 GB/s), total 99 GB, elapsed 1 min
+blk.45 done: 2.62 GB in 1 s (2.75 GB/s), total 102 GB, elapsed 1 min
+verifying 64 random records
+verify: OK

@@ -1,0 +1,35 @@
+=== LEG S1M ctx=1048576 parallel=1 cache_MiB=58000 11:39:35
+READY S1M after 26s
+0.03.091.745 I load_tensors:   CPU_Mapped model buffer size =   415.94 MiB
+0.03.091.746 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.091.747 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.091.747 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.091.747 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.091.748 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.091.748 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.091.748 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+{"kind": "conc", "tag": "S1M", "n": 1, "round": "warm", "agg_tps": 10.25, "wall_s": 24.98, "gen": 256, "per_stream_tps": [10.86], "md5": ["53816a69bc"], "t0": 1793731207.534826, "t1": 1793731232.5098557}
+{"kind": "conc", "tag": "S1M", "n": 1, "round": 1, "agg_tps": 12.45, "wall_s": 20.57, "gen": 256, "per_stream_tps": [12.67], "md5": ["53816a69bc"], "t0": 1793731232.5102022, "t1": 1793731253.08013}
+{"kind": "conc", "tag": "S1M", "n": 1, "round": 2, "agg_tps": 12.35, "wall_s": 20.73, "gen": 256, "per_stream_tps": [12.57], "md5": ["53816a69bc"], "t0": 1793731253.0804117, "t1": 1793731273.8119788}
+{"kind": "conc", "tag": "S1M", "n": 1, "round": 3, "agg_tps": 12.7, "wall_s": 20.16, "gen": 256, "per_stream_tps": [12.93], "md5": ["53816a69bc"], "t0": 1793731273.8122823, "t1": 1793731293.9713452}
+{"kind": "depth", "tag": "S1M-depth", "target": 2048, "prompt_n": 2068, "prefill_tps": 273.87, "prefill_s": 7.55, "decode_n": 64, "decode_tps": 9.9, "md5": "9c80718286", "t0": 1793731294.0015447, "t1": 1793731307.935605}
+{"kind": "depth", "tag": "S1M-depth", "target": 16384, "prompt_n": 16414, "prefill_tps": 303.86, "prefill_s": 54.02, "decode_n": 64, "decode_tps": 11.37, "md5": "9c80718286", "t0": 1793731307.9375854, "t1": 1793731367.5123138}
+{"kind": "depth", "tag": "S1M-depth", "target": 65536, "prompt_n": 65243, "prefill_tps": 293.12, "prefill_s": 222.58, "decode_n": 64, "decode_tps": 11.33, "md5": "1a864866cf", "t0": 1793731367.520212, "t1": 1793731595.7220314}
+TOOLCALL finish tool_calls calls [{"type": "function", "function": {"name": "kubectl_get", "arguments": "{\"kind\":\"pods\",\"namespace\":\"garage\"}"}, "id": "Z0miEJWwX1FYeKcHldlcVDw5Mlcnr4hb"}] decode 9.55
+7.08.060.759 I fill_late: expert store: 442026 lookups, hit rate 89.9%, 366.4 GB read for decode, 839.7 GB for prefill
+MEMORY S1M lowest MemAvailable MiB 10972
+=== LEG S4 ctx=1048576 parallel=4 cache_MiB=58000 11:46:52
+READY S4 after 30s
+0.03.002.238 I load_tensors:   CPU_Mapped model buffer size =   415.94 MiB
+0.03.002.239 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.002.239 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.002.240 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.002.240 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.002.241 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.002.241 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.002.241 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+{"kind": "conc", "tag": "S4", "n": 4, "round": "warm", "agg_tps": 28.82, "wall_s": 35.53, "gen": 1024, "per_stream_tps": [7.37, 7.42, 7.42, 7.42], "md5": ["bcae48a3dc", "b25b861858", "b25b861858", "b25b861858"], "t0": 1793731647.4924674, "t1": 1793731683.0267253}
+{"kind": "conc", "tag": "S4", "n": 4, "round": 1, "agg_tps": 37.04, "wall_s": 27.64, "gen": 1024, "per_stream_tps": [9.73, 9.73, 9.73, 9.73], "md5": ["94b69c865d", "94b69c865d", "94b69c865d", "94b69c865d"], "t0": 1793731683.0272017, "t1": 1793731710.6695473}
+{"kind": "conc", "tag": "S4", "n": 4, "round": 2, "agg_tps": 39.82, "wall_s": 25.72, "gen": 1024, "per_stream_tps": [10.17, 10.17, 10.17, 10.17], "md5": ["819283bef3", "819283bef3", "819283bef3", "819283bef3"], "t0": 1793731710.6701176, "t1": 1793731736.3890245}
+MEMORY lowest MemAvailable MiB 10972
+WIN2FLASH3-DONE

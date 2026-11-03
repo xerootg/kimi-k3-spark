@@ -1,0 +1,11 @@
+=== LEG F1 ctx=524288 parallel=1 11:30:24
+win2flash.sh: line 20: 386456 Killed                  "$BIN" -m $M --alias glm-5.3-flash --jinja -ngl 999 --ctx-size $2 --parallel $3 --flash-attn on --batch-size 2048 --ubatch-size 2048 --threads 8 --threads-batch 12 --host 127.0.0.1 --port 18080 --metrics --no-warmup --fit off --load-mode mmap > $OUT/server-$1.log 2>&1
+LEG-FAIL F1 server died
+0.00.562.950 W model has unused tensor blk.45.ffn_up_shexp.weight (size = 5767168 bytes) -- ignoring
+0.00.562.955 W model has unused tensor blk.45.nextn.eh_proj.weight (size = 35651584 bytes) -- ignoring
+0.00.562.959 W model has unused tensor blk.45.nextn.enorm.weight (size = 16384 bytes) -- ignoring
+0.00.562.968 W model has unused tensor blk.45.nextn.hnorm.weight (size = 16384 bytes) -- ignoring
+0.00.562.977 W model has unused tensor blk.45.nextn.shared_head_norm.weight (size = 16384 bytes) -- ignoring
+F1M 1M context did not load
+WATCHDOG kill F1 MemAvailable 1398 MiB
+=== LEG F4 ctx=524288 parallel=4 11:33:43
