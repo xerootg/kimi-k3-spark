@@ -1,0 +1,41 @@
+ready after 57 s
+Importer error status: The importer binary and its dependencies were not found.
+Unable to retrieve the importer version: skipping importation of the QDSTRM file.
+Generating '/tmp/nsys-report-b3b9.qdstrm'
+Generated:
+    /srv/glm-5.3/prof/prefill/shallow.qdstrm
+shallow captured 05:22:46
+Importer error status: The importer binary and its dependencies were not found.
+Unable to retrieve the importer version: skipping importation of the QDSTRM file.
+Generating '/tmp/nsys-report-4983.qdstrm'
+Generated:
+    /srv/glm-5.3/prof/prefill/deep.qdstrm
+deep captured 05:27:42
+PREFILL 203198 tok 453.5 tok/s 448.1 s
+1.30.015.847 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  20480, progress = 0.10, t =  36.09 s / 567.54 tokens per second
+2.04.681.103 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  40960, progress = 0.20, t =  70.75 s / 578.93 tokens per second
+2.42.232.325 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  61440, progress = 0.30, t = 108.30 s / 567.30 tokens per second
+3.22.687.304 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  81920, progress = 0.40, t = 148.76 s / 550.70 tokens per second
+4.06.128.953 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens = 102400, progress = 0.50, t = 192.20 s / 532.78 tokens per second
+4.52.382.412 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens = 122880, progress = 0.60, t = 238.45 s / 515.32 tokens per second
+5.41.437.527 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens = 143360, progress = 0.71, t = 287.51 s / 498.63 tokens per second
+6.33.389.200 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens = 163840, progress = 0.81, t = 339.46 s / 482.65 tokens per second
+7.28.133.322 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens = 184320, progress = 0.91, t = 394.20 s / 467.58 tokens per second
+total 2257120
+drwxrwxr-x  2 ubuntu ubuntu       4096 Nov  3 05:27 .
+drwxrwxr-x 14 ubuntu ubuntu       4096 Nov  3 05:20 ..
+-rw-rw-r--  1 ubuntu ubuntu    3771865 Nov  3 05:27 deep.nsys-rep
+-rw-rw-r--  1 ubuntu ubuntu 1137314107 Nov  3 05:27 deep.qdstrm
+-rw-r--r--  1 ubuntu ubuntu   12144640 Nov  3 05:27 deep.sqlite
+-rw-rw-r--  1 ubuntu ubuntu       1684 Nov  3 05:27 imp-deep.log
+-rw-rw-r--  1 ubuntu ubuntu       1606 Nov  3 05:27 imp-shallow.log
+-rw-rw-r--  1 ubuntu ubuntu      12127 Nov  3 05:27 kern-deep.csv
+-rw-rw-r--  1 ubuntu ubuntu      12857 Nov  3 05:27 kern-shallow.csv
+-rw-rw-r--  1 ubuntu ubuntu    1151802 Nov  3 05:21 req.json
+-rw-rw-r--  1 ubuntu ubuntu    1153428 Nov  3 05:29 resp.json
+-rw-rw-r--  1 ubuntu ubuntu      19787 Nov  3 05:29 server.log
+-rw-rw-r--  1 ubuntu ubuntu    4218266 Nov  3 05:27 shallow.nsys-rep
+-rw-rw-r--  1 ubuntu ubuntu 1137717111 Nov  3 05:27 shallow.qdstrm
+-rw-r--r--  1 ubuntu ubuntu   13619200 Nov  3 05:27 shallow.sqlite
+-rw-rw-rw-  1 ubuntu ubuntu     113818 Nov  3 05:26 snapcopy.k3sn
+PREFILL-PROF-DONE
