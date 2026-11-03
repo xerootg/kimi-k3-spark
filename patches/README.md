@@ -897,3 +897,39 @@ one order, independent of its position, and no fixup pass runs. Inert when unset
 gave a different md5 (`b533bf356d`, `b5933beb88`, ...). Spark: its prefill uses the prefill bank's map, not the
 compacted list, and its decode uses MMVQ, so neither patch is expected to touch the Spark gold; confirm the gold
 before the Spark adopts an image with them.
+
+## 0045-elastic-kv
+
+`LLAMA_ELASTIC_KV=1` (exact value, inert when unset) makes the KV cache elastic. Every K/V buffer still reserves the
+whole context as GPU address space (CUDA VMM, `cuMemAddressReserve`), but physical memory is mapped one VMM chunk
+(2 MiB on the GB10) at a time and only for cells `[0, padded use + margin)` of each tensor. Addresses never move, so
+views and captured CUDA graphs stay valid. Newly mapped chunks are zeroed, as the whole buffer was before.
+
+- Grows at the end of `apply_ubatch`, before the graph that writes the new cells runs, in steps of
+  `LLAMA_ELASTIC_KV_MARGIN` cells (default 4096).
+- Shrinks in `seq_rm`/`clear` once `LLAMA_ELASTIC_KV_SHRINK` cells (default 65536) are spare, after a device sync.
+- A K-shift maps the whole context first, because its graph views every cell.
+- Before growing, the KV cache calls `llama_moe_cache_make_room(bytes)`. The expert store's memory valve then
+  releases least recently used slots so the host keeps its reserve. The valve re-arms them by itself after 10 s of
+  calm once the KV has shrunk.
+- Only for one KV stream with no transposed V (flash attention) and unshared cells. Other configurations log a
+  warning and allocate as before.
+- CUDA side: `ggml_backend_cuda_elastic_buffer_alloc` / `..._set_ranges` via `get_proc_address`. These return
+  buffers of the device's ordinary buffer type, so the scheduler and the graph checks see a plain CUDA buffer.
+  `clear` touches only mapped chunks.
+
+**Window el (Spark, GLM-5.3-Flash, 1M context, 2026-11-03):**
+
+| Setup | Decode, short (tok/s) | Decode after 16k (tok/s) | Prompt reading, 16k (tok/s) |
+|---|---|---|---|
+| Elastic on, cache 58000 MiB | 13.5 | 10.3 | ~300 |
+| Elastic on, cache 78000 MiB | 15.4 | 13.8–14.4 | 345–354 |
+
+- **Exactness:** with the cache unchanged (58000 MiB), output md5 `53816a69bc` / `145c14aa8b`, the same as elastic
+  off, at the same speed. The KV starts with 110 MiB mapped instead of 19.7 GB.
+- **Bigger cache:** with the KV's unused memory lent to the expert cache (78000 MiB), the md5s are still the same.
+  Hit rate rose from 90.7 % to 97.9 %.
+- **Long prompt:** a 200k-token prompt read at 272 tok/s and decoded at 12.5 tok/s. The KV grew to 3.85 GB, the
+  valve released 1.71 GB of cache, and the lowest MemAvailable was 7.6 GB against a 6.4 GB reserve.
+- **Shrink:** the next request dropped the long sequence, so the KV shrank back to 110 MiB. After one refill turn
+  (6.9 tok/s) decode was back at 15.4 tok/s.

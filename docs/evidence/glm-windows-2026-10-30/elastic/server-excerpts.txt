@@ -1,0 +1,212 @@
+0.12.748.768 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.753.932 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (5.1 ms)
+0.12.774.285 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.777.082 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (2.8 ms)
+0.20.978.028 I snapshot_restore: expert store: cache snapshot restored: 7090 experts, 58.0 GB read in 4.2 s (13.8 GB/s)
+0.20.978.253 I valve_start: expert store: memory valve on: host reserve 4096 MiB, floor 50% of the slots, sampled every 500 ms (no PSI trigger: /proc/pressure/memory not writable), released slots re-armed after 10 s of calm
+0.23.201.957 I sched_reserve:      CUDA0 compute buffer size = 14020.45 MiB
+0.23.201.965 I sched_reserve:  CUDA_Host compute buffer size =  5275.36 MiB
+0.35.036.424 I fill_late: expert store: 34597 lookups, hit rate 89.8%, 29.3 GB read for decode, 0.0 GB for prefill
+0.35.036.439 I fill_late: expert store: memory valve: host MemAvailable 31.94 GB (lowest 31.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.43.254.468 I fill_late: expert store: 67365 lookups, hit rate 88.5%, 64.1 GB read for decode, 0.0 GB for prefill
+0.43.254.474 I fill_late: expert store: memory valve: host MemAvailable 31.95 GB (lowest 31.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.51.174.220 I fill_late: expert store: 101685 lookups, hit rate 89.2%, 91.2 GB read for decode, 0.0 GB for prefill
+0.51.174.227 I fill_late: expert store: memory valve: host MemAvailable 31.93 GB (lowest 31.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.58.623.463 I fill_late: expert store: 134453 lookups, hit rate 89.8%, 113.7 GB read for decode, 0.0 GB for prefill
+0.58.623.470 I fill_late: expert store: memory valve: host MemAvailable 31.94 GB (lowest 31.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.05.984.787 I fill_late: expert store: 167221 lookups, hit rate 90.2%, 135.7 GB read for decode, 0.0 GB for prefill
+1.05.984.794 I fill_late: expert store: memory valve: host MemAvailable 31.94 GB (lowest 31.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.13.429.969 I fill_late: expert store: 201541 lookups, hit rate 90.7%, 155.1 GB read for decode, 0.0 GB for prefill
+1.13.429.976 I fill_late: expert store: memory valve: host MemAvailable 31.93 GB (lowest 31.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.20.901.500 I fill_late: expert store: 234309 lookups, hit rate 90.8%, 178.4 GB read for decode, 0.0 GB for prefill
+1.20.901.508 I fill_late: expert store: memory valve: host MemAvailable 31.93 GB (lowest 31.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.28.387.912 I fill_late: expert store: 268629 lookups, hit rate 91.1%, 198.5 GB read for decode, 0.0 GB for prefill
+1.28.387.918 I fill_late: expert store: memory valve: host MemAvailable 31.94 GB (lowest 31.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.35.578.800 I fill_late: expert store: 301397 lookups, hit rate 91.3%, 217.5 GB read for decode, 0.0 GB for prefill
+1.35.578.807 I fill_late: expert store: memory valve: host MemAvailable 31.94 GB (lowest 31.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.42.872.017 I fill_late: expert store: 334165 lookups, hit rate 91.4%, 238.1 GB read for decode, 0.0 GB for prefill
+1.42.872.023 I fill_late: expert store: memory valve: host MemAvailable 31.93 GB (lowest 31.90, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.58.472.833 I elastic_fit: elastic KV (ubatch): 4352 -> 10496 of 1048576 cells, 132.0 MiB mapped (9.8 ms)
+1.58.481.877 I elastic_fit: elastic KV (ubatch): 4352 -> 10496 of 1048576 cells, 88.0 MiB mapped (6.4 ms)
+2.17.515.363 I elastic_fit: elastic KV (ubatch): 10496 -> 16640 of 1048576 cells, 198.0 MiB mapped (8.6 ms)
+2.17.532.643 I elastic_fit: elastic KV (ubatch): 10496 -> 16640 of 1048576 cells, 154.0 MiB mapped (15.7 ms)
+2.35.368.420 I elastic_fit: elastic KV (ubatch): 16640 -> 20992 of 1048576 cells, 242.0 MiB mapped (2.9 ms)
+2.35.370.730 I elastic_fit: elastic KV (ubatch): 16640 -> 20992 of 1048576 cells, 176.0 MiB mapped (1.4 ms)
+2.47.140.382 I fill_late: expert store: 370027 lookups, hit rate 90.7%, 284.9 GB read for decode, 189.7 GB for prefill
+2.47.140.390 I fill_late: expert store: memory valve: host MemAvailable 31.14 GB (lowest 31.14, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.55.883.472 I llama_moe_cache: ubatch <= 8: hits = 358006, misses = 37758, hit rate = 90.46%, uploaded = 297597.25 MiB
+2.55.883.481 I llama_moe_cache: ubatch  > 8: hits = 1790, misses = 1105, hit rate = 61.83%, uploaded = 8558.81 MiB
+2.55.883.494 I llama_moe_cache: expert store: memory valve: host MemAvailable 51.03 GB (lowest 31.13, reserve 4.29), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.12.404.589 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.408.631 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (4.0 ms)
+0.12.428.484 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.431.204 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (2.7 ms)
+0.21.428.610 I snapshot_restore: expert store: cache snapshot restored: 7090 experts, 58.0 GB read in 4.1 s (14.0 GB/s)
+0.21.428.864 I valve_start: expert store: memory valve on: host reserve 6144 MiB, floor 50% of the slots, sampled every 500 ms (no PSI trigger: /proc/pressure/memory not writable), released slots re-armed after 10 s of calm
+0.23.648.703 I sched_reserve:      CUDA0 compute buffer size = 14020.45 MiB
+0.23.648.711 I sched_reserve:  CUDA_Host compute buffer size =  5275.36 MiB
+0.33.217.166 I fill_late: expert store: 34597 lookups, hit rate 96.0%, 11.7 GB read for decode, 0.0 GB for prefill
+0.33.217.178 I fill_late: expert store: memory valve: host MemAvailable 10.85 GB (lowest 10.83, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.39.946.596 I fill_late: expert store: 67365 lookups, hit rate 95.9%, 23.3 GB read for decode, 0.0 GB for prefill
+0.39.946.603 I fill_late: expert store: memory valve: host MemAvailable 10.88 GB (lowest 10.83, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.46.632.411 I fill_late: expert store: 101685 lookups, hit rate 96.4%, 30.5 GB read for decode, 0.0 GB for prefill
+0.46.632.418 I fill_late: expert store: memory valve: host MemAvailable 10.89 GB (lowest 10.83, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.52.963.992 I fill_late: expert store: 134453 lookups, hit rate 96.9%, 35.1 GB read for decode, 0.0 GB for prefill
+0.52.963.999 I fill_late: expert store: memory valve: host MemAvailable 10.89 GB (lowest 10.83, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.59.285.919 I fill_late: expert store: 167221 lookups, hit rate 97.2%, 39.3 GB read for decode, 0.0 GB for prefill
+0.59.285.926 I fill_late: expert store: memory valve: host MemAvailable 10.90 GB (lowest 10.83, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.05.888.351 I fill_late: expert store: 201541 lookups, hit rate 97.4%, 43.8 GB read for decode, 0.0 GB for prefill
+1.05.888.359 I fill_late: expert store: memory valve: host MemAvailable 10.91 GB (lowest 10.83, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.12.237.933 I fill_late: expert store: 234309 lookups, hit rate 97.5%, 48.6 GB read for decode, 0.0 GB for prefill
+1.12.237.939 I fill_late: expert store: memory valve: host MemAvailable 10.93 GB (lowest 10.83, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.18.805.917 I fill_late: expert store: 268629 lookups, hit rate 97.7%, 53.0 GB read for decode, 0.0 GB for prefill
+1.18.805.924 I fill_late: expert store: memory valve: host MemAvailable 10.93 GB (lowest 10.83, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.25.137.916 I fill_late: expert store: 301397 lookups, hit rate 97.8%, 57.1 GB read for decode, 0.0 GB for prefill
+1.25.137.923 I fill_late: expert store: memory valve: host MemAvailable 10.93 GB (lowest 10.83, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.31.475.810 I fill_late: expert store: 334165 lookups, hit rate 97.8%, 61.5 GB read for decode, 0.0 GB for prefill
+1.31.475.817 I fill_late: expert store: memory valve: host MemAvailable 10.93 GB (lowest 10.83, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.45.277.533 I elastic_fit: elastic KV (ubatch): 4352 -> 10496 of 1048576 cells, 132.0 MiB mapped (8.5 ms)
+1.45.288.280 I elastic_fit: elastic KV (ubatch): 4352 -> 10496 of 1048576 cells, 88.0 MiB mapped (9.0 ms)
+2.02.233.473 I elastic_fit: elastic KV (ubatch): 10496 -> 16640 of 1048576 cells, 198.0 MiB mapped (5.4 ms)
+2.02.241.101 I elastic_fit: elastic KV (ubatch): 10496 -> 16640 of 1048576 cells, 154.0 MiB mapped (6.2 ms)
+2.16.134.702 I elastic_fit: elastic KV (ubatch): 16640 -> 20992 of 1048576 cells, 242.0 MiB mapped (2.8 ms)
+2.16.136.982 I elastic_fit: elastic KV (ubatch): 16640 -> 20992 of 1048576 cells, 176.0 MiB mapped (1.4 ms)
+2.25.746.164 I fill_late: expert store: 370110 lookups, hit rate 97.5%, 76.1 GB read for decode, 91.4 GB for prefill
+2.25.746.170 I fill_late: expert store: memory valve: host MemAvailable 10.12 GB (lowest 10.12, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+3.29.308.803 I elastic_fit: elastic KV (ubatch): 20992 -> 26880 of 1048576 cells, 308.0 MiB mapped (5.8 ms)
+3.29.313.662 I elastic_fit: elastic KV (ubatch): 20992 -> 26880 of 1048576 cells, 220.0 MiB mapped (3.8 ms)
+3.49.690.461 I elastic_fit: elastic KV (ubatch): 26880 -> 33024 of 1048576 cells, 374.0 MiB mapped (5.9 ms)
+3.49.698.584 I elastic_fit: elastic KV (ubatch): 26880 -> 33024 of 1048576 cells, 286.0 MiB mapped (7.0 ms)
+4.11.464.824 I elastic_fit: elastic KV (ubatch): 33024 -> 39168 of 1048576 cells, 440.0 MiB mapped (8.5 ms)
+4.11.473.169 I elastic_fit: elastic KV (ubatch): 33024 -> 39168 of 1048576 cells, 330.0 MiB mapped (6.9 ms)
+4.30.441.685 I elastic_fit: elastic KV (ubatch): 39168 -> 45312 of 1048576 cells, 506.0 MiB mapped (8.4 ms)
+4.30.450.988 I elastic_fit: elastic KV (ubatch): 39168 -> 45312 of 1048576 cells, 374.0 MiB mapped (7.8 ms)
+4.49.575.231 I elastic_fit: elastic KV (ubatch): 45312 -> 51456 of 1048576 cells, 572.0 MiB mapped (6.1 ms)
+4.49.580.348 I elastic_fit: elastic KV (ubatch): 45312 -> 51456 of 1048576 cells, 418.0 MiB mapped (4.0 ms)
+5.09.023.877 I elastic_fit: elastic KV (ubatch): 51456 -> 57600 of 1048576 cells, 638.0 MiB mapped (8.3 ms)
+5.09.041.123 I elastic_fit: elastic KV (ubatch): 51456 -> 57600 of 1048576 cells, 484.0 MiB mapped (15.9 ms)
+5.28.849.581 I elastic_fit: elastic KV (ubatch): 57600 -> 63744 of 1048576 cells, 704.0 MiB mapped (5.6 ms)
+5.28.853.638 I elastic_fit: elastic KV (ubatch): 57600 -> 63744 of 1048576 cells, 528.0 MiB mapped (3.0 ms)
+5.48.996.470 I elastic_fit: elastic KV (ubatch): 63744 -> 69888 of 1048576 cells, 770.0 MiB mapped (5.3 ms)
+5.49.000.921 I elastic_fit: elastic KV (ubatch): 63744 -> 69888 of 1048576 cells, 572.0 MiB mapped (3.0 ms)
+6.09.476.392 I elastic_fit: elastic KV (ubatch): 69888 -> 76032 of 1048576 cells, 836.0 MiB mapped (5.3 ms)
+6.09.480.753 I elastic_fit: elastic KV (ubatch): 69888 -> 76032 of 1048576 cells, 616.0 MiB mapped (2.9 ms)
+6.30.272.108 I elastic_fit: elastic KV (ubatch): 76032 -> 82176 of 1048576 cells, 902.0 MiB mapped (8.3 ms)
+6.30.288.407 I elastic_fit: elastic KV (ubatch): 76032 -> 82176 of 1048576 cells, 682.0 MiB mapped (14.9 ms)
+6.51.486.094 I elastic_fit: elastic KV (ubatch): 82176 -> 88320 of 1048576 cells, 968.0 MiB mapped (5.7 ms)
+6.51.490.985 I elastic_fit: elastic KV (ubatch): 82176 -> 88320 of 1048576 cells, 726.0 MiB mapped (3.7 ms)
+7.12.972.099 I elastic_fit: elastic KV (ubatch): 88320 -> 94464 of 1048576 cells, 1034.0 MiB mapped (8.6 ms)
+7.12.980.188 I elastic_fit: elastic KV (ubatch): 88320 -> 94464 of 1048576 cells, 770.0 MiB mapped (6.8 ms)
+7.34.803.050 I elastic_fit: elastic KV (ubatch): 94464 -> 100608 of 1048576 cells, 1100.0 MiB mapped (8.2 ms)
+7.34.811.946 I elastic_fit: elastic KV (ubatch): 94464 -> 100608 of 1048576 cells, 814.0 MiB mapped (7.4 ms)
+7.57.003.651 I elastic_fit: elastic KV (ubatch): 100608 -> 106752 of 1048576 cells, 1166.0 MiB mapped (8.3 ms)
+7.57.020.837 I elastic_fit: elastic KV (ubatch): 100608 -> 106752 of 1048576 cells, 880.0 MiB mapped (15.9 ms)
+8.19.508.611 I elastic_fit: elastic KV (ubatch): 106752 -> 112896 of 1048576 cells, 1232.0 MiB mapped (8.4 ms)
+8.19.516.785 I elastic_fit: elastic KV (ubatch): 106752 -> 112896 of 1048576 cells, 924.0 MiB mapped (6.8 ms)
+8.42.434.198 I elastic_fit: elastic KV (ubatch): 112896 -> 119040 of 1048576 cells, 1298.0 MiB mapped (8.8 ms)
+8.42.443.146 I elastic_fit: elastic KV (ubatch): 112896 -> 119040 of 1048576 cells, 968.0 MiB mapped (7.5 ms)
+9.05.711.819 I elastic_fit: elastic KV (ubatch): 119040 -> 125184 of 1048576 cells, 1364.0 MiB mapped (5.7 ms)
+9.05.716.653 I elastic_fit: elastic KV (ubatch): 119040 -> 125184 of 1048576 cells, 1012.0 MiB mapped (3.7 ms)
+9.29.359.435 I elastic_fit: elastic KV (ubatch): 125184 -> 131328 of 1048576 cells, 1430.0 MiB mapped (5.8 ms)
+9.29.369.075 I elastic_fit: elastic KV (ubatch): 125184 -> 131328 of 1048576 cells, 1078.0 MiB mapped (8.5 ms)
+9.53.392.611 I elastic_fit: elastic KV (ubatch): 131328 -> 137472 of 1048576 cells, 1496.0 MiB mapped (6.3 ms)
+9.53.394.228 W valve_release: expert store: memory valve: host MemAvailable 8.05 GB under the 6.44 GB reserve (elastic KV): released 7 slots (0.06 GB), 0.06 GB of the host cache released in all
+9.53.400.731 I elastic_fit: elastic KV (ubatch): 131328 -> 137472 of 1048576 cells, 1122.0 MiB mapped (6.5 ms)
+10.17.726.465 W valve_release: expert store: memory valve: host MemAvailable 8.06 GB under the 6.44 GB reserve (elastic KV): released 8 slots (0.07 GB), 0.13 GB of the host cache released in all
+10.17.732.722 I elastic_fit: elastic KV (ubatch): 137472 -> 143616 of 1048576 cells, 1562.0 MiB mapped (6.2 ms)
+10.17.734.179 W valve_release: expert store: memory valve: host MemAvailable 8.06 GB under the 6.44 GB reserve (elastic KV): released 6 slots (0.05 GB), 0.18 GB of the host cache released in all
+10.17.740.484 I elastic_fit: elastic KV (ubatch): 137472 -> 143616 of 1048576 cells, 1166.0 MiB mapped (6.3 ms)
+10.42.331.407 W valve_release: expert store: memory valve: host MemAvailable 8.06 GB under the 6.44 GB reserve (elastic KV): released 8 slots (0.07 GB), 0.24 GB of the host cache released in all
+10.42.337.598 I elastic_fit: elastic KV (ubatch): 143616 -> 149760 of 1048576 cells, 1628.0 MiB mapped (6.2 ms)
+10.42.339.111 W valve_release: expert store: memory valve: host MemAvailable 8.05 GB under the 6.44 GB reserve (elastic KV): released 7 slots (0.06 GB), 0.30 GB of the host cache released in all
+10.42.345.519 I elastic_fit: elastic KV (ubatch): 143616 -> 149760 of 1048576 cells, 1210.0 MiB mapped (6.4 ms)
+11.07.078.123 W valve_release: expert store: memory valve: host MemAvailable 8.07 GB under the 6.44 GB reserve (elastic KV): released 7 slots (0.06 GB), 0.36 GB of the host cache released in all
+11.07.084.372 I elastic_fit: elastic KV (ubatch): 149760 -> 155904 of 1048576 cells, 1694.0 MiB mapped (6.2 ms)
+11.07.085.815 W valve_release: expert store: memory valve: host MemAvailable 8.05 GB under the 6.44 GB reserve (elastic KV): released 7 slots (0.06 GB), 0.42 GB of the host cache released in all
+11.07.092.969 I elastic_fit: elastic KV (ubatch): 149760 -> 155904 of 1048576 cells, 1276.0 MiB mapped (7.1 ms)
+11.32.150.613 W valve_release: expert store: memory valve: host MemAvailable 8.04 GB under the 6.44 GB reserve (elastic KV): released 10 slots (0.08 GB), 0.50 GB of the host cache released in all
+11.32.156.827 I elastic_fit: elastic KV (ubatch): 155904 -> 162048 of 1048576 cells, 1760.0 MiB mapped (6.2 ms)
+11.32.158.140 W valve_release: expert store: memory valve: host MemAvailable 8.06 GB under the 6.44 GB reserve (elastic KV): released 6 slots (0.05 GB), 0.55 GB of the host cache released in all
+11.32.164.362 I elastic_fit: elastic KV (ubatch): 155904 -> 162048 of 1048576 cells, 1320.0 MiB mapped (6.2 ms)
+11.57.889.165 W valve_release: expert store: memory valve: host MemAvailable 8.05 GB under the 6.44 GB reserve (elastic KV): released 9 slots (0.08 GB), 0.63 GB of the host cache released in all
+11.57.895.596 I elastic_fit: elastic KV (ubatch): 162048 -> 168192 of 1048576 cells, 1826.0 MiB mapped (6.4 ms)
+11.57.897.141 W valve_release: expert store: memory valve: host MemAvailable 8.05 GB under the 6.44 GB reserve (elastic KV): released 7 slots (0.06 GB), 0.69 GB of the host cache released in all
+11.57.902.339 I elastic_fit: elastic KV (ubatch): 162048 -> 168192 of 1048576 cells, 1364.0 MiB mapped (5.2 ms)
+12.23.773.964 W valve_release: expert store: memory valve: host MemAvailable 8.06 GB under the 6.44 GB reserve (elastic KV): released 8 slots (0.07 GB), 0.75 GB of the host cache released in all
+12.23.779.977 I elastic_fit: elastic KV (ubatch): 168192 -> 174336 of 1048576 cells, 1892.0 MiB mapped (6.0 ms)
+12.23.781.449 W valve_release: expert store: memory valve: host MemAvailable 8.07 GB under the 6.44 GB reserve (elastic KV): released 5 slots (0.04 GB), 0.80 GB of the host cache released in all
+12.23.787.926 I elastic_fit: elastic KV (ubatch): 168192 -> 174336 of 1048576 cells, 1408.0 MiB mapped (6.5 ms)
+12.50.166.606 W valve_release: expert store: memory valve: host MemAvailable 8.05 GB under the 6.44 GB reserve (elastic KV): released 9 slots (0.08 GB), 0.87 GB of the host cache released in all
+12.50.172.640 I elastic_fit: elastic KV (ubatch): 174336 -> 180480 of 1048576 cells, 1958.0 MiB mapped (6.0 ms)
+12.50.174.002 W valve_release: expert store: memory valve: host MemAvailable 8.05 GB under the 6.44 GB reserve (elastic KV): released 7 slots (0.06 GB), 0.93 GB of the host cache released in all
+12.50.180.954 I elastic_fit: elastic KV (ubatch): 174336 -> 180480 of 1048576 cells, 1474.0 MiB mapped (6.9 ms)
+13.16.993.266 W valve_release: expert store: memory valve: host MemAvailable 8.04 GB under the 6.44 GB reserve (elastic KV): released 10 slots (0.08 GB), 1.02 GB of the host cache released in all
+13.16.999.598 I elastic_fit: elastic KV (ubatch): 180480 -> 186624 of 1048576 cells, 2024.0 MiB mapped (6.3 ms)
+13.17.001.040 W valve_release: expert store: memory valve: host MemAvailable 8.06 GB under the 6.44 GB reserve (elastic KV): released 6 slots (0.05 GB), 1.07 GB of the host cache released in all
+13.17.007.240 I elastic_fit: elastic KV (ubatch): 180480 -> 186624 of 1048576 cells, 1518.0 MiB mapped (6.2 ms)
+13.44.268.671 W valve_release: expert store: memory valve: host MemAvailable 8.05 GB under the 6.44 GB reserve (elastic KV): released 9 slots (0.08 GB), 1.14 GB of the host cache released in all
+13.44.274.920 I elastic_fit: elastic KV (ubatch): 186624 -> 192768 of 1048576 cells, 2090.0 MiB mapped (6.2 ms)
+13.44.276.225 W valve_release: expert store: memory valve: host MemAvailable 8.07 GB under the 6.44 GB reserve (elastic KV): released 5 slots (0.04 GB), 1.18 GB of the host cache released in all
+13.44.282.557 I elastic_fit: elastic KV (ubatch): 186624 -> 192768 of 1048576 cells, 1562.0 MiB mapped (6.3 ms)
+14.11.628.696 W valve_release: expert store: memory valve: host MemAvailable 8.05 GB under the 6.44 GB reserve (elastic KV): released 9 slots (0.08 GB), 1.26 GB of the host cache released in all
+14.11.634.779 I elastic_fit: elastic KV (ubatch): 192768 -> 198912 of 1048576 cells, 2156.0 MiB mapped (6.1 ms)
+14.11.636.262 W valve_release: expert store: memory valve: host MemAvailable 8.05 GB under the 6.44 GB reserve (elastic KV): released 7 slots (0.06 GB), 1.32 GB of the host cache released in all
+14.11.642.834 I elastic_fit: elastic KV (ubatch): 192768 -> 198912 of 1048576 cells, 1606.0 MiB mapped (6.6 ms)
+14.37.019.974 W valve_release: expert store: memory valve: host MemAvailable 7.90 GB under the 6.44 GB reserve (elastic KV): released 26 slots (0.22 GB), 1.54 GB of the host cache released in all
+14.37.022.870 I elastic_fit: elastic KV (ubatch): 198912 -> 204288 of 1048576 cells, 2200.0 MiB mapped (2.9 ms)
+14.37.024.365 W valve_release: expert store: memory valve: host MemAvailable 7.92 GB under the 6.44 GB reserve (elastic KV): released 21 slots (0.18 GB), 1.71 GB of the host cache released in all
+14.37.027.018 I elastic_fit: elastic KV (ubatch): 198912 -> 204288 of 1048576 cells, 1650.0 MiB mapped (2.6 ms)
+14.47.583.305 I fill_late: expert store: 403328 lookups, hit rate 97.4%, 88.9 GB read for decode, 1046.1 GB for prefill
+14.47.583.313 I fill_late: expert store: memory valve: host MemAvailable 7.95 GB (lowest 7.90, reserve 6.44), 204 host slots released (1.71 GB); 23 releases, 0 re-arms, 0 PSI wake-ups
+15.36.824.187 I elastic_fit: elastic KV (seq_rm): 204288 -> 4352 of 1048576 cells, 44.0 MiB mapped (53.3 ms)
+15.36.908.092 I elastic_fit: elastic KV (seq_rm): 204288 -> 4352 of 1048576 cells, 66.0 MiB mapped (69.7 ms)
+15.40.180.107 I fill_late: expert store: 437648 lookups, hit rate 97.3%, 98.1 GB read for decode, 1046.1 GB for prefill
+15.40.180.114 I fill_late: expert store: memory valve: host MemAvailable 12.24 GB (lowest 7.90, reserve 6.44), 204 host slots released (1.71 GB); 23 releases, 0 re-arms, 0 PSI wake-ups
+15.46.624.196 I fill_late: expert store: 470416 lookups, hit rate 97.3%, 104.9 GB read for decode, 1046.1 GB for prefill
+15.46.624.203 I fill_late: expert store: memory valve: host MemAvailable 12.24 GB (lowest 7.90, reserve 6.44), 204 host slots released (1.71 GB); 23 releases, 0 re-arms, 0 PSI wake-ups
+16.07.039.351 I valve_rearm: expert store: memory valve: host calm for 10 s: 204 slots (1.71 GB) re-armed, 0 still released
+16.13.153.440 I fill_late: expert store: 503184 lookups, hit rate 97.4%, 109.8 GB read for decode, 1046.1 GB for prefill
+16.13.153.447 I fill_late: expert store: memory valve: host MemAvailable 10.53 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+16.19.769.510 I fill_late: expert store: 537504 lookups, hit rate 97.4%, 114.8 GB read for decode, 1046.1 GB for prefill
+16.19.769.517 I fill_late: expert store: memory valve: host MemAvailable 10.53 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+16.26.109.777 I fill_late: expert store: 570272 lookups, hit rate 97.5%, 119.2 GB read for decode, 1046.1 GB for prefill
+16.26.109.785 I fill_late: expert store: memory valve: host MemAvailable 10.53 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+16.32.681.767 I fill_late: expert store: 604592 lookups, hit rate 97.6%, 123.1 GB read for decode, 1046.1 GB for prefill
+16.32.681.775 I fill_late: expert store: memory valve: host MemAvailable 10.53 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+16.39.018.234 I fill_late: expert store: 637360 lookups, hit rate 97.6%, 126.8 GB read for decode, 1046.1 GB for prefill
+16.39.018.241 I fill_late: expert store: memory valve: host MemAvailable 10.53 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+16.45.304.884 I fill_late: expert store: 670128 lookups, hit rate 97.7%, 130.1 GB read for decode, 1046.1 GB for prefill
+16.45.304.892 I fill_late: expert store: memory valve: host MemAvailable 10.53 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+16.51.871.581 I fill_late: expert store: 704448 lookups, hit rate 97.7%, 133.8 GB read for decode, 1046.1 GB for prefill
+16.51.871.589 I fill_late: expert store: memory valve: host MemAvailable 10.53 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+16.58.171.093 I fill_late: expert store: 737216 lookups, hit rate 97.8%, 137.5 GB read for decode, 1046.1 GB for prefill
+16.58.171.100 I fill_late: expert store: memory valve: host MemAvailable 10.53 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+17.04.484.665 I fill_late: expert store: 769984 lookups, hit rate 97.8%, 140.4 GB read for decode, 1046.1 GB for prefill
+17.04.484.673 I fill_late: expert store: memory valve: host MemAvailable 10.53 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+17.14.935.578 I elastic_fit: elastic KV (ubatch): 4352 -> 10496 of 1048576 cells, 132.0 MiB mapped (8.4 ms)
+17.14.945.586 I elastic_fit: elastic KV (ubatch): 4352 -> 10496 of 1048576 cells, 88.0 MiB mapped (8.2 ms)
+17.31.606.740 I elastic_fit: elastic KV (ubatch): 10496 -> 16640 of 1048576 cells, 198.0 MiB mapped (8.1 ms)
+17.31.623.994 I elastic_fit: elastic KV (ubatch): 10496 -> 16640 of 1048576 cells, 154.0 MiB mapped (15.8 ms)
+17.45.060.403 I elastic_fit: elastic KV (ubatch): 16640 -> 20992 of 1048576 cells, 242.0 MiB mapped (2.7 ms)
+17.45.062.587 I elastic_fit: elastic KV (ubatch): 16640 -> 20992 of 1048576 cells, 176.0 MiB mapped (1.3 ms)
+17.57.553.646 I fill_late: expert store: 805929 lookups, hit rate 97.8%, 151.7 GB read for decode, 1127.6 GB for prefill
+17.57.553.653 I fill_late: expert store: memory valve: host MemAvailable 10.04 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+18.34.404.575 I fill_late: expert store: 840249 lookups, hit rate 97.7%, 159.0 GB read for decode, 1127.6 GB for prefill
+18.34.404.583 I fill_late: expert store: memory valve: host MemAvailable 10.20 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+18.40.753.236 I fill_late: expert store: 873017 lookups, hit rate 97.8%, 163.6 GB read for decode, 1127.6 GB for prefill
+18.40.753.244 I fill_late: expert store: memory valve: host MemAvailable 10.21 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+18.47.085.247 I fill_late: expert store: 905785 lookups, hit rate 97.8%, 167.1 GB read for decode, 1127.6 GB for prefill
+18.47.085.254 I fill_late: expert store: memory valve: host MemAvailable 10.21 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+18.53.634.958 I fill_late: expert store: 940105 lookups, hit rate 97.8%, 171.1 GB read for decode, 1127.6 GB for prefill
+18.53.634.966 I fill_late: expert store: memory valve: host MemAvailable 10.21 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+18.59.922.200 I fill_late: expert store: 972873 lookups, hit rate 97.9%, 174.6 GB read for decode, 1127.6 GB for prefill
+18.59.922.206 I fill_late: expert store: memory valve: host MemAvailable 10.21 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+19.06.468.436 I fill_late: expert store: 1007193 lookups, hit rate 97.9%, 178.1 GB read for decode, 1127.6 GB for prefill
+19.06.468.444 I fill_late: expert store: memory valve: host MemAvailable 10.21 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+19.12.782.077 I fill_late: expert store: 1039961 lookups, hit rate 97.9%, 181.8 GB read for decode, 1127.6 GB for prefill
+19.12.782.084 I fill_late: expert store: memory valve: host MemAvailable 10.21 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+19.19.050.697 I fill_late: expert store: 1072729 lookups, hit rate 97.9%, 184.8 GB read for decode, 1127.6 GB for prefill
+19.19.050.705 I fill_late: expert store: memory valve: host MemAvailable 10.16 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups
+19.21.737.533 I llama_moe_cache: ubatch <= 8: hits = 1055370, misses = 21257, hit rate = 98.03%, uploaded = 170388.12 MiB
+19.21.737.539 I llama_moe_cache: ubatch  > 8: hits = 5037, misses = 873, hit rate = 85.23%, uploaded = 6781.25 MiB
+19.21.737.544 I llama_moe_cache: expert store: memory valve: host MemAvailable 31.60 GB (lowest 7.90, reserve 6.44), 0 host slots released (0.00 GB); 23 releases, 1 re-arms, 0 PSI wake-ups

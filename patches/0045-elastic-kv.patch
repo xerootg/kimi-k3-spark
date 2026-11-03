@@ -1,0 +1,571 @@
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index fee88ad6b..21d590b2d 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -988,10 +988,23 @@ ggml_backend_cuda_context::~ggml_backend_cuda_context() {
+ 
+ // cuda buffer
+ 
++// kimi-k3-spark patch 0045: elastic buffers. The buffer's whole size is reserved as virtual address space, but
++// physical memory is mapped one VMM chunk (2 MiB on the GB10) at a time, and only for the byte ranges its owner says
++// are in use (ggml_backend_cuda_elastic_buffer_set_ranges). The addresses never move, so tensors, views and captured
++// CUDA graphs stay valid while the mapping grows and shrinks. Newly mapped chunks are zeroed. A kernel that touches an
++// unmapped chunk faults, so the owner must map every range a graph can read or write before the graph runs.
++struct ggml_cuda_elastic_map {
++    size_t chunk  = 0;              // bytes per chunk
++    size_t mapped = 0;              // bytes mapped now
++    std::vector<uint8_t> is_mapped; // [chunk]
++};
++
+ struct ggml_backend_cuda_buffer_context {
+     int device;
+     void * dev_ptr = nullptr;
+     std::string name;
++    std::unique_ptr<ggml_cuda_elastic_map> elastic;
++    size_t va_size = 0;
+ 
+     ggml_backend_cuda_buffer_context(int device, void * dev_ptr) :
+         device(device), dev_ptr(dev_ptr),
+@@ -999,6 +1012,19 @@ struct ggml_backend_cuda_buffer_context {
+     }
+ 
+     ~ggml_backend_cuda_buffer_context() {
++#if defined(GGML_USE_VMM)
++        if (elastic) {
++            ggml_cuda_set_device(device);
++            CUDA_CHECK(cudaDeviceSynchronize());
++            for (size_t i = 0; i < elastic->is_mapped.size(); ++i) {
++                if (elastic->is_mapped[i]) {
++                    CU_CHECK(cuMemUnmap((CUdeviceptr) dev_ptr + i*elastic->chunk, elastic->chunk));
++                }
++            }
++            CU_CHECK(cuMemAddressFree((CUdeviceptr) dev_ptr, va_size));
++            return;
++        }
++#endif
+         CUDA_CHECK(cudaFree(dev_ptr));
+     }
+ };
+@@ -1025,7 +1051,8 @@ static enum ggml_status ggml_backend_cuda_buffer_init_tensor(ggml_backend_buffer
+         return GGML_STATUS_SUCCESS;
+     }
+ 
+-    if (ggml_is_quantized(tensor->type) && tensor->view_src == nullptr && ggml_backend_buffer_get_usage(buffer) != GGML_BACKEND_BUFFER_USAGE_COMPUTE) {
++    // elastic buffers: nothing is mapped yet, and the owner zeroes every chunk it maps
++    if (ctx->elastic == nullptr && ggml_is_quantized(tensor->type) && tensor->view_src == nullptr && ggml_backend_buffer_get_usage(buffer) != GGML_BACKEND_BUFFER_USAGE_COMPUTE) {
+         // initialize padding to 0 to avoid possible NaN values
+         const size_t original_size = ggml_nbytes(tensor);
+         const size_t padded_size = ggml_backend_buft_get_alloc_size(buffer->buft, tensor);
+@@ -1112,6 +1139,24 @@ static void ggml_backend_cuda_buffer_clear(ggml_backend_buffer_t buffer, uint8_t
+     ggml_backend_cuda_buffer_context * ctx = (ggml_backend_cuda_buffer_context *)buffer->context;
+ 
+     ggml_cuda_set_device(ctx->device);
++    if (ctx->elastic) {
++        // only the mapped chunks, run by run
++        const auto & m = *ctx->elastic;
++        for (size_t i = 0; i < m.is_mapped.size();) {
++            if (!m.is_mapped[i]) {
++                i++;
++                continue;
++            }
++            size_t j = i;
++            while (j < m.is_mapped.size() && m.is_mapped[j]) {
++                j++;
++            }
++            CUDA_CHECK(cudaMemsetAsync((char *) ctx->dev_ptr + i*m.chunk, value, (j - i)*m.chunk, cudaStreamPerThread));
++            i = j;
++        }
++        CUDA_CHECK(cudaStreamSynchronize(cudaStreamPerThread));
++        return;
++    }
+     CUDA_CHECK(cudaMemsetAsync(ctx->dev_ptr, value, buffer->size, cudaStreamPerThread));
+     CUDA_CHECK(cudaStreamSynchronize(cudaStreamPerThread));
+ }
+@@ -1227,6 +1272,134 @@ ggml_backend_buffer_type_t ggml_backend_cuda_buffer_type(int device) {
+     return &ggml_backend_cuda_buffer_types[device];
+ }
+ 
++// kimi-k3-spark patch 0045: an elastic buffer of the device's ordinary buffer type (so the scheduler, the graph
++// checks and the copy paths treat it as any CUDA buffer) with nothing mapped. nullptr without VMM.
++static ggml_backend_buffer_t ggml_backend_cuda_elastic_buffer_alloc(int device, size_t size) {
++#if defined(GGML_USE_VMM)
++    if (device < 0 || device >= ggml_backend_cuda_get_device_count() || !ggml_cuda_info().devices[device].vmm) {
++        return nullptr;
++    }
++    const size_t chunk = ggml_cuda_info().devices[device].vmm_granularity;
++    if (chunk == 0) {
++        return nullptr;
++    }
++    ggml_cuda_set_device(device);
++    const size_t va_size = std::max(chunk, (size + chunk - 1)/chunk*chunk);
++    CUdeviceptr base = 0;
++    if (cuMemAddressReserve(&base, va_size, 0, 0, 0) != CUDA_SUCCESS) {
++        GGML_LOG_ERROR("%s: reserving %.2f MiB of address space on device %d failed\n", __func__, va_size/1024.0/1024.0, device);
++        return nullptr;
++    }
++    ggml_backend_cuda_buffer_context * ctx = new ggml_backend_cuda_buffer_context(device, (void *) base);
++    ctx->va_size = va_size;
++    ctx->elastic.reset(new ggml_cuda_elastic_map);
++    ctx->elastic->chunk = chunk;
++    ctx->elastic->is_mapped.assign(va_size/chunk, 0);
++    return ggml_backend_buffer_init(ggml_backend_cuda_buffer_type(device), ggml_backend_cuda_buffer_interface, ctx, size);
++#else
++    GGML_UNUSED(device);
++    GGML_UNUSED(size);
++    return nullptr;
++#endif
++}
++
++// Map exactly the chunks that overlap the n byte ranges [offs[i], offs[i] + lens[i]) of an elastic buffer: chunks
++// newly needed are mapped and zeroed, and with shrink also the chunks no range touches any more are unmapped (after
++// the device is idle). Returns the bytes mapped afterwards, or SIZE_MAX if a chunk could not be mapped (the chunks
++// mapped before the failure stay mapped; nothing is unmapped then).
++static size_t ggml_backend_cuda_elastic_buffer_set_ranges(ggml_backend_buffer_t buffer, const size_t * offs, const size_t * lens, size_t n, bool shrink) {
++#if defined(GGML_USE_VMM)
++    if (buffer == nullptr || !ggml_backend_buffer_is_cuda(buffer)) {
++        return SIZE_MAX;
++    }
++    ggml_backend_cuda_buffer_context * ctx = (ggml_backend_cuda_buffer_context *) buffer->context;
++    if (!ctx->elastic) {
++        return SIZE_MAX;
++    }
++    ggml_cuda_elastic_map & m = *ctx->elastic;
++    const size_t n_chunks = m.is_mapped.size();
++    std::vector<uint8_t> want(n_chunks, 0);
++    for (size_t i = 0; i < n; ++i) {
++        if (lens[i] == 0) {
++            continue;
++        }
++        GGML_ASSERT(offs[i] + lens[i] <= ctx->va_size);
++        const size_t c0 = offs[i]/m.chunk;
++        const size_t c1 = (offs[i] + lens[i] - 1)/m.chunk;
++        for (size_t c = c0; c <= c1; ++c) {
++            want[c] = 1;
++        }
++    }
++    ggml_cuda_set_device(ctx->device);
++    CUdevice cu_dev;
++    CU_CHECK(cuDeviceGet(&cu_dev, ggml_cuda_get_physical_device(ctx->device)));
++    CUmemAllocationProp prop = {};
++    prop.type = CU_MEM_ALLOCATION_TYPE_PINNED;
++    prop.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
++    prop.location.id = (int) cu_dev;
++    CUmemAccessDesc access = {};
++    access.location = prop.location;
++    access.flags = CU_MEM_ACCESS_FLAGS_PROT_READWRITE;
++    const CUdeviceptr base = (CUdeviceptr) ctx->dev_ptr;
++    bool failed = false;
++    for (size_t c = 0; c < n_chunks && !failed;) {
++        if (!want[c] || m.is_mapped[c]) {
++            c++;
++            continue;
++        }
++        size_t e = c;
++        while (e < n_chunks && want[e] && !m.is_mapped[e]) {
++            CUmemGenericAllocationHandle h;
++            if (cuMemCreate(&h, m.chunk, &prop, 0) != CUDA_SUCCESS) {
++                failed = true;
++                break;
++            }
++            if (cuMemMap(base + e*m.chunk, m.chunk, 0, h, 0) != CUDA_SUCCESS) {
++                cuMemRelease(h);
++                failed = true;
++                break;
++            }
++            CU_CHECK(cuMemRelease(h)); // the mapping keeps the memory until it is unmapped
++            m.is_mapped[e] = 1;
++            m.mapped += m.chunk;
++            e++;
++        }
++        if (e > c) {
++            CU_CHECK(cuMemSetAccess(base + c*m.chunk, (e - c)*m.chunk, &access, 1));
++            CUDA_CHECK(cudaMemsetAsync((void *) (base + c*m.chunk), 0, (e - c)*m.chunk, cudaStreamPerThread));
++        }
++        c = e;
++    }
++    CUDA_CHECK(cudaStreamSynchronize(cudaStreamPerThread));
++    if (failed) {
++        (void) cudaGetLastError();
++        return SIZE_MAX;
++    }
++    if (shrink) {
++        bool synced = false;
++        for (size_t c = 0; c < n_chunks; ++c) {
++            if (m.is_mapped[c] && !want[c]) {
++                if (!synced) {
++                    CUDA_CHECK(cudaDeviceSynchronize()); // no kernel may still read what is unmapped
++                    synced = true;
++                }
++                CU_CHECK(cuMemUnmap(base + c*m.chunk, m.chunk));
++                m.is_mapped[c] = 0;
++                m.mapped -= m.chunk;
++            }
++        }
++    }
++    return m.mapped;
++#else
++    GGML_UNUSED(buffer);
++    GGML_UNUSED(offs);
++    GGML_UNUSED(lens);
++    GGML_UNUSED(n);
++    GGML_UNUSED(shrink);
++    return SIZE_MAX;
++#endif
++}
++
+ // Communication context for multi-GPU AllReduce during tensor parallelism.
+ //
+ // Created once per meta backend instance.  Resources for the selected mode
+@@ -7342,6 +7515,12 @@ static void * ggml_backend_cuda_reg_get_proc_address(ggml_backend_reg_t reg, con
+     if (strcmp(name, "ggml_backend_get_features") == 0) {
+         return (void *)ggml_backend_cuda_get_features;
+     }
++    if (strcmp(name, "ggml_backend_cuda_elastic_buffer_alloc") == 0) {
++        return (void *)ggml_backend_cuda_elastic_buffer_alloc;
++    }
++    if (strcmp(name, "ggml_backend_cuda_elastic_buffer_set_ranges") == 0) {
++        return (void *)ggml_backend_cuda_elastic_buffer_set_ranges;
++    }
+     return nullptr;
+ }
+ 
+diff --git a/src/llama-kv-cache.cpp b/src/llama-kv-cache.cpp
+index e0891ee49..486a91f33 100644
+--- a/src/llama-kv-cache.cpp
++++ b/src/llama-kv-cache.cpp
+@@ -4,6 +4,9 @@
+ #include "llama-io.h"
+ #include "llama-model.h"
+ #include "llama-context.h"
++#include "llama-moe-cache.h"
++
++#include "ggml-alloc.h"
+ 
+ #include <algorithm>
+ #include <cassert>
+@@ -273,10 +276,76 @@ llama_kv_cache::llama_kv_cache(
+         }
+     }
+ 
++    // kimi-k3-spark patch 0045: elastic KV (see llama-kv-cache.h). Single stream, no transposed V, own cells only.
++    static const bool elastic_env = [] {
++        const char * v = getenv("LLAMA_ELASTIC_KV");
++        return v != nullptr && v[0] == '1' && v[1] == '\0';
++    }();
++    const bool elastic_ok = elastic_env && !hparams.no_alloc && other == nullptr && n_stream == 1 && (!v_trans || is_mla);
++    if (elastic_env && !elastic_ok) {
++        LLAMA_LOG_WARN("%s: LLAMA_ELASTIC_KV=1 ignored: needs one KV stream, no transposed V (flash attention) and unshared cells\n", __func__);
++    }
++    if (elastic_ok) {
++        if (const char * v = getenv("LLAMA_ELASTIC_KV_MARGIN")) {
++            elastic_margin = (uint32_t) std::max(256, atoi(v));
++        }
++        if (const char * v = getenv("LLAMA_ELASTIC_KV_SHRINK")) {
++            elastic_shrink = (uint32_t) std::max(256, atoi(v));
++        }
++    }
++    std::vector<ggml_backend_buffer_t> elastic_raw;
++    // an elastic buffer of the buffer type's device with the context's tensors placed as the ordinary allocator would
++    auto elastic_alloc = [&](ggml_context * ctx, ggml_backend_buffer_type_t buft) -> ggml_backend_buffer_t {
++        ggml_backend_dev_t dev = ggml_backend_buft_get_device(buft);
++        if (dev == nullptr || (ggml_backend_dev_type(dev) != GGML_BACKEND_DEVICE_TYPE_GPU && ggml_backend_dev_type(dev) != GGML_BACKEND_DEVICE_TYPE_IGPU)) {
++            return nullptr; // the GB10 is an IGPU
++        }
++        ggml_backend_reg_t reg = ggml_backend_dev_backend_reg(dev);
++        auto alloc_fn = (ggml_backend_buffer_t (*)(int, size_t)) ggml_backend_reg_get_proc_address(reg, "ggml_backend_cuda_elastic_buffer_alloc");
++        if (alloc_fn == nullptr || ggml_backend_dev_buffer_type(dev) != buft) {
++            return nullptr;
++        }
++        int idx = -1;
++        for (size_t i = 0; i < ggml_backend_reg_dev_count(reg); ++i) {
++            if (ggml_backend_reg_dev_get(reg, i) == dev) {
++                idx = (int) i;
++            }
++        }
++        const size_t size = ggml_backend_alloc_ctx_tensors_from_buft_size(ctx, buft);
++        ggml_backend_buffer_t buf = idx >= 0 && size > 0 ? alloc_fn(idx, size) : nullptr;
++        if (buf == nullptr) {
++            LLAMA_LOG_WARN("%s: elastic KV: no elastic buffer on %s (no VMM?), allocating it whole\n", __func__, ggml_backend_dev_name(dev));
++            return nullptr;
++        }
++        ggml_tallocr talloc = ggml_tallocr_new(buf);
++        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
++            if (t->data == nullptr && t->view_src == nullptr) {
++                if (ggml_tallocr_alloc(&talloc, t) != GGML_STATUS_SUCCESS) {
++                    ggml_backend_buffer_free(buf);
++                    return nullptr;
++                }
++            }
++        }
++        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
++            if (t->view_src != nullptr && t->buffer == nullptr) {
++                ggml_backend_view_init(t);
++            }
++        }
++        return buf;
++    };
++
+     // allocate tensors and initialize the buffers to avoid NaNs in the padding
+     for (auto & [buft, ctx] : ctx_map) {
+-        ggml_backend_buffer_t buf;
+-        if (hparams.no_alloc) {
++        ggml_backend_buffer_t buf = nullptr;
++        if (elastic_ok) {
++            buf = elastic_alloc(ctx.get(), buft);
++            if (buf != nullptr) {
++                elastic_raw.push_back(buf);
++            }
++        }
++        if (buf != nullptr) {
++            // elastic: placed above, nothing mapped yet
++        } else if (hparams.no_alloc) {
+             buf = ggml_backend_buft_alloc_buffer(buft, /*size =*/ 0); // dummy buffer
+             for (ggml_tensor * t = ggml_get_first_tensor(ctx.get()); t != nullptr; t = ggml_get_next_tensor(ctx.get(), t)) {
+                 t->buffer = buf; // set dummy buffer for KV cache so that the backend scheduler won't try to allocate it
+@@ -294,6 +363,29 @@ llama_kv_cache::llama_kv_cache(
+         ctxs_bufs.emplace_back(std::move(ctx), buf);
+     }
+ 
++    for (ggml_backend_buffer_t buf : elastic_raw) {
++        elastic_buf eb = { buf, {}, {}, {} };
++        const size_t base = (size_t) ggml_backend_buffer_get_base(buf);
++        for (const auto & layer : layers) {
++            for (ggml_tensor * t : { layer.k, layer.v }) {
++                if (t != nullptr && t->buffer == buf) {
++                    eb.offs.push_back((size_t) t->data - base);
++                    eb.rows.push_back(t->nb[1]);
++                    elastic_cell_bytes += t->nb[1];
++                }
++            }
++        }
++        eb.lens.resize(eb.offs.size());
++        if (!eb.offs.empty()) {
++            elastic_bufs.push_back(std::move(eb));
++        }
++    }
++    if (!elastic_bufs.empty()) {
++        LLAMA_LOG_INFO("%s: elastic KV: %zu buffer(s), %.1f KiB per cell, mapped on use (margin %u cells, shrink at %u spare cells)\n", __func__,
++            elastic_bufs.size(), elastic_cell_bytes/1024.0, elastic_margin, elastic_shrink);
++        elastic_fit_used(false, "init");
++    }
++
+     {
+         const size_t memory_size_k = size_k_bytes();
+         const size_t memory_size_v = size_v_bytes();
+@@ -399,6 +491,8 @@ void llama_kv_cache::clear(bool data) {
+             ggml_backend_buffer_clear(buf.get(), 0);
+         }
+     }
++
++    elastic_fit_used(true, "clear");
+ }
+ 
+ bool llama_kv_cache::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1) {
+@@ -467,6 +561,8 @@ bool llama_kv_cache::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1) {
+         }
+     }
+ 
++    elastic_fit_used(true, "seq_rm");
++
+     return true;
+ }
+ 
+@@ -883,6 +979,9 @@ bool llama_kv_cache::update(llama_context * lctx, bool do_shift, const stream_co
+ 
+         // apply K-shift if needed
+         if (hparams.rope_type != LLAMA_ROPE_TYPE_NONE) {
++            // the shift graph views every cell (kimi-k3-spark patch 0045: map them all)
++            elastic_fit(get_size(), false, "K-shift");
++
+             ggml_backend_sched_reset(sched);
+ 
+             auto * res = lctx->get_gf_res_reserve();
+@@ -1205,6 +1304,71 @@ void llama_kv_cache::apply_ubatch(const slot_info & sinfo, const llama_ubatch &
+ 
+         head = sinfo.idxs[s].back() + 1;
+     }
++
++    // the graph that follows reads and writes cells up to the padded use
++    elastic_fit_used(false, "ubatch");
++}
++
++// kimi-k3-spark patch 0045: elastic KV
++static size_t (*elastic_set_ranges_fn)(ggml_backend_buffer_t, const size_t *, const size_t *, size_t, bool) = nullptr;
++
++void llama_kv_cache::elastic_fit_used(bool shrink, const char * why) {
++    if (elastic_bufs.empty()) {
++        return;
++    }
++    uint32_t used = 0;
++    for (uint32_t s = 0; s < n_stream; ++s) {
++        used = std::max(used, v_cells[s].used_max_p1());
++    }
++    const uint32_t pad  = std::max(n_pad, 256u);
++    const uint32_t need = GGML_PAD(used, pad) + pad;
++    if (need > elastic_cells) {
++        elastic_fit(need + elastic_margin, false, why);
++    } else if (shrink && elastic_cells > need + elastic_margin + elastic_shrink) {
++        elastic_fit(need + elastic_margin, true, why);
++    }
++}
++
++void llama_kv_cache::elastic_fit(uint32_t n_cells, bool shrink, const char * why) {
++    if (elastic_bufs.empty()) {
++        return;
++    }
++    n_cells = std::min(n_cells, get_size());
++    if (n_cells == elastic_cells) {
++        return;
++    }
++    if (elastic_set_ranges_fn == nullptr) {
++        for (int i = 0; i < (int) ggml_backend_reg_count() && elastic_set_ranges_fn == nullptr; ++i) {
++            elastic_set_ranges_fn = (decltype(elastic_set_ranges_fn)) ggml_backend_reg_get_proc_address(ggml_backend_reg_get(i), "ggml_backend_cuda_elastic_buffer_set_ranges");
++        }
++        GGML_ASSERT(elastic_set_ranges_fn != nullptr);
++    }
++    const bool grow = n_cells > elastic_cells;
++    const size_t delta = (size_t) (grow ? n_cells - elastic_cells : elastic_cells - n_cells)*elastic_cell_bytes;
++    if (grow) {
++        llama_moe_cache_make_room(delta); // the expert cache gives the memory back before the GPU takes it
++    }
++    const auto t0 = ggml_time_us();
++    size_t mapped = 0;
++    for (auto & eb : elastic_bufs) {
++        for (size_t i = 0; i < eb.offs.size(); ++i) {
++            eb.lens[i] = (size_t) n_cells*eb.rows[i];
++        }
++        size_t r = elastic_set_ranges_fn(eb.buf, eb.offs.data(), eb.lens.data(), eb.offs.size(), shrink && !grow);
++        for (int attempt = 0; r == SIZE_MAX && attempt < 3; ++attempt) {
++            // the device is out of memory: ask the expert cache for the whole delta again and retry
++            LLAMA_LOG_WARN("%s: elastic KV: mapping %u cells failed, asking the expert cache for %.2f GB more\n", __func__, n_cells, delta/1e9);
++            llama_moe_cache_make_room(2*delta + ((size_t) 1 << 30));
++            r = elastic_set_ranges_fn(eb.buf, eb.offs.data(), eb.lens.data(), eb.offs.size(), false);
++        }
++        if (r == SIZE_MAX) {
++            GGML_ABORT("elastic KV: could not map %u cells", n_cells);
++        }
++        mapped += r;
++    }
++    LLAMA_LOG_INFO("%s: elastic KV (%s): %u -> %u of %u cells, %.1f MiB mapped (%.1f ms)\n", __func__, why,
++        elastic_cells, n_cells, get_size(), mapped/1024.0/1024.0, (ggml_time_us() - t0)/1000.0);
++    elastic_cells = n_cells;
+ }
+ 
+ bool llama_kv_cache::get_can_shift() const {
+diff --git a/src/llama-kv-cache.h b/src/llama-kv-cache.h
+index e6bc459db..d7d328a0c 100644
+--- a/src/llama-kv-cache.h
++++ b/src/llama-kv-cache.h
+@@ -299,6 +299,23 @@ private:
+     // ggml contexts for the KV cache along with the allocated backend buffers:
+     std::vector<std::pair<ggml_context_ptr, ggml_backend_buffer_ptr>> ctxs_bufs;
+ 
++    // kimi-k3-spark patch 0045: elastic KV (LLAMA_ELASTIC_KV=1). The buffers reserve the whole context as address
++    // space but map GPU memory only for the cells in use (plus a margin), so a short conversation leaves the rest
++    // to the expert cache. elastic_fit(n) maps cells [0, n) of every K/V tensor and, with shrink, unmaps the rest.
++    struct elastic_buf {
++        ggml_backend_buffer_t buf;
++        std::vector<size_t> offs; // per K/V stream tensor: byte offset of cell 0 in the buffer
++        std::vector<size_t> rows; // per K/V stream tensor: bytes per cell
++        std::vector<size_t> lens; // scratch for the ranges
++    };
++    std::vector<elastic_buf> elastic_bufs;
++    uint32_t elastic_cells  = 0;      // cells mapped in every tensor
++    uint32_t elastic_margin = 4096;   // LLAMA_ELASTIC_KV_MARGIN: cells mapped past the padded use
++    uint32_t elastic_shrink = 65536;  // LLAMA_ELASTIC_KV_SHRINK: unmap only when this many cells are spare
++    size_t   elastic_cell_bytes = 0;  // bytes per cell over all tensors
++    void elastic_fit(uint32_t n_cells, bool shrink, const char * why);
++    void elastic_fit_used(bool shrink, const char * why);
++
+     // the current index from where we start searching for a free slot in the ring buffer of KV cells (see find_slot())
+     // note: this is not part of the KV state and it's only used to speed-up the find_slot() method
+     std::vector<uint32_t> v_heads;
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index 119db97b0..00c068195 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -2057,6 +2057,10 @@ static bool llama_moe_cache_is_host_weight(const ggml_tensor * t) {
+ 
+ }
+ 
++// kimi-k3-spark patch 0045: the cache whose valve llama_moe_cache_make_room() asks
++static std::atomic<llama_moe_cache::impl *> moe_cache_elastic_owner{nullptr};
++static std::mutex moe_cache_elastic_mutex; // keeps the owner alive across a make_room call
++
+ struct llama_moe_cache::impl {
+     bool thp_bank = [] { const char * e = getenv("LLAMA_EXPERT_STORE_THP_BANK"); return e && strcmp(e, "1") == 0; }();
+     struct record_checker {
+@@ -2664,12 +2668,36 @@ struct llama_moe_cache::impl {
+         }
+         valve_stop.store(false);
+         valve_thread = std::thread([this] { valve_loop(); });
++        {
++            std::lock_guard<std::mutex> lock(moe_cache_elastic_mutex);
++            moe_cache_elastic_owner.store(this);
++        }
+         LLAMA_LOG_INFO("%s: expert store: memory valve on: host reserve %zu MiB%s, floor %d%% of the slots, sampled every %d ms%s, released slots re-armed after %d s of calm\n", __func__,
+             valve_reserve >> 20, hbm_node() >= 0 ? (", HBM node reserve " + std::to_string(valve_hbm_reserve >> 20) + " MiB").c_str() : "",
+             valve_floor_pct, valve_interval_ms, valve_psi_fd >= 0 ? " and on a PSI memory trigger" : " (no PSI trigger: /proc/pressure/memory not writable)", valve_regrow_s);
+     }
+ 
++    // kimi-k3-spark patch 0045: release slots now so that `bytes` can be taken without going under the reserve
++    void make_room(size_t bytes) {
++        if (!valve_thread.joinable()) {
++            return;
++        }
++        const size_t host = host_available();
++        if (host == SIZE_MAX) {
++            return;
++        }
++        const size_t want = valve_reserve + valve_reserve/4 + bytes;
++        if (host < want) {
++            valve_release(false, want - host, host, "elastic KV");
++        }
++    }
++
+     void valve_stop_thread() {
++        {
++            std::lock_guard<std::mutex> lock(moe_cache_elastic_mutex);
++            impl * self = this;
++            moe_cache_elastic_owner.compare_exchange_strong(self, nullptr);
++        }
+         if (valve_thread.joinable()) {
+             valve_stop.store(true);
+             valve_thread.join();
+@@ -5928,6 +5956,14 @@ llama_moe_cache::llama_moe_cache(const llama_model & model, const std::vector<gg
+ 
+ llama_moe_cache::~llama_moe_cache() = default;
+ 
++void llama_moe_cache_make_room(size_t bytes) {
++    std::lock_guard<std::mutex> lock(moe_cache_elastic_mutex);
++    llama_moe_cache::impl * owner = moe_cache_elastic_owner.load();
++    if (owner != nullptr) {
++        owner->make_room(bytes);
++    }
++}
++
+ ggml_backend_t llama_moe_cache::backend(int32_t il) const {
+     return pimpl->backend(il);
+ }
+diff --git a/src/llama-moe-cache.h b/src/llama-moe-cache.h
+index d06656eb5..134945839 100644
+--- a/src/llama-moe-cache.h
++++ b/src/llama-moe-cache.h
+@@ -116,9 +116,16 @@ public:
+     bool fill_prefill(ggml_backend_t backend, const ggml_tensor * w, ggml_tensor * dst, const ggml_tensor * ids, const std::vector<bool> & used);
+     void prefill_reset();
+ 
++    struct impl; // named outside the class by llama_moe_cache_make_room (patch 0045)
++
+ private:
+-    struct impl;
+     std::unique_ptr<impl> pimpl;
+ };
+ 
+ using llama_moe_cache_ptr = std::unique_ptr<llama_moe_cache>;
++
++// kimi-k3-spark patch 0045: elastic KV. Called before the KV cache maps `bytes` more GPU memory (on the GB10 that is
++// host memory): the expert cache's memory valve releases least recently used slots until the host would keep its
++// reserve with those bytes taken. The valve re-arms them by itself once the memory is free again. No-op without a
++// running valve.
++void llama_moe_cache_make_room(size_t bytes);
