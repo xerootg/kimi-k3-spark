@@ -1,0 +1,26 @@
+=== LEG SL8 11:57:20 env: LLAMA_EXPERT_STORE_SPLIT_LATE=8 args: 
+READY SL8 after 26s
+{"kind": "conc", "tag": "SL8", "n": 1, "round": "warm", "agg_tps": 14.25, "wall_s": 17.96, "gen": 256, "per_stream_tps": [14.57], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "SL8", "n": 1, "round": 1, "agg_tps": 15.12, "wall_s": 16.93, "gen": 256, "per_stream_tps": [15.35], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "SL8", "n": 1, "round": 2, "agg_tps": 15.17, "wall_s": 16.87, "gen": 256, "per_stream_tps": [15.41], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "SL8", "n": 1, "round": 3, "agg_tps": 15.2, "wall_s": 16.84, "gen": 256, "per_stream_tps": [15.44], "md5": ["53816a69bc"]}
+{"kind": "depth", "tag": "SL8-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 346.89, "prefill_s": 47.32, "decode_n": 128, "decode_tps": 13.63, "md5": "145c14aa8b"}
+2.25.940.241 I fill_late: expert store: split GEMV: 44595 early lookups, 7.8 of 8 experts complete at the early lookup, 0.18 read under the early matmul (8 rows), 0 lookups with more misses (0.00 records read at the early lookup), plan 0.004 ms, wait at the real lookup 0.09 ms, 0 early lookups without a real one
+=== LEG SL1 11:59:58 env: LLAMA_EXPERT_STORE_SPLIT_LATE=1 args: 
+READY SL1 after 28s
+{"kind": "conc", "tag": "SL1", "n": 1, "round": "warm", "agg_tps": 15.21, "wall_s": 16.83, "gen": 256, "per_stream_tps": [15.57], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "SL1", "n": 1, "round": 1, "agg_tps": 16.23, "wall_s": 15.77, "gen": 256, "per_stream_tps": [16.5], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "SL1", "n": 1, "round": 2, "agg_tps": 16.2, "wall_s": 15.8, "gen": 256, "per_stream_tps": [16.48], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "SL1", "n": 1, "round": 3, "agg_tps": 16.21, "wall_s": 15.79, "gen": 256, "per_stream_tps": [16.48], "md5": ["53816a69bc"]}
+{"kind": "depth", "tag": "SL1-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 346.74, "prefill_s": 47.34, "decode_n": 128, "decode_tps": 14.5, "md5": "145c14aa8b"}
+2.22.657.319 I fill_late: expert store: split GEMV: 44595 early lookups, 7.8 of 8 experts complete at the early lookup, 0.15 read under the early matmul (1 rows), 1035 lookups with more misses (0.03 records read at the early lookup), plan 0.025 ms, wait at the real lookup 0.07 ms, 0 early lookups without a real one
+=== LEG SL2 12:02:32 env: LLAMA_EXPERT_STORE_SPLIT_LATE=2 args: 
+READY SL2 after 26s
+{"kind": "conc", "tag": "SL2", "n": 1, "round": "warm", "agg_tps": 14.96, "wall_s": 17.11, "gen": 256, "per_stream_tps": [15.31], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "SL2", "n": 1, "round": 1, "agg_tps": 15.96, "wall_s": 16.04, "gen": 256, "per_stream_tps": [16.23], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "SL2", "n": 1, "round": 2, "agg_tps": 15.97, "wall_s": 16.03, "gen": 256, "per_stream_tps": [16.23], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "SL2", "n": 1, "round": 3, "agg_tps": 15.96, "wall_s": 16.04, "gen": 256, "per_stream_tps": [16.22], "md5": ["53816a69bc"]}
+{"kind": "depth", "tag": "SL2-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 346.32, "prefill_s": 47.4, "decode_n": 128, "decode_tps": 14.39, "md5": "145c14aa8b"}
+2.22.734.357 I fill_late: expert store: split GEMV: 44595 early lookups, 7.8 of 8 experts complete at the early lookup, 0.18 read under the early matmul (2 rows), 157 lookups with more misses (0.00 records read at the early lookup), plan 0.007 ms, wait at the real lookup 0.09 ms, 0 early lookups without a real one
+MEMORY lowest MemAvailable MiB 9968
+WIN2SL-DONE
