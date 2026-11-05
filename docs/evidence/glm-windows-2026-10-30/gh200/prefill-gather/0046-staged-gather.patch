@@ -1,0 +1,228 @@
+--- a/src/llama-moe-cache.cpp	2026-11-03 05:36:03.724918660 +0000
++++ b/src/llama-moe-cache.cpp	2026-11-05 02:01:45.078884617 +0000
+@@ -2208,6 +2208,16 @@
+     } landing;
+     bool prefill_bank = false;
+     bool prefill_timing = false;
++    struct pf_gather_jobs { // mirrors ggml_cuda_gather_jobs (ggml-cuda/gather-experts.cuh)
++        const char * src[1024];
++        int32_t      x[1024];
++        int32_t      zx[1024];
++        int32_t      n;
++        int32_t      nz;
++    };
++    static constexpr int64_t PF_GATHER_MAX_JOBS = 1024;
++    pf_gather_jobs * gather_cur = nullptr;
++    std::vector<int32_t> gather_miss;
+     double pf_plan_ms = 0, pf_read_ms = 0, pf_upload_ms = 0;
+     size_t pf_layers = 0, pf_bytes = 0;
+     bool use_store = false;
+@@ -5645,6 +5655,68 @@
+             for (int64_t x = 0; x < n_expert && all_resident; ++x) {
+                 all_resident = !used[x] || smap[x] >= 0;
+             }
++            // Patch 0046: one gather kernel per part from the registered host slots, in stream order, no syncs
++            static const bool gather = [] {
++                const char * v = getenv("LLAMA_EXPERT_STORE_PREFILL_GATHER");
++                return v != nullptr && v[0] == '1' && v[1] == '\0';
++            }();
++            auto * gather_begin  = gather && gpu_reg ? (pf_gather_jobs * (*)()) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_gather_begin") : nullptr;
++            auto * gather_launch = gather && gpu_reg ? (double (*)(ggml_backend_t, void *, size_t, size_t, const pf_gather_jobs *, int)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_gather_launch") : nullptr;
++            const size_t g_moff  = g.part_off[b.ip];
++            const size_t g_msize = w->nb[2];
++            const bool gather_ok = gather_begin != nullptr && gather_launch != nullptr && (int64_t) n_expert <= PF_GATHER_MAX_JOBS &&
++                g_msize % 16 == 0 && g_moff % 16 == 0 && g.slot_stride % 16 == 0 && (uintptr_t) g.region % 16 == 0 && ((uintptr_t) dst->data % 16) == 0;
++            if (gather_ok) {
++                if (prefill.il != b.il || prefill.ids != ids) {
++                    pf_gather_jobs * jobs = gather_begin();
++                    int32_t n = 0, nz = 0;
++                    gather_miss.clear();
++                    this->jobs.clear();
++                    for (int64_t x = 0; x < n_expert; ++x) {
++                        if (!used[x]) {
++                            continue;
++                        }
++                        if (smap[x] < 0) {
++                            // the few experts the cache does not hold are read from the store into the pinned staging
++                            gather_miss.push_back((int32_t) x);
++                            this->jobs.push_back({ (char *) staging + (size_t) x*rec, rec, (off_t) (e->offset((size_t) x)) });
++                        } else {
++                            jobs->src[n]   = (const char *) g.region + (size_t) smap[x]*g.slot_stride;
++                            jobs->x[n++]   = (int32_t) x;
++                        }
++                        if (x + 1 < n_expert && !used[x + 1]) {
++                            jobs->zx[nz++] = (int32_t) (x + 1);
++                        }
++                    }
++                    jobs->n  = n;
++                    jobs->nz = nz;
++                    gather_cur = jobs;
++                    const auto tmiss = std::chrono::steady_clock::now();
++                    if (!gather_miss.empty()) {
++                        if (!pool->run(store.fd, this->jobs, prefill_bank)) {
++                            GGML_ABORT("expert store: read failed for layer %d: %s", b.il, strerror(errno));
++                        }
++                        store_prefill_bytes += gather_miss.size()*rec;
++                    }
++                    if (prefill_timing) {
++                        fprintf(stderr, "gather layer %d miss %zu miss_read %.3f ms\n", b.il, gather_miss.size(), elapsed_ms(tmiss));
++                    }
++                    pf_bytes += (size_t) (n + gather_miss.size())*rec;
++                    pf_layers++;
++                    prefill.il  = b.il;
++                    prefill.ids = ids;
++                }
++                const double ms = gather_launch(backend, dst->data, g_msize, g_moff, gather_cur, prefill_timing ? 1 : 0);
++                for (const int32_t x : gather_miss) {
++                    ggml_backend_tensor_set_async(backend, dst, (const char *) staging + (size_t) x*rec + g_moff, (size_t) x*g_msize, g_msize);
++                }
++                if (prefill_timing) {
++                    pf_upload_ms += ms;
++                    const double gb = (double) gather_cur->n*g_msize/1e9;
++                    fprintf(stderr, "prefill layer %d part %d gather %.3f ms %.1f GB/s (%d experts, %.3f GB)\n", b.il, b.ip, ms, gb/(ms/1e3), gather_cur->n, gb);
++                }
++                return true;
++            }
+             if (all_resident) {
+                 if (prefill.il != b.il || prefill.ids != ids) {
+                     // the uploads of the previous layer may still be reading slots another fill could reuse
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu	2026-11-02 00:49:28.962892011 +0000
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu	2026-11-05 01:24:04.751582171 +0000
+@@ -2015,6 +2015,7 @@
+     return ggml_cuda_op_profile_every() > 0 ? ms : -1.0;
+ }
+ static cudaEvent_t g_op_prof_cur_beg = nullptr;
++#include "gather-experts.cuh"
+ 
+ static cudaEvent_t ggml_cuda_op_profile_event() {
+     if (!g_op_prof_free.empty()) {
+@@ -7330,6 +7331,12 @@
+     if (strcmp(name, "ggml_backend_cuda_prefill_mmid_ms") == 0) {
+         return (void *) ggml_cuda_prefill_mmid_ms;
+     }
++    if (strcmp(name, "ggml_backend_cuda_gather_begin") == 0) {
++        return (void *) ggml_cuda_gather_begin;
++    }
++    if (strcmp(name, "ggml_backend_cuda_gather_launch") == 0) {
++        return (void *) ggml_cuda_gather_launch;
++    }
+     if (strcmp(name, "ggml_backend_cuda_set_host_bank_hook") == 0) {
+         return (void *)ggml_backend_cuda_set_host_bank_hook;
+     }
+--- /dev/null	2026-10-18 22:28:59.177000000 +0000
++++ b/ggml/src/ggml-cuda/gather-experts.cuh	2026-11-05 02:01:43.140864629 +0000
+@@ -0,0 +1,114 @@
++// Patch 0046: staged prefill gather. One kernel per (layer, part) copies the used experts' slices from the registered
++// host cache slots straight into the layer's HBM expert tensor (16-byte coalesced loads over all SMs, no per-expert
++// copies, no host sync), and zero-fills the 512 bytes the MMQ reads past a used expert's neighbour.
++#pragma once
++
++#define GATHER_MAX_JOBS 1024
++#define GATHER_RING     4
++
++struct ggml_cuda_gather_jobs {
++    const char * src[GATHER_MAX_JOBS]; // host slot base of the record (the part offset is added by the kernel)
++    int32_t      x[GATHER_MAX_JOBS];   // destination expert index
++    int32_t      zx[GATHER_MAX_JOBS];  // experts whose first 512 bytes are zeroed
++    int32_t      n;
++    int32_t      nz;
++};
++
++static ggml_cuda_gather_jobs * g_gather_host[GATHER_RING];
++static ggml_cuda_gather_jobs * g_gather_dev[GATHER_RING];
++static int                     g_gather_next = 0;
++static cudaEvent_t             g_gather_ev0 = nullptr, g_gather_ev1 = nullptr;
++
++static __global__ void ggml_cuda_gather_experts_kernel(char * __restrict__ dst, const size_t msize, const size_t part_off,
++        const ggml_cuda_gather_jobs * __restrict__ jobs) {
++    const size_t upj    = msize/16;
++    const size_t total  = (size_t) jobs->n*upj;
++    const size_t nthr   = (size_t) gridDim.x*blockDim.x;
++    const size_t gtid   = (size_t) blockIdx.x*blockDim.x + threadIdx.x;
++    constexpr int U = 4;
++
++    for (size_t idx = gtid; idx < total; idx += U*nthr) {
++        uint4  v[U];
++        size_t j[U], o[U];
++#pragma unroll
++        for (int k = 0; k < U; ++k) {
++            const size_t i = idx + k*nthr;
++            if (i < total) {
++                j[k] = i/upj;
++                o[k] = i - j[k]*upj;
++                v[k] = __ldg((const uint4 *) (jobs->src[j[k]] + part_off) + o[k]);
++            }
++        }
++#pragma unroll
++        for (int k = 0; k < U; ++k) {
++            if (idx + k*nthr < total) {
++                ((uint4 *) (dst + (size_t) jobs->x[j[k]]*msize))[o[k]] = v[k];
++            }
++        }
++    }
++
++    const size_t ztotal = (size_t) jobs->nz*32;
++    for (size_t i = gtid; i < ztotal; i += nthr) {
++        const size_t z = i/32;
++        ((uint4 *) (dst + (size_t) jobs->zx[z]*msize))[i - z*32] = make_uint4(0, 0, 0, 0);
++    }
++}
++
++// a pinned job list the caller fills once per layer (the ring keeps a list alive until its kernels have run)
++static ggml_cuda_gather_jobs * ggml_cuda_gather_begin() {
++    if (g_gather_host[0] == nullptr) {
++        for (int i = 0; i < GATHER_RING; ++i) {
++            CUDA_CHECK(cudaMallocHost((void **) &g_gather_host[i], sizeof(ggml_cuda_gather_jobs)));
++            CUDA_CHECK(cudaMalloc((void **) &g_gather_dev[i], sizeof(ggml_cuda_gather_jobs)));
++        }
++        CUDA_CHECK(cudaEventCreate(&g_gather_ev0));
++        CUDA_CHECK(cudaEventCreate(&g_gather_ev1));
++    }
++    g_gather_next = (g_gather_next + 1) % GATHER_RING;
++    return g_gather_host[g_gather_next];
++}
++
++// launches on the backend's stream; with timing it waits for the kernel and returns its time in ms (else -1)
++static double ggml_cuda_gather_launch(ggml_backend_t backend, void * dst, size_t msize, size_t part_off, const ggml_cuda_gather_jobs * jobs, int timing) {
++    auto * ctx = (ggml_backend_cuda_context *) backend->context;
++    ggml_cuda_set_device(ctx->device);
++    int slot = -1;
++    for (int i = 0; i < GATHER_RING; ++i) {
++        if (g_gather_host[i] == jobs) {
++            slot = i;
++        }
++    }
++    GGML_ASSERT(slot >= 0);
++    cudaStream_t s = ctx->stream();
++    if (timing) {
++        CUDA_CHECK(cudaEventRecord(g_gather_ev0, s));
++    }
++    CUDA_CHECK(cudaMemcpyAsync(g_gather_dev[slot], jobs, sizeof(ggml_cuda_gather_jobs), cudaMemcpyHostToDevice, s));
++    const int nsm = ggml_cuda_info().devices[ctx->device].nsm;
++    ggml_cuda_gather_experts_kernel<<<nsm*4, 512, 0, s>>>((char *) dst, msize, part_off, g_gather_dev[slot]);
++    CUDA_CHECK(cudaGetLastError());
++    static const bool verify = getenv("LLAMA_EXPERT_STORE_PREFILL_GATHER_VERIFY") != nullptr;
++    if (verify) {
++        CUDA_CHECK(cudaStreamSynchronize(s));
++        static std::vector<char> tmp;
++        tmp.resize(msize);
++        int bad = 0;
++        for (int j = 0; j < jobs->n; ++j) {
++            CUDA_CHECK(cudaMemcpy(tmp.data(), (const char *) dst + (size_t) jobs->x[j]*msize, msize, cudaMemcpyDeviceToHost));
++            if (memcmp(tmp.data(), jobs->src[j] + part_off, msize) != 0) {
++                bad++;
++            }
++        }
++        if (bad) {
++            fprintf(stderr, "GATHER-VERIFY mismatch: %d of %d experts\n", bad, jobs->n);
++        }
++    }
++    if (!timing) {
++        return -1.0;
++    }
++    CUDA_CHECK(cudaEventRecord(g_gather_ev1, s));
++    CUDA_CHECK(cudaEventSynchronize(g_gather_ev1));
++    float ms = 0;
++    CUDA_CHECK(cudaEventElapsedTime(&ms, g_gather_ev0, g_gather_ev1));
++    return ms;
++}
