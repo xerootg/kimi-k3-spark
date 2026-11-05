@@ -1,0 +1,58 @@
+== longwin.log
+READY
+{"req": "A", "prompt_n": 23732, "cache_n": 0, "prefill_tps": 1562.8, "prefill_s": 15.2, "decode_tps": 37.64, "wall_s": 16.0, "md5": "8f58e82d34"}
+{"req": "B", "prompt_n": 23785, "cache_n": 0, "prefill_tps": 1610.2, "prefill_s": 14.8, "decode_tps": 45.9, "wall_s": 15.5, "md5": "8f58e82d34"}
+{"req": "A-again", "prompt_n": 4, "cache_n": 23728, "prefill_tps": 54.0, "prefill_s": 0.1, "decode_tps": 52.65, "wall_s": 0.8, "md5": "8f58e82d34"}
+{"req": "A-step", "prompt_n": 323, "cache_n": 23728, "prefill_tps": 536.3, "prefill_s": 0.6, "decode_tps": 41.22, "wall_s": 1.4, "md5": "c292a27d88"}
+{"req": "900k-cold", "prompt_n": 894429, "cache_n": 0, "prefill_tps": 595.1, "prefill_s": 1502.9, "decode_tps": 27.61, "wall_s": 1505.8, "md5": "9c80718286"}
+{"req": "after-900k-std", "prompt_n": 10, "cache_n": 0, "prefill_tps": 14.7, "prefill_s": 0.7, "decode_tps": 40.04, "wall_s": 4.7, "md5": "2a73cda2a3"}
+26.09.974.452 I elastic_fit: elastic KV (ubatch): 893184 -> 898816 of 1048576 cells, 7260.0 MiB mapped (1.5 ms)
+26.22.687.052 I fill_decode: expert store: memory valve: host MemAvailable 243.98 GB (lowest 241.34, reserve 8.59), 0 host slots released (0.00 GB), HBM node free 10929 MB (lowest 220), 0 HBM slots released; 12 releases,
+26.27.072.678 I fill_decode: expert store: memory valve: host MemAvailable 225.68 GB (lowest 225.68, reserve 8.59), 0 host slots released (0.00 GB), HBM node free 28555 MB (lowest 220), 0 HBM slots released; 12 releases,
+26.23.933.825 I srv  get_availabl: updating prompt cache
+26.23.968.649 I srv   prompt_save:  - saving prompt with length 894492, total state size = 16981.438 MiB (draft: 0.000 MiB)
+26.24.825.986 I srv        update:  - cache state: 3 prompts, 19193.031 MiB (limits: 98304.000 MiB, 1048576 tokens, 4826789 est)
+26.24.825.992 I srv  get_availabl: prompt cache update took 892.16 ms
+PEAK GPU 96559 MiB, LOWEST host MemAvailable 235002 MiB
+no-server
+LONGWIN-DONE
+== longwin2.log
+READY
+{"req": "A", "prompt_n": 23732, "cache_n": 0, "prefill_tps": 1557.2, "prefill_s": 15.2, "decode_tps": 37.03, "wall_s": 16.1, "md5": "8f58e82d34"}
+{"req": "B", "prompt_n": 23785, "cache_n": 0, "prefill_tps": 1607.7, "prefill_s": 14.8, "decode_tps": 45.58, "wall_s": 15.6, "md5": "8f58e82d34"}
+{"req": "A-again", "prompt_n": 4, "cache_n": 23728, "prefill_tps": 53.8, "prefill_s": 0.1, "decode_tps": 53.52, "wall_s": 0.7, "md5": "8f58e82d34"}
+{"req": "A-step", "prompt_n": 323, "cache_n": 23728, "prefill_tps": 532.5, "prefill_s": 0.6, "decode_tps": 40.97, "wall_s": 1.4, "md5": "c292a27d88"}
+Traceback (most recent call last):
+http.client.RemoteDisconnected: Remote end closed connection without response
+31.16.622.091 I elastic_fit: elastic KV (ubatch): 999680 -> 1007872 of 1048576 cells, 10846.0 MiB mapped (2.5 ms)
+31.16.626.618 I elastic_fit: elastic KV (ubatch): 999680 -> 1007872 of 1048576 cells, 8140.0 MiB mapped (1.8 ms)
+31.41.821.450 I elastic_fit: elastic KV (ubatch): 1007872 -> 1016064 of 1048576 cells, 10934.0 MiB mapped (3.7 ms)
+1.18.611.061 I srv  get_availabl: updating prompt cache
+1.18.613.324 I srv   prompt_save:  - saving prompt with length 24082, total state size = 598.828 MiB (draft: 0.000 MiB)
+1.18.682.501 I srv        update:  - cache state: 2 prompts, 1920.466 MiB (limits: 98304.000 MiB, 1048576 tokens, 2451782 est)
+1.18.682.504 I srv  get_availabl: prompt cache update took 71.44 ms
+longwin2.sh: line 26: 2873307 Aborted                 env $BASE LLAMA_EXPERT_STORE_HBM_MIB=40960 LLAMA_EXPERT_STORE_MAX_BATCH=4096 LLAMA_EXPERT_STORE_SNAPSHOT=/srv/glm-5.3-flash/$out/snap-long2.k3sn $BIN -m q4/GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf --ali
+PEAK GPU 96522 MiB, LOWEST host MemAvailable 231463 MiB
+no-server
+LONGWIN2-DONE
+== longwin3.log
+READY
+{"req": "A", "prompt_n": 23732, "cache_n": 0, "prefill_tps": 1559.8, "prefill_s": 15.2, "decode_tps": 37.0, "wall_s": 16.1, "md5": "8f58e82d34"}
+{"req": "B", "prompt_n": 23785, "cache_n": 0, "prefill_tps": 1606.5, "prefill_s": 14.8, "decode_tps": 45.57, "wall_s": 15.6, "md5": "8f58e82d34"}
+{"req": "A-again", "prompt_n": 4, "cache_n": 23728, "prefill_tps": 54.0, "prefill_s": 0.1, "decode_tps": 53.56, "wall_s": 0.7, "md5": "8f58e82d34"}
+{"req": "A-step", "prompt_n": 323, "cache_n": 23728, "prefill_tps": 532.4, "prefill_s": 0.6, "decode_tps": 41.49, "wall_s": 1.4, "md5": "17e6b9e1c0"}
+{"req": "1M-cold", "prompt_n": 1028537, "cache_n": 0, "prefill_tps": 541.8, "prefill_s": 1898.4, "decode_tps": 24.31, "wall_s": 1901.8, "md5": "9c80718286"}
+{"req": "after-1M-std", "prompt_n": 10, "cache_n": 0, "prefill_tps": 13.6, "prefill_s": 0.7, "decode_tps": 36.33, "wall_s": 5.2, "md5": "2a73cda2a3"}
+32.42.169.908 I elastic_fit: elastic KV (ubatch): 1024256 -> 1028864 of 1048576 cells, 8294.0 MiB mapped (1.5 ms)
+33.02.262.788 I fill_decode: expert store: memory valve: host MemAvailable 221.07 GB (lowest 220.66, reserve 8.59), 0 host slots released (0.00 GB), HBM node free 25313 MB (lowest 5128), 2520 HBM slots released; 19 relea
+33.04.916.653 I fill_decode: expert store: memory valve: host MemAvailable 221.07 GB (lowest 220.66, reserve 8.59), 0 host slots released (0.00 GB), HBM node free 25313 MB (lowest 5128), 2520 HBM slots released; 19 relea
+32.59.724.477 I srv  get_availabl: updating prompt cache
+32.59.764.104 I srv   prompt_save:  - saving prompt with length 1028600, total state size = 19505.581 MiB (draft: 0.000 MiB)
+33.00.733.496 I srv        update:  - cache state: 3 prompts, 21717.174 MiB (limits: 98304.000 MiB, 1048576 tokens, 4872828 est)
+33.00.733.500 I srv  get_availabl: prompt cache update took 1009.02 ms
+PEAK GPU 91878 MiB, LOWEST host MemAvailable 234646 MiB
+no-server
+LONGWIN3-DONE
+1677:30.40.893.107 W valve_release: expert store: memory valve: HBM node free 0.58 GB under the reserve but nothing left to release (floor 50%, protected or busy slots)
+1687:31.12.905.091 W valve_release: expert store: memory valve: HBM node free 0.42 GB under the reserve but nothing left to release (floor 50%, protected or busy slots)
+1703:/home/ubuntu/llama-el/src/llama-kv-cache.cpp:1365: elastic KV: could not map 1016064 cells
