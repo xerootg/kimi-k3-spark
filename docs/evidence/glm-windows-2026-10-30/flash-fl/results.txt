@@ -1,0 +1,26 @@
+{"kind": "conc", "tag": "M0", "n": 1, "round": "warm", "agg_tps": 14.25, "wall_s": 17.96, "gen": 256, "per_stream_tps": [14.57], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "M0", "n": 1, "round": 1, "agg_tps": 15.11, "wall_s": 16.95, "gen": 256, "per_stream_tps": [15.34], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "M0", "n": 1, "round": 2, "agg_tps": 15.15, "wall_s": 16.9, "gen": 256, "per_stream_tps": [15.38], "md5": ["53816a69bc"]}
+{"kind": "conc", "tag": "M0", "n": 1, "round": 3, "agg_tps": 15.13, "wall_s": 16.92, "gen": 256, "per_stream_tps": [15.36], "md5": ["53816a69bc"]}
+{"kind": "depth", "tag": "M0-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 347.99, "prefill_s": 47.17, "decode_n": 128, "decode_tps": 13.7, "md5": "145c14aa8b"}
+{"kind": "conc", "tag": "M1", "n": 1, "round": "warm", "agg_tps": 8.54, "wall_s": 29.98, "gen": 256, "per_stream_tps": [8.82], "md5": ["f2c99a7d44"]}
+{"kind": "conc", "tag": "M1", "n": 1, "round": 1, "agg_tps": 17.13, "wall_s": 14.94, "gen": 256, "per_stream_tps": [17.7], "md5": ["8e00c9eb75"]}
+{"kind": "conc", "tag": "M1", "n": 1, "round": 2, "agg_tps": 18.17, "wall_s": 14.09, "gen": 256, "per_stream_tps": [18.79], "md5": ["f06371d4c6"]}
+{"kind": "conc", "tag": "M1", "n": 1, "round": 3, "agg_tps": 17.87, "wall_s": 14.32, "gen": 256, "per_stream_tps": [18.47], "md5": ["f2c99a7d44"]}
+{"kind": "depth", "tag": "M1-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 311.68, "prefill_s": 52.66, "decode_n": 128, "decode_tps": 14.92, "md5": "145c14aa8b"}
+{"kind": "conc", "tag": "M2", "n": 1, "round": "warm", "agg_tps": 6.66, "wall_s": 38.44, "gen": 256, "per_stream_tps": [7.87], "md5": ["f2c99a7d44"]}
+{"kind": "conc", "tag": "M2", "n": 1, "round": 1, "agg_tps": 13.24, "wall_s": 19.33, "gen": 256, "per_stream_tps": [13.65], "md5": ["f390bc1e34"]}
+{"kind": "conc", "tag": "M2", "n": 1, "round": 2, "agg_tps": 12.91, "wall_s": 19.83, "gen": 256, "per_stream_tps": [13.29], "md5": ["f2c99a7d44"]}
+{"kind": "conc", "tag": "M2", "n": 1, "round": 3, "agg_tps": 13.33, "wall_s": 19.21, "gen": 256, "per_stream_tps": [13.73], "md5": ["f2c99a7d44"]}
+{"kind": "depth", "tag": "M2-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 292.52, "prefill_s": 56.11, "decode_n": 128, "decode_tps": 11.46, "md5": "145c14aa8b"}
+1.53.049.103 I slot print_timing: id  0 | task 0 | draft acceptance = 1.00000 (   20 accepted /    20 generated), mean len =  3.00
+2.23.057.067 I slot print_timing: id  0 | task 22 | draft acceptance = 0.84375 (  162 accepted /   192 generated), mean len =  3.08
+2.37.998.401 I slot print_timing: id  0 | task 118 | draft acceptance = 0.85789 (  163 accepted /   190 generated), mean len =  3.20
+2.52.085.250 I slot print_timing: id  0 | task 213 | draft acceptance = 0.88710 (  165 accepted /   186 generated), mean len =  3.23
+3.06.409.484 I slot print_timing: id  0 | task 306 | draft acceptance = 0.84817 (  162 accepted /   191 generated), mean len =  3.13
+4.07.646.310 I slot print_timing: id  0 | task 402 | draft acceptance = 1.00000 (   84 accepted /    84 generated), mean len =  3.00
+1.10.522.864 I slot print_timing: id  0 | task 0 | draft acceptance = 0.86170 (  162 accepted /   188 generated), mean len =  3.08
+1.29.851.692 I slot print_timing: id  0 | task 96 | draft acceptance = 0.88889 (  160 accepted /   180 generated), mean len =  3.19
+1.49.680.747 I slot print_timing: id  0 | task 194 | draft acceptance = 0.85106 (  160 accepted /   188 generated), mean len =  3.03
+2.08.891.870 I slot print_timing: id  0 | task 292 | draft acceptance = 0.85789 (  163 accepted /   190 generated), mean len =  3.12
+3.16.168.334 I slot print_timing: id  0 | task 387 | draft acceptance = 1.00000 (   84 accepted /    84 generated), mean len =  3.00
