@@ -272,6 +272,20 @@ slots still require an owner decision; the memo's GLM speed estimates remain unm
 Source review and standalone benches do not certify engine gains. Use matched frozen snapshots,
 standard greedy md5 gates and measured A/Bs before adoption.
 
+## Backlog: for when tokens are free (Haley, 2026-11-05)
+
+Haley asked to park these until token cost does not matter. Reproducibility is a hard requirement for anything served:
+the same request must give the same bytes across runs and restarts.
+
+- **Make MTP reproducible on the Spark (Flash).** MTP measured +15-22 % decode (window fl), but three identical requests
+  in one server gave three different outputs (`8e00c9eb75`, `f06371d4c6`, `f2c99a7d44`), and the six exact-columns
+  knobs did not fix it (and made it slower than no MTP). Find the nondeterministic step in the verify pass (tensor
+  digests per layer between two identical runs, as for 0042/0043), fix it, re-measure. Only then adopt MTP.
+- **GH200 long-prompt reproducibility across restarts (Flash Q4).** On GLM-5.3 a 100k prompt's output varied across
+  server restarts while short requests stayed identical (2026-11-05 ledger). Flash Q4 matched at 24k and 200k between
+  two legs with different ubatch sizes, but a restart test (same config, two processes, 100k+) is still owed.
+- **Cheap verify kernel for MTP windows (Strata's interleaved small-batch matvec)**: only after MTP is reproducible.
+
 ## Cluster layout for this work
 
 | node | role |
@@ -310,3 +324,4 @@ standard greedy md5 gates and measured A/Bs before adoption.
 - 2026-10-31: ready flags z c4 measured −7 %, gold; spinning GPU blocks cost more than the host wait they hide. Rejected; idea closed.
 - 2026-10-31: fix the stack: GH200-only 0004b CPU-slot-map guard entered patches/ in aa52f22, was included in ge4e4290 and subsequent production images/window stack checks, and shifted prefill-bank context. Move to tools/gh200/ in 72518b8; Spark GPU slot maps are unaffected, measurements stand.
 - 2026-10-31: the host-bank plan outcome supersedes the earlier queued-lever ranking: Spark GLM-5.3 Q2 is near its architectural floor at ~5.8 tok/s warm for this workload. Material changes need a smaller quant per expert, read parallelism, or GH200; none has a quantified gain here.
+- 2026-11-05: Spark Flash: SPLIT_LATE=1 adopted (+7 %, same bytes, argo-things #135). MTP (+15-22 %) rejected for now: not reproducible; parked with the GH200 restart check in the Backlog section.
