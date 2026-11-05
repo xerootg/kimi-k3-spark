@@ -1,0 +1,5 @@
+0.49.554.490 I snapshot_restore: expert store: cache snapshot restored: 18848 experts, 230.4 GB read in 23.5 s (9.8 GB/s)
+0.49.554.802 I impl: 71 layers, iq3_xxs: 18841 slots (103.7%), 665 of them on the HBM node, stride 12091392 B (bytes)
+0.49.554.803 I impl:  1 layers, iq4_xs:   265 slots (103.5%), 9 of them on the HBM node, stride 16318464 B (bytes)
+0.49.554.804 I impl:  3 layers, iq4_xs:   796 slots (103.6%), 28 of them on the HBM node, stride 13959168 B (bytes)
+0.50.537.887 W valve_release: expert store: memory valve: HBM node free 5.70 GB under the 8.59 GB reserve (sample): released 352 slots (4.30 GB), 4.30 GB of the HBM cache released in all

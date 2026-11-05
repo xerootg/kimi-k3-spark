@@ -1,0 +1,22 @@
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index 00c068195..1d9bf3309 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -3410,7 +3410,16 @@ struct llama_moe_cache::impl {
+             const int32_t n_expert  = g.ref[0]->ne[2];
+             g.hbm_budget = use_store ? (size_t) ((double) hbm_size*g.host_bytes/d.host_bytes) : 0;
+             const size_t  budget    = (size_t) ((double) size*d.split/split_sum*g.host_bytes/d.host_bytes) + g.hbm_budget;
+-            const int32_t max_slots = g.layers.size()*n_expert;
++            // kimi-k3-spark patch 0047: LLAMA_EXPERT_STORE_HBM_SPARE=1 allows host slots beyond one per expert, as many
++            // as the HBM tier has. When every expert fits, the tier's slots are part of the one-per-expert count, so
++            // each HBM slot the memory valve releases drops an expert out of the cache entirely (read from the store
++            // on every use until something else is evicted). The spare host slots take those experts instead.
++            static const bool hbm_spare = [] {
++                const char * v = getenv("LLAMA_EXPERT_STORE_HBM_SPARE");
++                return v != nullptr && v[0] == '1' && v[1] == '\0';
++            }();
++            const int32_t spare_slots = hbm_spare && g.hbm_budget > 0 && g.slot_stride > 0 ? (int32_t) (g.hbm_budget/g.slot_stride) : 0;
++            const int32_t max_slots = g.layers.size()*n_expert + spare_slots;
+             while (g.n_slots < max_slots && alloc_size(g, g.n_slots + 1) <= budget) {
+                 g.n_slots++;
+             }

@@ -933,3 +933,29 @@ views and captured CUDA graphs stay valid. Newly mapped chunks are zeroed, as th
   valve released 1.71 GB of cache, and the lowest MemAvailable was 7.6 GB against a 6.4 GB reserve.
 - **Shrink:** the next request dropped the long sequence, so the KV shrank back to 110 MiB. After one refill turn
   (6.9 tok/s) decode was back at 15.4 tok/s.
+
+## 0047-hbm-spare-slots
+
+`LLAMA_EXPERT_STORE_HBM_SPARE=1` (exact value, inert when unset) lets the expert cache have more host slots than
+experts, as many extra as the HBM tier has slots.
+
+**The problem it fixes:** when the cache budget holds every expert, slot sizing stops at one slot per expert. The HBM
+tier's slots are part of that count, so the cache has no spare slot. Each HBM slot the memory valve releases
+therefore drops its expert out of the cache entirely, and that expert is read from the store on every use until
+something else is evicted.
+
+On the GH200 (512k context, 4096-token ubatch, 8 GiB tier) the valve releases 352 HBM slots (4.30 GB) right after
+start. That is about 1.8 % of the experts, read from NVMe on demand.
+
+**With the switch:** 18,841 slots for 18,176 experts in the IQ3_XXS group (103.7 %), so released HBM slots fall back to
+host slots.
+
+**Measured (native, production env, 2026-11-05):**
+
+| Measurement | Off | On |
+|---|---|---|
+| 24k prompt | 646 tok/s | 657 tok/s (+1.7 %) |
+| 100k prompt | 596 tok/s | 600 tok/s |
+| Decode | 26.4–27.1 tok/s | 26.8–27.1 tok/s |
+
+Standard md5 `c592f33e7c` in both.

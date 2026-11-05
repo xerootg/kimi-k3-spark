@@ -1,0 +1,23 @@
+=== A LLAMA_EXPERT_STORE_HBM_SPARE=0 03:53:14
+0.50.582.785 W valve_release: expert store: memory valve: HBM node free 5.70 GB under the 8.59 GB reserve (sample): released 352 slots (4.30 GB), 4.30 GB of the HBM cache released in all
+{"tag": "A", "req": "24k-cold", "prompt_n": 24331, "cache_n": 0, "prefill_tps": 645.7, "prefill_s": 37.68, "decode_tps": 22.79, "md5": "c2c04a7f36"}
+{"tag": "A", "req": "step-300", "prompt_n": 323, "cache_n": 24331, "prefill_tps": 232.0, "prefill_s": 1.39, "decode_tps": 23.4, "md5": "c2c04a7f36"}
+{"tag": "A", "req": "step-60", "prompt_n": 62, "cache_n": 24654, "prefill_tps": 84.2, "prefill_s": 0.74, "decode_tps": 23.84, "md5": "83c6e7468a"}
+{"tag": "A", "req": "100k-cold", "prompt_n": 101673, "cache_n": 0, "prefill_tps": 595.5, "prefill_s": 170.73, "decode_tps": 21.77, "md5": "849b054ca3"}
+{"tag": "A", "req": "std", "prompt_n": 10, "cache_n": 0, "prefill_tps": 28.4, "prefill_s": 0.35, "decode_tps": 26.42, "md5": "c592f33e7c"}
+DEC A r1 26.44 tok/s md5 6d9d4fa70a
+DEC A r2 26.91 tok/s md5 6d9d4fa70a
+DEC A r3 27.06 tok/s md5 6d9d4fa70a
+PEAK A 91335 MiB
+=== B LLAMA_EXPERT_STORE_HBM_SPARE=1 03:58:16
+0.50.308.377 W valve_release: expert store: memory valve: HBM node free 5.70 GB under the 8.59 GB reserve (sample): released 352 slots (4.30 GB), 4.30 GB of the HBM cache released in all
+{"tag": "B", "req": "24k-cold", "prompt_n": 24331, "cache_n": 0, "prefill_tps": 656.9, "prefill_s": 37.04, "decode_tps": 23.43, "md5": "c2c04a7f36"}
+{"tag": "B", "req": "step-300", "prompt_n": 323, "cache_n": 24331, "prefill_tps": 240.3, "prefill_s": 1.34, "decode_tps": 23.73, "md5": "c2c04a7f36"}
+{"tag": "B", "req": "step-60", "prompt_n": 62, "cache_n": 24654, "prefill_tps": 89.4, "prefill_s": 0.69, "decode_tps": 24.06, "md5": "83c6e7468a"}
+{"tag": "B", "req": "100k-cold", "prompt_n": 101673, "cache_n": 0, "prefill_tps": 600.1, "prefill_s": 169.42, "decode_tps": 22.0, "md5": "2d2fd9789c"}
+{"tag": "B", "req": "std", "prompt_n": 10, "cache_n": 0, "prefill_tps": 29.7, "prefill_s": 0.34, "decode_tps": 26.76, "md5": "c592f33e7c"}
+DEC B r1 26.75 tok/s md5 6d9d4fa70a
+DEC B r2 26.92 tok/s md5 6d9d4fa70a
+DEC B r3 27.07 tok/s md5 6d9d4fa70a
+PEAK B 91336 MiB
+EL-GH-DONE
