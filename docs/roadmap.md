@@ -286,6 +286,19 @@ the same request must give the same bytes across runs and restarts.
   two legs with different ubatch sizes, but a restart test (same config, two processes, 100k+) is still owed.
 - **Cheap verify kernel for MTP windows (Strata's interleaved small-batch matvec)**: only after MTP is reproducible.
 
+## Stashed 2026-11-05 (pending Haley's answers, resume here)
+
+- **GH200 efficiency** (6 h sample, 723 requests): 96 % of 47.6M prompt tokens came from the prompt cache; the GPU was
+  busy 43 % (28 min reading, 127 min writing at a median 45.4 tok/s). 20 full re-reads of 57-86k-token prompts cost
+  12 min, almost half the reading time: clients rewriting history (OpenClaw compaction, the RE workbench condenser
+  still tuned for K3 at 48k tokens / 80 events). Proposed: (1) raise the RE workbench condenser to ~200k (config, no
+  downtime); (2) HBM tier 40960 -> ~48000 (+~5 % decode, needs one 1M-context validation with the valve floor at 10).
+- **RE workbench model**: its seeded LLM still points at the retired kimi-k3-gh200 Service. Haley to choose: (a) Flash
+  as a selectable model in the existing workbench, or (b) a separate GH200-only workbench.
+- **Spark 20-25 tok/s kernel work**: go / backlog not decided. State: split-late=1 live (16.5 tok/s); early gate/up
+  fusion (0048, LLAMA_EXPERT_STORE_FUSE_VIEWS) works byte-identically but is 1.8 % slower, not adopted; ncu needs root
+  plus a memory watchdog (the first root run OOM-killed the test server, dma-latency pod restarted once).
+
 ## Cluster layout for this work
 
 | node | role |
