@@ -1,0 +1,65 @@
+== vision.jsonl
+{"tag": "text-only READ prompt", "prompt_tokens": 64}
+{"tag": "2652d15d read-full", "prompt_tokens": 7997, "prefill_ms": 6884, "decode_tps": 44.6, "out_tokens": 900, "wall_s": 27.4, "md5": "715e18c323"}
+{"tag": "2652d15d read-1536", "prompt_tokens": 2376, "prefill_ms": 2164, "decode_tps": 48.1, "out_tokens": 900, "wall_s": 21.0, "md5": "0ad108f0fe"}
+{"tag": "2652d15d locate-1536", "prompt_tokens": 2389, "prefill_ms": 2238, "decode_tps": 45.8, "out_tokens": 400, "wall_s": 11.0, "md5": "d41d8cd98f"}
+{"tag": "2652d15d read-crop", "prompt_tokens": 7972, "prefill_ms": 6797, "decode_tps": 46.6, "out_tokens": 268, "wall_s": 12.8, "md5": "3107dcc56b"}
+{"tag": "7d734f4f read-full", "prompt_tokens": 7997, "prefill_ms": 6758, "decode_tps": 47.8, "out_tokens": 900, "wall_s": 25.9, "md5": "d41d8cd98f"}
+{"tag": "7d734f4f read-1536", "prompt_tokens": 2376, "prefill_ms": 2148, "decode_tps": 49.0, "out_tokens": 900, "wall_s": 20.6, "md5": "d41d8cd98f"}
+{"tag": "7d734f4f locate-1536", "prompt_tokens": 2389, "prefill_ms": 2236, "decode_tps": 46.4, "out_tokens": 400, "wall_s": 10.9, "md5": "d41d8cd98f"}
+{"tag": "7d734f4f read-crop", "prompt_tokens": 2211, "prefill_ms": 2063, "decode_tps": 47.1, "out_tokens": 608, "wall_s": 15.0, "md5": "6734d91941"}
+{"tag": "eaa17d7e read-full", "prompt_tokens": 7997, "prefill_ms": 6787, "decode_tps": 47.0, "out_tokens": 592, "wall_s": 19.8, "md5": "fe82129cf6"}
+{"tag": "eaa17d7e read-1536", "prompt_tokens": 2376, "prefill_ms": 2158, "decode_tps": 47.8, "out_tokens": 900, "wall_s": 21.1, "md5": "d41d8cd98f"}
+{"tag": "eaa17d7e locate-1536", "prompt_tokens": 2389, "prefill_ms": 2240, "decode_tps": 45.7, "out_tokens": 400, "wall_s": 11.1, "md5": "d41d8cd98f"}
+{"tag": "eaa17d7e read-crop", "prompt_tokens": 1002, "prefill_ms": 1470, "decode_tps": 47.4, "out_tokens": 553, "wall_s": 13.2, "md5": "a8c058b07d"}
+{"tag": "fb48f8cf read-full", "prompt_tokens": 7997, "prefill_ms": 6764, "decode_tps": 47.9, "out_tokens": 900, "wall_s": 25.9, "md5": "d41d8cd98f"}
+{"tag": "fb48f8cf read-1536", "prompt_tokens": 2376, "prefill_ms": 2148, "decode_tps": 49.0, "out_tokens": 900, "wall_s": 20.6, "md5": "d41d8cd98f"}
+{"tag": "fb48f8cf locate-1536", "prompt_tokens": 2389, "prefill_ms": 2235, "decode_tps": 46.8, "out_tokens": 400, "wall_s": 10.8, "md5": "d41d8cd98f"}
+{"tag": "fb48f8cf read-crop", "prompt_tokens": 4249, "prefill_ms": 3694, "decode_tps": 47.6, "out_tokens": 617, "wall_s": 16.7, "md5": "bad1d27f5d"}
+{"tag": "2652d15d read-crop repeat", "prompt_tokens": 7972, "prefill_ms": 6789, "decode_tps": 47.7, "out_tokens": 267, "wall_s": 12.6, "md5": "3e16288231"}
+== vision2.jsonl
+{"tag": "repro 2652d15d crop #0", "prompt_tokens": 7972, "prefill_ms": 6960, "out_tokens": 268, "wall_s": 13.9, "reasoning_chars": 574, "emb_md5": "b914453570", "md5": "3107dcc56b"}
+{"tag": "repro 2652d15d crop #1", "prompt_tokens": 7972, "prefill_ms": 6872, "out_tokens": 267, "wall_s": 13.3, "reasoning_chars": 594, "emb_md5": "b914453570", "md5": "3e16288231"}
+{"tag": "repro 2652d15d crop #2", "prompt_tokens": 7972, "prefill_ms": 6844, "out_tokens": 268, "wall_s": 13.0, "reasoning_chars": 574, "emb_md5": "b914453570", "md5": "3107dcc56b"}
+{"tag": "repro 7d734f4f crop #0", "prompt_tokens": 2211, "prefill_ms": 2069, "out_tokens": 608, "wall_s": 15.1, "reasoning_chars": 986, "emb_md5": "17059cc861", "md5": "6734d91941"}
+{"tag": "repro 7d734f4f crop #1", "prompt_tokens": 2211, "prefill_ms": 2058, "out_tokens": 608, "wall_s": 14.5, "reasoning_chars": 986, "emb_md5": "17059cc861", "md5": "6734d91941"}
+{"tag": "2652d15d locate-1536", "prompt_tokens": 2389, "prefill_ms": 2259, "out_tokens": 500, "wall_s": 13.5, "reasoning_chars": 1731, "emb_md5": "9173c73b38", "md5": "d41d8cd98f"}
+{"tag": "2652d15d locate-1024", "prompt_tokens": 1115, "prefill_ms": 1599, "out_tokens": 500, "wall_s": 12.0, "reasoning_chars": 1883, "emb_md5": "b6dcf97f1c", "md5": "d41d8cd98f"}
+{"tag": "2652d15d read-crop-native", "prompt_tokens": 7972, "prefill_ms": 6863, "out_tokens": 268, "wall_s": 13.2, "reasoning_chars": 574, "emb_md5": "b914453570", "md5": "3107dcc56b"}
+{"tag": "2652d15d read-crop-2MP", "prompt_tokens": 2679, "prefill_ms": 2360, "out_tokens": 256, "wall_s": 7.9, "reasoning_chars": 505, "emb_md5": "b851eb349d", "md5": "83bf00bda7"}
+{"tag": "2652d15d read-crop-1MP", "prompt_tokens": 1362, "prefill_ms": 1639, "out_tokens": 240, "wall_s": 6.7, "reasoning_chars": 500, "emb_md5": "b826f6608c", "md5": "592c588345"}
+{"tag": "7d734f4f locate-1536", "prompt_tokens": 2389, "prefill_ms": 2244, "out_tokens": 500, "wall_s": 13.0, "reasoning_chars": 1726, "emb_md5": "08794388b1", "md5": "d41d8cd98f"}
+{"tag": "7d734f4f locate-1024", "prompt_tokens": 1115, "prefill_ms": 1585, "out_tokens": 500, "wall_s": 12.0, "reasoning_chars": 1703, "emb_md5": "75c20fef68", "md5": "d41d8cd98f"}
+{"tag": "7d734f4f read-crop-native", "prompt_tokens": 2211, "prefill_ms": 2088, "out_tokens": 608, "wall_s": 15.4, "reasoning_chars": 986, "emb_md5": "17059cc861", "md5": "6734d91941"}
+{"tag": "7d734f4f read-crop-2MP", "prompt_tokens": 2211, "prefill_ms": 2078, "out_tokens": 608, "wall_s": 14.7, "reasoning_chars": 986, "emb_md5": "17059cc861", "md5": "6734d91941"}
+{"tag": "7d734f4f read-crop-1MP", "prompt_tokens": 1399, "prefill_ms": 1646, "out_tokens": 850, "wall_s": 19.1, "reasoning_chars": 1731, "emb_md5": "25584b97b7", "md5": "21120c117c"}
+{"tag": "eaa17d7e locate-1536", "prompt_tokens": 2389, "prefill_ms": 2261, "out_tokens": 500, "wall_s": 13.7, "reasoning_chars": 1487, "emb_md5": "c020ef61c8", "md5": "d41d8cd98f"}
+{"tag": "eaa17d7e locate-1024", "prompt_tokens": 1115, "prefill_ms": 1592, "out_tokens": 397, "wall_s": 10.0, "reasoning_chars": 994, "emb_md5": "c8bd624421", "md5": "5b875ed950"}
+{"tag": "eaa17d7e read-crop-native", "prompt_tokens": 1002, "prefill_ms": 1479, "out_tokens": 553, "wall_s": 13.3, "reasoning_chars": 1218, "emb_md5": "0550b5d378", "md5": "a8c058b07d"}
+{"tag": "eaa17d7e read-crop-2MP", "prompt_tokens": 1002, "prefill_ms": 1465, "out_tokens": 553, "wall_s": 12.9, "reasoning_chars": 1218, "emb_md5": "0550b5d378", "md5": "a8c058b07d"}
+{"tag": "eaa17d7e read-crop-1MP", "prompt_tokens": 1002, "prefill_ms": 1457, "out_tokens": 553, "wall_s": 12.8, "reasoning_chars": 1218, "emb_md5": "0550b5d378", "md5": "a8c058b07d"}
+{"tag": "fb48f8cf locate-1536", "prompt_tokens": 2389, "prefill_ms": 2248, "out_tokens": 500, "wall_s": 13.3, "reasoning_chars": 1722, "emb_md5": "a3c54e9b09", "md5": "d41d8cd98f"}
+{"tag": "fb48f8cf locate-1024", "prompt_tokens": 1115, "prefill_ms": 1589, "out_tokens": 500, "wall_s": 12.0, "reasoning_chars": 1772, "emb_md5": "541a0f443e", "md5": "d41d8cd98f"}
+{"tag": "fb48f8cf read-crop-native", "prompt_tokens": 4249, "prefill_ms": 3734, "out_tokens": 617, "wall_s": 17.1, "reasoning_chars": 1148, "emb_md5": "04b738a133", "md5": "bad1d27f5d"}
+{"tag": "fb48f8cf read-crop-2MP", "prompt_tokens": 2656, "prefill_ms": 2352, "out_tokens": 695, "wall_s": 17.1, "reasoning_chars": 1613, "emb_md5": "9d006f2377", "md5": "202aeb5823"}
+{"tag": "fb48f8cf read-crop-1MP", "prompt_tokens": 1366, "prefill_ms": 1641, "out_tokens": 437, "wall_s": 10.5, "reasoning_chars": 705, "emb_md5": "85a26a5049", "md5": "1a906f9d05"}
+== vision3.jsonl
+{"tag": "2652d15d locate-1024", "prompt_tokens": 1115, "prefill_ms": 1708, "out_tokens": 35, "wall_s": 2.7, "reasoning_chars": 0, "md5": "1c6b7abe18"}
+{"tag": "7d734f4f locate-1024", "prompt_tokens": 1115, "prefill_ms": 1634, "out_tokens": 134, "wall_s": 5.0, "reasoning_chars": 0, "md5": "5d0d1824cb"}
+{"tag": "eaa17d7e locate-1024", "prompt_tokens": 1115, "prefill_ms": 1612, "out_tokens": 45, "wall_s": 2.7, "reasoning_chars": 0, "md5": "37e819b114"}
+{"tag": "fb48f8cf locate-1024", "prompt_tokens": 1115, "prefill_ms": 1606, "out_tokens": 143, "wall_s": 4.9, "reasoning_chars": 0, "md5": "4839e7b6ca"}
+{"tag": "2652d15d read-1.2MP #0", "prompt_tokens": 1626, "prefill_ms": 1788, "out_tokens": 102, "wall_s": 4.2, "reasoning_chars": 0, "md5": "b2f7e636e8"}
+{"tag": "2652d15d read-1.2MP #1", "prompt_tokens": 1626, "prefill_ms": 1768, "out_tokens": 102, "wall_s": 4.1, "reasoning_chars": 0, "md5": "b2f7e636e8"}
+{"tag": "2652d15d read-1.2MP #2", "prompt_tokens": 1626, "prefill_ms": 1763, "out_tokens": 102, "wall_s": 4.0, "reasoning_chars": 0, "md5": "b2f7e636e8"}
+{"tag": "7d734f4f read-1.2MP #0", "prompt_tokens": 1617, "prefill_ms": 1744, "out_tokens": 270, "wall_s": 7.7, "reasoning_chars": 0, "md5": "64fd906bb5"}
+{"tag": "7d734f4f read-1.2MP #1", "prompt_tokens": 1617, "prefill_ms": 1737, "out_tokens": 270, "wall_s": 7.4, "reasoning_chars": 0, "md5": "64fd906bb5"}
+{"tag": "7d734f4f read-1.2MP #2", "prompt_tokens": 1617, "prefill_ms": 1736, "out_tokens": 270, "wall_s": 7.3, "reasoning_chars": 0, "md5": "64fd906bb5"}
+{"tag": "eaa17d7e read-1.2MP #0", "prompt_tokens": 1002, "prefill_ms": 1442, "out_tokens": 139, "wall_s": 4.4, "reasoning_chars": 0, "md5": "930335f7e0"}
+{"tag": "eaa17d7e read-1.2MP #1", "prompt_tokens": 1002, "prefill_ms": 1438, "out_tokens": 139, "wall_s": 4.3, "reasoning_chars": 0, "md5": "930335f7e0"}
+{"tag": "eaa17d7e read-1.2MP #2", "prompt_tokens": 1002, "prefill_ms": 1435, "out_tokens": 139, "wall_s": 4.3, "reasoning_chars": 0, "md5": "930335f7e0"}
+{"tag": "fb48f8cf read-1.2MP #0", "prompt_tokens": 1661, "prefill_ms": 1762, "out_tokens": 218, "wall_s": 6.2, "reasoning_chars": 0, "md5": "32b323ec11"}
+{"tag": "fb48f8cf read-1.2MP #1", "prompt_tokens": 1661, "prefill_ms": 1754, "out_tokens": 218, "wall_s": 6.2, "reasoning_chars": 0, "md5": "32b323ec11"}
+{"tag": "fb48f8cf read-1.2MP #2", "prompt_tokens": 1661, "prefill_ms": 1753, "out_tokens": 218, "wall_s": 6.1, "reasoning_chars": 0, "md5": "32b323ec11"}
+{"tag": "2652d15d read-native #0", "prompt_tokens": 7972, "prefill_ms": 6772, "out_tokens": 102, "wall_s": 9.1, "reasoning_chars": 0, "md5": "c9f49aa49a"}
+{"tag": "2652d15d read-native #1", "prompt_tokens": 7972, "prefill_ms": 6762, "out_tokens": 102, "wall_s": 9.0, "reasoning_chars": 0, "md5": "c9f49aa49a"}
+{"tag": "2652d15d read-native #2", "prompt_tokens": 7972, "prefill_ms": 6756, "out_tokens": 102, "wall_s": 9.0, "reasoning_chars": 0, "md5": "c9f49aa49a"}
