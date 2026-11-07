@@ -1,0 +1,40 @@
+void mul_mat_vec_q<t17, (int)1, (bool)0, (bool)0, (bool)0>(const void *, const v|2048|9|1|32|4|5166|108.31|8.743
+void mul_mat_vec_q<t14, (int)1, (bool)0, (bool)0, (bool)1>(const void *, const v|8192|1|1|32|8|4284|128.66|8.612
+void mul_mat_vec_q<t13, (int)1, (bool)0, (bool)0, (bool)1>(const void *, const v|4096|1|1|32|8|2772|157.0|6.8
+void mul_mat_vec_q<t18, (int)1, (bool)0, (bool)0, (bool)0>(const void *, const v|4096|9|1|32|4|2457|161.6|6.204
+void mul_mat_vec_q<t17, (int)1, (bool)1, (bool)0, (bool)0>(const void *, const v|2048|8|1|32|4|2583|109.2|4.407
+void mul_mat_vec_q<t13, (int)1, (bool)0, (bool)0, (bool)1>(const void *, const v|8192|1|1|32|8|2142|110.79|3.708
+void mul_mat_vec_q<t18, (int)1, (bool)0, (bool)0, (bool)0>(const void *, const v|4096|8|1|32|4|2457|50.4|1.935
+void mul_mat_vec_q<t12, (int)1, (bool)0, (bool)0, (bool)1>(const void *, const v|154880|1|1|32|8|64|1763.74|1.764
+void mul_mat_vec_q<t13, (int)1, (bool)1, (bool)0, (bool)1>(const void *, const v|2048|1|1|32|8|1764|55.11|1.519
+void mul_mat_vec_q<t14, (int)1, (bool)1, (bool)0, (bool)0>(const void *, const v|4096|1|1|32|4|2583|34.63|1.398
+void mul_mat_vec_q<t8, (int)1, (bool)0, (bool)0, (bool)1>(const void *, const vo|16384|1|1|32|8|693|114.1|1.235
+void mul_mat_vec_f<float, float, (int)1, (int)256, (bool)0, (bool)0>(const T1 *, const flo|288|1|1|256|1|2646|24.01|0.993
+void mul_mat_vec_q<t14, (int)1, (bool)0, (bool)0, (bool)1>(const void *, const v|4096|1|1|32|8|252|209.85|0.826
+void mul_mat_vec_q_moe<t17, (int)2, (bool)0>(const void *, const void *, const i|1024|8|1|32|6|82|594.51|0.762
+void mul_mat_vec_q<t8, (int)1, (bool)0, (bool)0, (bool)1>(const void *, const vo|24|1|1|32|8|5670|8.37|0.741
+void mul_mat_vec_q<t13, (int)1, (bool)0, (bool)0, (bool)1>(const void *, const v|2048|1|1|32|8|1638|28.67|0.734
+quantize_q8_1(const float *, void *, long, long, long, long, long, unsigned int, uint3)|16|1|1|256|1|27469|1.69|0.725
+void k_get_rows_float_vec<float>(const T1 *, const int *, T1 *, long, long, uint3, unsigne|1|1024|1|256|1|2210|20.78|0.718
+void mul_mat_vec_q<t13, (int)1, (bool)0, (bool)0, (bool)1>(const void *, const v|12288|1|1|32|8|252|169.1|0.666
+void ssm_conv_f32<(bool)0, (unsigned long)128, (unsigned long)4>(const float *, const floa|1|64|1|128|1|6630|6.22|0.644
+void mul_mat_vec_q<t23, (int)1, (bool)0, (bool)1, (bool)0>(const void *, const v|1024|9|1|32|4|189|215.23|0.636
+void mul_mat_vec_q<t8, (int)1, (bool)0, (bool)0, (bool)1>(const void *, const vo|128|1|1|32|8|5670|6.3|0.558
+void mul_mat_vec_q_moe<t18, (int)2, (bool)0>(const void *, const void *, const i|2048|8|1|32|6|39|819.83|0.5
+quantize_q8_1(const float *, void *, long, long, long, long, long, unsigned int, uint3)|64|1|1|256|1|6363|4.95|0.492
+void mul_mat_vec_q_moe<t17, (int)2, (bool)0>(const void *, const void *, const i|1024|8|1|32|4|82|374.84|0.48
+void rms_norm_f32<(int)1024, (int)4, (bool)1, (bool)0, (bool)0, (bool)0>(const float *, fl|1|1|1|1024|1|5670|5.42|0.48
+void unary_op_kernel<&op_silu, float>(const T2 *, T2 *, int)|32|1|1|256|1|6426|4.46|0.447
+void mul_mat_vec_q<t8, (int)1, (bool)1, (bool)1, (bool)0>(const void *, const vo|2048|1|1|32|4|2142|12.94|0.433
+void mul_mat_vec_q<t8, (int)1, (bool)0, (bool)1, (bool)0>(const void *, const vo|128|64|1|32|4|693|39.38|0.426
+void mul_mat_vec_q<t8, (int)1, (bool)0, (bool)1, (bool)0>(const void *, const vo|64|64|1|32|4|693|39.02|0.422
+void mul_mat_vec_q<t8, (int)1, (bool)0, (bool)0, (bool)1>(const void *, const vo|4096|1|1|32|8|693|30.88|0.334
+void gated_delta_net_cuda<(int)128, (bool)1, (bool)0, (int)4>(const float *, const float *|64|1|8|32|4|2210|9.53|0.329
+void mul_mat_vec_q<t13, (int)1, (bool)1, (bool)0, (bool)1>(const void *, const v|12288|1|1|32|8|63|332.16|0.327
+void mul_mat_vec_q_moe<t18, (int)2, (bool)0>(const void *, const void *, const i|2048|8|1|32|4|39|530.28|0.323
+void dsv4_hc_post_f32<(bool)1>(const float *, const float *, const float *, const float *,|64|1|1|256|1|5670|3.58|0.317
+void k_bin_bcast<&op_add, float, float, float, const float *>(const T2 *, const T3 *, T4 *|1|1|1|2|1|11340|1.63|0.288
+void mul_mat_vec_q<t18, (int)1, (bool)0, (bool)0, (bool)0>(const void *, const v|2048|9|1|32|4|126|144.61|0.285
+void unary_op_kernel<&op_sigmoid, float>(const T2 *, T2 *, int)|1|1|1|256|1|13876|1.31|0.284
+void k_bin_bcast<&op_mul, float, float, float, const float *>(const T2 *, const T3 *, T4 *|1|1|1|2|1|11340|1.58|0.279
+void rms_norm_f32<(int)32, (int)1, (bool)1, (bool)0, (bool)0, (bool)1>(const float *, floa|64|1|1|32|1|4284|4.17|0.279

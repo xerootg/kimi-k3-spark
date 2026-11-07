@@ -1,0 +1,55 @@
+   935.9 MB x 34 Q6_K     (4096, 8192)         blk.N.attn_k.weight
+   935.9 MB x 34 Q6_K     (4096, 8192)         blk.N.attn_v.weight
+   784.3 MB x 34 Q5_K     (8192, 4096)         blk.N.attn_output.weight
+   784.3 MB x 34 Q5_K     (4096, 8192)         blk.N.attn_q.weight
+   507.5 MB x 11 Q5_K     (16384, 4096)        blk.N.attn_output.weight
+   436.1 MB x  1 Q5_K     (4096, 154880)       token_embd.weight
+   356.8 MB x  1 Q4_K     (4096, 154880)       output.weight
+   320.9 MB x 12 Q8_0     (1536, 16384)        blk.N.attn_q_b.weight
+   289.0 MB x 42 Q6_K     (2048, 4096)         blk.N.ffn_down_shexp.weight
+   242.2 MB x 42 Q5_K     (4096, 2048)         blk.N.ffn_gate_shexp.weight
+   242.2 MB x 42 Q5_K     (4096, 2048)         blk.N.ffn_up_shexp.weight
+   202.9 MB x 43 F32      (4096, 288)          blk.N.ffn_gate_inp.weight
+   123.9 MB x  3 Q6_K     (12288, 4096)        blk.N.ffn_down.weight
+   107.0 MB x 12 Q8_0     (256, 512, 64)       blk.N.attn_k_b.weight
+   107.0 MB x 12 Q8_0     (512, 256, 64)       blk.N.attn_v_b.weight
+   103.8 MB x  3 Q5_K     (4096, 12288)        blk.N.ffn_gate.weight
+   103.8 MB x  3 Q5_K     (4096, 12288)        blk.N.ffn_up.weight
+    80.2 MB x 12 Q8_0     (1536, 4096)         blk.N.indexer.attn_q_b.weight
+    55.1 MB x  1 Q6_K     (16384, 4096)        blk.N.attn_output.weight
+    47.6 MB x 11 Q5_K     (4096, 1536)         blk.N.attn_q_a.weight
+    37.9 MB x 34 Q8_0     (128, 8192)          blk.N.ssm_f_b.weight
+    37.9 MB x 34 Q8_0     (128, 8192)          blk.N.ssm_g_b.weight
+    35.7 MB x  1 Q8_0     (8192, 4096)         blk.N.nextn.eh_proj.weight
+    26.7 MB x 12 Q8_0     (4096, 512)          blk.N.attn_kv_a_mqa.weight
+    18.9 MB x 34 Q8_0     (4096, 128)          blk.N.ssm_f_a.weight
+    18.9 MB x 34 Q8_0     (4096, 128)          blk.N.ssm_g_a.weight
+    18.8 MB x 45 Q8_0     (16384, 24)          blk.N.hc_attn_fn.weight
+    18.8 MB x 45 Q8_0     (16384, 24)          blk.N.hc_ffn_fn.weight
+     9.5 MB x 34 Q8_0     (4096, 64)           blk.N.ssm_beta.weight
+     8.9 MB x  1 Q8_0     (2048, 4096)         blk.N.ffn_down_shexp.weight
+     6.9 MB x  1 Q6_K     (4096, 2048)         blk.N.ffn_gate_shexp.weight
+     6.9 MB x  1 Q6_K     (4096, 2048)         blk.N.ffn_up_shexp.weight
+     6.7 MB x 12 Q8_0     (4096, 128)          blk.N.indexer.attn_k.weight
+     6.7 MB x 12 Q8_0     (4096, 128)          blk.N.indexer_compressor_gate.weight
+     6.3 MB x 12 F32      (4096, 32)           blk.N.indexer.proj.weight
+     5.2 MB x  1 Q6_K     (4096, 1536)         blk.N.attn_q_a.weight
+     0.0 MB x 12 F32      (128, 4)             blk.N.indexer_compressor_ape.weight
+by type MB: {'Q5_K': 3252, 'Q6_K': 2359, 'Q8_0': 860, 'Q4_K': 357, 'F32': 209}
+total MB 7037
+grid 96 x 256: 206.8 GB/s
+grid 96 x 512: 67.3 GB/s
+grid 96 x 1024: 144.8 GB/s
+grid 192 x 256: 79.4 GB/s
+grid 192 x 512: 51.3 GB/s
+grid 192 x 1024: 178.8 GB/s
+grid 384 x 256: 242.2 GB/s
+grid 384 x 512: 242.1 GB/s
+grid 384 x 1024: 241.3 GB/s
+grid 768 x 256: 242.1 GB/s
+grid 768 x 512: 240.5 GB/s
+grid 768 x 1024: 191.8 GB/s
+grid 1536 x 256: 90.9 GB/s
+grid 1536 x 512: 139.8 GB/s
+grid 1536 x 1024: 183.3 GB/s
+SMs 48
