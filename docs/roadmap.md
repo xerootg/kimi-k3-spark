@@ -303,6 +303,11 @@ the same request must give the same bytes across runs and restarts.
 
 Haley: "Once we have networking, we can distribute to the nucs." NUC work waits for the faster link (10GbE or ConnectX/RoCE, see the network options above). The roofline entry puts the single-stream Flash-on-Spark ceiling at ~+9 % even at zero latency (NUC DDR5 is ~1/4 of the Spark's 245 GB/s); measure instead where the NUCs can add more once the link exists: aggregate throughput with several streams, and models whose experts do not fit the Spark. Prerequisites that do not need the link: a NUC expert kernel near 40-50 GB/s (today ~20 of 59 GB/s on nuc2).
 
+Haley (same day): "I also suspect we are still fundamentally approaching how to use the nucs efficiently wrong" and "the number of network round trips should probably not be as high as it is". Agreed: the remote tier did one round trip per MoE layer per token (43 a token for Flash), each on the critical path. Designs that cut round trips, to evaluate when the link lands:
+1. **Batch across streams:** with N concurrent requests (Juno, the RE workbench and Claude Code run several), one round trip per layer serves all N, and while stream A waits for the NUCs the Spark computes stream B's layer, so latency is hidden rather than paid. The NUCs then add aggregate throughput.
+2. **Batch across tokens:** speculative or lookahead decoding verifies k tokens per pass, so one round trip carries k tokens' experts. Needs batch-identical kernels (the exact-columns work, fd4-fd8) to stay reproducible.
+3. **Ownership by layer span:** a NUC owns whole consecutive layers, so one hand-off covers a span instead of one per layer; single-stream it is limited by NUC bandwidth (1.6-1.9 tok/s measured for full-layer pipelining), so it only pays together with 1.
+
 ## Cluster layout for this work
 
 | node | role |

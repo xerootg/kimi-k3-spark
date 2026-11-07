@@ -1,0 +1,12 @@
+0 %
+q6_K     k=4096   m=8192   copies=39   27.53 MB  best   122.53 us  mean   127.58 us   224.6 GB/s  digest cad618541d83260e
+q5_K     k=4096   m=8192   copies=46   23.07 MB  best   102.94 us  mean   105.71 us   224.1 GB/s  digest f96be3f9677b0ec3
+q5_K     k=8192   m=4096   copies=46   23.07 MB  best   106.77 us  mean   111.43 us   216.1 GB/s  digest 4ddd88d21ad33b6f
+q5_K     k=16384  m=4096   copies=23   46.14 MB  best   205.65 us  mean   212.98 us   224.4 GB/s  digest db322d57d132df5c
+q4_K     k=4096   m=154880 copies=3    356.84 MB  best  1574.83 us  mean  1638.30 us   226.6 GB/s  digest 27d1417e9e2b6252
+q8_0     k=1536   m=16384  copies=40   26.74 MB  best   108.22 us  mean   112.29 us   247.1 GB/s  digest 89c193c47ce27657
+q6_K     k=2048   m=4096   copies=156  6.88 MB  best    32.68 us  mean    33.73 us   210.6 GB/s  digest 2df7ce99b5e35617
+q5_K     k=4096   m=2048   copies=186  5.77 MB  best    27.58 us  mean    28.96 us   209.1 GB/s  digest 61ca9005216f0163
+q8_0     k=16384  m=24     copies=2570 0.42 MB  best     4.41 us  mean     4.48 us    94.6 GB/s  digest f05a83c8341ac163
+q8_0     k=4096   m=128    copies=1927 0.56 MB  best     4.61 us  mean     4.68 us   120.9 GB/s  digest 2a1509d9a234df4e
+iq3_xxs  k=2048   m=4096   copies=334  3.21 MB  best    16.18 us  mean    16.84 us   198.5 GB/s  digest e0f3e87d2e8c2343
