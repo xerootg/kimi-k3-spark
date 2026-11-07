@@ -1485,3 +1485,6 @@ something else dominated at the time. Re-test them after any change that shifts 
   section is already measured; don't repeat them.
 - **15+ tok/s on the GH200.** Only path found so far: all experts resident in memory, for example a second
   GH200 with expert parallelism.
+
+**Production: patch 0050 live on the Spark (2026-11-07).** argo-things #150 (merged) switched glm53-spark to image `547208dca250-gbf3b354` with `GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1`. Before merge, a container canary of the exact deployment (docker, same image, env, args and mounts) was healthy after 28 s: 16.70 / 16.72 / 16.77 tok/s, md5 `53816a69bc`; 16k prompt at 321.6 tok/s, decode 14.21, md5 `145c14aa8b`; lowest MemAvailable 9,067 MiB. Production check after rollout through the Service: warm-up 16.08, then 17.10 / 17.12 / 17.14 tok/s (server timings), md5 `53816a69bc` every time. The batched NUC tier (0049) is in the image but off. **Spark Flash production decode 16.5 -> 17.1 tok/s, byte-identical.**
+
