@@ -295,9 +295,13 @@ the same request must give the same bytes across runs and restarts.
   downtime); (2) HBM tier 40960 -> ~48000 (+~5 % decode, needs one 1M-context validation with the valve floor at 10).
 - **RE workbench model**: its seeded LLM still points at the retired kimi-k3-gh200 Service. Haley to choose: (a) Flash
   as a selectable model in the existing workbench, or (b) a separate GH200-only workbench.
-- **Spark 20-25 tok/s kernel work**: go / backlog not decided. State: split-late=1 live (16.5 tok/s); early gate/up
+- **Spark kernel work: GO (Haley, 2026-11-07).** Target revised by the roofline entry (245 GB/s practical, ~9.7 GB per token): ~19-21 tok/s byte-identical from 16.5; steps: (A) a cold-cache MMVQ bench at production shapes, (B) MMVQ ~200 -> ~235 GB/s without changing per-row arithmetic, (C) fuse the small-kernel tail (~430 quantize launches, norms, broadcasts per token). Was: go / backlog not decided. State: split-late=1 live (16.5 tok/s); early gate/up
   fusion (0048, LLAMA_EXPERT_STORE_FUSE_VIEWS) works byte-identically but is 1.8 % slower, not adopted; ncu needs root
   plus a memory watchdog (the first root run OOM-killed the test server, dma-latency pod restarted once).
+
+## NUC distribution (Haley, 2026-11-07)
+
+Haley: "Once we have networking, we can distribute to the nucs." NUC work waits for the faster link (10GbE or ConnectX/RoCE, see the network options above). The roofline entry puts the single-stream Flash-on-Spark ceiling at ~+9 % even at zero latency (NUC DDR5 is ~1/4 of the Spark's 245 GB/s); measure instead where the NUCs can add more once the link exists: aggregate throughput with several streams, and models whose experts do not fit the Spark. Prerequisites that do not need the link: a NUC expert kernel near 40-50 GB/s (today ~20 of 59 GB/s on nuc2).
 
 ## Cluster layout for this work
 
