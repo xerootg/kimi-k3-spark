@@ -959,3 +959,37 @@ host slots.
 | Decode | 26.4–27.1 tok/s | 26.8–27.1 tok/s |
 
 Standard md5 `c592f33e7c` in both.
+
+## 0049-remote-batched
+
+Window nd (2026-11-07), env-gated, default off. The remote expert tier batched across sequences. The single-token tier
+(0003) sends one request per MoE layer per token, each on the critical path (43 a token for GLM-5.3-Flash), and only
+for experts the Spark does not hold. `LLAMA_EXPERT_STORE_REMOTE_COLS=1` instead hooks the N-column split GEMV (0030,
+`LLAMA_EXPERT_STORE_SPLIT_COLS=1`, N = 2..8 sequences decoding together): at the early lookup of each MoE layer the
+poller picks, per box, up to `LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS` (one value or one per box) (expert, token) pairs
+from the box's `LLAMA_EXPERT_STORE_REMOTE_SET` (experts used by one token first; resident experts too, so the Spark
+does not read them; `LLAMA_EXPERT_STORE_REMOTE_OFFLOAD=0` restricts it to non-resident ones) and sends ONE request per
+box with the inputs of the tokens involved and the pairs. The graph copies the N inputs into the layer's remote input
+before the early lookup; the remote experts point at the zero record in the early and late matmuls; at the real
+lookup the rows that arrived by `LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US` (from the post) are placed in the remote rows
+and merged by `set_rows` after the late merge, and every pair that did not arrive is computed by the late matmul
+(its expert read first if it is not resident; that read plans the layer's whole union, so no slot the late matmul
+still reads is evicted). The output never depends on the network. Single-token decode stays local.
+
+- `LLAMA_EXPERT_STORE_REMOTE_ADAPT=1`: each box's pairs per layer adapt per column count between 1 and its maximum
+  (start 1; one more after 8 replies in a row complete when the real lookup came; one fewer after a wait longer than
+  `LLAMA_EXPERT_STORE_REMOTE_ADAPT_WAIT_US`, default 100, or a miss).
+- `LLAMA_EXPERT_STORE_REMOTE_MAX_WAIT_US`: how long the real lookup waits for a box whose pairs are all resident on
+  the Spark (a late pair then costs one late-matmul row instead of a wait); pairs the Spark would have to read still
+  wait until the deadline.
+- Test knobs: `LLAMA_EXPERT_STORE_REMOTE_DISCARD=1` (send and wait, compute every pair locally),
+  `LLAMA_EXPERT_STORE_REMOTE_DUMP=<path>` with `_DUMP_N` (placed rows with their inputs, written at exit; replayed on
+  the GPU by `flashreplay.cpp` in docs/evidence/glm-windows-2026-10-30/nuc-batched/).
+
+Wire: int32 hdr[68] { 0x4E440000|k, ntok, seq, layer, (gid, token) x 32 } + ntok x n_in f32; reply k x n_out f32 in
+request order. The NUC server is tools/glm53/flash/f53s.cpp. Requires `GGML_CUDA_MMVQ_EXACT_COLS=1`: the stock
+multi-token MoE kernel has another reduction order, so without it the boxes' rows are not the Spark's (a warning is
+logged). Reproducible multi-stream bytes additionally need `LLAMA_PREFILL_ISOLATE=1` (0035), with or without the tier.
+Measured (docs/experiments.md, windows nd0-nd8): byte-identical tier on/off at N=2/4/8, +1.3-2.5 % at N=4, +4.1-4.2 %
+at N=8, neutral at N=2, nothing at N=1. The diff is against the production tree (llama-k3-el); it applies on the
+committed stack (`git apply --check`) and the touched files pass a host syntax check.

@@ -1,0 +1,125 @@
+f53s: locked 6.1 of 32.7 GB of records (memlock limit 8.4 GB)
+f53s: 4056 records (32.7 GB), 11 workers + caller, port 19700
+f53s: client connected
+f53s: compute per pair p50 419 us p90 784 us p99 1106 us (last 40 requests)
+f53s: client gone after 40 requests (5.00 pairs per request, compute 2407 us per request, 0 NaN rows; minor faults 0 major 0 since start)
+f53s: client connected
+f53s: compute per pair p50 417 us p90 548 us p99 1106 us (last 80 requests)
+f53s: client gone after 80 requests (5.00 pairs per request, compute 2279 us per request, 0 NaN rows; minor faults 0 major 0 since start)
+f53s: client connected
+f53s: compute per pair p50 416 us p90 472 us p99 960 us (last 120 requests)
+f53s: client gone after 120 requests (5.00 pairs per request, compute 2217 us per request, 0 NaN rows; minor faults 0 major 0 since start)
+f53s: client connected
+f53s: compute per pair p50 415 us p90 470 us p99 960 us (last 130 requests)
+f53s: client gone after 130 requests (6.15 pairs per request, compute 2681 us per request, 0 NaN rows; minor faults 1 major 0 since start)
+f53s: client connected
+f53s: 20000 requests, 3.83 pairs per request, compute 1854 us per request, 0 NaN rows, minor faults 1 major 0 since start
+f53s: compute per pair p50 481 us p90 517 us p99 750 us (last 30385 requests)
+f53s: client gone after 30385 requests (3.82 pairs per request, compute 1875 us per request, 0 NaN rows; minor faults 30 major 0 since start)
+f53s: client connected
+f53s: 40000 requests, 3.38 pairs per request, compute 1683 us per request, 0 NaN rows, minor faults 30 major 0 since start
+f53s: 60000 requests, 2.92 pairs per request, compute 1484 us per request, 0 NaN rows, minor faults 30 major 0 since start
+f53s: compute per pair p50 497 us p90 542 us p99 1043 us (last 60307 requests)
+f53s: client gone after 60307 requests (2.91 pairs per request, compute 1482 us per request, 0 NaN rows; minor faults 89 major 0 since start)
+f53s: client connected
+f53s: 80000 requests, 2.45 pairs per request, compute 1265 us per request, 0 NaN rows, minor faults 89 major 0 since start
+f53s: 100000 requests, 2.26 pairs per request, compute 1171 us per request, 0 NaN rows, minor faults 89 major 0 since start
+f53s: compute per pair p50 536 us p90 591 us p99 1082 us (last 65536 requests)
+f53s: client gone after 119273 requests (2.17 pairs per request, compute 1134 us per request, 0 NaN rows; minor faults 154 major 0 since start)
+f53s: client connected
+f53s: 120000 requests, 2.16 pairs per request, compute 1133 us per request, 0 NaN rows, minor faults 154 major 0 since start
+f53s: 140000 requests, 2.00 pairs per request, compute 1057 us per request, 0 NaN rows, minor faults 154 major 0 since start
+f53s: 160000 requests, 1.89 pairs per request, compute 1000 us per request, 0 NaN rows, minor faults 154 major 0 since start
+f53s: 180000 requests, 1.89 pairs per request, compute 1000 us per request, 0 NaN rows, minor faults 154 major 0 since start
+f53s: compute per pair p50 532 us p90 580 us p99 1017 us (last 65536 requests)
+f53s: client gone after 199600 requests (1.89 pairs per request, compute 998 us per request, 0 NaN rows; minor faults 189 major 0 since start)
+f53s: client connected
+f53s: compute per pair p50 532 us p90 580 us p99 1025 us (last 65536 requests)
+f53s: client gone after 199725 requests (1.89 pairs per request, compute 999 us per request, 0 NaN rows; minor faults 189 major 0 since start)
+f53s: client connected
+f53s: 200000 requests, 1.89 pairs per request, compute 999 us per request, 0 NaN rows, minor faults 189 major 0 since start
+f53s: compute per pair p50 532 us p90 580 us p99 1031 us (last 65536 requests)
+f53s: client gone after 219949 requests (1.81 pairs per request, compute 962 us per request, 0 NaN rows; minor faults 189 major 0 since start)
+f53s: client connected
+f53s: 220000 requests, 1.81 pairs per request, compute 962 us per request, 0 NaN rows, minor faults 189 major 0 since start
+f53s: 240000 requests, 1.82 pairs per request, compute 963 us per request, 0 NaN rows, minor faults 189 major 0 since start
+f53s: 260000 requests, 1.80 pairs per request, compute 957 us per request, 0 NaN rows, minor faults 189 major 0 since start
+f53s: compute per pair p50 531 us p90 570 us p99 1066 us (last 65536 requests)
+f53s: client gone after 262367 requests (1.80 pairs per request, compute 954 us per request, 0 NaN rows; minor faults 189 major 0 since start)
+f53s: client connected
+f53s: 280000 requests, 1.80 pairs per request, compute 956 us per request, 0 NaN rows, minor faults 189 major 0 since start
+f53s: 300000 requests, 1.81 pairs per request, compute 959 us per request, 0 NaN rows, minor faults 189 major 0 since start
+f53s: compute per pair p50 528 us p90 577 us p99 1145 us (last 65536 requests)
+f53s: client gone after 317770 requests (1.77 pairs per request, compute 942 us per request, 0 NaN rows; minor faults 189 major 0 since start)
+f53s: client connected
+f53s: 320000 requests, 1.79 pairs per request, compute 948 us per request, 0 NaN rows, minor faults 189 major 0 since start
+f53s: 340000 requests, 1.91 pairs per request, compute 1008 us per request, 0 NaN rows, minor faults 189 major 0 since start
+f53s: compute per pair p50 504 us p90 568 us p99 1087 us (last 65536 requests)
+f53s: client gone after 348696 requests (1.97 pairs per request, compute 1033 us per request, 0 NaN rows; minor faults 189 major 0 since start)
+f53s: client connected
+f53s: 360000 requests, 2.03 pairs per request, compute 1060 us per request, 0 NaN rows, minor faults 189 major 0 since start
+f53s: compute per pair p50 487 us p90 540 us p99 974 us (last 65536 requests)
+f53s: client gone after 379588 requests (2.13 pairs per request, compute 1107 us per request, 0 NaN rows; minor faults 189 major 0 since start)
+f53s: client connected
+f53s: 380000 requests, 2.13 pairs per request, compute 1107 us per request, 0 NaN rows, minor faults 189 major 0 since start
+f53s: 400000 requests, 2.11 pairs per request, compute 1099 us per request, 0 NaN rows, minor faults 189 major 0 since start
+f53s: compute per pair p50 501 us p90 548 us p99 993 us (last 65536 requests)
+f53s: client gone after 417244 requests (2.10 pairs per request, compute 1094 us per request, 0 NaN rows; minor faults 189 major 0 since start)
+====nuc3
+f53s: locked 1.9 of 14.5 GB of records (memlock limit 4.1 GB)
+f53s: 1794 records (14.5 GB), 11 workers + caller, port 19700
+f53s: client connected
+f53s: 20000 requests, 2.30 pairs per request, compute 1071 us per request, 0 NaN rows, minor faults 0 major 0 since start
+f53s: 40000 requests, 2.47 pairs per request, compute 1132 us per request, 0 NaN rows, minor faults 0 major 0 since start
+f53s: 60000 requests, 2.60 pairs per request, compute 1180 us per request, 0 NaN rows, minor faults 0 major 0 since start
+f53s: compute per pair p50 432 us p90 521 us p99 682 us (last 65135 requests)
+f53s: client gone after 65135 requests (2.62 pairs per request, compute 1188 us per request, 0 NaN rows; minor faults 64 major 0 since start)
+f53s: client connected
+f53s: 80000 requests, 2.32 pairs per request, compute 1083 us per request, 0 NaN rows, minor faults 64 major 0 since start
+f53s: compute per pair p50 455 us p90 644 us p99 894 us (last 65536 requests)
+f53s: client gone after 92924 requests (2.13 pairs per request, compute 1018 us per request, 0 NaN rows; minor faults 129 major 0 since start)
+f53s: client connected
+f53s: 100000 requests, 2.06 pairs per request, compute 986 us per request, 0 NaN rows, minor faults 129 major 0 since start
+f53s: 120000 requests, 1.90 pairs per request, compute 916 us per request, 0 NaN rows, minor faults 129 major 0 since start
+f53s: 140000 requests, 1.90 pairs per request, compute 916 us per request, 0 NaN rows, minor faults 129 major 0 since start
+f53s: compute per pair p50 478 us p90 637 us p99 995 us (last 65536 requests)
+f53s: client gone after 148892 requests (1.90 pairs per request, compute 916 us per request, 0 NaN rows; minor faults 193 major 0 since start)
+f53s: client connected
+f53s: 160000 requests, 1.84 pairs per request, compute 898 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: 180000 requests, 1.75 pairs per request, compute 867 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: 200000 requests, 1.71 pairs per request, compute 860 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: 220000 requests, 1.69 pairs per request, compute 861 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: compute per pair p50 609 us p90 684 us p99 1005 us (last 65536 requests)
+f53s: client gone after 223540 requests (1.69 pairs per request, compute 861 us per request, 0 NaN rows; minor faults 193 major 0 since start)
+f53s: client connected
+f53s: compute per pair p50 609 us p90 684 us p99 1004 us (last 65536 requests)
+f53s: client gone after 223691 requests (1.69 pairs per request, compute 862 us per request, 0 NaN rows; minor faults 193 major 0 since start)
+f53s: client connected
+f53s: 240000 requests, 1.64 pairs per request, compute 847 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: compute per pair p50 613 us p90 685 us p99 1085 us (last 65536 requests)
+f53s: client gone after 241402 requests (1.64 pairs per request, compute 846 us per request, 0 NaN rows; minor faults 193 major 0 since start)
+f53s: client connected
+f53s: 260000 requests, 1.64 pairs per request, compute 847 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: 280000 requests, 1.62 pairs per request, compute 850 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: compute per pair p50 607 us p90 684 us p99 1140 us (last 65536 requests)
+f53s: client gone after 282635 requests (1.62 pairs per request, compute 848 us per request, 0 NaN rows; minor faults 193 major 0 since start)
+f53s: client connected
+f53s: 300000 requests, 1.64 pairs per request, compute 852 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: 320000 requests, 1.66 pairs per request, compute 855 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: 340000 requests, 1.63 pairs per request, compute 840 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: compute per pair p50 461 us p90 588 us p99 883 us (last 65536 requests)
+f53s: client gone after 342635 requests (1.63 pairs per request, compute 838 us per request, 0 NaN rows; minor faults 193 major 0 since start)
+f53s: client connected
+f53s: 360000 requests, 1.72 pairs per request, compute 878 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: compute per pair p50 447 us p90 579 us p99 820 us (last 65536 requests)
+f53s: client gone after 372694 requests (1.79 pairs per request, compute 906 us per request, 0 NaN rows; minor faults 193 major 0 since start)
+f53s: client connected
+f53s: 380000 requests, 1.83 pairs per request, compute 923 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: 400000 requests, 1.94 pairs per request, compute 969 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: compute per pair p50 427 us p90 587 us p99 802 us (last 65536 requests)
+f53s: client gone after 402440 requests (1.95 pairs per request, compute 974 us per request, 0 NaN rows; minor faults 193 major 0 since start)
+f53s: client connected
+f53s: 420000 requests, 1.94 pairs per request, compute 970 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: 440000 requests, 1.92 pairs per request, compute 966 us per request, 0 NaN rows, minor faults 193 major 0 since start
+f53s: compute per pair p50 456 us p90 674 us p99 881 us (last 65536 requests)
+f53s: client gone after 441893 requests (1.92 pairs per request, compute 966 us per request, 0 NaN rows; minor faults 193 major 0 since start)

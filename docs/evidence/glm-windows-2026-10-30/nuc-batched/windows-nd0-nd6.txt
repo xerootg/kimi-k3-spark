@@ -1,0 +1,206 @@
+=== win-nd0.out
+=== LEG A1 02:44:06 parallel 1 env: 
+READY A1 after 28s
+{"kind": "solo", "tag": "A1", "p": 0, "decode_tps": 15.51, "gen": 256, "md5": "53816a69bc", "t0": 1794044675.4256692, "t1": 1794044692.2514734}
+=== LEG A4 02:44:58 parallel 4 env: 
+READY A4 after 32s
+{"kind": "solo", "tag": "A4", "p": 0, "decode_tps": 10.11, "gen": 256, "md5": "53816a69bc", "t0": 1794044729.5528128, "t1": 1794044757.4240272}
+{"kind": "solo", "tag": "A4", "p": 1, "decode_tps": 14.7, "gen": 256, "md5": "28c834e37b", "t0": 1794044757.424083, "t1": 1794044775.4769082}
+{"kind": "solo", "tag": "A4", "p": 2, "decode_tps": 13.99, "gen": 256, "md5": "e3288e25c0", "t0": 1794044775.4769518, "t1": 1794044794.4308593}
+{"kind": "solo", "tag": "A4", "p": 3, "decode_tps": 14.58, "gen": 256, "md5": "34401d3b29", "t0": 1794044794.4309013, "t1": 1794044812.7414777}
+{"kind": "multi", "tag": "A4", "n": 2, "round": "warm", "agg_tps": 17.27, "wall_s": 29.64, "gen": 512, "per_stream_tps": [8.92, 8.87], "md5": ["088fb7e12e", "7aec4323e2"], "t0": 1794044812.7704957, "t1": 1794044842.4120626}
+{"kind": "multi", "tag": "A4", "n": 2, "round": 1, "agg_tps": 18.04, "wall_s": 28.38, "gen": 512, "per_stream_tps": [9.27, 9.27], "md5": ["5b268c4f32", "efb92bbdc2"], "t0": 1794044842.4124668, "t1": 1794044870.7974188}
+{"kind": "multi", "tag": "A4", "n": 2, "round": 2, "agg_tps": 19.75, "wall_s": 25.93, "gen": 512, "per_stream_tps": [10.17, 10.17], "md5": ["5b268c4f32", "efb92bbdc2"], "t0": 1794044870.7978046, "t1": 1794044896.7281358}
+{"kind": "multi", "tag": "A4", "n": 4, "round": "warm", "agg_tps": 21.39, "wall_s": 47.86, "gen": 1024, "per_stream_tps": [5.57, 5.63, 5.63, 5.57], "md5": ["e089e3a9eb", "a339e8d7d3", "3805933909", "8ad565e6de"], "t0": 1794044896.7838688, "t1": 1794044944.6455796}
+{"kind": "multi", "tag": "A4", "n": 4, "round": 1, "agg_tps": 23.01, "wall_s": 44.5, "gen": 1024, "per_stream_tps": [5.98, 6.04, 6.04, 5.98], "md5": ["e089e3a9eb", "a339e8d7d3", "3805933909", "8ad565e6de"], "t0": 1794044944.646061, "t1": 1794044989.1414793}
+{"kind": "multi", "tag": "A4", "n": 4, "round": 2, "agg_tps": 20.74, "wall_s": 49.36, "gen": 1024, "per_stream_tps": [5.65, 5.7, 5.7, 5.7], "md5": ["bcae48a3dc", "e82715aadf", "6bb984be5e", "7d51452feb"], "t0": 1794044989.141958, "t1": 1794045038.5038152}
+{"kind": "multi", "tag": "A4", "n": 4, "round": 3, "agg_tps": 22.15, "wall_s": 46.23, "gen": 1024, "per_stream_tps": [5.76, 5.76, 5.76, 5.79], "md5": ["3151d6686b", "063f27e270", "0eac159523", "1e0421f20d"], "t0": 1794045038.5043032, "t1": 1794045084.7369795}
+=== LEG A4x 02:51:30 parallel 4 env: GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1
+READY A4x after 28s
+{"kind": "solo", "tag": "A4x", "p": 0, "decode_tps": 15.03, "gen": 256, "md5": "f2c99a7d44", "t0": 1794045118.3366494, "t1": 1794045135.980149}
+{"kind": "solo", "tag": "A4x", "p": 1, "decode_tps": 14.86, "gen": 256, "md5": "8a441772c7", "t0": 1794045135.980207, "t1": 1794045153.909206}
+{"kind": "solo", "tag": "A4x", "p": 2, "decode_tps": 14.56, "gen": 256, "md5": "f6db94c1c9", "t0": 1794045153.90925, "t1": 1794045172.173236}
+{"kind": "solo", "tag": "A4x", "p": 3, "decode_tps": 14.76, "gen": 256, "md5": "afef88f25c", "t0": 1794045172.1732779, "t1": 1794045190.302456}
+{"kind": "multi", "tag": "A4x", "n": 2, "round": "warm", "agg_tps": 15.27, "wall_s": 33.53, "gen": 512, "per_stream_tps": [7.87, 7.94], "md5": ["f2c99a7d44", "079b71aa11"], "t0": 1794045190.3321137, "t1": 1794045223.8616843}
+{"kind": "multi", "tag": "A4x", "n": 2, "round": 1, "agg_tps": 15.89, "wall_s": 32.22, "gen": 512, "per_stream_tps": [8.18, 8.18], "md5": ["f2c99a7d44", "5f824ff92c"], "t0": 1794045223.862071, "t1": 1794045256.077751}
+{"kind": "multi", "tag": "A4x", "n": 2, "round": 2, "agg_tps": 16.14, "wall_s": 31.72, "gen": 512, "per_stream_tps": [8.31, 8.31], "md5": ["f2c99a7d44", "5f824ff92c"], "t0": 1794045256.0781298, "t1": 1794045287.800166}
+{"kind": "multi", "tag": "A4x", "n": 4, "round": "warm", "agg_tps": 16.91, "wall_s": 60.54, "gen": 1024, "per_stream_tps": [4.39, 4.39, 4.35, 4.35], "md5": ["c29b3a1183", "54994cf8c8", "8f1fa1ecd2", "b0d2a18a6c"], "t0": 1794045287.8300328, "t1": 1794045348.3726773}
+{"kind": "multi", "tag": "A4x", "n": 4, "round": 1, "agg_tps": 17.06, "wall_s": 60.03, "gen": 1024, "per_stream_tps": [4.38, 4.38, 4.38, 4.38], "md5": ["1f4c5a0603", "9e3996ed46", "d2d16862ca", "0dbc5c7145"], "t0": 1794045348.373194, "t1": 1794045408.4028926}
+{"kind": "multi", "tag": "A4x", "n": 4, "round": 2, "agg_tps": 17.23, "wall_s": 59.44, "gen": 1024, "per_stream_tps": [4.46, 4.46, 4.46, 4.41], "md5": ["c29b3a1183", "9fc4f769f2", "513e7d8020", "b0d2a18a6c"], "t0": 1794045408.4033937, "t1": 1794045467.8416522}
+{"kind": "multi", "tag": "A4x", "n": 4, "round": 3, "agg_tps": 16.92, "wall_s": 60.52, "gen": 1024, "per_stream_tps": [4.39, 4.39, 4.39, 4.34], "md5": ["c29b3a1183", "9fc4f769f2", "513e7d8020", "b0d2a18a6c"], "t0": 1794045467.8422132, "t1": 1794045528.3639495}
+MEMORY lowest MemAvailable MiB 5894
+WIN-ND0-DONE
+=== win-nd1.out
+=== LEG M4 02:59:34 parallel 4 env: GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1
+WATCHDOG kill M4 3954 MiB
+/home/xero/nd/ndlib.sh: line 21: 2343107 Killed                  env $ENV "$@" LLAMA_EXPERT_STORE_SNAPSHOT=$PWD/snapshot/nd-$tag.k3sn $BIN $ARGS --parallel $par > $OUT/server-$tag.log 2>&1
+LEG-FAIL M4 died
+WATCHDOG kill M4 3954 MiB
+MEMORY lowest MemAvailable MiB 5559
+WIN-ND1-DONE
+=== win-nd2.out
+=== LEG R0 03:12:43 parallel 4 env: GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1
+READY R0 after 30s
+{"kind": "solo", "tag": "R0", "p": 0, "decode_tps": 16.17, "gen": 256, "md5": "d8b2a26bf6", "t0": 1794046393.8008375, "t1": 1794046410.0632617}
+{"kind": "multi", "tag": "R0", "n": 2, "round": "warm", "agg_tps": 19.11, "wall_s": 26.79, "gen": 512, "per_stream_tps": [9.88, 9.88], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794046410.0926774, "t1": 1794046436.8863177}
+{"kind": "multi", "tag": "R0", "n": 2, "round": 1, "agg_tps": 20.0, "wall_s": 25.6, "gen": 512, "per_stream_tps": [10.31, 10.31], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794046436.886704, "t1": 1794046462.4822564}
+{"kind": "multi", "tag": "R0", "n": 2, "round": 2, "agg_tps": 20.06, "wall_s": 25.52, "gen": 512, "per_stream_tps": [10.34, 10.34], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794046462.4825878, "t1": 1794046488.000822}
+{"kind": "multi", "tag": "R0", "n": 4, "round": "warm", "agg_tps": 22.39, "wall_s": 45.74, "gen": 1024, "per_stream_tps": [5.86, 5.86, 5.9, 5.86], "md5": ["3d2861e68f", "6712a22f38", "12d4042cfb", "a6ae77b3f3"], "t0": 1794046488.0306985, "t1": 1794046533.7703803}
+{"kind": "multi", "tag": "R0", "n": 4, "round": 1, "agg_tps": 22.2, "wall_s": 46.12, "gen": 1024, "per_stream_tps": [6.1, 6.1, 6.06, 6.06], "md5": ["c224a987bd", "3c40ee010a", "b3d66de4c5", "b30c3a98cf"], "t0": 1794046533.7708597, "t1": 1794046579.893717}
+{"kind": "multi", "tag": "R0", "n": 4, "round": 2, "agg_tps": 22.74, "wall_s": 45.02, "gen": 1024, "per_stream_tps": [5.93, 5.93, 5.89, 5.93], "md5": ["1ff67f69e5", "4ddbc56eaa", "09e9d640b4", "13ffdf14ba"], "t0": 1794046579.894234, "t1": 1794046624.9175038}
+{"kind": "multi", "tag": "R0", "n": 4, "round": 3, "agg_tps": 24.17, "wall_s": 42.36, "gen": 1024, "per_stream_tps": [6.32, 6.32, 6.32, 6.27], "md5": ["c224a987bd", "3c40ee010a", "0ab8ae6d6a", "f034854184"], "t0": 1794046624.9180546, "t1": 1794046667.2782533}
+=== LEG R1 03:17:52 parallel 4 env: GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_REMOTE=192.168.4.249:19700,192.168.4.250:19700 LLAMA_EXPERT_STORE_REMOTE_SET=/home/xero/nd/nuc2.set,/home/xero/nd/nuc3.set LLAMA_EXPERT_STORE_REMOTE_COLS=1 LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS=4,3 LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US=3000
+READY R1 after 28s
+{"kind": "solo", "tag": "R1", "p": 0, "decode_tps": 16.1, "gen": 256, "md5": "d8b2a26bf6", "t0": 1794046700.4461079, "t1": 1794046716.786913}
+{"kind": "multi", "tag": "R1", "n": 2, "round": "warm", "agg_tps": 12.54, "wall_s": 40.83, "gen": 512, "per_stream_tps": [6.41, 6.45], "md5": ["8d3cf17b08", "3549d9730b"], "t0": 1794046716.8167362, "t1": 1794046757.6440716}
+{"kind": "multi", "tag": "R1", "n": 2, "round": 1, "agg_tps": 12.63, "wall_s": 40.55, "gen": 512, "per_stream_tps": [6.43, 6.43], "md5": ["f15acd114b", "1c120facae"], "t0": 1794046757.6444478, "t1": 1794046798.1951604}
+{"kind": "multi", "tag": "R1", "n": 2, "round": 2, "agg_tps": 12.61, "wall_s": 40.61, "gen": 512, "per_stream_tps": [6.41, 6.41], "md5": ["f15acd114b", "6a578d631b"], "t0": 1794046798.1955457, "t1": 1794046838.8096519}
+{"kind": "multi", "tag": "R1", "n": 4, "round": "warm", "agg_tps": 22.55, "wall_s": 45.4, "gen": 1024, "per_stream_tps": [5.97, 6.04, 6.04, 6.04], "md5": ["b9e66df464", "b77d82257b", "a59e024cd8", "bb9b3c9c7e"], "t0": 1794046838.8402967, "t1": 1794046884.2433403}
+{"kind": "multi", "tag": "R1", "n": 4, "round": 1, "agg_tps": 23.52, "wall_s": 43.54, "gen": 1024, "per_stream_tps": [6.18, 6.12, 6.12, 6.18], "md5": ["3ab5dc0746", "98ef3565b6", "8b4d25addc", "3be0cafeb0"], "t0": 1794046884.2439852, "t1": 1794046927.7825537}
+{"kind": "multi", "tag": "R1", "n": 4, "round": 2, "agg_tps": 23.3, "wall_s": 43.96, "gen": 1024, "per_stream_tps": [6.14, 6.09, 6.14, 6.09], "md5": ["ac202c4b32", "364f78eef1", "3189d8fe20", "c6b4bb01ba"], "t0": 1794046927.7830746, "t1": 1794046971.7386727}
+{"kind": "multi", "tag": "R1", "n": 4, "round": 3, "agg_tps": 22.9, "wall_s": 44.71, "gen": 1024, "per_stream_tps": [5.95, 5.99, 5.95, 5.95], "md5": ["f2c99a7d44", "33312443a6", "7471e614f9", "b30c3a98cf"], "t0": 1794046971.7392335, "t1": 1794047016.4472358}
+5.29.324.389 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.31.333.539 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.33.340.017 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.35.348.209 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.37.356.022 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.39.362.670 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.41.369.028 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.43.390.535 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.29.324.389 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.31.333.539 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.33.340.017 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.35.348.209 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.37.356.022 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.39.362.670 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.41.369.028 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+5.43.390.535 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+MEMORY lowest MemAvailable MiB 5945
+WIN-ND2-DONE
+=== win-nd3.out
+=== LEG F0 03:48:47 parallel 4 env: 
+READY F0 after 30s
+{"kind": "solo", "tag": "F0", "p": 0, "decode_tps": 9.99, "gen": 256, "md5": "53816a69bc", "t0": 1794048557.360034, "t1": 1794048585.6335318}
+=== LEG F1 03:49:51 parallel 4 env: GGML_CUDA_MMVQ_EXACT_COLS=1
+READY F1 after 28s
+{"kind": "solo", "tag": "F1", "p": 0, "decode_tps": 14.7, "gen": 256, "md5": "e45b9d9cd3", "t0": 1794048619.0794606, "t1": 1794048636.9394753}
+=== LEG F2 03:50:41 parallel 4 env: LLAMA_EXPERT_STORE_SPLIT_COLS=1
+READY F2 after 28s
+{"kind": "solo", "tag": "F2", "p": 0, "decode_tps": 16.13, "gen": 256, "md5": "d8b2a26bf6", "t0": 1794048669.4390988, "t1": 1794048685.7404797}
+=== LEG F3 03:51:31 parallel 1 env: GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_REMOTE=192.168.4.249:19700,192.168.4.250:19700 LLAMA_EXPERT_STORE_REMOTE_SET=/home/xero/nd/nuc2.set,/home/xero/nd/nuc3.set LLAMA_EXPERT_STORE_REMOTE_COLS=1 LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS=4,3 LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US=3000
+READY F3 after 28s
+{"kind": "solo", "tag": "F3", "p": 0, "decode_tps": 16.4, "gen": 256, "md5": "d8b2a26bf6", "t0": 1794048719.8732562, "t1": 1794048735.887095}
+{"kind": "depth", "tag": "F3-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 346.72, "prefill_s": 47.34, "decode_n": 128, "decode_tps": 15.68, "md5": "145c14aa8b", "t0": 1794048735.9328036, "t1": 1794048791.404153}
+MEMORY lowest MemAvailable MiB 5804
+WIN-ND3-DONE
+=== win-nd4.out
+=== LEG D1 03:27:01 parallel 4 env: GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_REMOTE=192.168.4.249:19700,192.168.4.250:19700 LLAMA_EXPERT_STORE_REMOTE_SET=/home/xero/nd/nuc2.set,/home/xero/nd/nuc3.set LLAMA_EXPERT_STORE_REMOTE_COLS=1 LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS=2,1 LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US=3000 LLAMA_EXPERT_STORE_REMOTE_DISCARD=1 LLAMA_EXPERT_STORE_REMOTE_TRIP=1000000
+READY D1 after 30s
+{"kind": "multi", "tag": "D1", "n": 2, "round": "warm", "agg_tps": 10.03, "wall_s": 51.06, "gen": 512, "per_stream_tps": [5.66, 5.66], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794047250.9181833, "t1": 1794047301.9825208}
+{"kind": "multi", "tag": "D1", "n": 2, "round": 1, "agg_tps": 13.13, "wall_s": 38.99, "gen": 512, "per_stream_tps": [6.72, 6.72], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794047301.982972, "t1": 1794047340.9766304}
+{"kind": "multi", "tag": "D1", "n": 2, "round": 2, "agg_tps": 5.38, "wall_s": 95.2, "gen": 512, "per_stream_tps": [2.72, 2.71], "md5": ["e9e1715e09", "5fc9703c46"], "t0": 1794047340.9779277, "t1": 1794047436.1793592}
+3.35.396.783 I llama_moe_cache: expert store: remote BATCHED: 32340 N-token layer steps, 30030 with a post (one request per box), 524160 routed pairs, 87652 posted (16.7%), 87652 computed late after a miss, 4789 fallback reads; resolve 0.617 ms per posted layer
+3.35.396.783 I llama_moe_cache: expert store: remote BATCHED: replies complete when the real lookup came 36020, waited for 21955
+3.35.396.784 I llama_moe_cache: expert store: remote BATCHED box 0: 0 rows placed = 0.00% of the routed pairs
+3.35.396.785 I llama_moe_cache: expert store: remote BATCHED box 1: 0 rows placed = 0.00% of the routed pairs
+3.35.397.507 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 29991 posts, 1.99 rows per post, 0 rows placed, 29991 requests short (59668 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 0 breaker trips; RTT p50 1.32 p90 1.46 p99 2.26 ms (16384 replies); 1 connects, 0 drops (0 stale)
+3.35.397.845 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 27984 posts, 1.00 rows per post, 0 rows placed, 27984 requests short (27984 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 0 breaker trips; RTT p50 0.85 p90 0.99 p99 2.48 ms (16384 replies); 1 connects, 0 drops (0 stale)
+=== LEG A1 03:30:43 parallel 4 env: GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_REMOTE=192.168.4.249:19700,192.168.4.250:19700 LLAMA_EXPERT_STORE_REMOTE_SET=/home/xero/nd/nuc2.set,/home/xero/nd/nuc3.set LLAMA_EXPERT_STORE_REMOTE_COLS=1 LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS=4,3 LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US=3000 LLAMA_EXPERT_STORE_REMOTE_ADAPT=1
+READY A1 after 28s
+{"kind": "multi", "tag": "A1", "n": 2, "round": "warm", "agg_tps": 18.02, "wall_s": 28.41, "gen": 512, "per_stream_tps": [9.38, 9.31], "md5": ["a27595b4a7", "4015ec2e7c"], "t0": 1794047470.642578, "t1": 1794047499.0489063}
+{"kind": "multi", "tag": "A1", "n": 2, "round": 1, "agg_tps": 18.49, "wall_s": 27.7, "gen": 512, "per_stream_tps": [9.5, 9.5], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794047499.0493138, "t1": 1794047526.7447283}
+{"kind": "multi", "tag": "A1", "n": 2, "round": 2, "agg_tps": 19.32, "wall_s": 26.5, "gen": 512, "per_stream_tps": [9.94, 9.94], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794047526.7450786, "t1": 1794047553.2458904}
+{"kind": "multi", "tag": "A1", "n": 4, "round": "warm", "agg_tps": 22.79, "wall_s": 44.94, "gen": 1024, "per_stream_tps": [5.95, 6.01, 6.02, 6.01], "md5": ["2899452b9a", "2817a3df56", "48ccf290c6", "0d3b33e40b"], "t0": 1794047553.2766507, "t1": 1794047598.2160485}
+{"kind": "multi", "tag": "A1", "n": 4, "round": 1, "agg_tps": 23.7, "wall_s": 43.21, "gen": 1024, "per_stream_tps": [6.17, 6.21, 6.21, 6.17], "md5": ["ab64d11931", "2817a3df56", "0ab8ae6d6a", "4596c39bd8"], "t0": 1794047598.21654, "t1": 1794047641.4216328}
+{"kind": "multi", "tag": "A1", "n": 4, "round": 2, "agg_tps": 23.92, "wall_s": 42.81, "gen": 1024, "per_stream_tps": [6.2, 6.2, 6.2, 6.2], "md5": ["3d2861e68f", "003d53776c", "d4d218327a", "84091c8d4f"], "t0": 1794047641.4221635, "t1": 1794047684.2338848}
+4.01.366.790 I llama_moe_cache: expert store: remote BATCHED: 64848 N-token layer steps, 60166 with a post (one request per box), 1562400 routed pairs, 166914 posted (10.7%), 631 computed late after a miss, 70 fallback reads; resolve 0.104 ms per posted layer
+4.01.366.791 I llama_moe_cache: expert store: remote BATCHED: replies complete when the real lookup came 82233, waited for 32701
+4.01.366.792 I llama_moe_cache: expert store: remote BATCHED box 0: 82613 rows placed = 5.29% of the routed pairs, pairs per layer now 2
+4.01.366.792 I llama_moe_cache: expert store: remote BATCHED box 1: 83670 rows placed = 5.36% of the routed pairs, pairs per layer now 1
+4.01.367.859 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 58966 posts, 1.41 rows per post, 82613 rows placed, 225 requests short (307 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 2 breaker trips; RTT p50 1.32 p90 1.62 p99 2.12 ms (16384 replies); 1 connects, 0 drops (0 stale)
+4.01.368.258 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 55968 posts, 1.50 rows per post, 83670 rows placed, 233 requests short (324 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 4 breaker trips; RTT p50 1.25 p90 1.70 p99 2.10 ms (16384 replies); 1 connects, 0 drops (0 stale)
+MEMORY lowest MemAvailable MiB 6186
+WIN-ND4-DONE
+=== win-nd5.out
+=== LEG R0 03:36:30 parallel 4 env: GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1
+READY R0 after 26s
+{"kind": "solo", "tag": "R0", "p": 0, "decode_tps": 16.32, "gen": 256, "md5": "d8b2a26bf6", "t0": 1794047816.3505232, "t1": 1794047832.408687}
+{"kind": "multi", "tag": "R0", "n": 2, "round": "warm", "agg_tps": 19.69, "wall_s": 26.0, "gen": 512, "per_stream_tps": [10.16, 10.16], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794047832.4376187, "t1": 1794047858.438778}
+{"kind": "multi", "tag": "R0", "n": 2, "round": 1, "agg_tps": 20.29, "wall_s": 25.24, "gen": 512, "per_stream_tps": [10.44, 10.44], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794047858.43921, "t1": 1794047883.6780074}
+{"kind": "multi", "tag": "R0", "n": 2, "round": 2, "agg_tps": 20.29, "wall_s": 25.24, "gen": 512, "per_stream_tps": [10.44, 10.44], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794047883.6783407, "t1": 1794047908.9160585}
+{"kind": "multi", "tag": "R0", "n": 2, "round": 3, "agg_tps": 20.31, "wall_s": 25.21, "gen": 512, "per_stream_tps": [10.46, 10.46], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794047908.916414, "t1": 1794047934.123295}
+{"kind": "multi", "tag": "R0", "n": 4, "round": "warm", "agg_tps": 22.88, "wall_s": 44.76, "gen": 1024, "per_stream_tps": [6.25, 6.19, 6.25, 6.19], "md5": ["a8a50f387f", "ec28efff13", "7db24d8e17", "670a265210"], "t0": 1794047934.1543782, "t1": 1794047978.9100702}
+{"kind": "multi", "tag": "R0", "n": 4, "round": 1, "agg_tps": 24.11, "wall_s": 42.48, "gen": 1024, "per_stream_tps": [6.23, 6.27, 6.27, 6.23], "md5": ["ab64d11931", "46ee3a043f", "d9d8c9bedd", "4596c39bd8"], "t0": 1794047978.9105873, "t1": 1794048021.3908627}
+{"kind": "multi", "tag": "R0", "n": 4, "round": 2, "agg_tps": 24.8, "wall_s": 41.29, "gen": 1024, "per_stream_tps": [6.41, 6.41, 6.41, 6.41], "md5": ["3d2861e68f", "2d06579a19", "cd46b97ca2", "fdc996fc46"], "t0": 1794048021.3913288, "t1": 1794048062.679703}
+{"kind": "multi", "tag": "R0", "n": 4, "round": 3, "agg_tps": 24.73, "wall_s": 41.41, "gen": 1024, "per_stream_tps": [6.45, 6.39, 6.45, 6.45], "md5": ["f06371d4c6", "339d24fa5c", "7db24d8e17", "040c7bc3be"], "t0": 1794048062.6801999, "t1": 1794048104.0951374}
+4.28.208.414 I fill_late: expert store: memory valve: host MemAvailable 22.78 GB (lowest 22.75, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.43.846.391 I fill_late: expert store: 1880341 lookups, hit rate 96.8%, 503.2 GB read for decode, 0.0 GB for prefill
+4.43.846.400 I fill_late: expert store: memory valve: host MemAvailable 22.75 GB (lowest 22.75, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.59.206.331 I fill_late: expert store: 2005092 lookups, hit rate 96.8%, 543.8 GB read for decode, 0.0 GB for prefill
+4.59.206.338 I fill_late: expert store: memory valve: host MemAvailable 22.74 GB (lowest 22.72, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+5.14.167.684 I llama_moe_cache: ubatch <= 8: hits = 2009456, misses = 64759, hit rate = 96.88%, uploaded = 518606.88 MiB
+5.14.167.687 I llama_moe_cache: ubatch  > 8: hits = 49147, misses = 3354, hit rate = 93.61%, uploaded = 26585.12 MiB
+5.14.167.693 I llama_moe_cache: expert store: memory valve: host MemAvailable 25.30 GB (lowest 22.72, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+=== LEG A2 03:41:49 parallel 4 env: GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_REMOTE=192.168.4.249:19700,192.168.4.250:19700 LLAMA_EXPERT_STORE_REMOTE_SET=/home/xero/nd/nuc2.set,/home/xero/nd/nuc3.set LLAMA_EXPERT_STORE_REMOTE_COLS=1 LLAMA_EXPERT_STORE_REMOTE_SPIN_US=5000 LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS=4,3 LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US=3000 LLAMA_EXPERT_STORE_REMOTE_ADAPT=1
+READY A2 after 28s
+{"kind": "solo", "tag": "A2", "p": 0, "decode_tps": 16.28, "gen": 256, "md5": "d8b2a26bf6", "t0": 1794048136.1407495, "t1": 1794048152.2259681}
+{"kind": "multi", "tag": "A2", "n": 2, "round": "warm", "agg_tps": 18.33, "wall_s": 27.93, "gen": 512, "per_stream_tps": [9.44, 9.5], "md5": ["8d3cf17b08", "3549d9730b"], "t0": 1794048152.2555182, "t1": 1794048180.1888099}
+{"kind": "multi", "tag": "A2", "n": 2, "round": 1, "agg_tps": 19.14, "wall_s": 26.75, "gen": 512, "per_stream_tps": [9.83, 9.83], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794048180.189134, "t1": 1794048206.9415035}
+{"kind": "multi", "tag": "A2", "n": 2, "round": 2, "agg_tps": 19.62, "wall_s": 26.09, "gen": 512, "per_stream_tps": [10.09, 10.09], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794048206.941841, "t1": 1794048233.0314164}
+{"kind": "multi", "tag": "A2", "n": 2, "round": 3, "agg_tps": 19.38, "wall_s": 26.42, "gen": 512, "per_stream_tps": [9.96, 9.96], "md5": ["f15acd114b", "e26c5838f9"], "t0": 1794048233.031726, "t1": 1794048259.448958}
+{"kind": "multi", "tag": "A2", "n": 4, "round": "warm", "agg_tps": 23.82, "wall_s": 42.98, "gen": 1024, "per_stream_tps": [6.21, 6.21, 6.26, 6.26], "md5": ["9f51bd11f4", "c74b1f5c4a", "83853175f4", "334f3115d1"], "t0": 1794048259.4788451, "t1": 1794048302.4618552}
+{"kind": "multi", "tag": "A2", "n": 4, "round": 1, "agg_tps": 24.93, "wall_s": 41.07, "gen": 1024, "per_stream_tps": [6.46, 6.46, 6.46, 6.46], "md5": ["3d2861e68f", "2d06579a19", "cd46b97ca2", "fdc996fc46"], "t0": 1794048302.4623518, "t1": 1794048343.5356905}
+{"kind": "multi", "tag": "A2", "n": 4, "round": 2, "agg_tps": 24.79, "wall_s": 41.31, "gen": 1024, "per_stream_tps": [6.47, 6.41, 6.47, 6.47], "md5": ["ac202c4b32", "339d24fa5c", "48ccf290c6", "0d3b33e40b"], "t0": 1794048343.5362213, "t1": 1794048384.8440778}
+{"kind": "multi", "tag": "A2", "n": 4, "round": 3, "agg_tps": 25.2, "wall_s": 40.63, "gen": 1024, "per_stream_tps": [6.52, 6.52, 6.52, 6.52], "md5": ["3d2861e68f", "2d06579a19", "cd46b97ca2", "fdc996fc46"], "t0": 1794048384.8445966, "t1": 1794048425.4778168}
+5.16.499.373 I llama_moe_cache: ubatch  > 8: hits = 47803, misses = 3270, hit rate = 93.60%, uploaded = 25976.94 MiB
+5.16.499.379 I llama_moe_cache: expert store: memory valve: host MemAvailable 22.74 GB (lowest 22.73, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+5.16.499.385 I llama_moe_cache: expert store: remote BATCHED: 86562 N-token layer steps, 80375 with a post (one request per box), 2085888 routed pairs, 212775 posted (10.2%), 706 computed late after a miss, 53 fallback reads; resolve 0.115 ms per posted layer
+5.16.499.386 I llama_moe_cache: expert store: remote BATCHED: replies complete when the real lookup came 101157, waited for 53818
+5.16.499.386 I llama_moe_cache: expert store: remote BATCHED box 0: 117382 rows placed = 5.63% of the routed pairs, pairs per layer now 2
+5.16.499.387 I llama_moe_cache: expert store: remote BATCHED box 1: 94687 rows placed = 4.54% of the routed pairs, pairs per layer now 1
+5.16.500.313 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 80327 posts, 1.47 rows per post, 117382 rows placed, 256 requests short (389 rows read locally, 1 partial replies, 0 NaN rows), 0 unsent, 0 breaker trips; RTT p50 1.30 p90 1.58 p99 2.02 ms (16384 replies); 1 connects, 0 drops (0 stale)
+5.16.500.682 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 74648 posts, 1.27 rows per post, 94687 rows placed, 266 requests short (317 rows read locally, 4 partial replies, 0 NaN rows), 0 unsent, 5 breaker trips; RTT p50 0.98 p90 1.60 p99 2.02 ms (16384 replies); 1 connects, 0 drops (0 stale)
+MEMORY lowest MemAvailable MiB 21671
+WIN-ND5-DONE
+=== win-nd6.out
+=== LEG V 03:54:55 parallel 4 env: GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_REMOTE=192.168.4.249:19700,192.168.4.250:19700 LLAMA_EXPERT_STORE_REMOTE_SET=/home/xero/nd/nuc2.set,/home/xero/nd/nuc3.set LLAMA_EXPERT_STORE_REMOTE_COLS=1 LLAMA_EXPERT_STORE_REMOTE_SPIN_US=5000 LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS=4,3 LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US=3000 LLAMA_EXPERT_STORE_REMOTE_ADAPT=1 LLAMA_EXPERT_STORE_REMOTE_DUMP=/srv/glm-5.3-flash/legs-nd6/V.dump LLAMA_EXPERT_STORE_REMOTE_DUMP_N=32768
+READY V after 26s
+{"kind": "solo", "tag": "V", "p": 0, "decode_tps": 16.48, "gen": 256, "md5": "d8b2a26bf6", "t0": 1794048921.7602262, "t1": 1794048937.6515708}
+{"kind": "multi", "tag": "V", "n": 2, "round": "warm", "agg_tps": 18.49, "wall_s": 27.69, "gen": 512, "per_stream_tps": [9.52, 9.59], "md5": ["8d3cf17b08", "3549d9730b"], "t0": 1794048937.6808717, "t1": 1794048965.3678162}
+{"kind": "multi", "tag": "V", "n": 2, "round": 1, "agg_tps": 19.12, "wall_s": 26.77, "gen": 512, "per_stream_tps": [9.8, 9.88], "md5": ["8d3cf17b08", "3549d9730b"], "t0": 1794048965.368156, "t1": 1794048992.1398964}
+1.36.613.985 I llama_moe_cache: expert store: remote BATCHED: 21798 N-token layer steps, 20241 with a post (one request per box), 358176 routed pairs, 40086 posted (11.2%), 156 computed late after a miss, 9 fallback reads; resolve 0.147 ms per posted layer
+1.36.613.986 I llama_moe_cache: expert store: remote BATCHED: replies complete when the real lookup came 18471, waited for 19464 (0 of them with the short wait of resident pairs)
+1.36.613.988 I llama_moe_cache: expert store: remote BATCHED box 0: 21522 rows placed = 6.01% of the routed pairs, pairs per layer now 1
+1.36.613.989 I llama_moe_cache: expert store: remote BATCHED box 1: 18408 rows placed = 5.14% of the routed pairs, pairs per layer now 1
+1.36.614.586 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 20224 posts, 1.07 rows per post, 21522 rows placed, 52 requests short (77 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 0 breaker trips; RTT p50 0.77 p90 0.91 p99 1.44 ms (16384 replies); 1 connects, 0 drops (0 stale)
+1.36.614.924 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 17711 posts, 1.04 rows per post, 18408 rows placed, 75 requests short (79 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 2 breaker trips; RTT p50 0.86 p90 0.96 p99 1.49 ms (16384 replies); 1 connects, 0 drops (0 stale)
+1.36.954.052 I expert store: remote BATCHED: 32768 placed rows with their inputs written to /srv/glm-5.3-flash/legs-nd6/V.dump
+ggml_cuda_init: found 1 CUDA devices (Total VRAM: 124607 MiB):
+ggml_cuda_init: device 0: host bank enabled (integrated = 1, host pointer for registered memory = 1, pageable access = 1, host page tables = 1)
+  Device 0: NVIDIA GB10, compute capability 12.1, VMM: yes, VRAM: 124607 MiB
+replay /srv/glm-5.3-flash/legs-nd6/V.dump: 32768 remote rows, 0 differ from the GPU's rows
+=== LEG I0 03:57:12 parallel 4 env: GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_PREFILL_ISOLATE=1
+READY I0 after 30s
+{"kind": "multi", "tag": "I0", "n": 4, "round": "warm", "agg_tps": 24.12, "wall_s": 42.45, "gen": 1024, "per_stream_tps": [6.16, 6.24, 6.1, 6.35], "md5": ["9cb753b35c", "31e3dd535b", "eee7aaf665", "28064cfa66"], "t0": 1794049063.04018, "t1": 1794049105.4944723}
+{"kind": "multi", "tag": "I0", "n": 4, "round": 1, "agg_tps": 24.83, "wall_s": 41.23, "gen": 1024, "per_stream_tps": [6.32, 6.4, 6.26, 6.48], "md5": ["9cb753b35c", "31e3dd535b", "eee7aaf665", "28064cfa66"], "t0": 1794049105.4950023, "t1": 1794049146.728122}
+{"kind": "multi", "tag": "I0", "n": 4, "round": 2, "agg_tps": 24.87, "wall_s": 41.18, "gen": 1024, "per_stream_tps": [6.33, 6.41, 6.27, 6.5], "md5": ["9cb753b35c", "31e3dd535b", "eee7aaf665", "28064cfa66"], "t0": 1794049146.7286468, "t1": 1794049187.9051754}
+{"kind": "multi", "tag": "I0", "n": 4, "round": 3, "agg_tps": 24.81, "wall_s": 41.27, "gen": 1024, "per_stream_tps": [6.4, 6.48, 6.34, 6.27], "md5": ["9cb753b35c", "31e3dd535b", "eee7aaf665", "28064cfa66"], "t0": 1794049187.905618, "t1": 1794049229.1728082}
+{"kind": "multi", "tag": "I0", "n": 2, "round": "warm", "agg_tps": 17.96, "wall_s": 28.52, "gen": 512, "per_stream_tps": [9.08, 9.24], "md5": ["fa6ae2a90c", "23b57afd49"], "t0": 1794049229.2032871, "t1": 1794049257.7187717}
+{"kind": "multi", "tag": "I0", "n": 2, "round": 1, "agg_tps": 19.03, "wall_s": 26.91, "gen": 512, "per_stream_tps": [9.62, 9.8], "md5": ["fa6ae2a90c", "23b57afd49"], "t0": 1794049257.7191193, "t1": 1794049284.6241648}
+=== LEG I1 04:01:29 parallel 4 env: GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_EXPERT_STORE_REMOTE=192.168.4.249:19700,192.168.4.250:19700 LLAMA_EXPERT_STORE_REMOTE_SET=/home/xero/nd/nuc2.set,/home/xero/nd/nuc3.set LLAMA_EXPERT_STORE_REMOTE_COLS=1 LLAMA_EXPERT_STORE_REMOTE_SPIN_US=5000 LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS=4,3 LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US=3000 LLAMA_EXPERT_STORE_REMOTE_ADAPT=1 LLAMA_EXPERT_STORE_REMOTE_MAX_WAIT_US=100
+READY I1 after 26s
+{"kind": "multi", "tag": "I1", "n": 4, "round": "warm", "agg_tps": 24.63, "wall_s": 41.58, "gen": 1024, "per_stream_tps": [6.32, 6.4, 6.49, 6.26], "md5": ["9cb753b35c", "31e3dd535b", "eee7aaf665", "28064cfa66"], "t0": 1794049315.9441552, "t1": 1794049357.5197332}
+{"kind": "multi", "tag": "I1", "n": 4, "round": 1, "agg_tps": 25.17, "wall_s": 40.68, "gen": 1024, "per_stream_tps": [6.42, 6.5, 6.57, 6.36], "md5": ["9cb753b35c", "31e3dd535b", "eee7aaf665", "28064cfa66"], "t0": 1794049357.5201583, "t1": 1794049398.200173}
+{"kind": "multi", "tag": "I1", "n": 4, "round": 2, "agg_tps": 25.15, "wall_s": 40.71, "gen": 1024, "per_stream_tps": [6.41, 6.49, 6.57, 6.35], "md5": ["9cb753b35c", "31e3dd535b", "eee7aaf665", "28064cfa66"], "t0": 1794049398.2005837, "t1": 1794049438.913981}
+{"kind": "multi", "tag": "I1", "n": 4, "round": 3, "agg_tps": 25.14, "wall_s": 40.73, "gen": 1024, "per_stream_tps": [6.49, 6.34, 6.57, 6.43], "md5": ["9cb753b35c", "31e3dd535b", "eee7aaf665", "28064cfa66"], "t0": 1794049438.9145026, "t1": 1794049479.6462917}
+{"kind": "multi", "tag": "I1", "n": 2, "round": "warm", "agg_tps": 17.95, "wall_s": 28.53, "gen": 512, "per_stream_tps": [9.07, 9.23], "md5": ["fa6ae2a90c", "23b57afd49"], "t0": 1794049479.699452, "t1": 1794049508.2263706}
+{"kind": "multi", "tag": "I1", "n": 2, "round": 1, "agg_tps": 18.89, "wall_s": 27.1, "gen": 512, "per_stream_tps": [9.54, 9.72], "md5": ["fa6ae2a90c", "23b57afd49"], "t0": 1794049508.2266862, "t1": 1794049535.325707}
+4.04.468.543 I fill_late: expert store: remote box 1 (192.168.4.250:19700, up): 41232 posts, 1.49 rows per post, 53978 rows placed, 3723 requests short (7490 rows read locally, 292 partial replies, 0 NaN rows), 0 unsent, 27 breaker trips; RTT p50 0.90 p90 1.53 p99 1.71 ms (16384 replies); 1 connects, 0 drops (0 stale)
+4.05.788.338 I llama_moe_cache: expert store: remote BATCHED: 65394 N-token layer steps, 50218 with a post (one request per box), 1753248 routed pairs, 134538 posted (7.7%), 16976 computed late after a miss, 39 fallback reads; resolve 0.031 ms per posted layer
+4.05.788.339 I llama_moe_cache: expert store: remote BATCHED: replies complete when the real lookup came 69277, waited for 14374 (12897 of them with the short wait of resident pairs)
+4.05.788.341 I llama_moe_cache: expert store: remote BATCHED box 0: 63589 rows placed = 3.63% of the routed pairs, pairs per layer now 1
+4.05.788.342 I llama_moe_cache: expert store: remote BATCHED box 1: 53978 rows placed = 3.08% of the routed pairs, pairs per layer now 1
+4.05.789.164 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 42418 posts, 1.72 rows per post, 63589 rows placed, 4057 requests short (9480 rows read locally, 229 partial replies, 0 NaN rows), 0 unsent, 29 breaker trips; RTT p50 1.03 p90 1.41 p99 1.76 ms (16384 replies); 1 connects, 0 drops (0 stale)
+4.05.789.526 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 41233 posts, 1.49 rows per post, 53978 rows placed, 3724 requests short (7491 rows read locally, 292 partial replies, 0 NaN rows), 0 unsent, 28 breaker trips; RTT p50 0.90 p90 1.53 p99 1.71 ms (16384 replies); 1 connects, 0 drops (0 stale)
+MEMORY lowest MemAvailable MiB 21393
+WIN-ND6-DONE

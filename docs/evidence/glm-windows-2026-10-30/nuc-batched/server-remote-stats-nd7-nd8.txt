@@ -1,0 +1,44 @@
+=== legs-nd7/server-J1.log
+4.31.888.789 I llama_moe_cache: ubatch <= 8: hits = 1581290, misses = 59712, hit rate = 96.36%, uploaded = 480566.19 MiB
+4.31.888.797 I llama_moe_cache: ubatch  > 8: hits = 35970, misses = 2639, hit rate = 93.16%, uploaded = 20840.12 MiB
+4.31.888.815 I llama_moe_cache: expert store: memory valve: host MemAvailable 22.86 GB (lowest 22.80, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.31.888.827 I llama_moe_cache: expert store: remote BATCHED: 76230 N-token layer steps, 65277 with a post (one request per box), 1929312 routed pairs, 191339 posted (9.9%), 24148 computed late after a miss, 50 fallback reads; resolve 0.037 ms per posted layer
+4.31.888.828 I llama_moe_cache: expert store: remote BATCHED: replies complete when the real lookup came 91881, waited for 23522 (21118 of them with the short wait of resident pairs)
+4.31.888.833 I llama_moe_cache: expert store: remote BATCHED box 0: 79818 rows placed = 4.14% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,1
+4.31.888.835 I llama_moe_cache: expert store: remote BATCHED box 1: 87376 rows placed = 4.53% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,1
+4.31.888.836 I llama_moe_cache: expert store: remote experts: 65277 layers with candidates, 10370 of them read some locally; wait at the real lookup 0.037 ms per layer with candidates
+4.31.889.577 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 55403 posts, 1.66 rows per post, 79818 rows placed, 5479 requests short (12127 rows read locally, 23 partial replies, 0 NaN rows), 0 unsent, 21 breaker trips; RTT p50 0.78 p90 1.32 p99 1.56 ms (16384 replies); 1 connects, 0 drops (0 stale)
+4.31.889.909 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 60000 posts, 1.66 rows per post, 87376 rows placed, 5403 requests short (12018 rows read locally, 299 partial replies, 0 NaN rows), 0 unsent, 13 breaker trips; RTT p50 0.71 p90 0.83 p99 1.34 ms (16384 replies); 1 connects, 0 drops (0 stale)
+=== legs-nd7/server-K1.log
+4.06.294.213 I llama_moe_cache: ubatch <= 8: hits = 1514168, misses = 87266, hit rate = 94.55%, uploaded = 696223.81 MiB
+4.06.294.217 I llama_moe_cache: ubatch  > 8: hits = 46644, misses = 3987, hit rate = 92.13%, uploaded = 31417.50 MiB
+4.06.294.222 I llama_moe_cache: expert store: memory valve: host MemAvailable 22.13 GB (lowest 22.08, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.06.294.228 I llama_moe_cache: expert store: remote BATCHED: 33306 N-token layer steps, 30927 with a post (one request per box), 2095296 routed pairs, 231572 posted (11.1%), 12415 computed late after a miss, 1615 fallback reads; resolve 0.064 ms per posted layer
+4.06.294.229 I llama_moe_cache: expert store: remote BATCHED: replies complete when the real lookup came 55532, waited for 5453 (2457 of them with the short wait of resident pairs)
+4.06.294.231 I llama_moe_cache: expert store: remote BATCHED box 0: 113092 rows placed = 5.40% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,4
+4.06.294.232 I llama_moe_cache: expert store: remote BATCHED box 1: 106069 rows placed = 5.06% of the routed pairs, pairs per layer now (N=2,4,8) 2,2,4
+4.06.294.232 I llama_moe_cache: expert store: remote experts: 30927 layers with candidates, 3423 of them read some locally; wait at the real lookup 0.064 ms per layer with candidates
+4.06.295.068 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 30926 posts, 3.97 rows per post, 113092 rows placed, 2689 requests short (9717 rows read locally, 1073 partial replies, 0 NaN rows), 0 unsent, 0 breaker trips; RTT p50 2.50 p90 2.86 p99 3.13 ms (16384 replies); 1 connects, 0 drops (0 stale)
+4.06.295.458 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 30059 posts, 3.62 rows per post, 106069 rows placed, 952 requests short (2694 rows read locally, 410 partial replies, 0 NaN rows), 0 unsent, 3 breaker trips; RTT p50 2.29 p90 2.59 p99 2.97 ms (16384 replies); 1 connects, 0 drops (0 stale)
+=== legs-nd8/server-Y1.log
+4.05.914.034 I llama_moe_cache: ubatch <= 8: hits = 1509150, misses = 83877, hit rate = 94.73%, uploaded = 670203.00 MiB
+4.05.914.039 I llama_moe_cache: ubatch  > 8: hits = 46781, misses = 3850, hit rate = 92.40%, uploaded = 30346.44 MiB
+4.05.914.045 I llama_moe_cache: expert store: memory valve: host MemAvailable 22.14 GB (lowest 22.09, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.05.914.052 I llama_moe_cache: expert store: remote BATCHED: 33306 N-token layer steps, 30925 with a post (one request per box), 2095296 routed pairs, 240127 posted (11.5%), 18753 computed late after a miss, 2601 fallback reads; resolve 0.096 ms per posted layer
+4.05.914.053 I llama_moe_cache: expert store: remote BATCHED: replies complete when the real lookup came 52662, waited for 7976 (3428 of them with the short wait of resident pairs)
+4.05.914.055 I llama_moe_cache: expert store: remote BATCHED box 0: 110587 rows placed = 5.28% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,4
+4.05.914.055 I llama_moe_cache: expert store: remote BATCHED box 1: 110804 rows placed = 5.29% of the routed pairs, pairs per layer now (N=2,4,8) 2,2,4
+4.05.914.056 I llama_moe_cache: expert store: remote experts: 30925 layers with candidates, 4500 of them read some locally; wait at the real lookup 0.096 ms per layer with candidates
+4.05.914.813 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 30892 posts, 3.91 rows per post, 110587 rows placed, 2774 requests short (10130 rows read locally, 1116 partial replies, 0 NaN rows), 0 unsent, 1 breaker trips; RTT p50 2.46 p90 2.80 p99 3.09 ms (16384 replies); 1 connects, 0 drops (0 stale)
+4.05.915.198 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 29746 posts, 4.01 rows per post, 110804 rows placed, 2317 requests short (8606 rows read locally, 809 partial replies, 0 NaN rows), 0 unsent, 4 breaker trips; RTT p50 2.41 p90 2.84 p99 3.05 ms (16384 replies); 1 connects, 0 drops (0 stale)
+=== legs-nd8/server-X1.log
+3.10.218.794 I llama_moe_cache: ubatch <= 8: hits = 1147640, misses = 39157, hit rate = 96.70%, uploaded = 314519.44 MiB
+3.10.218.798 I llama_moe_cache: ubatch  > 8: hits = 28608, misses = 2108, hit rate = 93.14%, uploaded = 16657.06 MiB
+3.10.218.804 I llama_moe_cache: expert store: memory valve: host MemAvailable 22.86 GB (lowest 22.79, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+3.10.218.810 I llama_moe_cache: expert store: remote BATCHED: 43722 N-token layer steps, 40585 with a post (one request per box), 1401120 routed pairs, 133649 posted (9.5%), 16332 computed late after a miss, 32 fallback reads; resolve 0.033 ms per posted layer
+3.10.218.810 I llama_moe_cache: expert store: remote BATCHED: replies complete when the real lookup came 65659, waited for 11450 (10028 of them with the short wait of resident pairs)
+3.10.218.813 I llama_moe_cache: expert store: remote BATCHED box 0: 59944 rows placed = 4.28% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,1
+3.10.218.813 I llama_moe_cache: expert store: remote BATCHED box 1: 57377 rows placed = 4.10% of the routed pairs, pairs per layer now (N=2,4,8) 2,1,1
+3.10.218.814 I llama_moe_cache: expert store: remote experts: 40585 layers with candidates, 6382 of them read some locally; wait at the real lookup 0.033 ms per layer with candidates
+3.10.219.560 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 37656 posts, 1.82 rows per post, 59944 rows placed, 3366 requests short (8621 rows read locally, 26 partial replies, 0 NaN rows), 0 unsent, 6 breaker trips; RTT p50 1.28 p90 1.46 p99 1.87 ms (16384 replies); 1 connects, 0 drops (0 stale)
+3.10.219.924 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 39453 posts, 1.65 rows per post, 57377 rows placed, 3343 requests short (7707 rows read locally, 275 partial replies, 0 NaN rows), 0 unsent, 2 breaker trips; RTT p50 1.11 p90 1.52 p99 1.76 ms (16384 replies); 1 connects, 0 drops (0 stale)

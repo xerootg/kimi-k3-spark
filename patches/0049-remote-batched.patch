@@ -1,0 +1,691 @@
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@ -2657,9 +2657,30 @@
+         ggml_tensor * pos = ggml_view_1d(ctx0, moe_cache->get_split_map(il, nc, 5), nk*nc, 0);
+         ggml_tensor * merge = ggml_get_rows(ctx0, moe_cache->get_split_map(il, nc, 3), pos);
+         if (ggml_backend_supports_op(moe_cache->backend(il), early) && ggml_backend_supports_op(moe_cache->backend(il), late)) {
++            // window nd (LLAMA_EXPERT_STORE_REMOTE_COLS=1): the batched remote tier. The N inputs go into the layer's
++            // remote input before the early lookup, which posts one request per box for all N tokens; the rows that
++            // come back are merged after the late merge (build_moe_ffn), the rest are the late matmul's.
++            ggml_tensor * rx = moe_split_input != nullptr ? moe_cache->get_split_map(il, nc, 7) : nullptr;
++            const bool remote = rx != nullptr && moe_split_input->ne[0]*8 == rx->ne[0] && ggml_nelements(moe_split_input) == moe_split_input->ne[0]*nc;
++            if (remote) {
++                ggml_tensor * dst = ggml_view_1d(ctx0, rx, ggml_nelements(moe_split_input), 0);
++                ggml_tensor * xin = ggml_is_contiguous(moe_split_input) ? moe_split_input : ggml_cont(ctx0, moe_split_input);
++                ggml_tensor * cp = ggml_cpy(ctx0, ggml_reshape_1d(ctx0, xin, ggml_nelements(moe_split_input)), dst);
++                ggml_backend_sched_set_tensor_backend(sched, cp, moe_cache->backend(il));
++                ggml_build_forward_expand(gf, cp);
++            }
+             ggml_format_name(early, "moe_early-%d", il);
+             ggml_backend_sched_set_tensor_backend(sched, early, moe_cache->backend(il));
+             ggml_build_forward_expand(gf, early);
++            if (remote) {
++                ggml_tensor * rrows = moe_cache->get_split_map(il, nc, 8); // F32 [n_out, rows]
++                ggml_tensor * rpos  = ggml_view_1d(ctx0, moe_cache->get_split_map(il, nc, 5), rrows->ne[1], 0);
++                ggml_tensor * rmerge = ggml_get_rows(ctx0, moe_cache->get_split_map(il, nc, 9), rpos);
++                ggml_format_name(rmerge, "moe_nowait_rmerge-%d", il); // written by the real lookup, read after it
++                ggml_backend_sched_set_tensor_backend(sched, rmerge, moe_cache->backend(il));
++                moe_split_rrows  = rrows;
++                moe_split_rmerge = ggml_reshape_1d(ctx0, rmerge, rrows->ne[1]);
++            }
+             for (ggml_tensor * t : moe_overlap) { ggml_build_forward_expand(gf, t); }
+             moe_overlap.clear();
+             early = ggml_reshape_2d(ctx0, early, nk, nc);
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -958,12 +958,20 @@
+ struct remote_client {
+     static constexpr int NSLOT = 8;
+     static constexpr int KMAX  = 16;
++    // window nd (LLAMA_EXPERT_STORE_REMOTE_COLS=1): the batched protocol, one request per box per MoE layer of a decode
++    // step for every sequence of the batch: int32 hdr[4 + 2*KND] { 0x4E440000|k, ntok, seq, layer, (gid, tok) x k }
++    // + ntok inputs of n_in f32; the reply is k rows of n_out f32 in request order
++    static constexpr int KND   = 32;
++    static constexpr int TND   = 8;
++    static constexpr uint32_t ND_MAGIC = 0x4E440000u;
+     enum { FREE = 0, QUEUED = 1, SENT = 2, DONE = 3, ABANDONED = 4 };
+     struct slot {
+         std::atomic<int> state{FREE};
+         std::atomic<int> rows_done{0}; // rows of the reply complete so far
+         bool             sent = false; // net thread only
+-        int32_t          hdr[1 + KMAX] = {};
++        int32_t          hdr[4 + 2*KND] = {};
++        int              k = 0;        // rows the reply carries
++        int              ntok = 1;     // inputs the request carries (batched protocol)
+         std::vector<float> x;
+         std::vector<float> rows;
+         std::chrono::steady_clock::time_point t_post, t_done;
+@@ -973,6 +981,7 @@
+     int         port = 0;
+     int         id = 0;
+     int         n_in = 0, n_out = 0;
++    bool        nd = false;              // the batched protocol (window nd)
+     int64_t     deadline_us = 3000;      // per box (LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US, one value or one per box)
+     int         stale_ms = 1000;         // LLAMA_EXPERT_STORE_REMOTE_STALE_MS: a request unanswered this long drops the link
+     int         trip_after = 8;          // LLAMA_EXPERT_STORE_REMOTE_TRIP: consecutive deadline misses that trip the breaker
+@@ -1047,8 +1056,8 @@
+         n_in = nin;
+         n_out = nout;
+         for (slot & s : slots) {
+-            s.x.assign((size_t) n_in, 0.0f);
+-            s.rows.assign((size_t) KMAX*n_out, 0.0f);
++            s.x.assign((size_t) n_in*(nd ? TND : 1), 0.0f);
++            s.rows.assign((size_t) (nd ? KND : KMAX)*n_out, 0.0f);
+         }
+         th = std::thread([this] { main(); });
+         return true;
+@@ -1219,7 +1228,8 @@
+                         t->cpu_pick = sched_getcpu();
+                         t->ivcsw_pick = thread_ivcsw();
+                     }
+-                    if (!send_all2(fd, s.hdr, sizeof s.hdr, s.x.data(), (size_t) n_in*sizeof(float))) {
++                    const size_t hb = nd ? sizeof(int32_t)*(4 + 2*KND) : sizeof(int32_t)*(1 + KMAX);
++                    if (!send_all2(fd, s.hdr, hb, s.x.data(), (size_t) (nd ? s.ntok : 1)*n_in*sizeof(float))) {
+                         broken = true;
+                         break;
+                     }
+@@ -1246,7 +1256,7 @@
+                     next_recv++;
+                     continue;
+                 }
+-                const size_t want = (size_t) s.hdr[0]*n_out*sizeof(float);
++                const size_t want = (size_t) s.k*n_out*sizeof(float);
+                 const ssize_t r = recv(fd, (char *) s.rows.data() + got, want - got, MSG_DONTWAIT);
+                 if (r == 0 || (r < 0 && errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)) {
+                     broken = true;
+@@ -2317,6 +2327,47 @@
+     std::vector<int32_t> remote_local; // scratch of fill_early: the selected experts that stay local
+     std::vector<int32_t> remote_pf;    // scratch of prefetch_decode: the predictions minus the remote ones
+     std::vector<int32_t> remote_miss_ids, remote_miss_pos; // scratch of remote_resolve: the rows that did not arrive
++    // window nd: the batched remote tier (LLAMA_EXPERT_STORE_REMOTE_COLS=1, needs LLAMA_EXPERT_STORE_SPLIT_COLS=1 and
++    // GGML_CUDA_MMVQ_EXACT_COLS=1 so every expert row of an N-token decode step is the single-column kernel's, which
++    // the boxes reproduce bit for bit). One request per box per MoE layer of a decode step carries every (expert,
++    // token) pair the box was given, for all sequences at once; the boxes compute experts the Spark holds as well
++    // (compute offload: those experts are not read by the Spark at all), up to LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS
++    // pairs per box per layer. A pair that does not arrive by the deadline is computed by the late matmul (its expert
++    // read first if it is not resident), so the output never depends on the network. N=1 stays local.
++    const bool remote_cols = [] { const char * e = getenv("LLAMA_EXPERT_STORE_REMOTE_COLS"); return e && strcmp(e, "1") == 0; }();
++    bool     remote_cols_resident = true;     // LLAMA_EXPERT_STORE_REMOTE_OFFLOAD=0: only non-resident experts go remote
++    std::vector<int> remote_box_rows;         // per box: pairs per layer at most
++    // LLAMA_EXPERT_STORE_REMOTE_ADAPT=1: each box's pairs per layer adapt between 1 and its maximum: one more after 8
++    // replies in a row that were complete when the real lookup came, one fewer after a reply it had to wait for longer
++    // than LLAMA_EXPERT_STORE_REMOTE_ADAPT_WAIT_US (default 100) or a miss
++    bool     remote_adapt = false;
++    bool     remote_discard = false;
++    // LLAMA_EXPERT_STORE_REMOTE_MAX_WAIT_US: how long the real lookup waits for a box whose pairs are all resident on
++    // the Spark (default: until the deadline). A late pair then costs only its row in the late matmul (the expert is
++    // in the bank), not a wait; pairs of experts the Spark would have to read still wait until the deadline.
++    int64_t  remote_max_wait_us = -1;
++    uint64_t n_rc_cut = 0;
++    // LLAMA_EXPERT_STORE_REMOTE_DUMP=<path> (test): the first LLAMA_EXPERT_STORE_REMOTE_DUMP_N (4096) placed rows with
++    // their gid and input, into a buffer allocated at start, written to <path> at exit (tools: flashreplay.cpp)
++    std::string rc_dump_path;
++    std::vector<float> rc_dump;               // [n][2 + n_in + n_out]: gid, step, x, row
++    size_t   rc_dump_n = 0, rc_dump_cap = 0;
++    uint64_t rc_step = 0;          // LLAMA_EXPERT_STORE_REMOTE_DISCARD=1 (test): send, wait, but compute every pair locally
++    int64_t  remote_adapt_wait_us = 100;
++    std::vector<int> remote_cap_cur, remote_good; // [ncols*n_boxes + box]: the window grows with the step's columns
++    size_t   remote_cols_nc = 0;              // columns of the pending remote layer
++    uint64_t n_rc_waited = 0, n_rc_early_done = 0;
++    int      remote_cols_rmax = 0;            // rows of the remote rows tensor (all boxes)
++    bool     remote_is_cols = false;          // the pending remote layer came from the N-column early lookup
++    size_t   remote_cols_nids = 0;            // its ids, for the fallback merge positions
++    size_t   remote_cols_nunion = 0;          // its union (cols_ids), planned again by a fallback read
++    int32_t  remote_cols_ids[8*8] = {};
++    int32_t  rc_gid[64] = {}, rc_col[64] = {}, rc_pos[64] = {}, rc_exp[64] = {}; // pairs, grouped by box
++    int32_t  rc_plan[8*8] = {};               // the union minus the remote experts
++    std::vector<uint8_t> rc_mark, rc_uses;    // [n_expert] scratch: box + 1 of a remote expert; pairs per expert
++    std::vector<int32_t> rc_fallback;         // scratch: experts of pairs that did not arrive
++    uint64_t n_rc_steps = 0, n_rc_pairs_all = 0, n_rc_pairs_posted = 0, n_rc_pairs_fallback = 0, n_rc_fallback_reads = 0;
++    uint64_t n_rc_layers_posted = 0, t_rc_resolve_us = 0;
+     size_t   split_late_used = 0;      // late rows the early lookup filled
+     uint64_t n_remote_layers = 0, t_remote_wait_us = 0, n_remote_fallback_layers = 0;
+     int      remote_dma_fd = -1;      // /dev/cpu_dma_latency, held while the remote experts are on
+@@ -3656,8 +3707,32 @@
+                         remote_rows_max = getenv("LLAMA_EXPERT_STORE_REMOTE_ROWS") != nullptr ?
+                             std::min(std::max(1, atoi(getenv("LLAMA_EXPERT_STORE_REMOTE_ROWS"))), std::min(n_expert_used, (int32_t) remote_client::KMAX)) :
+                             std::min(remote_rows_max, n_expert_used);
++                        if (remote_cols && split_cols) {
++                            if (remote_cols_rmax == 0) {
++                                // pairs per box per layer, one value or one per box (in box order, the last repeats)
++                                const char * v = getenv("LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS");
++                                for (const char * c = v ? v : "4"; *c; ) {
++                                    char * end = nullptr;
++                                    const long n = strtol(c, &end, 10);
++                                    if (end == c) {
++                                        break;
++                                    }
++                                    remote_box_rows.push_back((int) std::min(std::max(n, 1L), (long) remote_client::KND));
++                                    c = *end == ',' ? end + 1 : end;
++                                }
++                                if (remote_box_rows.empty()) {
++                                    remote_box_rows.push_back(4);
++                                }
++                                int tot = 0;
++                                for (size_t bx = 0; bx < remote_hosts.size(); ++bx) {
++                                    tot += remote_box_rows[std::min(bx, remote_box_rows.size() - 1)];
++                                }
++                                remote_cols_rmax = std::min(tot, 64);
++                            }
++                            remote_rows_max = remote_cols_rmax;
++                        }
+                         l.rpost_map   = ggml_new_tensor_2d(ctx_host.get(), GGML_TYPE_I32, 1, g.ref[0]->ne[2]);
+-                        l.remote_x    = ggml_new_tensor_1d(ctx_host.get(), GGML_TYPE_F32, n_in);
++                        l.remote_x    = ggml_new_tensor_1d(ctx_host.get(), GGML_TYPE_F32, n_in*(remote_cols && split_cols ? 8 : 1));
+                         l.remote_rows = ggml_new_tensor_2d(ctx_host.get(), GGML_TYPE_F32, n_out, remote_rows_max);
+                         l.rmerge_map  = ggml_new_tensor_2d(ctx_host.get(), GGML_TYPE_I32, 1, g.ref[0]->ne[2]);
+                         ggml_format_name(l.rpost_map,   "moe_cache.rpost_map-%d", il);
+@@ -3809,7 +3884,7 @@
+                     ggml_backend_tensor_set(l.rmerge_map, m.data(), 0, ggml_nbytes(l.rmerge_map));
+                     memset(l.remote_rows->data, 0, ggml_nbytes(l.remote_rows));
+                     memset(l.remote_x->data, 0, ggml_nbytes(l.remote_x));
+-                    r_in = l.remote_x->ne[0];
++                    r_in = l.remote_x->ne[0]/(remote_cols && split_cols ? 8 : 1);
+                     r_out = l.remote_rows->ne[0];
+                 }
+                 if (split && !remote_box.empty() && r_in > 0) {
+@@ -3867,6 +3942,7 @@
+                             LLAMA_LOG_INFO("%s: expert store: remote box %zu: tracing every request (SIGUSR1 or exit writes %s.%zu)\n", __func__,
+                                 bx, rc->trace_path.c_str(), bx);
+                         }
++                        rc->nd = remote_cols && split_cols;
+                         if (!rc->start(remote_hosts[bx], (int) bx, (int) r_in, (int) r_out)) {
+                             LLAMA_LOG_WARN("%s: expert store: remote box %zu: '%s' is not ipv4:port, remote experts off\n", __func__, bx, remote_hosts[bx].c_str());
+                             remotes.clear();
+@@ -3904,6 +3980,46 @@
+                         remote_slot.assign(remotes.size(), nullptr);
+                         remote_usable.assign(remotes.size(), 0);
+                         remote_split_box.assign((size_t) n_expert_used*4, -1);
++                        if (remote_cols) {
++                            if (!split_cols) {
++                                LLAMA_LOG_WARN("%s: expert store: LLAMA_EXPERT_STORE_REMOTE_COLS=1 needs LLAMA_EXPERT_STORE_SPLIT_COLS=1: the remote tier is the single-token one\n", __func__);
++                            } else {
++                                const char * mm = getenv("GGML_CUDA_MMVQ_EXACT_COLS");
++                                if (mm == nullptr || strcmp(mm, "1") != 0) {
++                                    LLAMA_LOG_WARN("%s: expert store: LLAMA_EXPERT_STORE_REMOTE_COLS=1 without GGML_CUDA_MMVQ_EXACT_COLS=1: N-token expert rows are not the boxes' rows, output will depend on the network\n", __func__);
++                                }
++                                remote_cols_resident = !(getenv("LLAMA_EXPERT_STORE_REMOTE_OFFLOAD") != nullptr && strcmp(getenv("LLAMA_EXPERT_STORE_REMOTE_OFFLOAD"), "0") == 0);
++                                rc_mark.assign((size_t) store.n_expert, 0);
++                                remote_adapt = getenv("LLAMA_EXPERT_STORE_REMOTE_ADAPT") != nullptr && strcmp(getenv("LLAMA_EXPERT_STORE_REMOTE_ADAPT"), "1") == 0;
++                                remote_discard = getenv("LLAMA_EXPERT_STORE_REMOTE_DISCARD") != nullptr && strcmp(getenv("LLAMA_EXPERT_STORE_REMOTE_DISCARD"), "1") == 0;
++                                if (getenv("LLAMA_EXPERT_STORE_REMOTE_DUMP") != nullptr && getenv("LLAMA_EXPERT_STORE_REMOTE_DUMP")[0] != 0) {
++                                    rc_dump_path = getenv("LLAMA_EXPERT_STORE_REMOTE_DUMP");
++                                    rc_dump_cap = getenv("LLAMA_EXPERT_STORE_REMOTE_DUMP_N") ? (size_t) std::max(1, atoi(getenv("LLAMA_EXPERT_STORE_REMOTE_DUMP_N"))) : 4096;
++                                    rc_dump.assign(rc_dump_cap*(2 + (size_t) r_in + (size_t) r_out), 0.0f);
++                                }
++                                if (getenv("LLAMA_EXPERT_STORE_REMOTE_MAX_WAIT_US") != nullptr) {
++                                    remote_max_wait_us = std::max(0, atoi(getenv("LLAMA_EXPERT_STORE_REMOTE_MAX_WAIT_US")));
++                                }
++                                if (getenv("LLAMA_EXPERT_STORE_REMOTE_ADAPT_WAIT_US") != nullptr) {
++                                    remote_adapt_wait_us = std::max(0, atoi(getenv("LLAMA_EXPERT_STORE_REMOTE_ADAPT_WAIT_US")));
++                                }
++                                for (size_t nc = 0; nc <= 8; ++nc) {
++                                    for (size_t bx = 0; bx < remotes.size(); ++bx) {
++                                        // adaptive: start at one pair and climb (a start at the maximum misses until it settles)
++                                        remote_cap_cur.push_back(remote_adapt ? 1 : remote_box_rows[std::min(bx, remote_box_rows.size() - 1)]);
++                                        remote_good.push_back(0);
++                                    }
++                                }
++                                rc_uses.assign((size_t) store.n_expert, 0);
++                                rc_fallback.reserve(64);
++                                std::string rows;
++                                for (size_t bx = 0; bx < remotes.size(); ++bx) {
++                                    rows += (bx ? "," : "") + std::to_string(remote_box_rows[std::min(bx, remote_box_rows.size() - 1)]);
++                                }
++                                LLAMA_LOG_INFO("%s: expert store: remote experts BATCHED (window nd): one request per box per MoE layer of an N-token decode step, %s pairs per box per layer, %s; N=1 stays local\n", __func__,
++                                    rows.c_str(), remote_cols_resident ? "resident experts offloaded too" : "only non-resident experts");
++                            }
++                        }
+                         LLAMA_LOG_INFO("%s: expert store: remote experts: %zu boxes, up to %d rows per layer%s\n", __func__,
+                             remotes.size(), remote_rows_max, remote_shadow ? ", SHADOW (every expert is still read locally)" : "");
+                     }
+@@ -4083,6 +4199,17 @@
+     ~impl() {
+         prefill_reset();
+         log_stats();
++        if (!rc_dump_path.empty() && rc_dump_n > 0 && !remotes.empty()) {
++            const size_t n = rc_dump_n, rec = 2 + (size_t) remotes[0]->n_in + (size_t) remotes[0]->n_out;
++            FILE * f = fopen(rc_dump_path.c_str(), "wb");
++            if (f != nullptr) {
++                const int32_t hdr[3] = { (int32_t) n, remotes[0]->n_in, remotes[0]->n_out };
++                fwrite(hdr, sizeof(int32_t), 3, f);
++                fwrite(rc_dump.data(), sizeof(float), n*rec, f);
++                fclose(f);
++                LLAMA_LOG_INFO("expert store: remote BATCHED: %zu placed rows with their inputs written to %s\n", n, rc_dump_path.c_str());
++            }
++        }
+         if (remote_dma_fd >= 0) {
+             close(remote_dma_fd);
+         }
+@@ -4595,9 +4722,25 @@
+         const auto t0 = std::chrono::steady_clock::now();
+         const size_t n_union = store_split_union(ids_data, n_ids, cols_ids, 8*8, store.n_expert);
+         prediction_measure(il, cols_ids, n_union);
++        // window nd: the batched remote tier picks its experts first and posts before the local reads are planned
++        remote_il = -1;
++        remote_is_cols = false;
++        size_t n_rpairs = 0;
++        if (remote_on() && remote_cols && l.remote_x != nullptr) {
++            n_rpairs = remote_select_cols(il, g, ids_data, n_ids, n_union);
++        }
++        n_rc_steps++;
++        rc_step++;
++        n_rc_pairs_all += n_ids;
++        size_t n_plan = 0;
++        for (size_t i = 0; i < n_union; ++i) {
++            if (!n_rpairs || !rc_mark[cols_ids[i]]) {
++                rc_plan[n_plan++] = cols_ids[i];
++            }
++        }
+         size_t n_hit = 0;
+-        fill_plan(il, cols_ids, n_union, true, n_hit);
+-        split_ids.assign(cols_ids, cols_ids + n_union);
++        fill_plan(il, rc_plan, n_plan, true, n_hit);
++        split_ids.assign(rc_plan, rc_plan + n_plan);
+         for (const auto & f : fills) { split_miss[f.expert] = 1; }
+         int32_t * early = (int32_t *) l.early_map->data;
+         int32_t * late = (int32_t *) l.cols_late->data;
+@@ -4605,6 +4748,11 @@
+         size_t missing = 0;
+         for (size_t i = 0; i < n_union; ++i) {
+             const int32_t x = cols_ids[i];
++            if (n_rpairs && rc_mark[x]) {
++                early[x] = g.n_slots; // remote: the zero record in both matmuls, its rows come from the box (or the fallback)
++                late[x] = g.n_slots;
++                continue;
++            }
+             const int32_t slot = g.lru.slot_map[il][x];
+             const bool miss = split_miss[x] || (spec_ok() && g.spec_state[slot].load(std::memory_order_acquire) != 0);
+             early[x] = miss ? g.n_slots : slot;
+@@ -4616,7 +4764,11 @@
+             const size_t col = i/8;
+             merge[i] = (int32_t) (col*9 + (late[ids_data[i]] != g.n_slots ? i%8 : 8));
+         }
+-        remote_il = -1;
++        if (n_rpairs) {
++            for (size_t i = 0; i < n_union; ++i) {
++                rc_mark[cols_ids[i]] = 0;
++            }
++        }
+         cols_calls[n_ids/8]++;
+         cols_union += n_union;
+         cols_reads += jobs.size();
+@@ -4660,7 +4812,7 @@
+         remote_pos.clear();
+         const int32_t * plan_ids = ids_data;
+         size_t n_plan = n_ids;
+-        if (remote_on() && l.rpost_map != nullptr) {
++        if (remote_on() && !remote_cols && l.rpost_map != nullptr) {
+             int32_t * rm = (int32_t *) l.rmerge_map->data;
+             for (int r = 0; r < remote_rows_max; ++r) {
+                 rm[r] = n_expert_used; // the scratch row (the GPU finished this layer's previous token long ago)
+@@ -4872,9 +5024,14 @@
+         stats_store_decode.misses += fills.size();
+         stats_store_decode.bytes  += fills.size()*g.record_size;
+         if (remote_il == il) {
+-            remote_resolve(il, l, g);
++            if (remote_is_cols) {
++                remote_resolve_cols(il, l, g);
++            } else {
++                remote_resolve(il, l, g);
++            }
+         }
+         remote_il = -1;
++        remote_is_cols = false;
+         if (snapshot_every_s > 0 && !snapshot_path.empty() &&
+                 std::chrono::duration_cast<std::chrono::seconds>(t2 - t_snapshot_last).count() >= snapshot_every_s) {
+             t_snapshot_last = t2;
+@@ -4890,6 +5047,286 @@
+         GGML_UNUSED(n_ids);
+     }
+ 
++    // window nd: choose the layer's remote experts for an N-token step (per box at most remote_box_rows pairs; experts
++    // used by one token first: the box's cost is per pair, the Spark's saving per expert), lay out the pairs grouped by
++    // box (rc_*), reset the remote merge positions to the scratch row and post. Returns the pairs posted (0: none);
++    // rc_mark[x] = box + 1 for the chosen experts (the caller clears it).
++    size_t remote_select_cols(int32_t il, group & g, const int32_t * ids_data, size_t n_ids, size_t n_union) {
++        layer & l = layers[il];
++        int32_t * rm = (int32_t *) l.rmerge_map->data;
++        for (int r = 0; r < remote_cols_rmax; ++r) {
++            rm[r] = n_expert_used; // col 0's scratch row
++        }
++        const size_t nb = remotes.size();
++        bool any = false;
++        for (size_t bx = 0; bx < nb; ++bx) {
++            remote_cnt[bx] = 0;
++            remote_slot[bx] = nullptr;
++            remote_usable[bx] = remotes[bx]->next_free() != nullptr;
++            any = any || remote_usable[bx];
++        }
++        if (!any) {
++            return 0;
++        }
++        for (size_t i = 0; i < n_ids; ++i) {
++            rc_uses[ids_data[i]]++;
++        }
++        size_t taken = 0;
++        for (int pass = 0; pass < 2; ++pass) {
++            for (size_t u = 0; u < n_union; ++u) {
++                const int32_t x = cols_ids[u];
++                const int uses = rc_uses[x];
++                if (rc_mark[x] || (pass == 0) != (uses == 1)) {
++                    continue;
++                }
++                const int bx = (int) remote_box[(size_t) il*store.n_expert + x] - 1;
++                if (bx < 0 || !remote_usable[bx]) {
++                    continue;
++                }
++                if (!remote_cols_resident && g.lru.slot_map[il][x] >= 0) {
++                    continue;
++                }
++                const int cap = remote_adapt ? remote_cap_cur[(n_ids/8)*nb + bx] : remote_box_rows[std::min((size_t) bx, remote_box_rows.size() - 1)];
++                if (remote_cnt[bx] + uses > cap || taken + uses > (size_t) remote_cols_rmax) {
++                    continue;
++                }
++                rc_mark[x] = (uint8_t) (bx + 1);
++                remote_cnt[bx] += uses;
++                taken += uses;
++            }
++        }
++        for (size_t u = 0; u < n_union; ++u) {
++            rc_uses[cols_ids[u]] = 0;
++        }
++        if (taken == 0) {
++            return 0;
++        }
++        int32_t off = 0;
++        for (size_t bx = 0; bx < nb; ++bx) {
++            remote_off[bx] = off;
++            off += remote_cnt[bx];
++        }
++        remote_fill_at.assign(remote_off.begin(), remote_off.end());
++        for (size_t i = 0; i < n_ids; ++i) {
++            const int32_t x = ids_data[i];
++            if (rc_mark[x]) {
++                const int bx = rc_mark[x] - 1;
++                const int k = remote_fill_at[bx]++;
++                rc_gid[k] = il*(int32_t) store.n_expert + x;
++                rc_col[k] = (int32_t) (i/8);
++                rc_pos[k] = (int32_t) i;
++                rc_exp[k] = x;
++            }
++        }
++        memcpy(remote_cols_ids, ids_data, n_ids*sizeof(int32_t));
++        remote_cols_nids = n_ids;
++        remote_cols_nc = n_ids/8;
++        remote_cols_nunion = n_union;
++        remote_il = il;
++        remote_is_cols = true;
++        n_remote_layers++;
++        n_rc_pairs_posted += taken;
++        remote_post_cols(il);
++        return taken;
++    }
++
++    // window nd: one request per box with pairs: the inputs of the tokens it needs (compacted), the (gid, token) pairs
++    void remote_post_cols(int32_t il) {
++        const layer & l = layers[il];
++        std::atomic_thread_fence(std::memory_order_acquire);
++        const float * xin = (const float *) l.remote_x->data;
++        bool posted = false;
++        for (size_t bx = 0; bx < remotes.size(); ++bx) {
++            const int k = remote_cnt[bx];
++            if (k == 0) {
++                continue;
++            }
++            remote_client & rc = *remotes[bx];
++            remote_client::slot * s = rc.next_free();
++            if (s == nullptr) {
++                rc.n_unsent++;
++                continue;
++            }
++            const int off = remote_off[bx];
++            int tmap[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
++            int nt = 0;
++            for (int r = 0; r < k; ++r) {
++                const int c = rc_col[off + r];
++                if (tmap[c] < 0) {
++                    tmap[c] = nt;
++                    memcpy(s->x.data() + (size_t) nt*rc.n_in, xin + (size_t) c*rc.n_in, (size_t) rc.n_in*sizeof(float));
++                    nt++;
++                }
++            }
++            s->hdr[0] = (int32_t) (remote_client::ND_MAGIC | (uint32_t) k);
++            s->hdr[1] = nt;
++            s->hdr[2] = (int32_t) rc.n_posts;
++            s->hdr[3] = il;
++            for (int r = 0; r < remote_client::KND; ++r) {
++                s->hdr[4 + 2*r] = r < k ? rc_gid[off + r] : 0;
++                s->hdr[5 + 2*r] = r < k ? tmap[rc_col[off + r]] : 0;
++            }
++            s->k = k;
++            s->ntok = nt;
++            s->tseq = -1;
++            rc.post(s);
++            remote_slot[bx] = s;
++            rc.n_posts++;
++            rc.n_rows += k;
++            posted = true;
++        }
++        n_rc_layers_posted += posted;
++    }
++
++    // window nd, at the real lookup: wait for each box until its deadline, place the rows that arrived, and give every
++    // pair that did not arrive to the late matmul (all positions of its expert; an expert that is not resident is read
++    // here first). A pair that arrived and whose expert is also computed late gets the same bits twice.
++    void remote_resolve_cols(int32_t il, layer & l, group & g) {
++        const auto t0 = std::chrono::steady_clock::now();
++        const size_t row = (size_t) l.remote_rows->ne[0];
++        int32_t * rm = (int32_t *) l.rmerge_map->data;
++        rc_fallback.clear();
++        for (size_t bx = 0; bx < remotes.size(); ++bx) {
++            const int k = remote_cnt[bx];
++            if (k == 0) {
++                continue;
++            }
++            remote_client & rc = *remotes[bx];
++            remote_client::slot * s = remote_slot[bx];
++            remote_slot[bx] = nullptr;
++            const int off = remote_off[bx];
++            int n_ok = 0;
++            if (s != nullptr) {
++                auto deadline = s->t_post + std::chrono::microseconds(rc.deadline_us);
++                int st = s->state.load(std::memory_order_acquire);
++                const bool early_done = st == remote_client::DONE;
++                const auto tw = std::chrono::steady_clock::now();
++                if (remote_max_wait_us >= 0 && !early_done) {
++                    bool resident = true;
++                    for (int r = 0; r < k && resident; ++r) {
++                        const int32_t sl = g.lru.slot_map[il][rc_exp[off + r]];
++                        resident = sl >= 0 && !(spec_ok() && g.spec_state[sl].load(std::memory_order_acquire) != 0);
++                    }
++                    if (resident && tw + std::chrono::microseconds(remote_max_wait_us) < deadline) {
++                        deadline = tw + std::chrono::microseconds(remote_max_wait_us);
++                        n_rc_cut++;
++                    }
++                }
++                while ((st == remote_client::QUEUED || st == remote_client::SENT) && std::chrono::steady_clock::now() < deadline) {
++                    st = s->state.load(std::memory_order_acquire);
++                }
++                const int64_t waited = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - tw).count();
++                n_rc_early_done += early_done;
++                n_rc_waited += !early_done;
++                if (remote_adapt) {
++                    const int cmax = remote_box_rows[std::min(bx, remote_box_rows.size() - 1)];
++                    if (st != remote_client::DONE || waited > remote_adapt_wait_us) {
++                        const size_t ci = remote_cols_nc*remotes.size() + bx;
++                        remote_cap_cur[ci] = std::max(1, remote_cap_cur[ci] - 1);
++                        remote_good[ci] = 0;
++                    } else if (early_done && ++remote_good[remote_cols_nc*remotes.size() + bx] >= 8) {
++                        const size_t ci = remote_cols_nc*remotes.size() + bx;
++                        remote_cap_cur[ci] = std::min(cmax, remote_cap_cur[ci] + 1);
++                        remote_good[ci] = 0;
++                    }
++                }
++                bool done = st == remote_client::DONE;
++                int n_rows = done ? k : s->rows_done.load(std::memory_order_acquire);
++                if (!done) {
++                    if (rc.abandon(s)) {
++                        done = true;
++                        n_rows = k;
++                    } else if (s->state.load(std::memory_order_acquire) == remote_client::FREE) {
++                        n_rows = 0;
++                    }
++                }
++                n_rows = std::min(n_rows, k);
++                if (done) {
++                    const auto rtt = std::chrono::duration_cast<std::chrono::microseconds>(s->t_done - s->t_post).count();
++                    rc.rtt_us[rc.rtt_next++ % rc.rtt_us.size()] = (uint32_t) std::max<int64_t>(0, rtt);
++                }
++                for (int r = 0; r < (remote_discard ? 0 : n_rows); ++r) {
++                    const float * src = s->rows.data() + (size_t) r*row;
++                    if (!remote_row_ok(src, row)) {
++                        rc.n_nan_rows++;
++                        break;
++                    }
++                    memcpy((float *) l.remote_rows->data + (size_t) (off + r)*row, src, row*sizeof(float));
++                    rm[off + r] = rc_col[off + r]*9 + rc_pos[off + r]%8;
++                    n_ok++;
++                    if (rc_dump_n < rc_dump_cap) {
++                        const size_t nin = (size_t) rc.n_in, rec = 2 + nin + row;
++                        float * d = rc_dump.data() + rc_dump_n*rec;
++                        d[0] = (float) rc_gid[off + r];
++                        d[1] = (float) (rc_step % 16777216);
++                        memcpy(d + 2, (const float *) l.remote_x->data + (size_t) rc_col[off + r]*nin, nin*sizeof(float));
++                        memcpy(d + 2 + nin, src, row*sizeof(float));
++                        rc_dump_n++;
++                    }
++                }
++                rc.n_hits += n_ok;
++                rc.n_partial += !done && n_ok > 0;
++                if (done) {
++                    s->state.store(remote_client::FREE, std::memory_order_release);
++                }
++            }
++            if (n_ok == k) {
++                rc.misses_in_row = 0;
++            } else {
++                rc.misses_in_row++;
++                rc.n_late++;
++                rc.n_late_rows += k - n_ok;
++                for (int r = n_ok; r < k; ++r) {
++                    rc_fallback.push_back(rc_exp[off + r]);
++                }
++            }
++        }
++        if (!rc_fallback.empty()) {
++            std::sort(rc_fallback.begin(), rc_fallback.end());
++            rc_fallback.erase(std::unique(rc_fallback.begin(), rc_fallback.end()), rc_fallback.end());
++            // experts that are not complete in the bank are read first (synchronously; rare with the offload policy).
++            // The plan names the layer's whole union: a victim is never an expert this step's late matmul still reads
++            // (the LRU protects only the plan's own experts within the layer being planned).
++            size_t n_need = 0;
++            for (int32_t x : rc_fallback) {
++                const int32_t sl = g.lru.slot_map[il][x];
++                if (sl < 0 || (spec_ok() && g.spec_state[sl].load(std::memory_order_acquire) != 0)) {
++                    n_need++;
++                }
++            }
++            if (n_need) {
++                size_t n_hit = 0;
++                fill_plan(il, cols_ids, remote_cols_nunion, true, n_hit);
++                if (!jobs.empty() && !pool->run(store.fd, jobs)) {
++                    GGML_ABORT("expert store: read failed for layer %d: %s", il, strerror(errno));
++                }
++                fill_adopt(il);
++                if (spec_ok()) {
++                    spec_adopt(il, g);
++                }
++                n_rc_fallback_reads += fills.size();
++                stats_store_decode.misses += fills.size();
++                stats_store_decode.bytes  += fills.size()*g.record_size;
++            }
++            int32_t * late  = (int32_t *) l.cols_late->data;
++            int32_t * merge = (int32_t *) l.cols_merge->data;
++            for (int32_t x : rc_fallback) {
++                late[x] = g.lru.slot_map[il][x];
++                GGML_ASSERT(late[x] >= 0);
++            }
++            for (size_t i = 0; i < remote_cols_nids; ++i) {
++                if (std::binary_search(rc_fallback.begin(), rc_fallback.end(), remote_cols_ids[i])) {
++                    merge[i] = (int32_t) ((i/8)*9 + i%8);
++                    n_rc_pairs_fallback++;
++                }
++            }
++            n_remote_fallback_layers++;
++        }
++        const uint64_t us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - t0).count();
++        t_remote_wait_us += us;
++        t_rc_resolve_us += us;
++    }
++
+     // remote experts: the GPU has copied the experts' input into the layer's remote input; send it with each box's
+     // candidates (the slots fill_early found free are still free: only this thread posts). Called by fill_early itself
+     // (the default: the graph copies the input before the early lookup), or by the "moe_rpost-<il>" post after it
+@@ -4917,6 +5354,8 @@
+             }
+             const int k = remote_cnt[bx];
+             s->hdr[0] = k;
++            s->k = k;
++            s->ntok = 1;
+             for (int r = 0; r < remote_client::KMAX; ++r) {
+                 s->hdr[1 + r] = r < k ? il*(int32_t) store.n_expert + remote_ids[remote_off[bx] + r] : 0;
+             }
+@@ -5091,6 +5530,22 @@
+         if (!remote_on()) {
+             return;
+         }
++        if (remote_cols && n_rc_steps > 0) {
++            LLAMA_LOG_INFO("%s: expert store: remote BATCHED: %llu N-token layer steps, %llu with a post (one request per box), %llu routed pairs, %llu posted (%.1f%%), %llu computed late after a miss, %llu fallback reads; resolve %.3f ms per posted layer\n", func,
++                (unsigned long long) n_rc_steps, (unsigned long long) n_rc_layers_posted, (unsigned long long) n_rc_pairs_all,
++                (unsigned long long) n_rc_pairs_posted, n_rc_pairs_all ? 100.0*n_rc_pairs_posted/n_rc_pairs_all : 0.0,
++                (unsigned long long) n_rc_pairs_fallback, (unsigned long long) n_rc_fallback_reads,
++                n_rc_layers_posted ? t_rc_resolve_us/1e3/n_rc_layers_posted : 0.0);
++            LLAMA_LOG_INFO("%s: expert store: remote BATCHED: replies complete when the real lookup came %llu, waited for %llu (%llu of them with the short wait of resident pairs)\n", func,
++                (unsigned long long) n_rc_early_done, (unsigned long long) n_rc_waited, (unsigned long long) n_rc_cut);
++            for (const auto & p : remotes) {
++                LLAMA_LOG_INFO("%s: expert store: remote BATCHED box %d: %llu rows placed = %.2f%% of the routed pairs%s%s\n", func, p->id,
++                    (unsigned long long) p->n_hits, n_rc_pairs_all ? 100.0*p->n_hits/n_rc_pairs_all : 0.0,
++                    remote_adapt ? ", pairs per layer now (N=2,4,8) " : "",
++                    remote_adapt ? (std::to_string(remote_cap_cur[2*remotes.size() + p->id]) + "," + std::to_string(remote_cap_cur[4*remotes.size() + p->id]) + "," +
++                                    std::to_string(remote_cap_cur[8*remotes.size() + p->id])).c_str() : "");
++            }
++        }
+         LLAMA_LOG_INFO("%s: expert store: remote experts%s: %llu layers with candidates, %llu of them read some locally; wait at the real lookup %.3f ms per layer with candidates\n", func,
+             remote_shadow ? " (SHADOW)" : "", (unsigned long long) n_remote_layers, (unsigned long long) n_remote_fallback_layers,
+             n_remote_layers ? t_remote_wait_us/1e3/n_remote_layers : 0.0);
+@@ -5260,7 +5715,7 @@
+         }
+         prediction_ids[il].assign(ids_data, ids_data + n_ids);
+         spec_reclaim(); // a prediction not started by now is stale
+-        if (remote_on() && !remote_shadow && l.rpost_map != nullptr) {
++        if (remote_on() && !remote_cols && !remote_shadow && l.rpost_map != nullptr) {
+             // the remote experts are not read ahead: saving the drive those reads is the point
+             remote_pf.clear();
+             for (size_t i = 0; i < n_ids; ++i) {
+@@ -5769,7 +6224,8 @@
+     // the maps of the split GEMV for a single-token decode of layer il (kind 1 early, 2 late, 3 merge, 4 the group's
+     // zero-record slot), nullptr if the split does not apply
+     ggml_tensor * get_split_map(int32_t il, int64_t n_tokens, int kind) const {
+-        if (!split || n_tokens < 1 || (n_tokens != 1 && (!split_cols || n_tokens > 8 || n_expert_used != 8 || remote_on())) || il < 0 || il >= (int32_t) layers.size() || layers[il].ig < 0) {
++        const bool rcols = remote_on() && remote_cols && split_cols;
++        if (!split || n_tokens < 1 || (n_tokens != 1 && (!split_cols || n_tokens > 8 || n_expert_used != 8 || (remote_on() && !rcols))) || il < 0 || il >= (int32_t) layers.size() || layers[il].ig < 0) {
+             return nullptr;
+         }
+         const layer & l = layers[il];
+@@ -5780,9 +6236,15 @@
+                 case 3: return l.cols_merge;
+                 case 4: return groups[l.ig].dummy_const;
+                 case 5: return cols_iota;
++                case 7: return rcols ? l.remote_x    : nullptr;
++                case 8: return rcols ? l.remote_rows : nullptr;
++                case 9: return rcols ? l.rmerge_map  : nullptr;
+                 default: return nullptr;
+             }
+         }
++        if (rcols && kind >= 6) {
++            return nullptr; // window nd: single-token decode stays local
++        }
+         switch (kind) {
+             case 1: return l.early_map;
+             case 2: return l.late_map;

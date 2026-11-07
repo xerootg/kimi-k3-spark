@@ -1,0 +1,20 @@
+# Row exactness of the NUC CPU server (f53s) against the GB10 (window nd, 2026-11-07)
+
+## GPU reference: flashrow (production ggml CUDA kernels, llama-k3-el build), layer 5, experts 7,19,33,64,101,150,222,287
+md5 fr-l5-t1.bin         4d82c861ebcbb4c60bbd85f8d7372471   T=1, 40 cases, fusion on
+md5 fr-l5-t1-nofuse.bin  4d82c861ebcbb4c60bbd85f8d7372471   T=1, GGML_CUDA_DISABLE_FUSION=1 (identical: fused GLU = unfused)
+md5 fr-l5-t4.bin         6098f9c46d053e24aacade427e8b6546   T=4, stock multi-token MoE kernel
+md5 fr-l5-t4x.bin        b372ead2e2f22d1d8cf8bb9284cbce87   T=4, GGML_CUDA_MMVQ_EXACT_COLS=1 GGML_CUDA_EXACT_COLS=1
+
+## f53s check on nuc2 (12 workers, F53_MUFU=~/glm53-mufu)
+check fr-l5-t1.bin: 40 cases T=1, 320 rows, 0 rows differ (0 values), 3185.6 us per case
+check fr-l5-t4x.bin: 10 cases T=4, 320 rows, 0 rows differ (0 values), 12601.0 us per case
+check fr-l5-t4.bin: 10 cases T=4, 320 rows, 320 rows differ (686334 values), 12333.0 us per case   (expected: other kernel)
+
+## over the wire (ndclient.py, Spark -> nuc2 f53s serve, batched protocol)
+fr-l5-t4x.bin: 10 cases, 200 rows over the wire, 0 differ; RTT p50 9.77 ms (20.0 pairs per request)
+fr-l5-t1.bin: 40 cases, 200 rows over the wire, 0 differ; RTT p50 2.55 ms (5.0 pairs per request)
+fr-l5-t4.bin: 10 cases, 200 rows over the wire, 200 differ                 (expected: other kernel)
+
+## real activations (window nd6 leg V): 32768 rows the NUCs computed in serving, with their inputs, replayed on the GPU
+replay /srv/glm-5.3-flash/legs-nd6/V.dump: 32768 remote rows, 0 differ from the GPU's rows

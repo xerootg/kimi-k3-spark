@@ -308,6 +308,11 @@ Haley (same day): "I also suspect we are still fundamentally approaching how to 
 2. **Batch across tokens:** speculative or lookahead decoding verifies k tokens per pass, so one round trip carries k tokens' experts. Needs batch-identical kernels (the exact-columns work, fd4-fd8) to stay reproducible.
 3. **Ownership by layer span:** a NUC owns whole consecutive layers, so one hand-off covers a span instead of one per layer; single-stream it is limited by NUC bandwidth (1.6-1.9 tok/s measured for full-layer pipelining), so it only pays together with 1.
 
+State after window nd (2026-11-07 night, on the existing 2.5 GbE; details in docs/experiments.md "NUC distribution, batched across streams"):
+- Done: design 1 (batch across streams) as patch 0049 (`LLAMA_EXPERT_STORE_REMOTE_COLS=1`, default off): one request per box per MoE layer per decode step for all N streams, so critical-path round trips per generated token fall from 43 to 43/N (10.75 at N=4, 5.4 at N=8). Both NUCs serve (nuc2 experts 0-103, nuc3 104-149 of each regular layer; `f53s` CPU server, CUDA-exact, 0.42 ms per expert-token pair, 0 page faults in steady state), each computing ~4-5 % of all routed rows (~10 % together). Byte-identical tier on/off at N=2/4/8 with prompt isolation; +1.3-2.5 % at N=4, +4.1-4.2 % at N=8, neutral at N=2, N=1 stays local.
+- Production: keep off. Production serves one 1M slot (`--parallel 1`), where the tier does nothing; multi-slot serving first needs elastic KV per slot (`--parallel 4` disables it today, and 1M context then costs the cache 12.8 GB through the valve) and `LLAMA_PREFILL_ISOLATE=1` (without it, multi-stream bytes are not reproducible run to run, tier or not). The two knobs the tier needs (`GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1`) also change the standard short request's md5 (`d8b2a26bf6`); the 16k gold holds.
+- Next levers, in order: (a) the box kernel: 0.42 ms per pair is compute-bound exact integer/FTZ work at ~19 GB/s of a 59 GB/s box; decoding a record once for all tokens that share it, or the Arc iGPU beside the CPU, raises the pairs per round trip; (b) the faster link: ~0.3 ms of each 0.7-0.8 ms single-pair round trip is transport; (c) design 2 (k tokens per pass) once speculative decoding is reproducible, which multiplies N for a single stream.
+
 ## Cluster layout for this work
 
 | node | role |
