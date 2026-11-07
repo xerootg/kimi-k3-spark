@@ -993,3 +993,56 @@ logged). Reproducible multi-stream bytes additionally need `LLAMA_PREFILL_ISOLAT
 Measured (docs/experiments.md, windows nd0-nd8): byte-identical tier on/off at N=2/4/8, +1.3-2.5 % at N=4, +4.0-4.2 %
 at N=8, neutral at N=2, nothing at N=1. The diff is against the production tree (llama-k3-el); it applies on the
 committed stack (`git apply --check`) and the touched files pass a host syntax check.
+
+## 0050-small-kernel-fusions
+
+Five opt-in switches (each `=1`, all inert when unset) that cut the number of small CUDA kernels per decode token of
+GLM-5.3-Flash without changing any arithmetic. Every fused kernel performs the same floating-point operations in the
+same order with the same roundings as the kernels it replaces (`__fmul_rn`/`__fadd_rn` where two former kernels must
+not contract into an FMA, the same device functions for sigmoid and silu, the SCALE kernel's FFMA, the ssm_conv loop
+copied as is). Single-token, single-sequence graphs only; prefill graphs run unchanged.
+
+- `GGML_CUDA_Q8_REUSE`: a quantized MMVQ activation (`quantize_q8_1`) is kept in one of eight retained 1 MiB slots for
+  the rest of the graph evaluation, keyed by the source pointer, shape and strides; a later MMVQ with the same source
+  skips its quantize kernel. A slot is dropped when any node (or fused group) writes over its source range, and all
+  slots are dropped at the start and end of each evaluation. Stream 0 only, not with concurrent streams. Decode
+  graph: 356 of 812 quantize launches removed (routed gate/up, shared gate/up, KDA q/k/v/f_a/beta/g_a).
+- `GGML_CUDA_FUSE_HC`: the hyper-connection weight chain `MUL(mix, scale) -> ADD(base) -> SIGMOID -> SCALE` is
+  computed inside the `DSV4_HC_PRE` that consumes it, and inside `DSV4_HC_POST` (after a normal `DSV4_HC_COMB`) for the
+  post weights: 6 kernels become 1 and 6 become 2 per hyper-connection pair, 720 launches per token.
+- `GGML_CUDA_FUSE_GDN_STATE`: the KDA `GATED_DELTA_NET` reads its input state straight from the recurrent cache row
+  that the `GET_ROWS` would have gathered (row `ids[0]`, read through the ids on the device), and that `GET_ROWS` (a
+  4 MiB copy per KDA layer) is skipped. Planned per evaluation: only when the GET_ROWS result has no other real
+  consumer, nothing between the gather and the GDN writes the cache, and the gdn_cache fusion writes the new state.
+  The GDN kernel reads every state element before writing it, from the same thread, so the in-place row is safe.
+- `GGML_CUDA_FUSE_KDA`: `SSM_CONV -> RESHAPE -> SILU` runs through the existing ssm_conv+silu kernel (the upstream
+  pattern only matched adjacent nodes), and the KDA gate chain `MUL -> SCALE -> SIGMOID -> SCALE` runs as one kernel.
+- `GGML_CUDA_FUSE_CONV_STATE`: the one-token short-conv state path (`GET_ROWS` of the conv cache row, per projection
+  `CONCAT(old taps, new column)`, `SSM_CONV`, `SILU`, and a `CPY` of the shifted taps back into the cache) runs as one
+  kernel per projection, at the CONCAT's position (the new column is overwritten by the next projection's matmul
+  before the SSM_CONV would run), reading the old taps from the cache and writing the shifted ones. Planned only when
+  nothing between the CONCAT and the SILU touches the SILU's memory.
+
+Measurement knobs (inert unless set): `GGML_CUDA_DUP_SMALL=1` runs every small out-of-place node twice and
+`GGML_CUDA_DUP_QUANT=1` every quantize twice (same bytes, to price one more kernel); `GGML_CUDA_DUMP_GRAPH=<file>`
+appends the node list and the fused/skipped steps of the first four large graphs; `LLAMA_LOGITS_FNV=1` prints an
+FNV-1a hash of every decode's last logits row to stderr (bit-for-bit comparison of two builds or flag sets);
+`GGML_CUDA_SCHED=yield|blocking` overrides the GB10's spin scheduling (both slower, see the ledger).
+
+Measured (native, production env and args, GLM-5.3-Flash on the Spark, 2026-11-07; docs/experiments.md has the
+interleaved legs):
+
+| Build / flags | Decode, short (tok/s, 3 rounds) | Decode after 16k (tok/s) | Prompt reading, 16k |
+|---|---|---|---|
+| Production tree (llama-k3-el), no flags | 16.46 / 16.45 / 16.40 | 14.07 | 330 tok/s |
+| This patch, no flags | 16.24 / 16.23 / 16.26 (other legs 16.32-16.35) | | |
+| This patch, all five flags | 16.89 / 16.90 / 16.87 | 14.51 | 342 tok/s |
+
+Output: md5 `53816a69bc` (256 tokens) and `145c14aa8b` (after the 16,414-token prompt) with every flag set; with
+`LLAMA_LOGITS_FNV=1` the logits of the prompt and all 256 decode tokens hash identically with the flags off, each
+of the first four flags alone, the four together and all five together. Kernel launches per decode token: graph steps 3,773 -> 2,506, quantize launches
+812 -> 456. The diff is against the production tree (llama-k3-el); it applies on the committed stack including 0049
+(`git apply --check`).
+
+Production setting: `GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1
+GGML_CUDA_FUSE_CONV_STATE=1`.
