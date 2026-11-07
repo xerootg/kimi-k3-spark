@@ -1,0 +1,7 @@
+=== LEG nsC /srv/glm-5.3-flash/sm-bins/b5 nsys 05:11:52 extra: GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1
+READY nsC after 30s
+traced 17.36 tok/s md5 de2fe3e1ab
+-rw-rw-r-- 1 xero xero  8007652 Nov  7 05:12 nsys/sm-nsC.nsys-rep
+-rw-r--r-- 1 xero xero 22179840 Nov  7 05:12 nsys/sm-nsC.sqlite
+MemAvailable now 120994 MiB; END nsC 05:12:37
+ALL-DONE

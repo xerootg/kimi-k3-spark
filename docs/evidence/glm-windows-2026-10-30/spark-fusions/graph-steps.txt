@@ -1,0 +1,83 @@
+Executed steps of the one-token decode graph (GGML_CUDA_DUMP_GRAPH), MUL_MAT/MUL_MAT_ID steps include their quantize launch
+== flags off (dump0): decode graph (1 token), 8561 nodes, 3773 executed steps, 0 planned skips
+     550 MUL_MAT
+     260 SCALE
+     250 GET_ROWS
+     248 SIGMOID
+     247 MUL
+     227 ADD
+     215 FUSED RMS_NORM +1 nodes
+     177 CONCAT
+     168 MUL_MAT_ID
+     146 CPY
+     112 CONT
+     102 SSM_CONV
+     102 SILU
+      90 RMS_NORM
+      90 DSV4_HC_PRE
+      90 DSV4_HC_COMB
+      90 DSV4_HC_POST
+      86 SET_ROWS
+      76 FUSED MUL_MAT +1 nodes
+      58 SWIGLU_CLAMP
+      42 FUSED SIGMOID +11 nodes
+      42 FUSED MUL_MAT_ID +2 nodes
+      42 FUSED MUL +15 nodes
+      34 FUSED GATED_DELTA_NET +3 nodes
+      34 FUSED SIGMOID +1 nodes
+      33 FILL
+      29 FUSED MUL_MAT +2 nodes
+      23 REPEAT
+      11 NORM
+      11 SOFT_MAX
+      11 SUM_ROWS
+      11 LIGHTNING_INDEXER
+      11 TOP_K
+      11 ARGSORT
+      11 ARANGE
+      11 SUB
+      11 EXP
+      11 FLASH_ATTN_EXT
+
+== all five flags (fnvc): decode graph (1 token), 8561 nodes, 2506 executed steps, 354 planned skips
+     550 MUL_MAT
+     215 FUSED RMS_NORM +1 nodes
+     184 GET_ROWS
+     168 MUL_MAT_ID
+     112 CONT
+      96 CONV_STATE (fused conv step)
+      90 RMS_NORM
+      90 FUSED MUL +5 nodes
+      89 FUSED MUL +6 nodes
+      86 SET_ROWS
+      81 CONCAT
+      76 FUSED MUL_MAT +1 nodes
+      58 SWIGLU_CLAMP
+      50 CPY
+      48 ADD
+      42 FUSED SIGMOID +11 nodes
+      42 FUSED MUL_MAT_ID +2 nodes
+      42 FUSED MUL +15 nodes
+      35 SIGMOID
+      34 FUSED MUL +3 nodes
+      34 FUSED GATED_DELTA_NET +3 nodes
+      34 FUSED SIGMOID +1 nodes
+      34 MUL
+      33 FILL
+      29 FUSED MUL_MAT +2 nodes
+      23 REPEAT
+      13 SCALE
+      11 NORM
+      11 SOFT_MAX
+      11 SUM_ROWS
+      11 LIGHTNING_INDEXER
+      11 TOP_K
+      11 ARGSORT
+      11 ARANGE
+      11 SUB
+      11 EXP
+      11 FLASH_ATTN_EXT
+       6 FUSED SSM_CONV +2 nodes
+       1 DSV4_HC_COMB
+       1 DSV4_HC_POST
+

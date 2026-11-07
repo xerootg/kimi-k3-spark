@@ -1,0 +1,18 @@
+=== LEG base1 el bench 03:02:25 extra: 
+READY base1 after 30s
+{"kind": "conc", "tag": "base1", "n": 1, "round": "warm", "agg_tps": 15.19, "wall_s": 16.85, "gen": 256, "per_stream_tps": [15.5], "md5": ["53816a69bc"], "t0": 1794045775.5501058, "t1": 1794045792.4007576}
+{"kind": "conc", "tag": "base1", "n": 1, "round": 1, "agg_tps": 16.18, "wall_s": 15.82, "gen": 256, "per_stream_tps": [16.46], "md5": ["53816a69bc"], "t0": 1794045792.4010801, "t1": 1794045808.2253056}
+{"kind": "conc", "tag": "base1", "n": 1, "round": 2, "agg_tps": 16.17, "wall_s": 15.83, "gen": 256, "per_stream_tps": [16.45], "md5": ["53816a69bc"], "t0": 1794045808.225645, "t1": 1794045824.0557997}
+{"kind": "conc", "tag": "base1", "n": 1, "round": 3, "agg_tps": 16.12, "wall_s": 15.88, "gen": 256, "per_stream_tps": [16.4], "md5": ["53816a69bc"], "t0": 1794045824.0560994, "t1": 1794045839.9362442}
+{"kind": "depth", "tag": "base1-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 330.19, "prefill_s": 49.71, "decode_n": 128, "decode_tps": 14.07, "md5": "145c14aa8b", "t0": 1794045839.9885948, "t1": 1794045898.7559857}
+./sm-leg.sh: line 42: syntax error near unexpected token `;;'
+./sm-leg.sh: line 42: `           python3 -c "import json,hashlib;d=json.load(open(\"$OUT/$TAG.r1.json\"));print(\"traced\",round(d[\"timings\"][\"predicted_per_second\"],2),\"tok/s md5\",hashlib.md5(d[\"content\"].encode()).hexdigest()[:10])" ;;'
+=== LEG q8a sm bench 03:05:03 extra: GGML_CUDA_Q8_REUSE=1 GGML_CUDA_Q8_REUSE_STATS=1
+READY q8a after 28s
+{"kind": "conc", "tag": "q8a", "n": 1, "round": "warm", "agg_tps": 15.22, "wall_s": 16.82, "gen": 256, "per_stream_tps": [15.53], "md5": ["53816a69bc"], "t0": 1794045932.3081954, "t1": 1794045949.1239896}
+{"kind": "conc", "tag": "q8a", "n": 1, "round": 1, "agg_tps": 16.12, "wall_s": 15.88, "gen": 256, "per_stream_tps": [16.4], "md5": ["53816a69bc"], "t0": 1794045949.12429, "t1": 1794045965.000635}
+{"kind": "conc", "tag": "q8a", "n": 1, "round": 2, "agg_tps": 16.09, "wall_s": 15.91, "gen": 256, "per_stream_tps": [16.36], "md5": ["53816a69bc"], "t0": 1794045965.0009427, "t1": 1794045980.9144254}
+{"kind": "conc", "tag": "q8a", "n": 1, "round": 3, "agg_tps": 16.09, "wall_s": 15.92, "gen": 256, "per_stream_tps": [16.36], "md5": ["53816a69bc"], "t0": 1794045980.9146986, "t1": 1794045996.8300848}
+{"kind": "depth", "tag": "q8a-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 348.36, "prefill_s": 47.12, "decode_n": 128, "decode_tps": 13.88, "md5": "145c14aa8b", "t0": 1794045996.862158, "t1": 1794046053.1603627}
+MemAvailable now 119235 MiB; END q8a 03:07:36
+ALL-DONE

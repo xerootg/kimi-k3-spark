@@ -1,0 +1,7 @@
+=== LEG fnvc /srv/glm-5.3-flash/sm-bins/b5 fnv 04:51:01 extra: LLAMA_LOGITS_FNV=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 GGML_CUDA_DUMP_GRAPH=/srv/glm-5.3-flash/legs-sm/graph-c.txt
+READY fnvc after 28s
+{"kind": "conc", "tag": "fnvc-fnv", "n": 1, "round": "warm", "agg_tps": 15.44, "wall_s": 16.58, "gen": 256, "per_stream_tps": [15.78], "md5": ["53816a69bc"], "t0": 1794052289.2988534, "t1": 1794052305.8776364}
+{"kind": "depth", "tag": "fnvc-fnv-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 341.62, "prefill_s": 48.05, "decode_n": 32, "decode_tps": 14.57, "md5": "04ef53121a", "t0": 1794052305.923648, "t1": 1794052356.1309922}
+fnv lines 289 last LOGITS_FNV 288 36672a2252360984 chain 93921625f6c71b41
+MemAvailable now 121214 MiB; END fnvc 04:52:39
+ALL-DONE

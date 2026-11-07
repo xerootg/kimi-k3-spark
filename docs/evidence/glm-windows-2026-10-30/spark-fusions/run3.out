@@ -1,0 +1,7 @@
+=== LEG fnv0b /srv/glm-5.3-flash/sm-bins/b1 fnv 03:25:22 extra: LLAMA_LOGITS_FNV=1
+READY fnv0b after 28s
+{"kind": "conc", "tag": "fnv0b-fnv", "n": 1, "round": "warm", "agg_tps": 15.0, "wall_s": 17.07, "gen": 256, "per_stream_tps": [15.3], "md5": ["53816a69bc"], "t0": 1794047151.1402118, "t1": 1794047168.2083127}
+{"kind": "depth", "tag": "fnv0b-fnv-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 344.29, "prefill_s": 47.68, "decode_n": 32, "decode_tps": 14.08, "md5": "04ef53121a", "t0": 1794047168.2400916, "t1": 1794047218.1420395}
+fnv lines 289 last LOGITS_FNV 288 1734f9cc0129000d chain f23cb790eab4db7f
+MemAvailable now 121248 MiB; END fnv0b 03:27:01
+ALL-DONE

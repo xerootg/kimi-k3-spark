@@ -1,0 +1,26 @@
+=== LEG fnvk /srv/glm-5.3-flash/sm-bins/b3 fnv 04:25:31 extra: LLAMA_LOGITS_FNV=1 GGML_CUDA_FUSE_KDA=1
+READY fnvk after 28s
+{"kind": "conc", "tag": "fnvk-fnv", "n": 1, "round": "warm", "agg_tps": 14.97, "wall_s": 17.1, "gen": 256, "per_stream_tps": [15.27], "md5": ["53816a69bc"], "t0": 1794050760.2452407, "t1": 1794050777.3484247}
+{"kind": "depth", "tag": "fnvk-fnv-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 329.0, "prefill_s": 49.89, "decode_n": 32, "decode_tps": 14.19, "md5": "04ef53121a", "t0": 1794050777.3806038, "t1": 1794050829.480355}
+fnv lines 289 last LOGITS_FNV 288 49f06125d3d35aa8 chain 645d6858ada8bb57
+MemAvailable now 121154 MiB; END fnvk 04:27:12
+=== LEG fnva /srv/glm-5.3-flash/sm-bins/b3 fnv 04:43:47 extra: LLAMA_LOGITS_FNV=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1
+READY fnva after 28s
+{"kind": "conc", "tag": "fnva-fnv", "n": 1, "round": "warm", "agg_tps": 15.11, "wall_s": 16.95, "gen": 256, "per_stream_tps": [15.43], "md5": ["53816a69bc"], "t0": 1794051856.4440224, "t1": 1794051873.3894134}
+{"kind": "depth", "tag": "fnva-fnv-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 333.44, "prefill_s": 49.23, "decode_n": 32, "decode_tps": 14.46, "md5": "04ef53121a", "t0": 1794051873.420855, "t1": 1794051924.8208764}
+fnv lines 289 last LOGITS_FNV 288 49f06125d3d35aa8 chain 2e1e288abb300923
+MemAvailable now 119588 MiB; END fnva 04:45:27
+=== LEG ta1 /srv/glm-5.3-flash/sm-bins/b3 quick 04:47:50 extra: GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1
+READY ta1 after 28s
+{"kind": "conc", "tag": "ta1", "n": 1, "round": "warm", "agg_tps": 15.47, "wall_s": 16.55, "gen": 256, "per_stream_tps": [15.8], "md5": ["53816a69bc"], "t0": 1794052098.5755427, "t1": 1794052115.1249924}
+{"kind": "conc", "tag": "ta1", "n": 1, "round": 1, "agg_tps": 16.48, "wall_s": 15.54, "gen": 256, "per_stream_tps": [16.77], "md5": ["53816a69bc"], "t0": 1794052115.1253169, "t1": 1794052130.66246}
+{"kind": "conc", "tag": "ta1", "n": 1, "round": 2, "agg_tps": 16.52, "wall_s": 15.5, "gen": 256, "per_stream_tps": [16.81], "md5": ["53816a69bc"], "t0": 1794052130.6627026, "t1": 1794052146.1632826}
+{"kind": "conc", "tag": "ta1", "n": 1, "round": 3, "agg_tps": 16.49, "wall_s": 15.52, "gen": 256, "per_stream_tps": [16.79], "md5": ["53816a69bc"], "t0": 1794052146.163595, "t1": 1794052161.6842813}
+MemAvailable now 121229 MiB; END ta1 04:49:24
+=== LEG t01 /srv/glm-5.3-flash/sm-bins/b3 quick 04:52:39 extra: 
+READY t01 after 28s
+{"kind": "conc", "tag": "t01", "n": 1, "round": "warm", "agg_tps": 15.05, "wall_s": 17.01, "gen": 256, "per_stream_tps": [15.36], "md5": ["53816a69bc"], "t0": 1794052388.0090687, "t1": 1794052405.022695}
+{"kind": "conc", "tag": "t01", "n": 1, "round": 1, "agg_tps": 15.97, "wall_s": 16.03, "gen": 256, "per_stream_tps": [16.24], "md5": ["53816a69bc"], "t0": 1794052405.0230126, "t1": 1794052421.0529733}
+{"kind": "conc", "tag": "t01", "n": 1, "round": 2, "agg_tps": 15.96, "wall_s": 16.04, "gen": 256, "per_stream_tps": [16.23], "md5": ["53816a69bc"], "t0": 1794052421.0532484, "t1": 1794052437.0919316}
+{"kind": "conc", "tag": "t01", "n": 1, "round": 3, "agg_tps": 15.99, "wall_s": 16.01, "gen": 256, "per_stream_tps": [16.26], "md5": ["53816a69bc"], "t0": 1794052437.0922172, "t1": 1794052453.1001265}
+MemAvailable now 121242 MiB; END t01 04:54:16

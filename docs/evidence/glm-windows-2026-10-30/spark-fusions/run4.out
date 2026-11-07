@@ -1,0 +1,27 @@
+=== LEG fnvg /srv/glm-5.3-flash/sm-bins/b2 fnv 03:34:50 extra: LLAMA_LOGITS_FNV=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_DUMP_GRAPH=/srv/glm-5.3-flash/legs-sm/graph-g.txt
+READY fnvg after 28s
+{"kind": "conc", "tag": "fnvg-fnv", "n": 1, "round": "warm", "agg_tps": 15.18, "wall_s": 16.86, "gen": 256, "per_stream_tps": [15.5], "md5": ["53816a69bc"], "t0": 1794047718.4074142, "t1": 1794047735.2711115}
+{"kind": "depth", "tag": "fnvg-fnv-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 331.45, "prefill_s": 49.52, "decode_n": 32, "decode_tps": 14.42, "md5": "04ef53121a", "t0": 1794047735.302838, "t1": 1794047787.0059245}
+fnv lines 289 last LOGITS_FNV 288 7459442c39a6a5b2 chain f3dafd9bef5c74c4
+MemAvailable now 121189 MiB; END fnvg 03:36:30
+=== LEG t0a /srv/glm-5.3-flash/sm-bins/b2 quick 03:47:11 extra: 
+READY t0a after 28s
+{"kind": "conc", "tag": "t0a", "n": 1, "round": "warm", "agg_tps": 15.12, "wall_s": 16.93, "gen": 256, "per_stream_tps": [15.42], "md5": ["53816a69bc"], "t0": 1794048459.5681784, "t1": 1794048476.500421}
+{"kind": "conc", "tag": "t0a", "n": 1, "round": 1, "agg_tps": 16.04, "wall_s": 15.96, "gen": 256, "per_stream_tps": [16.32], "md5": ["53816a69bc"], "t0": 1794048476.5007558, "t1": 1794048492.4599547}
+{"kind": "conc", "tag": "t0a", "n": 1, "round": 2, "agg_tps": 16.07, "wall_s": 15.93, "gen": 256, "per_stream_tps": [16.35], "md5": ["53816a69bc"], "t0": 1794048492.4602327, "t1": 1794048508.3870914}
+{"kind": "conc", "tag": "t0a", "n": 1, "round": 3, "agg_tps": 16.08, "wall_s": 15.92, "gen": 256, "per_stream_tps": [16.35], "md5": ["53816a69bc"], "t0": 1794048508.3873754, "t1": 1794048524.3080802}
+MemAvailable now 121188 MiB; END t0a 03:48:47
+=== LEG tD /srv/glm-5.3-flash/sm-bins/b2 quick 03:53:18 extra: GGML_CUDA_DUP_SMALL=1
+READY tD after 28s
+{"kind": "conc", "tag": "tD", "n": 1, "round": "warm", "agg_tps": 14.75, "wall_s": 17.35, "gen": 256, "per_stream_tps": [15.06], "md5": ["53816a69bc"], "t0": 1794048826.8544245, "t1": 1794048844.207953}
+{"kind": "conc", "tag": "tD", "n": 1, "round": 1, "agg_tps": 15.71, "wall_s": 16.3, "gen": 256, "per_stream_tps": [15.97], "md5": ["53816a69bc"], "t0": 1794048844.2082207, "t1": 1794048860.5075674}
+{"kind": "conc", "tag": "tD", "n": 1, "round": 2, "agg_tps": 15.71, "wall_s": 16.29, "gen": 256, "per_stream_tps": [15.98], "md5": ["53816a69bc"], "t0": 1794048860.5078528, "t1": 1794048876.8003793}
+{"kind": "conc", "tag": "tD", "n": 1, "round": 3, "agg_tps": 15.64, "wall_s": 16.37, "gen": 256, "per_stream_tps": [15.91], "md5": ["53816a69bc"], "t0": 1794048876.8006306, "t1": 1794048893.1664753}
+MemAvailable now 121245 MiB; END tD 03:54:55
+=== LEG tQ /srv/glm-5.3-flash/sm-bins/b2 quick 04:05:41 extra: GGML_CUDA_DUP_QUANT=1
+READY tQ after 28s
+{"kind": "conc", "tag": "tQ", "n": 1, "round": "warm", "agg_tps": 14.95, "wall_s": 17.12, "gen": 256, "per_stream_tps": [15.26], "md5": ["53816a69bc"], "t0": 1794049569.36964, "t1": 1794049586.4896016}
+{"kind": "conc", "tag": "tQ", "n": 1, "round": 1, "agg_tps": 15.88, "wall_s": 16.12, "gen": 256, "per_stream_tps": [16.14], "md5": ["53816a69bc"], "t0": 1794049586.4899297, "t1": 1794049602.614431}
+{"kind": "conc", "tag": "tQ", "n": 1, "round": 2, "agg_tps": 15.89, "wall_s": 16.12, "gen": 256, "per_stream_tps": [16.15], "md5": ["53816a69bc"], "t0": 1794049602.6147246, "t1": 1794049618.7300224}
+{"kind": "conc", "tag": "tQ", "n": 1, "round": 3, "agg_tps": 15.87, "wall_s": 16.13, "gen": 256, "per_stream_tps": [16.14], "md5": ["53816a69bc"], "t0": 1794049618.7302897, "t1": 1794049634.85796}
+MemAvailable now 120900 MiB; END tQ 04:07:16

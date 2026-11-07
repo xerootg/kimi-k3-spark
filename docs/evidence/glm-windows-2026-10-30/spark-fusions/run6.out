@@ -1,0 +1,13 @@
+=== LEG n16 /srv/glm-5.3-flash/sm-bins/b3 nsys16k 04:27:12 extra: 
+READY n16 after 30s
+traced16k 4 16.16 tok/s md5 4f77bd831f
+-rw-rw-r-- 1 xero xero  8811653 Nov  7 04:28 nsys/sm-n16.nsys-rep
+-rw-r--r-- 1 xero xero 24502272 Nov  7 04:28 nsys/sm-n16.sqlite
+MemAvailable now 121200 MiB; END n16 04:28:43
+=== LEG nsA /srv/glm-5.3-flash/sm-bins/b3 nsys 04:45:27 extra: GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1
+READY nsA after 30s
+traced 17.08 tok/s md5 de2fe3e1ab
+-rw-rw-r-- 1 xero xero  8489464 Nov  7 04:46 nsys/sm-nsA.nsys-rep
+-rw-r--r-- 1 xero xero 23449600 Nov  7 04:46 nsys/sm-nsA.sqlite
+MemAvailable now 119616 MiB; END nsA 04:46:12
+ALL-DONE

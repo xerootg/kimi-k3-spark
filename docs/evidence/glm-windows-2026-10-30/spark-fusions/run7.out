@@ -1,0 +1,15 @@
+=== LEG tB /srv/glm-5.3-flash/sm-bins/b4 quick 04:46:12 extra: GGML_CUDA_SCHED=blocking
+READY tB after 28s
+{"kind": "conc", "tag": "tB", "n": 1, "round": "warm", "agg_tps": 14.81, "wall_s": 17.29, "gen": 256, "per_stream_tps": [15.09], "md5": ["53816a69bc"], "t0": 1794052000.728418, "t1": 1794052018.0189874}
+{"kind": "conc", "tag": "tB", "n": 1, "round": 1, "agg_tps": 15.6, "wall_s": 16.41, "gen": 256, "per_stream_tps": [15.86], "md5": ["53816a69bc"], "t0": 1794052018.019398, "t1": 1794052034.4309392}
+{"kind": "conc", "tag": "tB", "n": 1, "round": 2, "agg_tps": 15.66, "wall_s": 16.34, "gen": 256, "per_stream_tps": [15.93], "md5": ["53816a69bc"], "t0": 1794052034.431191, "t1": 1794052050.7739065}
+{"kind": "conc", "tag": "tB", "n": 1, "round": 3, "agg_tps": 15.65, "wall_s": 16.36, "gen": 256, "per_stream_tps": [15.92], "md5": ["53816a69bc"], "t0": 1794052050.774211, "t1": 1794052067.1321175}
+MemAvailable now 119454 MiB; END tB 04:47:50
+=== LEG tY /srv/glm-5.3-flash/sm-bins/b4 quick 04:49:24 extra: GGML_CUDA_SCHED=yield
+READY tY after 28s
+{"kind": "conc", "tag": "tY", "n": 1, "round": "warm", "agg_tps": 15.01, "wall_s": 17.06, "gen": 256, "per_stream_tps": [15.31], "md5": ["53816a69bc"], "t0": 1794052192.871184, "t1": 1794052209.9314275}
+{"kind": "conc", "tag": "tY", "n": 1, "round": 1, "agg_tps": 15.93, "wall_s": 16.07, "gen": 256, "per_stream_tps": [16.2], "md5": ["53816a69bc"], "t0": 1794052209.9317777, "t1": 1794052226.00278}
+{"kind": "conc", "tag": "tY", "n": 1, "round": 2, "agg_tps": 15.93, "wall_s": 16.07, "gen": 256, "per_stream_tps": [16.19], "md5": ["53816a69bc"], "t0": 1794052226.0030456, "t1": 1794052242.0772796}
+{"kind": "conc", "tag": "tY", "n": 1, "round": 3, "agg_tps": 15.94, "wall_s": 16.06, "gen": 256, "per_stream_tps": [16.2], "md5": ["53816a69bc"], "t0": 1794052242.0775297, "t1": 1794052258.1421914}
+MemAvailable now 121184 MiB; END tY 04:51:01
+ALL-DONE

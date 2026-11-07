@@ -1,0 +1,6 @@
+ggml_cuda_graph_evaluate_and_capture: q8 reuse: 301 hits, 456 misses (cumulative), graph nodes 8057
+ggml_cuda_graph_evaluate_and_capture: q8 reuse: 602 hits, 911 misses (cumulative), graph nodes 8015
+ggml_cuda_graph_evaluate_and_capture: q8 reuse: 903 hits, 1367 misses (cumulative), graph nodes 8057
+ggml_cuda_graph_evaluate_and_capture: q8 reuse: 1259 hits, 1823 misses (cumulative), graph nodes 8561
+ggml_cuda_graph_evaluate_and_capture: q8 reuse: 1615 hits, 2279 misses (cumulative), graph nodes 8561
+ggml_cuda_graph_evaluate_and_capture: q8 reuse: 1979 hits, 2735 misses (cumulative), graph nodes 8561

@@ -297,7 +297,7 @@ the same request must give the same bytes across runs and restarts.
   as a selectable model in the existing workbench, or (b) a separate GH200-only workbench.
 - **Spark kernel work: GO (Haley, 2026-11-07).** Target revised by the roofline entry (245 GB/s practical, ~9.7 GB per token): ~19-21 tok/s byte-identical from 16.5; steps: (A) a cold-cache MMVQ bench at production shapes, (B) MMVQ ~200 -> ~235 GB/s without changing per-row arithmetic, (C) fuse the small-kernel tail (~430 quantize launches, norms, broadcasts per token). Was: go / backlog not decided. State: split-late=1 live (16.5 tok/s); early gate/up
   fusion (0048, LLAMA_EXPERT_STORE_FUSE_VIEWS) works byte-identically but is 1.8 % slower, not adopted; ncu needs root
-  plus a memory watchdog (the first root run OOM-killed the test server, dma-latency pod restarted once).
+  plus a memory watchdog (the first root run OOM-killed the test server, dma-latency pod restarted once). **Night of 2026-11-07:** patch 0050 (five `GGML_CUDA_*` fusion switches, byte-identical, logits hashes equal) gives 16.26 -> 16.91 tok/s short and ~+3.5 % after 16k; production needs `GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1` on the image with 0050. Small kernels cost ~1 us each (measured), so the tail left is ~2.5 ms; next levers: MMVQ itself and the expert-cache refill after long prefills (the 16k decode gap).
 
 ## NUC distribution (Haley, 2026-11-07)
 

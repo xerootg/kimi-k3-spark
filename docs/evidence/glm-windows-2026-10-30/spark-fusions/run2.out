@@ -1,0 +1,19 @@
+=== LEG fnv0 sm fnv 03:09:22 extra: LLAMA_LOGITS_FNV=1
+READY fnv0 after 28s
+{"kind": "conc", "tag": "fnv0-fnv", "n": 1, "round": "warm", "agg_tps": 14.94, "wall_s": 17.14, "gen": 256, "per_stream_tps": [15.24], "md5": ["53816a69bc"], "t0": 1794046191.3135335, "t1": 1794046208.4503803}
+{"kind": "depth", "tag": "fnv0-fnv-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 345.86, "prefill_s": 47.46, "decode_n": 32, "decode_tps": 14.14, "md5": "04ef53121a", "t0": 1794046208.4827719, "t1": 1794046258.1654775}
+fnv lines 289 last LOGITS_FNV 288 06d8f06632d61da0 chain d02cac715ce21ecc
+MemAvailable now 121255 MiB; END fnv0 03:11:01
+=== LEG fnvq sm fnv 03:11:06 extra: LLAMA_LOGITS_FNV=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_Q8_REUSE_STATS=1
+READY fnvq after 28s
+{"kind": "conc", "tag": "fnvq-fnv", "n": 1, "round": "warm", "agg_tps": 15.1, "wall_s": 16.95, "gen": 256, "per_stream_tps": [15.42], "md5": ["53816a69bc"], "t0": 1794046294.392702, "t1": 1794046311.3428953}
+{"kind": "depth", "tag": "fnvq-fnv-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 347.05, "prefill_s": 47.3, "decode_n": 32, "decode_tps": 14.22, "md5": "04ef53121a", "t0": 1794046311.3741236, "t1": 1794046360.881927}
+fnv lines 289 last LOGITS_FNV 288 8cda0569bf96b053 chain 9950e070346ab795
+MemAvailable now 121234 MiB; END fnvq 03:12:43
+=== LEG fnvh sm fnv 03:23:43 extra: LLAMA_LOGITS_FNV=1 GGML_CUDA_FUSE_HC=1
+READY fnvh after 28s
+{"kind": "conc", "tag": "fnvh-fnv", "n": 1, "round": "warm", "agg_tps": 15.15, "wall_s": 16.9, "gen": 256, "per_stream_tps": [15.45], "md5": ["53816a69bc"], "t0": 1794047051.4125926, "t1": 1794047068.311932}
+{"kind": "depth", "tag": "fnvh-fnv-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 336.57, "prefill_s": 48.77, "decode_n": 32, "decode_tps": 14.28, "md5": "04ef53121a", "t0": 1794047068.3473048, "t1": 1794047119.311483}
+fnv lines 289 last LOGITS_FNV 288 9921c9f2c9b9fc42 chain 60ea7fc3ddbb6d2e
+MemAvailable now 121270 MiB; END fnvh 03:25:22
+ALL-DONE

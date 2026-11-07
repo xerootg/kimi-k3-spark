@@ -1,0 +1,14 @@
+=== LEG bc1 /srv/glm-5.3-flash/sm-bins/b5 bench 05:09:21 extra: GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1
+READY bc1 after 28s
+{"kind": "conc", "tag": "bc1", "n": 1, "round": "warm", "agg_tps": 15.54, "wall_s": 16.47, "gen": 256, "per_stream_tps": [15.88], "md5": ["53816a69bc"], "t0": 1794053390.0861344, "t1": 1794053406.5591042}
+{"kind": "conc", "tag": "bc1", "n": 1, "round": 1, "agg_tps": 16.59, "wall_s": 15.43, "gen": 256, "per_stream_tps": [16.89], "md5": ["53816a69bc"], "t0": 1794053406.5593927, "t1": 1794053421.9858513}
+{"kind": "conc", "tag": "bc1", "n": 1, "round": 2, "agg_tps": 16.61, "wall_s": 15.41, "gen": 256, "per_stream_tps": [16.9], "md5": ["53816a69bc"], "t0": 1794053421.9861112, "t1": 1794053437.4002597}
+{"kind": "conc", "tag": "bc1", "n": 1, "round": 3, "agg_tps": 16.56, "wall_s": 15.45, "gen": 256, "per_stream_tps": [16.87], "md5": ["53816a69bc"], "t0": 1794053437.4005241, "t1": 1794053452.8548012}
+{"kind": "depth", "tag": "bc1-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 342.26, "prefill_s": 47.96, "decode_n": 128, "decode_tps": 14.51, "md5": "145c14aa8b", "t0": 1794053452.8865752, "t1": 1794053509.6198187}
+MemAvailable now 121242 MiB; END bc1 05:11:52
+=== LEG b01 /srv/glm-5.3-flash/sm-bins/b5 bench 05:12:37 extra: 
+READY b01 after 28s
+{"kind": "conc", "tag": "b01", "n": 1, "round": "warm", "agg_tps": 15.04, "wall_s": 17.02, "gen": 256, "per_stream_tps": [15.34], "md5": ["53816a69bc"], "t0": 1794053585.9160912, "t1": 1794053602.93645}
+{"kind": "conc", "tag": "b01", "n": 1, "round": 1, "agg_tps": 16.0, "wall_s": 16.0, "gen": 256, "per_stream_tps": [16.27], "md5": ["53816a69bc"], "t0": 1794053602.9367902, "t1": 1794053618.9346135}
+{"kind": "conc", "tag": "b01", "n": 1, "round": 2, "agg_tps": 16.02, "wall_s": 15.98, "gen": 256, "per_stream_tps": [16.29], "md5": ["53816a69bc"], "t0": 1794053618.9348905, "t1": 1794053634.9166234}
+{"kind": "conc", "tag": "b01", "n": 1, "round": 3, "agg_tps": 15.95, "wall_s": 16.05, "gen": 256, "per_stream_tps": [16.22], "md5": ["53816a69bc"], "t0": 1794053634.916886, "t1": 1794053650.9678843}
