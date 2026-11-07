@@ -62,6 +62,8 @@ static __m256i dp(__m256i a, __m256i b) { return _mm256_dpbusd_avx_epi32(_mm256_
 struct alignas(64) RowInput {
     __m256i q[D / 32];
     int correction[D / 32][2];
+    alignas(32) int corr_lo[D / 32];   // the same corrections, one vector of 8 per 256-value block (fast_row2)
+    alignas(32) int corr_hi[D / 32];
     __m256 scale[D / 256];
 };
 static void prepare(RowInput & dst, const Q8 * src, int nb) {
@@ -74,6 +76,8 @@ static void prepare(RowInput & dst, const Q8 * src, int nb) {
             for (int i = 0; i < 16; ++i) { lo += src[n].q[i]; hi += src[n].q[i + 16]; }
             dst.correction[n][0] = lo * 128;
             dst.correction[n][1] = hi * 128;
+            dst.corr_lo[n] = lo * 128;
+            dst.corr_hi[n] = hi * 128;
             hd[j] = src[n].d;
         }
         dst.scale[b] = _mm256_cvtph_ps(_mm_load_si128((const __m128i *) hd));
@@ -152,6 +156,72 @@ template <int ty, int nb> static float fast_row(const uint8_t * r, const RowInpu
     v = clean(_mm256_add_ps(v, _mm256_permute_ps(v, 0xb1)));
     return _mm_cvtss_f32(_mm256_castps256_ps128(v));
 }
+// The same row with the 16 per-j horizontal sums replaced by one transposed hadd reduction per block (integer adds
+// in another order: exact). F53_ROW=1 selects fast_row (the original) for comparison.
+template <int ty> static inline __m256i wdec(const uint8_t * b, int j) {
+    __m256i w;
+    if (ty == 17) {
+        const uint8_t * q = b + 2 + 8 * j;
+        unsigned a = u16(q), c = u16(q + 2), d = u16(q + 4), e = u16(q + 6);
+        w = _mm256_setr_epi64x(iq2xs_grid[a & 511], iq2xs_grid[c & 511], iq2xs_grid[d & 511], iq2xs_grid[e & 511]);
+        auto s = _mm256_setr_epi64x(ksigns64[a >> 9], ksigns64[c >> 9], ksigns64[d >> 9], ksigns64[e >> 9]);
+        w = _mm256_sign_epi8(w, _mm256_or_si256(s, _mm256_set1_epi8(1)));
+    } else {
+        const uint8_t * q = b + 2 + 8 * j;
+        const unsigned sc = u32(b + 66 + 4 * j);
+        w = _mm256_setr_epi32(iq3xxs_grid[q[0]], iq3xxs_grid[q[1]], iq3xxs_grid[q[2]], iq3xxs_grid[q[3]],
+                              iq3xxs_grid[q[4]], iq3xxs_grid[q[5]], iq3xxs_grid[q[6]], iq3xxs_grid[q[7]]);
+        auto s = _mm256_setr_epi64x(ksigns64[sc & 127], ksigns64[(sc >> 7) & 127], ksigns64[(sc >> 14) & 127], ksigns64[(sc >> 21) & 127]);
+        w = _mm256_sign_epi8(w, _mm256_or_si256(s, _mm256_set1_epi8(1)));
+    }
+    return _mm256_xor_si256(w, _mm256_set1_epi8(char(128)));
+}
+static inline __m256i idiv2(__m256i x) { return _mm256_srai_epi32(_mm256_add_epi32(x, _mm256_srli_epi32(x, 31)), 1); } // C x/2
+template <int ty, int nb> static float fast_row2(const uint8_t * r, const RowInput * y) {
+    __m256 p[16];
+    for (auto & v : p) v = _mm256_setzero_ps();
+    for (int b = 0; b < nb; b++) {
+        const auto * w = r + b * blockbytes(ty);
+        __m256i v[8];
+#pragma GCC unroll 8
+        for (int j = 0; j < 8; ++j) v[j] = dp(wdec<ty>(w, j), y->q[b * 8 + j]);
+        const __m256i h01 = _mm256_hadd_epi32(v[0], v[1]), h23 = _mm256_hadd_epi32(v[2], v[3]);
+        const __m256i h45 = _mm256_hadd_epi32(v[4], v[5]), h67 = _mm256_hadd_epi32(v[6], v[7]);
+        const __m256i g0 = _mm256_hadd_epi32(h01, h23), g1 = _mm256_hadd_epi32(h45, h67); // [a0..3 | c0..3], [a4..7 | c4..7]
+        const __m256i a = _mm256_sub_epi32(_mm256_permute2x128_si256(g0, g1, 0x20), _mm256_load_si256((const __m256i *) &y->corr_lo[b * 8]));
+        const __m256i c = _mm256_sub_epi32(_mm256_permute2x128_si256(g0, g1, 0x31), _mm256_load_si256((const __m256i *) &y->corr_hi[b * 8]));
+        const __m256i total = _mm256_add_epi32(a, c);
+        __m256i sum;
+        if constexpr (ty == 18) {
+            alignas(32) uint32_t aux[8];
+            for (int j = 0; j < 8; ++j) aux[j] = u32(w + 66 + 4 * j) >> 28;
+            const __m256i scl = _mm256_load_si256((const __m256i *) aux);
+            sum = idiv2(_mm256_add_epi32(_mm256_mullo_epi32(scl, total), idiv2(total)));
+        } else {
+            const __m256i sc = _mm256_cvtepu8_epi32(_mm_loadl_epi64((const __m128i *) (w + 66)));
+            sum = _mm256_add_epi32(idiv2(total), _mm256_add_epi32(_mm256_mullo_epi32(a, _mm256_and_si256(sc, _mm256_set1_epi32(15))),
+                                                                  _mm256_mullo_epi32(c, _mm256_srli_epi32(sc, 4))));
+            auto bias = _mm256_and_si256(_mm256_srai_epi32(sum, 31), _mm256_set1_epi32(3));
+            sum = _mm256_srai_epi32(_mm256_add_epi32(sum, bias), 2);
+        }
+        auto d = clean(_mm256_mul_ps(_mm256_set1_ps(half(u16(w))), y->scale[b]));
+        p[b % 16] = clean(_mm256_fmadd_ps(d, _mm256_cvtepi32_ps(sum), p[b % 16]));
+    }
+    __m256 lane[4];
+    for (int i = 0; i < 4; i++)
+        lane[i] = clean(_mm256_add_ps(clean(_mm256_add_ps(clean(_mm256_add_ps(p[i], p[i + 4])), p[i + 8])), p[i + 12]));
+    lane[0] = clean(_mm256_add_ps(lane[0], lane[2]));
+    lane[1] = clean(_mm256_add_ps(lane[1], lane[3]));
+    lane[0] = clean(_mm256_add_ps(lane[0], lane[1]));
+    auto vv = clean(_mm256_add_ps(lane[0], _mm256_permute2f128_ps(lane[0], lane[0], 1)));
+    vv = clean(_mm256_add_ps(vv, _mm256_permute_ps(vv, 0x4e)));
+    vv = clean(_mm256_add_ps(vv, _mm256_permute_ps(vv, 0xb1)));
+    return _mm_cvtss_f32(_mm256_castps256_ps128(vv));
+}
+static const bool row_v1 = getenv("F53_ROW") != nullptr && getenv("F53_ROW")[0] == '1';
+template <int ty, int nb> static inline float row_sel(const uint8_t * r, const RowInput * y) {
+    return row_v1 ? fast_row<ty, nb>(r, y) : fast_row2<ty, nb>(r, y);
+}
 // fused GLU of the GB10 path: x_bias/gate_bias placeholders (+0), then ggml_cuda_op_swiglu_clamp_single
 static inline float swiglu_clamp(float g, float u, const mufu_tables & t) {
     g = add(g, 0.f);
@@ -211,14 +281,14 @@ static void work(Pool * p) {
         if (!p->phase) {
             const RowInput * x = &p->ix[v.tok];
             for (int i = start; i < start + 32; i++) {
-                const float g = fast_row<17, NBG>(v.rec + size_t(i) * NBG * 74, x);
-                const float u = fast_row<17, NBG>(v.rec + GSZ + size_t(i) * NBG * 74, x);
+                const float g = row_sel<17, NBG>(v.rec + size_t(i) * NBG * 74, x);
+                const float u = row_sel<17, NBG>(v.rec + GSZ + size_t(i) * NBG * 74, x);
                 p->h[e][i] = swiglu_clamp(g, u, p->mt);
             }
             quant(p->h[e] + start, p->qh[e][start / 32], p->mt);
         } else {
             const RowInput * hh = &p->ih[e];
-            for (int i = start; i < start + 32; i++) v.out[i] = fast_row<18, NBD>(v.rec + GSZ + USZ + size_t(i) * NBD * 98, hh);
+            for (int i = start; i < start + 32; i++) v.out[i] = row_sel<18, NBD>(v.rec + GSZ + USZ + size_t(i) * NBD * 98, hh);
         }
     }
 }
@@ -237,7 +307,8 @@ static Pool * pool_create(const mufu_tables & mt, const std::vector<int> & cpus,
         p->threads.emplace_back([p, cpu, spin_us] {
             if (cpu >= 0) { cpu_set_t s; CPU_ZERO(&s); CPU_SET(cpu, &s); pthread_setaffinity_np(pthread_self(), sizeof s, &s); }
             prefault_stack();
-            { RowInput in{}; uint8_t raw[16 * 98]{}; volatile float r = fast_row<17, NBG>(raw, &in); r = fast_row<18, NBD>(raw, &in); (void) r; }
+            { RowInput in{}; uint8_t raw[16 * 98]{}; volatile float r = fast_row<17, NBG>(raw, &in); r = fast_row<18, NBD>(raw, &in);
+              r = fast_row2<17, NBG>(raw, &in); r = fast_row2<18, NBD>(raw, &in); (void) r; }
             errno = 0;
             int last = 0;
             auto idle = std::chrono::steady_clock::now();

@@ -25,3 +25,7 @@ first, workers the rest), `F53_SPIN_US` (idle spin before futex sleep). The tabl
 memory (a file mapping is page cache, which loading 30 GB of records evicts, and the first requests then take major
 faults); the records are read with the page cache dropped behind and locked as far as RLIMIT_MEMLOCK allows. The
 request path allocates nothing; the log reports page faults since start and compute time per pair.
+
+Row kernel: `fast_row2` (default) reduces each block's eight VNNI dot products with one transposed `hadd` tree
+instead of sixteen horizontal sums (integer adds: the same bits); `F53_ROW=1` selects the original `fast_row`.
+On nuc2 (12 workers): one pair 0.30 ms (was 0.42), eight pairs 2.6 ms (was 3.1).

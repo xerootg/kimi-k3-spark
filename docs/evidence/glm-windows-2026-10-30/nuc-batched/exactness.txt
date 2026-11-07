@@ -18,3 +18,8 @@ fr-l5-t4.bin: 10 cases, 200 rows over the wire, 200 differ                 (expe
 
 ## real activations (window nd6 leg V): 32768 rows the NUCs computed in serving, with their inputs, replayed on the GPU
 replay /srv/glm-5.3-flash/legs-nd6/V.dump: 32768 remote rows, 0 differ from the GPU's rows
+
+## f53s row kernel v2 (fast_row2, transposed hadd), nuc2
+check fr-l5-t1.bin: 40 cases T=1, 320 rows, 0 rows differ (0 values), 3131.9 us per case   (v1: 4186.2 us, same check run)
+check fr-l5-t4x.bin: 10 cases T=4, 320 rows, 0 rows differ (0 values), 12166.2 us per case  (v1: 13563.9 us)
+bench k=1: p50 303 us (v1 422); k=2: 682 (777); k=4: 1347 (1590); k=8: 2625 (3079)

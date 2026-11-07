@@ -990,6 +990,6 @@ Wire: int32 hdr[68] { 0x4E440000|k, ntok, seq, layer, (gid, token) x 32 } + ntok
 request order. The NUC server is tools/glm53/flash/f53s.cpp. Requires `GGML_CUDA_MMVQ_EXACT_COLS=1`: the stock
 multi-token MoE kernel has another reduction order, so without it the boxes' rows are not the Spark's (a warning is
 logged). Reproducible multi-stream bytes additionally need `LLAMA_PREFILL_ISOLATE=1` (0035), with or without the tier.
-Measured (docs/experiments.md, windows nd0-nd8): byte-identical tier on/off at N=2/4/8, +1.3-2.5 % at N=4, +4.1-4.2 %
+Measured (docs/experiments.md, windows nd0-nd8): byte-identical tier on/off at N=2/4/8, +1.3-2.5 % at N=4, +4.0-4.2 %
 at N=8, neutral at N=2, nothing at N=1. The diff is against the production tree (llama-k3-el); it applies on the
 committed stack (`git apply --check`) and the touched files pass a host syntax check.
