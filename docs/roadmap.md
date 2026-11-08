@@ -328,6 +328,9 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   (`LLAMA_SLOT_SERIAL=1`), same bytes as today, single-stream speed ~4 % lower, and alternating clients (Juno, the
   workbench, Claude Code) stop evicting each other's KV. Canary script ready (`canary0052.sh`); needs the policy
   choice (shared pool with refuse, or fixed shares) and one reviewed argo-things PR.
+- **Past 1M (0053, opt-in):** a 1,086,899-token prompt retrieved facts from its first line and its middle; prefill
+  2 h 40 min on the Spark, decode 7-9 tok/s at that depth. Next check: a long real transcript. Before 2.09M:
+  64-bit strides in `binbcast.cu`.
 - **Next:** parking idle slots' KV on NVMe when the pool is full (instead of refusing); root-cause the GDN fusion
   crash; exact batching for N>2 if batched throughput is wanted again.
 
