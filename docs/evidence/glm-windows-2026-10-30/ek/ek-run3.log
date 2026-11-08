@@ -1,0 +1,34 @@
+=== LEG P4s parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 LLAMA_SLOT_SERIAL=1] 11:56:23
+READY P4s after 28s
+0.13.323.940 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (730.8 ms)
+0.13.323.994 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.329.912 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.9 ms)
+0.13.335.558 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.6 ms)
+0.13.341.214 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.6 ms)
+0.13.346.822 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.6 ms)
+0.13.980.606 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (548.1 ms)
+0.13.980.637 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.4, "prefill_tps": 24.87, "decode_n": 256, "decode_tps": 15.32, "md5": "53816a69bc", "t0": 1794139012.6242852, "t1": 1794139029.6893663, "kind": "solo", "tag": "P4s"}
+{"kind": "multi", "tag": "P4s", "n": 4, "round": "warm", "agg_tps": 14.23, "wall_s": 71.95, "gen": 1024, "per_stream_tps": [14.79, 14.19, 14.62, 15.35], "md5": ["53816a69bc", "28c834e37b", "e3288e25c0", "34401d3b29"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [25.33, 28.29, 25.79, 24.52], "t0": 1794139029.7344115, "t1": 1794139101.68542}
+{"kind": "multi", "tag": "P4s", "n": 4, "round": 1, "agg_tps": 14.68, "wall_s": 69.75, "gen": 1024, "per_stream_tps": [14.37, 15.17, 15.06, 15.79], "md5": ["53816a69bc", "28c834e37b", "e3288e25c0", "34401d3b29"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.44, 34.66, 33.62, 34.28], "t0": 1794139101.6859508, "t1": 1794139171.4405339}
+{"kind": "multi", "tag": "P4s", "n": 2, "round": "warm", "agg_tps": 3.92, "wall_s": 97.9, "gen": 384, "per_stream_tps": [14.75, 14.3], "md5": ["53816a69bc", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [24.77, 230.21], "t0": 1794139171.4714837, "t1": 1794139269.3700583}
+{"spec": "L16384", "prompt_n": 4, "cache_n": 16410, "prefill_s": 0.22, "prefill_tps": 17.9, "decode_n": 128, "decode_tps": 15.45, "md5": "145c14aa8b", "t0": 1794139269.4000554, "t1": 1794139277.8782144, "kind": "solo", "tag": "P4s"}
+{"spec": "p1", "prompt_n": 4, "cache_n": 15, "prefill_s": 0.17, "prefill_tps": 23.14, "decode_n": 256, "decode_tps": 15.79, "md5": "28c834e37b", "t0": 1794139277.8783057, "t1": 1794139294.2008202, "kind": "solo", "tag": "P4s"}
+{"spec": "L16384", "prompt_n": 4, "cache_n": 16410, "prefill_s": 0.21, "prefill_tps": 19.24, "decode_n": 128, "decode_tps": 15.8, "md5": "145c14aa8b", "t0": 1794139294.2008715, "t1": 1794139302.468053, "kind": "solo", "tag": "P4s"}
+elastic lines: 18; refused: 0
+lowest MemAvailable 5670 MiB; now 120671 MiB; END P4s 12:01:46
+EK-LEG-DONE P4s 12:01:46
+=== LEG P1c parallel=1 ctx=1048576 extra=[] 12:01:46
+READY P1c after 26s
+0.12.491.767 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.496.722 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (4.9 ms)
+0.12.520.670 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.523.794 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (3.1 ms)
+0.25.279.410 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.41, "prefill_tps": 24.65, "decode_n": 256, "decode_tps": 15.81, "md5": "53816a69bc", "t0": 1794139332.8915596, "t1": 1794139349.4439337, "kind": "solo", "tag": "P1c"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 47.84, "prefill_tps": 343.09, "decode_n": 128, "decode_tps": 15.33, "md5": "145c14aa8b", "t0": 1794139349.472594, "t1": 1794139405.632, "kind": "solo", "tag": "P1c"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.62, "prefill_tps": 30.49, "decode_n": 256, "decode_tps": 15.71, "md5": "28c834e37b", "t0": 1794139405.632105, "t1": 1794139422.4928975, "kind": "solo", "tag": "P1c"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 46.17, "prefill_tps": 355.53, "decode_n": 128, "decode_tps": 16.33, "md5": "145c14aa8b", "t0": 1794139422.4929483, "t1": 1794139476.4559953, "kind": "solo", "tag": "P1c"}
+elastic lines: 10; refused: 0
+lowest MemAvailable 9257 MiB; now 120685 MiB; END P1c 12:04:38
+EK-LEG-DONE P1c 12:04:38

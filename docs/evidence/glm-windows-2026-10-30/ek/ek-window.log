@@ -1,0 +1,473 @@
+=== LEG P4 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 ] 10:47:34
+READY P4 after 30s
+0.13.462.006 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (682.1 ms)
+0.13.462.058 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.467.505 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.4 ms)
+0.13.472.585 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.1 ms)
+0.13.478.031 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.4 ms)
+0.13.483.045 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.0 ms)
+0.14.074.662 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (511.8 ms)
+0.14.074.692 I llama_kv_cache: elastic KV per stream: idx_1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"spec": "p0", "prompt_n": 10, "prefill_tps": 24.75, "decode_n": 256, "decode_tps": 15.51, "md5": "53816a69bc", "t0": 1794134885.703101, "t1": 1794134902.5625708, "kind": "solo", "tag": "P4-warm"}
+{"spec": "p0", "prompt_n": 10, "prefill_tps": 28.52, "decode_n": 256, "decode_tps": 16.52, "md5": "53816a69bc", "t0": 1794134902.5910754, "t1": 1794134918.3876553, "kind": "solo", "tag": "P4-solo"}
+{"spec": "p1", "prompt_n": 19, "prefill_tps": 26.31, "decode_n": 256, "decode_tps": 14.9, "md5": "28c834e37b", "t0": 1794134918.3877258, "t1": 1794134936.2276263, "kind": "solo", "tag": "P4-solo"}
+{"spec": "p2", "prompt_n": 18, "prefill_tps": 23.97, "decode_n": 256, "decode_tps": 14.11, "md5": "e3288e25c0", "t0": 1794134936.2276838, "t1": 1794134955.0520656, "kind": "solo", "tag": "P4-solo"}
+{"spec": "p3", "prompt_n": 21, "prefill_tps": 25.26, "decode_n": 256, "decode_tps": 15.05, "md5": "34401d3b29", "t0": 1794134955.052115, "t1": 1794134972.824299, "kind": "solo", "tag": "P4-solo"}
+{"spec": "L16384", "prompt_n": 16414, "prefill_tps": 231.06, "decode_n": 128, "decode_tps": 14.66, "md5": "145c14aa8b", "t0": 1794134972.82435, "t1": 1794135052.54087, "kind": "solo", "tag": "P4-solo"}
+{"kind": "multi", "tag": "P4-n2", "n": 2, "round": "warm", "agg_tps": 19.58, "wall_s": 26.15, "gen": 512, "per_stream_tps": [9.91, 10.1], "md5": ["f2c99a7d44", "2f86172301"], "specs": ["p0", "p1"], "prefill_tps": [25.31, 39.35], "t0": 1794135052.5886111, "t1": 1794135078.7429647}
+{"kind": "multi", "tag": "P4-n2", "n": 2, "round": 1, "agg_tps": 20.96, "wall_s": 24.42, "gen": 512, "per_stream_tps": [10.6, 10.82], "md5": ["f2c99a7d44", "2f86172301"], "specs": ["p0", "p1"], "prefill_tps": [26.86, 39.25], "t0": 1794135078.7433014, "t1": 1794135103.1669345}
+{"kind": "multi", "tag": "P4-n2", "n": 2, "round": 2, "agg_tps": 21.38, "wall_s": 23.95, "gen": 512, "per_stream_tps": [10.82, 11.04], "md5": ["f2c99a7d44", "2f86172301"], "specs": ["p0", "p1"], "prefill_tps": [26.18, 39.58], "t0": 1794135103.1672494, "t1": 1794135127.1195755}
+{"kind": "multi", "tag": "P4-n4", "n": 4, "round": "warm", "agg_tps": 23.36, "wall_s": 43.83, "gen": 1024, "per_stream_tps": [6.03, 5.98, 5.91, 6.12], "md5": ["f2c99a7d44", "e8a73da35b", "35cad6174a", "dea2df6599"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [27.45, 39.64, 28.44, 34.98], "t0": 1794135127.1502483, "t1": 1794135170.9827552}
+{"kind": "multi", "tag": "P4-n4", "n": 4, "round": 1, "agg_tps": 24.23, "wall_s": 42.26, "gen": 1024, "per_stream_tps": [6.09, 6.24, 6.16, 6.32], "md5": ["f2c99a7d44", "e8a73da35b", "35cad6174a", "dea2df6599"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [25.0, 39.31, 36.86, 37.44], "t0": 1794135170.9831977, "t1": 1794135213.2466955}
+{"kind": "multi", "tag": "P4-n4", "n": 4, "round": 2, "agg_tps": 24.28, "wall_s": 42.17, "gen": 1024, "per_stream_tps": [6.25, 6.19, 6.12, 6.34], "md5": ["f2c99a7d44", "e8a73da35b", "35cad6174a", "dea2df6599"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [26.06, 38.84, 35.79, 38.26], "t0": 1794135213.2472172, "t1": 1794135255.4135478}
+Exception in thread Thread-2 (w):
+Exception in thread Thread-1 (w):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+    self.run()
+    self.run()
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/glm-5.3-flash/ekbench.py", line 86, in w
+    self._target(*self._args, **self._kwargs)
+  File "/srv/glm-5.3-flash/ekbench.py", line 86, in w
+    res[i] = one(a.url, a.specs[i], a.n_predict)
+    res[i] = one(a.url, a.specs[i], a.n_predict)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 55, in one
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 55, in one
+    d = post(url + "/completion", body(spec, n_predict))
+    d = post(url + "/completion", body(spec, n_predict))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 43, in post
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 43, in post
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 515, in open
+  File "/usr/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 532, in _open
+  File "/usr/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1373, in http_open
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1373, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+    return self.do_open(http.client.HTTPConnection, req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1348, in do_open
+  File "/usr/lib/python3.12/urllib/request.py", line 1348, in do_open
+    r = h.getresponse()
+    r = h.getresponse()
+        ^^^^^^^^^^^^^^^
+        ^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 1457, in getresponse
+  File "/usr/lib/python3.12/http/client.py", line 1457, in getresponse
+    response.begin()
+    response.begin()
+  File "/usr/lib/python3.12/http/client.py", line 336, in begin
+  File "/usr/lib/python3.12/http/client.py", line 336, in begin
+    version, status, reason = self._read_status()
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 305, in _read_status
+  File "/usr/lib/python3.12/http/client.py", line 305, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+    raise RemoteDisconnected("Remote end closed connection without"
+http.client.RemoteDisconnected: Remote end closed connection without response
+http.client.RemoteDisconnected: Remote end closed connection without response
+Traceback (most recent call last):
+  File "/srv/glm-5.3-flash/ekbench.py", line 101, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 91, in main
+    st = min(r["t0"] for r in res)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 91, in <genexpr>
+    st = min(r["t0"] for r in res)
+             ~^^^^^^
+TypeError: 'NoneType' object is not subscriptable
+Exception in thread Thread-4 (w):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/urllib/request.py", line 1344, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "/usr/lib/python3.12/http/client.py", line 1365, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/usr/lib/python3.12/http/client.py", line 1411, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/usr/lib/python3.12/http/client.py", line 1360, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/usr/lib/python3.12/http/client.py", line 1120, in _send_output
+    self.send(msg)
+  File "/usr/lib/python3.12/http/client.py", line 1064, in send
+Exception in thread Thread-2 (w):
+Exception in thread Thread-1 (w):
+    self.connect()
+Exception in thread Thread-3 (w):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/http/client.py", line 1030, in connect
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/urllib/request.py", line 1344, in do_open
+  File "/usr/lib/python3.12/urllib/request.py", line 1344, in do_open
+  File "/usr/lib/python3.12/urllib/request.py", line 1344, in do_open
+    self.sock = self._create_connection(
+    h.request(req.get_method(), req.selector, req.data, headers,
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "/usr/lib/python3.12/http/client.py", line 1365, in request
+    h.request(req.get_method(), req.selector, req.data, headers,
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 1365, in request
+  File "/usr/lib/python3.12/http/client.py", line 1365, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/usr/lib/python3.12/http/client.py", line 1411, in _send_request
+  File "/usr/lib/python3.12/socket.py", line 852, in create_connection
+    self._send_request(method, url, body, headers, encode_chunked)
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/usr/lib/python3.12/http/client.py", line 1411, in _send_request
+  File "/usr/lib/python3.12/http/client.py", line 1360, in endheaders
+  File "/usr/lib/python3.12/http/client.py", line 1411, in _send_request
+    raise exceptions[0]
+    self._send_output(message_body, encode_chunked=encode_chunked)
+    self.endheaders(body, encode_chunked=encode_chunked)
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/usr/lib/python3.12/socket.py", line 837, in create_connection
+  File "/usr/lib/python3.12/http/client.py", line 1120, in _send_output
+  File "/usr/lib/python3.12/http/client.py", line 1360, in endheaders
+    sock.connect(sa)
+    self.send(msg)
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/usr/lib/python3.12/http/client.py", line 1360, in endheaders
+ConnectionRefusedError: [Errno 111] Connection refused
+
+During handling of the above exception, another exception occurred:
+  File "/usr/lib/python3.12/http/client.py", line 1064, in send
+  File "/usr/lib/python3.12/http/client.py", line 1120, in _send_output
+    self._send_output(message_body, encode_chunked=encode_chunked)
+
+Traceback (most recent call last):
+    self.send(msg)
+  File "/usr/lib/python3.12/http/client.py", line 1120, in _send_output
+  File "/usr/lib/python3.12/http/client.py", line 1064, in send
+    self.connect()
+    self.send(msg)
+    self.connect()
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+  File "/usr/lib/python3.12/http/client.py", line 1030, in connect
+  File "/usr/lib/python3.12/http/client.py", line 1064, in send
+  File "/usr/lib/python3.12/http/client.py", line 1030, in connect
+    self.sock = self._create_connection(
+    self.connect()
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socket.py", line 852, in create_connection
+    self.run()
+  File "/usr/lib/python3.12/http/client.py", line 1030, in connect
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    raise exceptions[0]
+    self.sock = self._create_connection(
+    self._target(*self._args, **self._kwargs)
+    self.sock = self._create_connection(
+  File "/usr/lib/python3.12/socket.py", line 837, in create_connection
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socket.py", line 852, in create_connection
+  File "/srv/glm-5.3-flash/ekbench.py", line 86, in w
+    sock.connect(sa)
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socket.py", line 852, in create_connection
+    res[i] = one(a.url, a.specs[i], a.n_predict)
+    raise exceptions[0]
+ConnectionRefusedError: [Errno 111] Connection refused
+
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 55, in one
+  File "/usr/lib/python3.12/socket.py", line 837, in create_connection
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+    raise exceptions[0]
+    sock.connect(sa)
+  File "/usr/lib/python3.12/socket.py", line 837, in create_connection
+ConnectionRefusedError: [Errno 111] Connection refused
+
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+    d = post(url + "/completion", body(spec, n_predict))
+During handling of the above exception, another exception occurred:
+    sock.connect(sa)
+
+ConnectionRefusedError: [Errno 111] Connection refused
+
+During handling of the above exception, another exception occurred:
+
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 43, in post
+Traceback (most recent call last):
+    self.run()
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+    self.run()
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+    self.run()
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+  File "/srv/glm-5.3-flash/ekbench.py", line 86, in w
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    return opener.open(url, data, timeout)
+    res[i] = one(a.url, a.specs[i], a.n_predict)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 86, in w
+    self._target(*self._args, **self._kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 55, in one
+    res[i] = one(a.url, a.specs[i], a.n_predict)
+  File "/srv/glm-5.3-flash/ekbench.py", line 86, in w
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 55, in one
+  File "/usr/lib/python3.12/urllib/request.py", line 515, in open
+    d = post(url + "/completion", body(spec, n_predict))
+    res[i] = one(a.url, a.specs[i], a.n_predict)
+    response = self._open(req, data)
+    d = post(url + "/completion", body(spec, n_predict))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 43, in post
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 43, in post
+  File "/srv/glm-5.3-flash/ekbench.py", line 55, in one
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 532, in _open
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+    result = self._call_chain(self.handle_open, protocol, protocol +
+    d = post(url + "/completion", body(spec, n_predict))
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 43, in post
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+    result = func(*args)
+    return opener.open(url, data, timeout)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1373, in http_open
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 515, in open
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 515, in open
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 532, in _open
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return self.do_open(http.client.HTTPConnection, req)
+    result = self._call_chain(self.handle_open, protocol, protocol +
+    return opener.open(url, data, timeout)
+    response = self._open(req, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 515, in open
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 532, in _open
+  File "/usr/lib/python3.12/urllib/request.py", line 1347, in do_open
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1373, in http_open
+    response = self._open(req, data)
+    raise URLError(err)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 532, in _open
+    return self.do_open(http.client.HTTPConnection, req)
+urllib.error.URLError: <urlopen error [Errno 111] Connection refused>
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    result = self._call_chain(self.handle_open, protocol, protocol +
+  File "/usr/lib/python3.12/urllib/request.py", line 1347, in do_open
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+    raise URLError(err)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1373, in http_open
+urllib.error.URLError: <urlopen error [Errno 111] Connection refused>
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1373, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    return self.do_open(http.client.HTTPConnection, req)
+  File "/usr/lib/python3.12/urllib/request.py", line 1347, in do_open
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1347, in do_open
+    raise URLError(err)
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 111] Connection refused>
+urllib.error.URLError: <urlopen error [Errno 111] Connection refused>
+Traceback (most recent call last):
+  File "/srv/glm-5.3-flash/ekbench.py", line 101, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 91, in main
+    st = min(r["t0"] for r in res)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 91, in <genexpr>
+    st = min(r["t0"] for r in res)
+             ~^^^^^^
+TypeError: 'NoneType' object is not subscriptable
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/urllib/request.py", line 1344, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "/usr/lib/python3.12/http/client.py", line 1365, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/usr/lib/python3.12/http/client.py", line 1411, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/usr/lib/python3.12/http/client.py", line 1360, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/usr/lib/python3.12/http/client.py", line 1120, in _send_output
+    self.send(msg)
+  File "/usr/lib/python3.12/http/client.py", line 1064, in send
+    self.connect()
+  File "/usr/lib/python3.12/http/client.py", line 1030, in connect
+    self.sock = self._create_connection(
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socket.py", line 852, in create_connection
+    raise exceptions[0]
+  File "/usr/lib/python3.12/socket.py", line 837, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 111] Connection refused
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/srv/glm-5.3-flash/ekbench.py", line 101, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 76, in main
+    r = one(a.url, spec, a.n_predict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 55, in one
+    d = post(url + "/completion", body(spec, n_predict))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 43, in post
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1373, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1347, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 111] Connection refused>
+2.09.371.044 W valve_release: expert store: memory valve: host MemAvailable 8.06 GB under the 6.44 GB reserve (elastic KV): released 6 slots (0.05 GB), 6.75 GB of the host cache released in all
+2.09.375.062 I elastic_fit_stream: elastic KV idx_(ubatch) stream 3: 4352 -> 10496 of 1048576 cells, 220.0 MiB mapped in all streams (4.0 ms)
+2.28.145.698 I elastic_fit_stream: elastic KV (ubatch) stream 3: 10496 -> 16640 of 1048576 cells, 396.0 MiB mapped in all streams (1135.1 ms)
+2.28.151.719 I elastic_fit_stream: elastic KV idx_(ubatch) stream 3: 10496 -> 16640 of 1048576 cells, 286.0 MiB mapped in all streams (5.1 ms)
+3.02.500.173 I elastic_fit_stream: elastic KV (ubatch) stream 3: 16640 -> 20992 of 1048576 cells, 440.0 MiB mapped in all streams (3.9 ms)
+3.02.502.952 I elastic_fit_stream: elastic KV idx_(ubatch) stream 3: 16640 -> 20992 of 1048576 cells, 308.0 MiB mapped in all streams (1.9 ms)
+6.51.788.503 I elastic_fit_stream: elastic KV (ubatch) stream 0: 4352 -> 10496 of 1048576 cells, 506.0 MiB mapped in all streams (1028.2 ms)
+6.51.792.981 I elastic_fit_stream: elastic KV idx_(ubatch) stream 0: 4352 -> 10496 of 1048576 cells, 352.0 MiB mapped in all streams (3.6 ms)
+7.08.909.713 I elastic_fit_stream: elastic KV (ubatch) stream 0: 10496 -> 16640 of 1048576 cells, 572.0 MiB mapped in all streams (1110.6 ms)
+7.08.916.206 I elastic_fit_stream: elastic KV idx_(ubatch) stream 0: 10496 -> 16640 of 1048576 cells, 418.0 MiB mapped in all streams (5.6 ms)
+7.21.756.681 I elastic_fit_stream: elastic KV (ubatch) stream 0: 16640 -> 20992 of 1048576 cells, 616.0 MiB mapped in all streams (4.2 ms)
+7.21.759.462 I elastic_fit_stream: elastic KV idx_(ubatch) stream 0: 16640 -> 20992 of 1048576 cells, 440.0 MiB mapped in all streams (1.9 ms)
+./ek-window.sh: line 39: 227712 Aborted                 (core dumped) env $PROD_ENV LLAMA_EXPERT_STORE_SNAPSHOT=$PWD/snapshot/ek-$TAG.k3sn $EXTRA $BIN $(base_args $3 $4) > $OUT/server-$TAG.log 2>&1
+elastic lines: 24; refused: 0
+lowest MemAvailable 5601 MiB; now 121127 MiB; END P4 10:55:23
+=== LEG P1 parallel=1 ctx=1048576 extra=[] 10:55:23
+READY P1 after 26s
+0.12.433.894 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.438.480 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (4.6 ms)
+0.12.462.180 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.465.353 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (3.2 ms)
+0.25.134.411 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+{"kind": "conc", "tag": "P1", "n": 1, "round": "warm", "agg_tps": 15.56, "wall_s": 16.45, "gen": 256, "per_stream_tps": [15.9], "md5": ["53816a69bc"], "t0": 1794135349.4867046, "t1": 1794135365.9373863}
+{"kind": "conc", "tag": "P1", "n": 1, "round": 1, "agg_tps": 16.67, "wall_s": 15.36, "gen": 256, "per_stream_tps": [16.96], "md5": ["53816a69bc"], "t0": 1794135365.9377472, "t1": 1794135381.2991118}
+{"kind": "conc", "tag": "P1", "n": 1, "round": 2, "agg_tps": 16.67, "wall_s": 15.36, "gen": 256, "per_stream_tps": [16.96], "md5": ["53816a69bc"], "t0": 1794135381.2994568, "t1": 1794135396.6606302}
+{"kind": "conc", "tag": "P1", "n": 1, "round": 3, "agg_tps": 16.68, "wall_s": 15.35, "gen": 256, "per_stream_tps": [16.98], "md5": ["53816a69bc"], "t0": 1794135396.6609383, "t1": 1794135412.0073354}
+{"kind": "depth", "tag": "P1-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 344.18, "prefill_s": 47.69, "decode_n": 128, "decode_tps": 14.7, "md5": "145c14aa8b", "t0": 1794135412.057243, "t1": 1794135468.418004}
+elastic lines: 10; refused: 0
+lowest MemAvailable 9754 MiB; now 121150 MiB; END P1 10:57:51
+=== LEG PRs parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 LLAMA_ELASTIC_KV_REFUSE=1 LLAMA_ELASTIC_KV_STREAM_MAX=8192] 10:57:51
+READY PRs after 28s
+0.13.263.844 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (689.6 ms)
+0.13.263.898 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out, fixed share per stream
+0.13.269.681 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.8 ms)
+0.13.275.206 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.5 ms)
+0.13.280.703 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.5 ms)
+0.13.286.276 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.6 ms)
+0.13.887.761 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (516.4 ms)
+0.13.887.797 I llama_kv_cache: elastic KV per stream: idx_1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out, fixed share per stream
+{"kind": "multi", "tag": "PRs-mix", "n": 2, "round": "warm", "agg_tps": 15.12, "wall_s": 16.93, "gen": 256, "per_stream_tps": [15.48, null], "md5": ["53816a69bc", "ERR503"], "specs": ["p0", "L16384"], "prefill_tps": [24.44, null], "t0": 1794135500.1112995, "t1": 1794135517.0406342}
+{"spec": "p0", "prompt_n": 10, "prefill_tps": 27.81, "decode_n": 256, "decode_tps": 16.39, "md5": "53816a69bc", "t0": 1794135517.0704312, "t1": 1794135533.00403, "kind": "solo", "tag": "PRs-after"}
+elastic lines: 13; refused: 1
+lowest MemAvailable 6263 MiB; now 121120 MiB; END PRs 10:58:58
+=== LEG PRf parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 LLAMA_ELASTIC_KV_REFUSE=1 LLAMA_ELASTIC_KV_FLOOR_MIB=120000] 10:58:58
+READY PRf after 28s
+0.13.317.704 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (696.7 ms)
+0.13.317.759 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.13.324.030 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (6.2 ms)
+0.13.329.750 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.7 ms)
+0.13.335.428 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.7 ms)
+0.13.341.085 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.6 ms)
+0.13.944.382 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (517.3 ms)
+0.13.944.414 I llama_kv_cache: elastic KV per stream: idx_1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+{"kind": "multi", "tag": "PRf-mix", "n": 2, "round": "warm", "agg_tps": 15.15, "wall_s": 16.9, "gen": 256, "per_stream_tps": [15.5, null], "md5": ["53816a69bc", "ERR503"], "specs": ["p0", "L16384"], "prefill_tps": [24.36, null], "t0": 1794135566.9140897, "t1": 1794135583.814188}
+{"spec": "p1", "prompt_n": 19, "prefill_tps": 26.14, "decode_n": 256, "decode_tps": 15.28, "md5": "28c834e37b", "t0": 1794135583.8442812, "t1": 1794135601.27473, "kind": "solo", "tag": "PRf-after"}
+{"status":"ok"}
+elastic lines: 14; refused: 1
+lowest MemAvailable 5369 MiB; now 121102 MiB; END PRf 11:00:06
+=== LEG P8 parallel=8 ctx=8388608 extra=[LLAMA_PREFILL_ISOLATE=1] 11:00:06
+WATCHDOG kill P8 2378 MiB
+./ek-window.sh: line 30: 240958 Killed                  env $PROD_ENV LLAMA_EXPERT_STORE_SNAPSHOT=$PWD/snapshot/ek-$TAG.k3sn $EXTRA $BIN $(base_args $3 $4) > $OUT/server-$TAG.log 2>&1
+LEG-FAIL P8 died
+0.12.466.884 W load_tensors: madvise(MADV_PAGEOUT) failed for 4 of 4 mappings: Cannot allocate memory
+EK-WINDOW-DONE 11:00:40

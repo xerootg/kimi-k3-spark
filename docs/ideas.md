@@ -13,12 +13,12 @@ measurement), **partly** (right direction, smaller payoff than hoped), **no** (n
 |---|---|---|---|
 | 2026-11-06 | NUCs make too many network round trips; we are using them wrong | sane | built (0049), off in production until multi-slot serving |
 | 2026-11-06 | Distribute inference to the NUCs once the faster links exist | partly | re-check when the links land |
-| 2026-11-08 | KV cache that resizes per conversation | sane | build; open decision: up to 1M each or fixed shares |
+| 2026-11-08 | KV cache that resizes per conversation | sane, built (0052) | open decision: up to 1M each (refuse when full) or fixed shares; both are switches |
 | 2026-11-08 | Keep each conversation's KV contiguous | sane | part of the per-conversation design |
 | 2026-11-08 | SIMD can't help because the KV is not contiguous | premise wrong | none |
 | 2026-11-08 | Put the KV on another machine on the network | no (active), sane (idle parking) | parking only |
 | 2026-11-08 | Compress the KV (8-bit) | rejected | none |
-| 2026-11-08 | Park idle conversations' KV on NVMe, reload on demand | sane | include in the multi-slot build |
+| 2026-11-08 | Park idle conversations' KV on NVMe, reload on demand | sane | next step after 0052: resident slots now refuse when memory is full instead of parking |
 | 2026-11-08 | Several 1M conversations on the GH200; leave KV in HBM and serve as many as fit | sane | follows the per-conversation build |
 | 2026-11-08 | Keep the KV in Grace memory and let the GPU read it over the fast link | promising (built, correct on the Spark) | GH200 window, script ready (~1 h) |
 | 2026-11-08 | The Spark as the general local failover for the GH200 | sane | Juno done in argo-things #159; public endpoint and workbench next |
@@ -49,6 +49,14 @@ Verdict: sane. Patch 0045 (elastic KV) already does this for one conversation bu
 with it off, `--parallel 4` reserves the full cache up front. Extending it per stream is the prerequisite for
 multi-slot serving (about +46 % aggregate at four streams on the Spark, plus the NUC tier). Open decision: can each
 conversation reach 1M (shared pool, refuse when full) or does each get a fixed share?
+
+Built 2026-11-08 as patch 0052 (window ek, `docs/experiments.md`): four slots of 1M each map ~440 MiB when idle and
+grow per conversation; `LLAMA_ELASTIC_KV_REFUSE=1` (shared pool, a request that does not fit gets HTTP 503 and the
+others continue) and `LLAMA_ELASTIC_KV_STREAM_MAX` (fixed share) are both switches, off by default. Catch found on
+the way: batched decode across slots (+30 % at two, +49 % at four) changes each client's bytes depending on what else
+is in the batch, so it breaks the reproducibility rule; the exact-batching knobs fix two streams but not four and eat
+the gain. What holds the rule is serving the resident slots one request at a time (`LLAMA_SLOT_SERIAL=1`): same bytes
+as production, and conversations stop evicting each other's KV.
 
 ## Contiguous KV per conversation (2026-11-08)
 

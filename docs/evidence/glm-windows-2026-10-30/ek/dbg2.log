@@ -1,0 +1,16 @@
+=== LEG DBG2 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_FUSE_GDN_STATE=0] 11:05:49
+READY DBG2 after 28s
+0.13.174.036 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (698.8 ms)
+0.13.174.090 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.180.031 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.9 ms)
+0.13.185.701 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.7 ms)
+0.13.191.367 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.7 ms)
+0.13.196.985 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.6 ms)
+0.13.798.740 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (515.5 ms)
+0.13.798.771 I llama_kv_cache: elastic KV per stream: idx_1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"kind": "multi", "tag": "DBG2", "n": 2, "round": "warm", "agg_tps": 10.35, "wall_s": 37.11, "gen": 384, "per_stream_tps": [6.96, 8.97], "md5": ["8e00c9eb75", "145c14aa8b"], "specs": ["p0", "L4096"], "prefill_tps": [24.9, 304.98], "t0": 1794135977.878471, "t1": 1794136014.9852786}
+{"kind": "multi", "tag": "DBG2", "n": 2, "round": "warm", "agg_tps": 5.44, "wall_s": 70.55, "gen": 384, "per_stream_tps": [3.64, 10.9], "md5": ["8e00c9eb75", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [23.23, 326.04], "t0": 1794136015.0152128, "t1": 1794136085.5639865}
+{"kind": "multi", "tag": "DBG2", "n": 4, "round": "warm", "agg_tps": 10.18, "wall_s": 88.01, "gen": 896, "per_stream_tps": [2.97, 2.95, 2.92, 5.77], "md5": ["5a141a319b", "71fcc787e6", "10542661fb", "145c14aa8b"], "specs": ["p1", "p2", "p3", "L16384"], "prefill_tps": [31.77, 26.62, 29.67, 357.32], "t0": 1794136085.5947657, "t1": 1794136173.606002}
+elastic lines: 24; refused: 0
+lowest MemAvailable 7096 MiB; now 120696 MiB; END DBG2 11:09:37
+EK-LEG-DONE DBG2 11:09:37

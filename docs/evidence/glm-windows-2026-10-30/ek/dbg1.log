@@ -1,0 +1,59 @@
+=== LEG DBG1 parallel=2 ctx=131072 extra=[LLAMA_PREFILL_ISOLATE=1 LLAMA_ELASTIC_KV=0 CUDA_LAUNCH_BLOCKING=1 GGML_CUDA_DISABLE_GRAPHS=1] 11:04:27
+READY DBG1 after 24s
+0.23.359.954 I srv    load_model: initializing, n_slots = 2, n_ctx_slot = 65536, kv_unified = 'false'
+Exception in thread Thread-1 (w):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/glm-5.3-flash/ekbench.py", line 86, in w
+    res[i] = one(a.url, a.specs[i], a.n_predict)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 55, in one
+    d = post(url + "/completion", body(spec, n_predict))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 43, in post
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1373, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1348, in do_open
+    r = h.getresponse()
+        ^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 1457, in getresponse
+    response.begin()
+  File "/usr/lib/python3.12/http/client.py", line 336, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 305, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+http.client.RemoteDisconnected: Remote end closed connection without response
+Traceback (most recent call last):
+  File "/srv/glm-5.3-flash/ekbench.py", line 101, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 91, in main
+    st = min(r["t0"] for r in res)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/glm-5.3-flash/ekbench.py", line 91, in <genexpr>
+    st = min(r["t0"] for r in res)
+             ~^^^^^^
+TypeError: 'NoneType' object is not subscriptable
+./ek-leg.sh: line 39: 244619 Aborted                 (core dumped) env $PROD_ENV LLAMA_EXPERT_STORE_SNAPSHOT=$PWD/snapshot/ek-$TAG.k3sn $EXTRA $BIN $(base_args $3 $4) ${XARGS:-} > $OUT/server-$TAG.log 2>&1
+elastic lines: 0; refused: 0
+lowest MemAvailable 24515 MiB; now 120675 MiB; END DBG1 11:05:25
+EK-LEG-DONE DBG1 11:05:25

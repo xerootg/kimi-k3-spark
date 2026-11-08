@@ -315,6 +315,22 @@ State after window nd (2026-11-07 night, on the existing 2.5 GbE; details in doc
 - Production: keep off. Production serves one 1M slot (`--parallel 1`), where the tier does nothing; multi-slot serving first needs elastic KV per slot (`--parallel 4` disables it today, and 1M context then costs the cache 12.8 GB through the valve) and `LLAMA_PREFILL_ISOLATE=1` (without it, multi-stream bytes are not reproducible run to run, tier or not). The two knobs the tier needs (`GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1`) also change the standard short request's md5 (`d8b2a26bf6`); the 16k gold holds.
 - Box kernel v2 (window nd9) cut the NUC's time per pair 15-28 % (0.30 ms for one pair) and the boxes took more rows, but throughput did not move: at N>=4 the routed experts are only ~25-30 % of the Spark's step, so offloading ~10 % of the pairs is worth ~2-4 %. Next levers, in order: (a) the Spark's own spine at N>=4 (the larger share, kernel-fusion work); (b) the faster link: ~0.3-0.4 ms of each single-pair round trip is transport, so more pairs fit the window; (c) design 2 (k tokens per pass) once speculative decoding is reproducible, which multiplies N for a single stream; (d) more boxes, if the experts' share grows (bigger models, larger N).
 
+## Multi-slot serving and long context (2026-11-08)
+
+Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.md`):
+- **Done:** elastic KV per slot (0052). `--parallel 4 --ctx-size 4194304` gives four 1M slots that map only what
+  their conversations use (~440 MiB idle); opt-in refuse-on-full (HTTP 503 for one request, the rest continue) or a
+  fixed share per slot.
+- **Found:** batched decode across slots is +30 % (N=2) / +49 % (N=4) aggregate but changes each client's bytes
+  with the batch, so it is off under the reproducibility rule. The exact-batching knobs fix N=2 only and cost the
+  gain. The 0050 switch `GGML_CUDA_FUSE_GDN_STATE` crashes multi-slot servers (guarded in 0052; root cause open).
+- **Candidate for production (Haley's call):** four resident slots served one request at a time
+  (`LLAMA_SLOT_SERIAL=1`), same bytes as today, single-stream speed ~4 % lower, and alternating clients (Juno, the
+  workbench, Claude Code) stop evicting each other's KV. Canary script ready (`canary0052.sh`); needs the policy
+  choice (shared pool with refuse, or fixed shares) and one reviewed argo-things PR.
+- **Next:** parking idle slots' KV on NVMe when the pool is full (instead of refusing); root-cause the GDN fusion
+  crash; exact batching for N>2 if batched throughput is wanted again.
+
 ## Cluster layout for this work
 
 | node | role |
