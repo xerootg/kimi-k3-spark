@@ -1078,3 +1078,54 @@ the GH200 idea of keeping the KV in Grace memory and reading it over NVLink-C2C 
 within noise. The GB10's host and device memory are the same LPDDR5X, so this measures correctness and the cost of
 the coherent host-access path, not the GH200's C2C link. Numbers are in `docs/experiments.md`. GH200 window prepared
 in `docs/evidence/glm-windows-2026-10-30/kv-placement/gh200-kvhost.sh`.
+
+## 0052-elastic-kv-per-stream
+
+Elastic KV (0045) for several KV streams, so `--parallel N` (non-unified KV: one stream per slot, each slot's cells
+contiguous from cell 0) reserves no memory up front. With `LLAMA_ELASTIC_KV=1` and `n_stream > 1` every stream of the
+attention KV and of the DSA indexer cache is mapped on its own: cells `[0, padded use + margin)` per stream, grown at
+the end of `apply_ubatch`, shrunk in `seq_rm`/`clear` (same `LLAMA_ELASTIC_KV_MARGIN` / `_SHRINK` knobs). llama.cpp
+divides `--ctx-size` by `--parallel`, so `--parallel 4 --ctx-size 4194304` gives each slot 1M of address space
+(44 + 33 GiB of VA on the GB10, reserved in ~1.2 s) and maps only what the conversations use. `n_stream == 1` takes
+the unchanged 0045 path.
+
+- **Backed buffers.** A multi-stream batch views all of its streams at the longest stream's extent (and the indexer
+  reads a sentinel row one past it), so a short stream next to a long one is read past its own mapping. The
+  multi-stream buffers are therefore "backed": one shared, zeroed 2 MiB chunk is mapped at every address without
+  memory of its own (`cuMemMap` of one handle ~0.6 us per chunk, access set once for the whole range). Those rows
+  are always masked out; growing a stream unmaps the backing chunk (after a device sync) and maps real memory.
+  CUDA side: `ggml_backend_cuda_elastic_buffer_alloc_backed`; `..._set_ranges` swaps chunks between backing and real.
+- **Stream copies** (`seq_cp` across streams) copy only the source's mapped cells, through the host, so the backing
+  chunk is never written.
+- **Memory policy, off by default.** Growth asks the expert cache for room (`llama_moe_cache_make_room`) as in 0045.
+  `LLAMA_ELASTIC_KV_REFUSE=1`: a slot may grow up to its address space; when the host would keep less than
+  `LLAMA_ELASTIC_KV_FLOOR_MIB` (default 2048) after the expert cache gave back what it could, the growth is refused.
+  `LLAMA_ELASTIC_KV_STREAM_MAX=<cells>`: a fixed share per slot. With either set, the server calls the new
+  `llama_elastic_kv_reserve(ctx, seq, n_cells)` for every active slot before its tokens enter a batch (the whole
+  prompt at once, so a request that cannot fit fails before its prefill); a refused slot gets HTTP 503 ("out of KV
+  cache memory"), gives its memory back (`seq_rm`), and the other slots continue. Without a policy a failed mapping
+  still aborts, as in 0045.
+- **`LLAMA_SLOT_SERIAL=1`** (server): one request at a time, the oldest (lowest task id), prompt and generation;
+  the other slots wait with their KV kept. Batched decode changes the bytes (below), serial decode does not, and
+  several conversations stay resident without re-reading their prompts.
+- **0050 guard.** `GGML_CUDA_FUSE_GDN_STATE` faulted (illegal address) on the first one-sequence decode after another
+  slot finished, in any multi-slot server (also with elastic KV off, window ek). Not root-caused; the fusion now
+  applies only when the recurrent cache has one row (`--parallel 1`, production unchanged).
+
+**Window ek (Spark, GLM-5.3-Flash Q2, 2026-11-08):** production env and args (cache 78000 MiB, 0050 flags) plus
+`LLAMA_PREFILL_ISOLATE=1`, `--parallel 4 --ctx-size 4194304` (1M per slot); distinct prompts p0-p3 (256 tokens) and
+the 16k request; aggregate = generated tokens / wall time; details in `docs/experiments.md`.
+
+| Setup | N=1 (tok/s) | N=2 aggregate | N=4 aggregate | bytes per client vs the same request alone |
+|---|---|---|---|---|
+| `--parallel 1` (0052 binary, n_stream 1) | 16.93-16.98, 16k 344 tok/s | - | - | production gold `53816a69bc` / `145c14aa8b` |
+| `--parallel 4`, batched decode | 16.2 | 20.8-21.3 (+30 %) | 24.1 (+49 %) | **differ** (reproducible run to run, but depend on the batch) |
+| `--parallel 4`, exact-batching knobs (0030-0038) | 16.4 | 15.9-16.0 | 17.6 | equal at N=2, differ at N=3 and N=4 |
+| `--parallel 4`, `LLAMA_SLOT_SERIAL=1` | 15.3-16.2 | - | 14.2-14.7 | **equal to production gold**, every client |
+
+- Memory: four idle slots map 4 x 4352 cells (264 MiB attention + 176 MiB indexer); a 16k conversation grows its
+  stream in 6144-cell steps (1.0-1.1 s when the valve must release cache first, 2-6 ms otherwise).
+- Refusal: with `LLAMA_ELASTIC_KV_STREAM_MAX=8192`, or with a floor no growth can meet, the 16k request got HTTP 503
+  at once and the concurrent short request finished with the gold md5; the server kept serving.
+- `--parallel 8 --ctx-size 8388608` does not fit next to a useful cache: startup took MemAvailable to 2.4 GB with
+  the 78000 MiB cache (watchdog), and with 70000 MiB the cache thrashed (single stream 8-9 tok/s, N=8 12.7 aggregate).

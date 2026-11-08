@@ -1,0 +1,594 @@
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index 69d0e53..d937b8a 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -1013,6 +1013,12 @@ struct ggml_cuda_elastic_map {
+     size_t chunk  = 0;              // bytes per chunk
+     size_t mapped = 0;              // bytes mapped now
+     std::vector<uint8_t> is_mapped; // [chunk]
++#if defined(GGML_USE_VMM)
++    // kimi-k3-spark patch 0052: a backed elastic buffer maps one shared, zeroed chunk at every address that has no
++    // memory of its own, so a kernel that reads past the ranges its owner mapped (a multi-stream KV view at the batch's
++    // longest extent, a sentinel row) reads finite values instead of faulting. Only rows the mask drops are read there.
++    CUmemGenericAllocationHandle backing = 0; // 0: not backed (patch 0045 behaviour)
++#endif
+ };
+ 
+ struct ggml_backend_cuda_buffer_context {
+@@ -1044,10 +1050,13 @@ struct ggml_backend_cuda_buffer_context {
+             ggml_cuda_set_device(device);
+             CUDA_CHECK(cudaDeviceSynchronize());
+             for (size_t i = 0; i < elastic->is_mapped.size(); ++i) {
+-                if (elastic->is_mapped[i]) {
++                if (elastic->is_mapped[i] || elastic->backing != 0) {
+                     CU_CHECK(cuMemUnmap((CUdeviceptr) dev_ptr + i*elastic->chunk, elastic->chunk));
+                 }
+             }
++            if (elastic->backing != 0) {
++                CU_CHECK(cuMemRelease(elastic->backing));
++            }
+             CU_CHECK(cuMemAddressFree((CUdeviceptr) dev_ptr, va_size));
+             return;
+         }
+@@ -1310,7 +1319,7 @@ ggml_backend_buffer_type_t ggml_backend_cuda_buffer_type(int device) {
+ 
+ // kimi-k3-spark patch 0045: an elastic buffer of the device's ordinary buffer type (so the scheduler, the graph
+ // checks and the copy paths treat it as any CUDA buffer) with nothing mapped. nullptr without VMM.
+-static ggml_backend_buffer_t ggml_backend_cuda_elastic_buffer_alloc(int device, size_t size) {
++static ggml_backend_buffer_t ggml_backend_cuda_elastic_buffer_alloc_impl(int device, size_t size, bool backed) {
+ #if defined(GGML_USE_VMM)
+     if (device < 0 || device >= ggml_backend_cuda_get_device_count() || !ggml_cuda_info().devices[device].vmm) {
+         return nullptr;
+@@ -1331,14 +1340,52 @@ static ggml_backend_buffer_t ggml_backend_cuda_elastic_buffer_alloc(int device,
+     ctx->elastic.reset(new ggml_cuda_elastic_map);
+     ctx->elastic->chunk = chunk;
+     ctx->elastic->is_mapped.assign(va_size/chunk, 0);
++    if (backed) {
++        // patch 0052: one zeroed chunk behind every address of the buffer
++        CUdevice cu_dev;
++        CU_CHECK(cuDeviceGet(&cu_dev, ggml_cuda_get_physical_device(device)));
++        CUmemAllocationProp prop = {};
++        prop.type = CU_MEM_ALLOCATION_TYPE_PINNED;
++        prop.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
++        prop.location.id = (int) cu_dev;
++        CUmemAccessDesc access = {};
++        access.location = prop.location;
++        access.flags = CU_MEM_ACCESS_FLAGS_PROT_READWRITE;
++        const int64_t t0 = ggml_time_us();
++        if (cuMemCreate(&ctx->elastic->backing, chunk, &prop, 0) != CUDA_SUCCESS) {
++            GGML_LOG_ERROR("%s: creating the backing chunk failed\n", __func__);
++            ctx->elastic->backing = 0;
++            delete ctx;
++            CU_CHECK(cuMemAddressFree(base, va_size));
++            return nullptr;
++        }
++        for (size_t c = 0; c < va_size/chunk; ++c) {
++            CU_CHECK(cuMemMap(base + c*chunk, chunk, 0, ctx->elastic->backing, 0));
++        }
++        CU_CHECK(cuMemSetAccess(base, va_size, &access, 1));
++        CUDA_CHECK(cudaMemset((void *) base, 0, chunk));
++        CUDA_CHECK(cudaDeviceSynchronize());
++        GGML_LOG_INFO("%s: backed elastic buffer: %.2f GiB of address space on one %zu KiB zero chunk (%.1f ms)\n", __func__,
++            va_size/1024.0/1024.0/1024.0, chunk/1024, (ggml_time_us() - t0)/1000.0);
++    }
+     return ggml_backend_buffer_init(ggml_backend_cuda_buffer_type(device), ggml_backend_cuda_buffer_interface, ctx, size);
+ #else
+     GGML_UNUSED(device);
+     GGML_UNUSED(size);
++    GGML_UNUSED(backed);
+     return nullptr;
+ #endif
+ }
+ 
++static ggml_backend_buffer_t ggml_backend_cuda_elastic_buffer_alloc(int device, size_t size) {
++    return ggml_backend_cuda_elastic_buffer_alloc_impl(device, size, false);
++}
++
++// patch 0052: the backed variant (see ggml_cuda_elastic_map::backing)
++static ggml_backend_buffer_t ggml_backend_cuda_elastic_buffer_alloc_backed(int device, size_t size) {
++    return ggml_backend_cuda_elastic_buffer_alloc_impl(device, size, true);
++}
++
+ #if defined(__linux__)
+ #include <sys/syscall.h>
+ #include <dirent.h>
+@@ -1487,6 +1534,7 @@ static size_t ggml_backend_cuda_elastic_buffer_set_ranges(ggml_backend_buffer_t
+     access.flags = CU_MEM_ACCESS_FLAGS_PROT_READWRITE;
+     const CUdeviceptr base = (CUdeviceptr) ctx->dev_ptr;
+     bool failed = false;
++    bool synced = false;
+     for (size_t c = 0; c < n_chunks && !failed;) {
+         if (!want[c] || m.is_mapped[c]) {
+             c++;
+@@ -1499,8 +1547,20 @@ static size_t ggml_backend_cuda_elastic_buffer_set_ranges(ggml_backend_buffer_t
+                 failed = true;
+                 break;
+             }
++            if (m.backing != 0) {
++                // patch 0052: the backing chunk leaves this address; a kernel still running may read it
++                if (!synced) {
++                    CUDA_CHECK(cudaDeviceSynchronize());
++                    synced = true;
++                }
++                CU_CHECK(cuMemUnmap(base + e*m.chunk, m.chunk));
++            }
+             if (cuMemMap(base + e*m.chunk, m.chunk, 0, h, 0) != CUDA_SUCCESS) {
+                 cuMemRelease(h);
++                if (m.backing != 0) {
++                    CU_CHECK(cuMemMap(base + e*m.chunk, m.chunk, 0, m.backing, 0));
++                    CU_CHECK(cuMemSetAccess(base + e*m.chunk, m.chunk, &access, 1));
++                }
+                 failed = true;
+                 break;
+             }
+@@ -1529,6 +1589,11 @@ static size_t ggml_backend_cuda_elastic_buffer_set_ranges(ggml_backend_buffer_t
+                     synced = true;
+                 }
+                 CU_CHECK(cuMemUnmap(base + c*m.chunk, m.chunk));
++                if (m.backing != 0) {
++                    // patch 0052: back to the shared zero chunk (kept zero: nothing the owner maps writes there)
++                    CU_CHECK(cuMemMap(base + c*m.chunk, m.chunk, 0, m.backing, 0));
++                    CU_CHECK(cuMemSetAccess(base + c*m.chunk, m.chunk, &access, 1));
++                }
+                 m.is_mapped[c] = 0;
+                 m.mapped -= m.chunk;
+             }
+@@ -6173,6 +6238,12 @@ static void ggml_cuda_plan_gdn_state(ggml_backend_cuda_context * ctx, const ggml
+         }
+         const ggml_tensor * table = gr->src[0];
+         const ggml_tensor * ids   = gr->src[1];
++        // kimi-k3-spark patch 0052: only a single-sequence recurrent cache (--parallel 1). With several sequence
++        // slots the fused read faulted (illegal address) on the first one-sequence decode after another slot
++        // finished (window ek, 2026-11-08); not root-caused yet, so multi-slot servers keep the GET_ROWS
++        if (ggml_nrows(table) != 1) {
++            continue;
++        }
+         if (gr->type != GGML_TYPE_F32 || table->type != GGML_TYPE_F32 || ids->type != GGML_TYPE_I32 ||
+                 gr->ne[0] != D || gr->ne[1] != n_seqs || ggml_nrows(gr) != n_seqs || ids->ne[0] != n_seqs ||
+                 !ggml_is_contiguous(ids) || table->ne[0] != D || table->nb[0] != sizeof(float) ||
+@@ -8185,6 +8256,9 @@ static void * ggml_backend_cuda_reg_get_proc_address(ggml_backend_reg_t reg, con
+     if (strcmp(name, "ggml_backend_cuda_elastic_buffer_alloc") == 0) {
+         return (void *)ggml_backend_cuda_elastic_buffer_alloc;
+     }
++    if (strcmp(name, "ggml_backend_cuda_elastic_buffer_alloc_backed") == 0) {
++        return (void *)ggml_backend_cuda_elastic_buffer_alloc_backed;
++    }
+     if (strcmp(name, "ggml_backend_cuda_host_kv_buffer_alloc") == 0) {
+         return (void *)ggml_backend_cuda_host_kv_buffer_alloc;
+     }
+diff --git a/include/llama.h b/include/llama.h
+index 3af6e22..7eafb64 100644
+--- a/include/llama.h
++++ b/include/llama.h
+@@ -756,6 +756,12 @@ extern "C" {
+             llama_memory_t mem,
+                       bool data);
+ 
++    // kimi-k3-spark patch 0052: elastic KV per stream (LLAMA_ELASTIC_KV=1 with several sequences, non-unified KV).
++    // Map the cells [0, n_cells) of seq_id's stream now. Returns false when the configured policy refuses
++    // (LLAMA_ELASTIC_KV_REFUSE=1: the memory has run out; LLAMA_ELASTIC_KV_STREAM_MAX: over the fixed share); the
++    // caller should then fail that sequence's request. Returns true when no policy is set or the KV is not elastic.
++    LLAMA_API bool llama_elastic_kv_reserve(struct llama_context * ctx, llama_seq_id seq_id, int32_t n_cells);
++
+     // Removes all tokens that belong to the specified sequence and have positions in [p0, p1)
+     // Returns false if a partial sequence cannot be removed. Removing a whole sequence never fails
+     // seq_id < 0 : match any sequence [TAG_LLAMA_SEQ_ID_NEG]
+diff --git a/src/llama-kv-cache.cpp b/src/llama-kv-cache.cpp
+index 40478e1..1fe7d7d 100644
+--- a/src/llama-kv-cache.cpp
++++ b/src/llama-kv-cache.cpp
+@@ -10,6 +10,8 @@
+ 
+ #include <algorithm>
+ #include <cassert>
++#include <cstring>
++#include <mutex>
+ #include <cmath>
+ #include <cstring>
+ #include <limits>
+@@ -297,9 +299,10 @@ llama_kv_cache::llama_kv_cache(
+     if (host_ok && elastic_env) {
+         LLAMA_LOG_WARN("%s: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory\n", __func__);
+     }
+-    const bool elastic_ok = elastic_env && !host_ok && !hparams.no_alloc && other == nullptr && n_stream == 1 && (!v_trans || is_mla);
++    // patch 0052: several streams (--parallel N without --kv-unified) are elastic per stream, on backed buffers
++    const bool elastic_ok = elastic_env && !host_ok && !hparams.no_alloc && other == nullptr && (!v_trans || is_mla);
+     if (elastic_env && !host_ok && !elastic_ok) {
+-        LLAMA_LOG_WARN("%s: LLAMA_ELASTIC_KV=1 ignored: needs one KV stream, no transposed V (flash attention) and unshared cells\n", __func__);
++        LLAMA_LOG_WARN("%s: LLAMA_ELASTIC_KV=1 ignored: needs no transposed V (flash attention) and unshared cells\n", __func__);
+     }
+     if (elastic_ok) {
+         if (const char * v = getenv("LLAMA_ELASTIC_KV_MARGIN")) {
+@@ -317,7 +320,8 @@ llama_kv_cache::llama_kv_cache(
+             return nullptr; // the GB10 is an IGPU
+         }
+         ggml_backend_reg_t reg = ggml_backend_dev_backend_reg(dev);
+-        auto alloc_fn = (ggml_backend_buffer_t (*)(int, size_t)) ggml_backend_reg_get_proc_address(reg, "ggml_backend_cuda_elastic_buffer_alloc");
++        auto alloc_fn = (ggml_backend_buffer_t (*)(int, size_t)) ggml_backend_reg_get_proc_address(reg,
++            n_stream > 1 ? "ggml_backend_cuda_elastic_buffer_alloc_backed" : "ggml_backend_cuda_elastic_buffer_alloc");
+         if (alloc_fn == nullptr || ggml_backend_dev_buffer_type(dev) != buft) {
+             return nullptr;
+         }
+@@ -433,13 +437,14 @@ llama_kv_cache::llama_kv_cache(
+     }
+ 
+     for (ggml_backend_buffer_t buf : elastic_raw) {
+-        elastic_buf eb = { buf, {}, {}, {} };
++        elastic_buf eb = { buf, {}, {}, {}, {} };
+         const size_t base = (size_t) ggml_backend_buffer_get_base(buf);
+         for (const auto & layer : layers) {
+             for (ggml_tensor * t : { layer.k, layer.v }) {
+                 if (t != nullptr && t->buffer == buf) {
+                     eb.offs.push_back((size_t) t->data - base);
+                     eb.rows.push_back(t->nb[1]);
++                    eb.strs.push_back(t->nb[2]);
+                     elastic_cell_bytes += t->nb[1];
+                 }
+             }
+@@ -449,7 +454,17 @@ llama_kv_cache::llama_kv_cache(
+             elastic_bufs.push_back(std::move(eb));
+         }
+     }
+-    if (!elastic_bufs.empty()) {
++    if (!elastic_bufs.empty() && n_stream > 1) {
++        // patch 0052
++        elastic_ms = true;
++        elastic_tag = name_tag;
++        elastic_cells_s.assign(n_stream, 0);
++        elastic_registry_add(this, &model);
++        LLAMA_LOG_INFO("%s: elastic KV per stream%s%s: %zu buffer(s), %u streams of %u cells, %.1f KiB per cell, mapped on use (margin %u cells, shrink at %u spare cells)%s%s\n", __func__,
++            name_tag[0] ? " " : "", name_tag, elastic_bufs.size(), n_stream, get_size(), elastic_cell_bytes/1024.0, elastic_margin, elastic_shrink,
++            elastic_policy().refuse ? ", refuse when memory runs out" : "", elastic_policy().stream_max ? ", fixed share per stream" : "");
++        elastic_fit_used(false, "init");
++    } else if (!elastic_bufs.empty()) {
+         LLAMA_LOG_INFO("%s: elastic KV: %zu buffer(s), %.1f KiB per cell, mapped on use (margin %u cells, shrink at %u spare cells)\n", __func__,
+             elastic_bufs.size(), elastic_cell_bytes/1024.0, elastic_margin, elastic_shrink);
+         elastic_fit_used(false, "init");
+@@ -1027,6 +1042,28 @@ bool llama_kv_cache::update(llama_context * lctx, bool do_shift, const stream_co
+ 
+             assert(ssrc != sdst);
+ 
++            if (elastic_ms) {
++                // patch 0052: copy only the source's mapped cells; the rest of the destination may be the shared
++                // backing chunk, which must not be written
++                const uint32_t nc = elastic_cells_s[ssrc];
++                if (elastic_cells_s[sdst] < nc) {
++                    elastic_fit_stream(sdst, nc, false, false, "stream copy");
++                }
++                std::vector<uint8_t> tmp;
++                for (const auto & layer : layers) {
++                    for (ggml_tensor * t : { layer.k, layer.v }) {
++                        if (t == nullptr) {
++                            continue;
++                        }
++                        const size_t n = (size_t) nc*t->nb[1];
++                        tmp.resize(n);
++                        ggml_backend_tensor_get(t, tmp.data(), (size_t) ssrc*t->nb[2], n);
++                        ggml_backend_tensor_set(t, tmp.data(), (size_t) sdst*t->nb[2], n);
++                    }
++                }
++                continue;
++            }
++
+             for (uint32_t il = 0; il < layers.size(); ++il) {
+                 const auto & layer = layers[il];
+ 
+@@ -1385,6 +1422,10 @@ void llama_kv_cache::elastic_fit_used(bool shrink, const char * why) {
+     if (elastic_bufs.empty()) {
+         return;
+     }
++    if (elastic_ms) {
++        elastic_fit_used_ms(shrink, why); // patch 0052
++        return;
++    }
+     uint32_t used = 0;
+     for (uint32_t s = 0; s < n_stream; ++s) {
+         used = std::max(used, v_cells[s].used_max_p1());
+@@ -1402,6 +1443,12 @@ void llama_kv_cache::elastic_fit(uint32_t n_cells, bool shrink, const char * why
+     if (elastic_bufs.empty()) {
+         return;
+     }
++    if (elastic_ms) {
++        for (uint32_t s = 0; s < n_stream; ++s) { // patch 0052 (the K-shift maps every cell of every stream)
++            elastic_fit_stream(s, n_cells, shrink, false, why);
++        }
++        return;
++    }
+     n_cells = std::min(n_cells, get_size());
+     if (n_cells == elastic_cells) {
+         return;
+@@ -1440,6 +1487,168 @@ void llama_kv_cache::elastic_fit(uint32_t n_cells, bool shrink, const char * why
+     elastic_cells = n_cells;
+ }
+ 
++// kimi-k3-spark patch 0052: elastic KV per stream
++
++const llama_kv_cache::elastic_policy_t & llama_kv_cache::elastic_policy() {
++    static const elastic_policy_t p = [] {
++        elastic_policy_t r;
++        if (const char * v = getenv("LLAMA_ELASTIC_KV_REFUSE")) {
++            r.refuse = strcmp(v, "1") == 0;
++        }
++        if (const char * v = getenv("LLAMA_ELASTIC_KV_FLOOR_MIB")) {
++            r.floor = (size_t) std::max(0, atoi(v)) << 20;
++        }
++        if (const char * v = getenv("LLAMA_ELASTIC_KV_STREAM_MAX")) {
++            r.stream_max = (uint32_t) std::max(0, atoi(v));
++        }
++        return r;
++    }();
++    return p;
++}
++
++static size_t elastic_mem_available() {
++    FILE * f = fopen("/proc/meminfo", "r");
++    if (f == nullptr) {
++        return SIZE_MAX;
++    }
++    char line[256];
++    size_t kb = SIZE_MAX;
++    while (fgets(line, sizeof(line), f)) {
++        if (strncmp(line, "MemAvailable:", 13) == 0) {
++            kb = (size_t) strtoull(line + 13, nullptr, 10);
++            break;
++        }
++    }
++    fclose(f);
++    return kb == SIZE_MAX ? SIZE_MAX : kb*1024;
++}
++
++static std::mutex elastic_registry_mutex;
++static std::vector<std::pair<llama_kv_cache *, const llama_model *>> elastic_registry;
++
++void llama_kv_cache::elastic_registry_add(llama_kv_cache * kv, const llama_model * mdl) {
++    std::lock_guard<std::mutex> lock(elastic_registry_mutex);
++    elastic_registry.emplace_back(kv, mdl);
++}
++
++llama_kv_cache::~llama_kv_cache() {
++    if (elastic_ms) {
++        std::lock_guard<std::mutex> lock(elastic_registry_mutex);
++        elastic_registry.erase(std::remove_if(elastic_registry.begin(), elastic_registry.end(),
++            [this](const auto & e) { return e.first == this; }), elastic_registry.end());
++    }
++}
++
++void llama_kv_cache::elastic_fit_used_ms(bool shrink, const char * why) {
++    const uint32_t pad = std::max(n_pad, 256u);
++    for (uint32_t s = 0; s < n_stream; ++s) {
++        const uint32_t used = v_cells[s].used_max_p1();
++        const uint32_t need = GGML_PAD(used, pad) + pad;
++        if (need > elastic_cells_s[s]) {
++            elastic_fit_stream(s, need + elastic_margin, false, false, why);
++        } else if (shrink && elastic_cells_s[s] > need + elastic_margin + elastic_shrink) {
++            elastic_fit_stream(s, need + elastic_margin, true, false, why);
++        }
++    }
++}
++
++bool llama_kv_cache::elastic_fit_stream(uint32_t s, uint32_t n_cells, bool shrink, bool may_refuse, const char * why) {
++    n_cells = std::min(n_cells, get_size());
++    if (n_cells == elastic_cells_s[s]) {
++        return true;
++    }
++    if (elastic_set_ranges_fn == nullptr) {
++        for (int i = 0; i < (int) ggml_backend_reg_count() && elastic_set_ranges_fn == nullptr; ++i) {
++            elastic_set_ranges_fn = (decltype(elastic_set_ranges_fn)) ggml_backend_reg_get_proc_address(ggml_backend_reg_get(i), "ggml_backend_cuda_elastic_buffer_set_ranges");
++        }
++        GGML_ASSERT(elastic_set_ranges_fn != nullptr);
++    }
++    const auto & pol = elastic_policy();
++    const bool grow = n_cells > elastic_cells_s[s];
++    const size_t delta = (size_t) (grow ? n_cells - elastic_cells_s[s] : elastic_cells_s[s] - n_cells)*elastic_cell_bytes;
++    if (grow) {
++        llama_moe_cache_make_room(delta); // the expert cache gives the memory back before the GPU takes it
++        if (may_refuse && pol.refuse) {
++            const size_t avail = elastic_mem_available();
++            if (avail != SIZE_MAX && avail < delta + pol.floor) {
++                LLAMA_LOG_WARN("%s: elastic KV %s%s(%s) stream %u: REFUSED %u -> %u cells (%.2f GB): MemAvailable %.2f GB, floor %.2f GB\n", __func__,
++                    elastic_tag, elastic_tag[0] ? " " : "", why, s, elastic_cells_s[s], n_cells, delta/1e9, avail/1e9, pol.floor/1e9);
++                return false;
++            }
++        }
++    }
++    const auto t0 = ggml_time_us();
++    const uint32_t old = elastic_cells_s[s];
++    elastic_cells_s[s] = n_cells;
++    size_t mapped = 0;
++    std::vector<size_t> offs, lens;
++    for (auto & eb : elastic_bufs) {
++        offs.clear();
++        lens.clear();
++        for (size_t i = 0; i < eb.offs.size(); ++i) {
++            for (uint32_t st = 0; st < n_stream; ++st) {
++                offs.push_back(eb.offs[i] + (size_t) st*eb.strs[i]);
++                lens.push_back((size_t) elastic_cells_s[st]*eb.rows[i]);
++            }
++        }
++        size_t r = elastic_set_ranges_fn(eb.buf, offs.data(), lens.data(), offs.size(), shrink && !grow);
++        for (int attempt = 0; r == SIZE_MAX && attempt < (may_refuse ? 1 : 3); ++attempt) {
++            LLAMA_LOG_WARN("%s: elastic KV: mapping %u cells of stream %u failed, asking the expert cache for %.2f GB more\n", __func__, n_cells, s, delta/1e9);
++            llama_moe_cache_make_room(2*delta + ((size_t) 1 << 30));
++            r = elastic_set_ranges_fn(eb.buf, offs.data(), lens.data(), offs.size(), false);
++        }
++        if (r == SIZE_MAX) {
++            if (may_refuse) {
++                // whatever got mapped stays mapped until the stream's next shrink
++                elastic_cells_s[s] = old;
++                LLAMA_LOG_WARN("%s: elastic KV %s%s(%s) stream %u: REFUSED %u -> %u cells: the device could not map them\n", __func__,
++                    elastic_tag, elastic_tag[0] ? " " : "", why, s, old, n_cells);
++                return false;
++            }
++            GGML_ABORT("elastic KV: could not map %u cells of stream %u", n_cells, s);
++        }
++        mapped += r;
++    }
++    LLAMA_LOG_INFO("%s: elastic KV %s%s(%s) stream %u: %u -> %u of %u cells, %.1f MiB mapped in all streams (%.1f ms)\n", __func__,
++        elastic_tag, elastic_tag[0] ? " " : "", why, s, old, n_cells, get_size(), mapped/1024.0/1024.0, (ggml_time_us() - t0)/1000.0);
++    return true;
++}
++
++bool llama_kv_cache::elastic_reserve(llama_seq_id seq_id, uint32_t n_cells) {
++    const auto & pol = elastic_policy();
++    if (!elastic_ms || (!pol.refuse && pol.stream_max == 0)) {
++        return true; // no policy: streams grow in apply_ubatch as in patch 0045
++    }
++    GGML_ASSERT(seq_id >= 0 && (size_t) seq_id < seq_to_stream.size());
++    const uint32_t s = seq_to_stream[seq_id];
++    if (pol.stream_max > 0 && n_cells > pol.stream_max) {
++        LLAMA_LOG_WARN("%s: elastic KV %s%sstream %u: REFUSED %u cells: over the fixed share of %u cells\n", __func__,
++            elastic_tag, elastic_tag[0] ? " " : "", s, n_cells, pol.stream_max);
++        return false;
++    }
++    const uint32_t pad  = std::max(n_pad, 256u);
++    const uint32_t need = GGML_PAD(n_cells, pad) + pad;
++    if (need <= elastic_cells_s[s]) {
++        return true;
++    }
++    return elastic_fit_stream(s, need + elastic_margin, false, true, "reserve");
++}
++
++bool llama_elastic_kv_reserve(llama_context * ctx, llama_seq_id seq_id, int32_t n_cells) {
++    const llama_model * mdl = ctx != nullptr ? &ctx->get_model() : nullptr;
++    std::lock_guard<std::mutex> lock(elastic_registry_mutex);
++    bool ok = true;
++    for (auto & [kv, m] : elastic_registry) {
++        if (mdl == nullptr || m == mdl) {
++            ok = kv->elastic_reserve(seq_id, (uint32_t) std::max(0, n_cells)) && ok;
++            if (!ok) {
++                break;
++            }
++        }
++    }
++    return ok;
++}
++
+ bool llama_kv_cache::get_can_shift() const {
+     // Step35 uses per-layer RoPE dims; K-shift assumes a single global n_rot.
+     if (model.arch == LLM_ARCH_STEP35) {
+diff --git a/src/llama-kv-cache.h b/src/llama-kv-cache.h
+index d7d328a..77ee0af 100644
+--- a/src/llama-kv-cache.h
++++ b/src/llama-kv-cache.h
+@@ -116,7 +116,7 @@ public:
+         // a model can hold more than one cache, so the tensor names have to stay unique
+                  const char *   name_tag = "");
+ 
+-    ~llama_kv_cache() = default;
++    ~llama_kv_cache(); // patch 0052: leaves the elastic registry
+ 
+     //
+     // llama_memory_i
+@@ -307,6 +307,7 @@ private:
+         std::vector<size_t> offs; // per K/V stream tensor: byte offset of cell 0 in the buffer
+         std::vector<size_t> rows; // per K/V stream tensor: bytes per cell
+         std::vector<size_t> lens; // scratch for the ranges
++        std::vector<size_t> strs; // patch 0052: per K/V tensor: bytes per stream (nb[2])
+     };
+     std::vector<elastic_buf> elastic_bufs;
+     uint32_t elastic_cells  = 0;      // cells mapped in every tensor
+@@ -316,6 +317,29 @@ private:
+     void elastic_fit(uint32_t n_cells, bool shrink, const char * why);
+     void elastic_fit_used(bool shrink, const char * why);
+ 
++    // kimi-k3-spark patch 0052: elastic KV per stream (n_stream > 1, one stream per sequence). Every stream's cells
++    // [0, elastic_cells_s[s]) are mapped, independently of the others; the buffers are backed (one shared zero chunk
++    // behind every unmapped address), because a batch views all its streams at its longest stream's extent.
++    std::vector<uint32_t> elastic_cells_s;     // [n_stream] cells mapped per stream
++    bool     elastic_ms = false;               // per-stream mode on
++    const char * elastic_tag = "";             // the cache's name tag ("idx_" for the DSA indexer cache)
++    struct elastic_policy_t {
++        bool     refuse     = false;             // LLAMA_ELASTIC_KV_REFUSE=1
++        size_t   floor      = (size_t) 2048 << 20; // LLAMA_ELASTIC_KV_FLOOR_MIB
++        uint32_t stream_max = 0;                 // LLAMA_ELASTIC_KV_STREAM_MAX (cells, 0 = the stream's size)
++    };
++    static const elastic_policy_t & elastic_policy();
++    static void elastic_registry_add(llama_kv_cache * kv, const llama_model * mdl);
++public:
++    // patch 0052: make sure the stream of seq_id has cells [0, n_cells) mapped (plus the usual pad and margin).
++    // Returns false (and maps nothing more) when the policy refuses: LLAMA_ELASTIC_KV_REFUSE=1 refuses when the host
++    // would keep less than LLAMA_ELASTIC_KV_FLOOR_MIB after the expert cache gave back what it could, and
++    // LLAMA_ELASTIC_KV_STREAM_MAX (cells) caps each stream (a fixed share). Always true when neither is set.
++    bool elastic_reserve(llama_seq_id seq_id, uint32_t n_cells);
++private:
++    bool elastic_fit_stream(uint32_t s, uint32_t n_cells, bool shrink, bool may_refuse, const char * why);
++    void elastic_fit_used_ms(bool shrink, const char * why);
++
+     // the current index from where we start searching for a free slot in the ring buffer of KV cells (see find_slot())
+     // note: this is not part of the KV state and it's only used to speed-up the find_slot() method
+     std::vector<uint32_t> v_heads;
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 18de77e..83b274e 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -3440,6 +3440,23 @@ private:
+             }
+         });
+ 
++        // kimi-k3-spark patch 0052: with elastic KV per stream and a memory policy (LLAMA_ELASTIC_KV_REFUSE=1 or
++        // LLAMA_ELASTIC_KV_STREAM_MAX), map each slot's cells before its tokens enter the batch; a slot whose growth is
++        // refused gets an error and gives its memory back, the others continue
++        iterate(slots, [&](server_slot & slot) {
++            if (!slot.task || !(slot.state == SLOT_STATE_STARTED || slot.state == SLOT_STATE_PROCESSING_PROMPT || slot.state == SLOT_STATE_GENERATING)) {
++                return;
++            }
++            const int32_t n_need = slot.state == SLOT_STATE_GENERATING ? slot.prompt.n_tokens() + 1 :
++                std::max<int32_t>((int32_t) slot.task->n_tokens(), slot.prompt.n_tokens()) + 1;
++            if (!llama_elastic_kv_reserve(ctx_tgt, slot.id, n_need)) {
++                SLT_WRN(slot, "elastic KV refused %d cells, failing this request\n", n_need);
++                send_error(slot, "out of KV cache memory: the server cannot hold this conversation now (elastic KV refused " + std::to_string(n_need) + " cells)", ERROR_TYPE_UNAVAILABLE);
++                slot.release();
++                slot.prompt_clear();
++            }
++        });
++
+         // start populating the batch for this iteration
+         batch.clear();
+ 
+@@ -3468,6 +3485,26 @@ private:
+             }
+         }
+ 
++        // kimi-k3-spark patch 0052: LLAMA_SLOT_SERIAL=1 serves one request at a time, the oldest (lowest task id),
++        // prompt and generation, while the other slots wait with their KV kept. Every client then gets the bytes it
++        // would get alone (batched decode changes them), and several conversations stay resident without re-reading.
++        static const bool slot_serial = []() {
++            const char * value = std::getenv("LLAMA_SLOT_SERIAL");
++            return value && std::strcmp(value, "1") == 0;
++        }();
++        server_slot * slot_only = nullptr;
++        if (slot_serial) {
++            for (auto & slot : slots) {
++                if (slot.task && slot.is_processing() && slot.state != SLOT_STATE_WAIT_OTHER &&
++                        (slot_only == nullptr || slot.task->id < slot_only->task->id)) {
++                    slot_only = &slot;
++                }
++            }
++            if (slot_only) {
++                slot_prefill = (slot_only->state == SLOT_STATE_STARTED || slot_only->state == SLOT_STATE_PROCESSING_PROMPT) ? slot_only : nullptr;
++            }
++        }
++
+         auto & generating = generating_scratch;
+         auto & drafting = drafting_scratch;
+         generating.clear();
+@@ -3478,6 +3515,9 @@ private:
+             if (slot_prefill || slot.state != SLOT_STATE_GENERATING) {
+                 return;
+             }
++            if (slot_only && slot_only != &slot) {
++                return; // patch 0052: LLAMA_SLOT_SERIAL
++            }
+ 
+             // check if we can batch this slot with the previous one
+             if (!slot_batched) {
+@@ -3618,6 +3658,9 @@ private:
+                 if (slot_prefill && slot_prefill != &slot) {
+                     return;
+                 }
++                if (slot_only && slot_only != &slot) {
++                    return; // patch 0052: LLAMA_SLOT_SERIAL
++                }
+                 if (!add_ok || batch.size() >= n_batch) {
+                     return; // batch is full, skip remaining slots
+                 }
