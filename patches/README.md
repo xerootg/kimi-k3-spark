@@ -1129,3 +1129,10 @@ the 16k request; aggregate = generated tokens / wall time; details in `docs/expe
   at once and the concurrent short request finished with the gold md5; the server kept serving.
 - `--parallel 8 --ctx-size 8388608` does not fit next to a useful cache: startup took MemAvailable to 2.4 GB with
   the 78000 MiB cache (watchdog), and with 70000 MiB the cache thrashed (single stream 8-9 tok/s, N=8 12.7 aggregate).
+
+## 0053-ctx-past-train
+
+`LLAMA_CTX_PAST_TRAIN=1` (server, exact value, inert when unset): a slot may use its whole context even past the
+model's training length. Upstream caps every slot at `n_ctx_train` (1,048,576 for GLM-5.3-Flash) and rejects
+longer prompts; the startup warning still prints. For measuring retrieval and coherence past 1M (`docs/ideas.md`,
+"Past the 1M-token ceiling"); results in `docs/experiments.md`.

@@ -1,0 +1,21 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 83b274e..b73cbec 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -4736,6 +4736,16 @@ private:
+             res = std::min(res, params_base.kv_unified_per_slot);
+         }
+ 
++        // kimi-k3-spark patch 0053: LLAMA_CTX_PAST_TRAIN=1 lets a slot use its whole context past the model's training
++        // length (for measuring retrieval and coherence there; the model never saw such sequences)
++        static const bool past_train = []() {
++            const char * value = std::getenv("LLAMA_CTX_PAST_TRAIN");
++            return value && std::strcmp(value, "1") == 0;
++        }();
++        if (past_train) {
++            return res;
++        }
++
+         return std::min(res, llama_model_n_ctx_train(model_tgt));
+     }
+ 
