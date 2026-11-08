@@ -3,6 +3,8 @@
 Living document. Update it whenever a step starts, finishes or changes, with the date and the measured numbers. The ledger
 (`docs/experiments.md`) keeps the full record of every experiment. This file is the plan and its status.
 
+Haley's unconventional ideas and their sanity checks live in `docs/ideas.md`; check it before proposing a direction.
+
 ## Goal and rules
 
 - **Goal.** A research demonstration that pooled commodity hardware gives sovereign, usable inference of a very large model (Kimi K3,

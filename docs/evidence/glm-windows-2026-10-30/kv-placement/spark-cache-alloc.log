@@ -1,0 +1,17 @@
+0.12.647.534 I llama_kv_cache:      CUDA0 KV buffer size = 11264.00 MiB
+0.12.647.555 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.651.964 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (4.3 ms)
+0.12.651.974 I llama_kv_cache: size = 11264.00 MiB (1048576 cells,  11 layers,  1/1 seqs), K (f16): 11264.00 MiB, V (f16):    0.00 MiB
+0.12.651.977 I llama_kv_cache: n_rot_k = 0, n_embd_head_k_all = 512
+0.12.651.977 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+0.12.658.186 I llama_memory_recurrent:      CUDA0 RS buffer size =   145.56 MiB
+0.12.658.199 I llama_memory_recurrent: size =  145.56 MiB (     1 cells,  45 layers,  1 seqs  0 rs_seq), R (f32):    9.56 MiB, S (f32):  136.00 MiB, P (f32):    0.00 MiB
+0.12.658.202 I operator(): creating indexer KV cache, size = 1048576 cells
+0.12.671.862 I llama_kv_cache:      CUDA0 KV buffer size =  8448.00 MiB
+0.12.671.874 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.674.962 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (3.1 ms)
+0.12.674.969 I llama_kv_cache: size = 8448.00 MiB (1048576 cells,  11 layers,  1/1 seqs), K (f16): 8448.00 MiB, V (f16):    0.00 MiB
+0.12.674.970 I llama_kv_cache: n_rot_k = 0, n_embd_head_k_all = 384
+0.12.674.970 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+0.25.715.663 I sched_reserve:      CUDA0 compute buffer size = 14020.45 MiB
+0.25.715.672 I sched_reserve:  CUDA_Host compute buffer size =  5275.36 MiB
