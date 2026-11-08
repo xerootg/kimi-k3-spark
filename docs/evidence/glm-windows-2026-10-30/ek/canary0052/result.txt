@@ -1,0 +1,12 @@
+health after 16x2s
+{"kind": "conc", "tag": "C0052", "n": 1, "round": "warm", "agg_tps": 14.21, "wall_s": 18.01, "gen": 256, "per_stream_tps": [14.59], "md5": ["53816a69bc"], "t0": 1794149448.3337984, "t1": 1794149466.3469915}
+{"kind": "conc", "tag": "C0052", "n": 1, "round": 1, "agg_tps": 15.78, "wall_s": 16.22, "gen": 256, "per_stream_tps": [16.08], "md5": ["53816a69bc"], "t0": 1794149466.3472583, "t1": 1794149482.5716753}
+{"kind": "conc", "tag": "C0052", "n": 1, "round": 2, "agg_tps": 16.03, "wall_s": 15.97, "gen": 256, "per_stream_tps": [16.34], "md5": ["53816a69bc"], "t0": 1794149482.5719662, "t1": 1794149498.542358}
+{"kind": "conc", "tag": "C0052", "n": 1, "round": 3, "agg_tps": 16.26, "wall_s": 15.75, "gen": 256, "per_stream_tps": [16.58], "md5": ["53816a69bc"], "t0": 1794149498.5426486, "t1": 1794149514.2877967}
+{"kind": "depth", "tag": "C0052-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 222.05, "prefill_s": 73.92, "decode_n": 128, "decode_tps": 14.44, "md5": "145c14aa8b", "t0": 1794149514.3187356, "t1": 1794149597.0909564}
+{"kind": "multi", "tag": "C0052-serial4", "n": 4, "round": "warm", "agg_tps": 14.57, "wall_s": 70.27, "gen": 1024, "per_stream_tps": [16.4, 14.81, 14.17, 14.87], "md5": ["53816a69bc", "28c834e37b", "e3288e25c0", "34401d3b29"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [28.47, 32.02, 27.75, 30.89], "t0": 1794149597.1209211, "t1": 1794149667.3925278}
+{"kind": "multi", "tag": "C0052-serial4", "n": 4, "round": 1, "agg_tps": 15.3, "wall_s": 66.94, "gen": 1024, "per_stream_tps": [15.25, 15.81, 15.76, 15.93], "md5": ["53816a69bc", "28c834e37b", "e3288e25c0", "34401d3b29"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [26.89, 37.99, 38.81, 37.41], "t0": 1794149667.3930542, "t1": 1794149734.3290336}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 47.63, "prefill_tps": 344.62, "decode_n": 128, "decode_tps": 13.44, "md5": "145c14aa8b", "t0": 1794149734.35921, "t1": 1794149791.4970684, "kind": "solo", "tag": "C0052-resident"}
+{"spec": "p1", "prompt_n": 4, "cache_n": 15, "prefill_s": 0.18, "prefill_tps": 22.48, "decode_n": 256, "decode_tps": 15.54, "md5": "28c834e37b", "t0": 1794149791.4971774, "t1": 1794149808.0848005, "kind": "solo", "tag": "C0052-resident"}
+{"spec": "L16384", "prompt_n": 4, "cache_n": 16410, "prefill_s": 0.23, "prefill_tps": 17.71, "decode_n": 128, "decode_tps": 15.04, "md5": "145c14aa8b", "t0": 1794149808.0848582, "t1": 1794149816.769634, "kind": "solo", "tag": "C0052-resident"}
+CANARY-DONE

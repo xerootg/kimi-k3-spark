@@ -1,0 +1,1 @@
+ghcr.io/xerootg/llamacpp-spark:547208dca250-g41cdc4d

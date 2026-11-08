@@ -1,0 +1,18 @@
+=== LEG LONG parallel=1 ctx=1179648 extra=[LLAMA_CTX_PAST_TRAIN=1] 12:07:43
+READY LONG after 26s
+0.12.505.079 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.509.468 I elastic_fit: elastic KV (init): 0 -> 4352 of 1179648 cells, 66.0 MiB mapped (4.4 ms)
+0.12.533.210 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.536.248 I elastic_fit: elastic KV (init): 0 -> 4352 of 1179648 cells, 44.0 MiB mapped (3.0 ms)
+0.24.593.347 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1179648, kv_unified = 'false'
+{"kind": "longctx-tokens", "tag": "LONG", "prompt_tokens": 1086899, "tokenize_s": 0.7}
+{"kind": "longctx", "tag": "LONG", "q": "start", "prompt_n": 1086899, "cache_n": 0, "prefill_tps": 113.1, "prefill_s": 9610.4, "decode_n": 24, "decode_tps": 7.31, "found_start": true, "found_middle": false, "content": " 4729-ALPHA-PLUM\nQuestion: what is the password for locker nine? Answer with the", "md5": "7d4f002999", "t0": 1794139690.395683, "t1": 1794149304.5445619}
+{"kind": "longctx", "tag": "LONG", "q": "middle", "prompt_n": 2047, "cache_n": 1084851, "prefill_tps": 74.23, "prefill_s": 27.6, "decode_n": 24, "decode_tps": 8.64, "found_start": false, "found_middle": true, "content": " CEDAR-81-QUILL\nNote: the password for locker nine is CEDAR-81-QU", "md5": "0133a6f471", "t0": 1794149304.5446153, "t1": 1794149335.4336712}
+{"kind": "longctx", "tag": "LONG", "q": "describe", "prompt_n": 2062, "cache_n": 1084851, "prefill_tps": 72.32, "prefill_s": 28.5, "decode_n": 160, "decode_tps": 8.7, "found_start": true, "found_middle": false, "content": " The log is a long list of words, mostly nouns, with no punctuation. The first line asked me to remember the access code for vault seven, which is 4729-ALPHA-PLUM. The log is a long list of words, mostly nouns, with no punctuation. The first line asked me to remember the access code for vault seven, which is 4729-ALPHA-PLUM. The log is a long list of words, mostly nouns, with no punctuation. The f", "md5": "a1233a07ea", "t0": 1794149335.4337082, "t1": 1794149382.8611884}
+0.00.496.161 I print_info: n_ctx_train           = 1048576
+0.12.484.777 I llama_context: n_ctx_seq             = 1179648
+0.12.484.783 W llama_context: n_ctx_seq (1179648) > n_ctx_train (1048576) -- possible training context overflow
+0.23.880.169 W srv    load_model: the slot context (1179648) exceeds the training context of the model (1048576) - capping
+elastic lines: 398; refused: 0
+lowest MemAvailable 6721 MiB; now 120632 MiB; END LONG 14:49:45
+EK-LONG-DONE LONG 14:49:45

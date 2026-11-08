@@ -4,7 +4,7 @@
 # at a time (LLAMA_SLOT_SERIAL=1, bytes equal to the single-slot gold), refuse-on-full memory policy. Port 18100,
 # memory watchdog. glm53-spark must be at 0 replicas.
 set -u
-IMG=${IMG:-ghcr.io/xerootg/llamacpp-spark:547208dca250-g41cdc4d}
+IMG=${IMG:-ghcr.io/xerootg/llamacpp-spark:547208dca250-g1bbc8bb}
 OUT=/srv/glm-5.3-flash/legs-canary0052; mkdir -p $OUT
 cd /srv/glm-5.3-flash
 exec 9>/srv/glm-5.3-flash/window.lock; flock 9

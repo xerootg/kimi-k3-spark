@@ -22,7 +22,7 @@ measurement), **partly** (right direction, smaller payoff than hoped), **no** (n
 | 2026-11-08 | Several 1M conversations on the GH200; leave KV in HBM and serve as many as fit | sane | follows the per-conversation build |
 | 2026-11-08 | Keep the KV in Grace memory and let the GPU read it over the fast link | promising (built, correct on the Spark) | GH200 window, script ready (~1 h) |
 | 2026-11-08 | The Spark as the general local failover for the GH200 | sane | Juno done in argo-things #159; public endpoint and workbench next |
-| 2026-11-08 | Crack the 1M-token context ceiling | promising | test past 1M on the Spark after the KV-placement prototype |
+| 2026-11-08 | Crack the 1M-token context ceiling | promising, works at 1.087M (needles found) | long real transcript; binbcast fix before 2.09M |
 
 ## NUC round trips (2026-11-06)
 
@@ -179,4 +179,10 @@ past the trained length. Risks, in order:
 
 Next: after the KV-placement prototype releases the Spark, run 1.2M / 1.5M / 2M contexts there with retrieval checks
 and an offset audit of the attention, indexer and KV-copy kernels.
+
+Measured 2026-11-08 (window ek, `docs/experiments.md`): a 1,086,899-token prompt on the Spark (patch 0053 lifts the
+server's `n_ctx_train` cap) retrieved a fact from line 1 and one from the middle, and described the log correctly
+before falling into a greedy repetition loop. Prefill took 2 h 40 min (75 tok/s near 1M), decode at that depth
+7-9 tok/s. The offset audit found one hard limit: `binbcast.cu`'s 32-bit strides abort the prefill past ~2.09M cells
+at ubatch 2048 (fix known, not applied); everything else is 64-bit.
 

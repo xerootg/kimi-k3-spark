@@ -1,0 +1,1440 @@
+0.00.533.049 I srv  llama_server: initializing ...
+0.00.533.109 I cmn  common_param: common_params_print_info: build 1 (547208d) with GNU 13.3.0 for Linux aarch64
+0.00.533.111 I cmn  common_param: common_params_print_info: verbosity = 4 (adjust with the `-lv N` CLI arg)
+0.00.533.111 I cmn  common_param: device_info:
+0.00.533.215 I cmn  common_param:   - CUDA0   : NVIDIA GB10 (124607 MiB, 120196 MiB free)
+0.00.533.218 I cmn  common_param:   - CPU     : CPU (124607 MiB, 124607 MiB free)
+0.00.533.356 I cmn  common_param: system_info: n_threads = 8 (n_threads_batch = 20) / 20 | CUDA : ARCHS = 900,1210 | USE_GRAPHS = 1 | FA_QUANTS = q4_0-q4_0,q8_0-q8_0,f16-f16,bf16-bf16 | BLACKWELL_NATIVE_FP4 = 1 | CPU : NEON = 1 | ARM_FMA = 1 | FP16_VA = 1 | MATMUL_INT8 = 1 | SVE = 1 | DOTPROD = 1 | SVE_CNT = 16 | OPENMP = 1 | REPACK = 1 | 
+0.00.534.162 I srv          init: using 19 threads for HTTP server
+0.00.534.191 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.535.999 I srv    load_model: loading model '/models/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf'
+0.00.536.001 I srv    load_model: local path '/models/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf'
+0.00.578.782 I llama_model_loader: additional 3 GGUFs metadata loaded.
+0.00.578.820 I llama_model_loader: loaded meta data with 73 key-value pairs and 1412 tensors from /models/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf (version GGUF V3 (latest))
+0.00.578.858 I llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+0.00.578.881 I llama_model_loader: - kv   0:                       general.architecture str              = glm5-next
+0.00.578.884 I llama_model_loader: - kv   1:                               general.type str              = model
+0.00.578.901 I llama_model_loader: - kv   2:                     general.sampling.top_p f32              = 0.950000
+0.00.578.905 I llama_model_loader: - kv   3:                      general.sampling.temp f32              = 1.000000
+0.00.578.906 I llama_model_loader: - kv   4:                               general.name str              = GLM 5.3 Flash
+0.00.578.907 I llama_model_loader: - kv   5:                         general.size_label str              = 288x10B
+0.00.578.908 I llama_model_loader: - kv   6:                            general.license str              = mit
+0.00.578.949 I llama_model_loader: - kv   7:                               general.tags arr[str,2]       = ["conversational", "unsloth"]
+0.00.578.953 I llama_model_loader: - kv   8:                          general.languages arr[str,2]       = ["en", "zh"]
+0.00.578.959 I llama_model_loader: - kv   9:                      glm5-next.block_count u32              = 46
+0.00.578.964 I llama_model_loader: - kv  10:                   glm5-next.context_length u32              = 1048576
+0.00.578.970 I llama_model_loader: - kv  11:                 glm5-next.embedding_length u32              = 4096
+0.00.578.973 I llama_model_loader: - kv  12:              glm5-next.feed_forward_length u32              = 12288
+0.00.578.973 I llama_model_loader: - kv  13:             glm5-next.attention.head_count u32              = 64
+0.00.578.975 I llama_model_loader: - kv  14: glm5-next.attention.layer_norm_rms_epsilon f32              = 0.000010
+0.00.578.975 I llama_model_loader: - kv  15:                     glm5-next.expert_count u32              = 288
+0.00.578.977 I llama_model_loader: - kv  16:                glm5-next.expert_used_count u32              = 8
+0.00.578.978 I llama_model_loader: - kv  17:               glm5-next.expert_group_count u32              = 1
+0.00.578.978 I llama_model_loader: - kv  18:          glm5-next.expert_group_used_count u32              = 1
+0.00.578.979 I llama_model_loader: - kv  19:               glm5-next.expert_gating_func u32              = 2
+0.00.578.980 I llama_model_loader: - kv  20:                       glm5-next.vocab_size u32              = 154880
+0.00.578.986 I llama_model_loader: - kv  21:          glm5-next.attention.head_count_kv arr[i32,46]      = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, ...
+0.00.578.987 I llama_model_loader: - kv  22:            glm5-next.attention.q_lora_rank u32              = 1536
+0.00.578.988 I llama_model_loader: - kv  23:           glm5-next.attention.kv_lora_rank u32              = 512
+0.00.578.989 I llama_model_loader: - kv  24:             glm5-next.rope.dimension_count u32              = 0
+0.00.578.989 I llama_model_loader: - kv  25:             glm5-next.attention.key_length u32              = 512
+0.00.578.990 I llama_model_loader: - kv  26:           glm5-next.attention.value_length u32              = 512
+0.00.578.991 I llama_model_loader: - kv  27:         glm5-next.attention.key_length_mla u32              = 256
+0.00.578.991 I llama_model_loader: - kv  28:       glm5-next.attention.value_length_mla u32              = 256
+0.00.578.992 I llama_model_loader: - kv  29:     glm5-next.attention.layer_norm_epsilon f32              = 0.000001
+0.00.578.993 I llama_model_loader: - kv  30:                  glm5-next.ssm.conv_kernel u32              = 4
+0.00.578.994 I llama_model_loader: - kv  31:                     glm5-next.kda.head_dim u32              = 128
+0.00.578.994 I llama_model_loader: - kv  32:             glm5-next.kda.gate_lower_bound f32              = -5.000000
+0.00.578.995 I llama_model_loader: - kv  33:     glm5-next.attention.indexer.head_count u32              = 32
+0.00.578.996 I llama_model_loader: - kv  34:     glm5-next.attention.indexer.key_length u32              = 128
+0.00.578.997 I llama_model_loader: - kv  35:          glm5-next.attention.indexer.top_k u32              = 2048
+0.00.578.998 I llama_model_loader: - kv  36:          glm5-next.attention.indexer.kpool u32              = 4
+0.00.578.998 I llama_model_loader: - kv  37:           glm5-next.hyper_connection.count u32              = 4
+0.00.578.999 I llama_model_loader: - kv  38: glm5-next.hyper_connection.sinkhorn_iterations u32              = 20
+0.00.579.000 I llama_model_loader: - kv  39:         glm5-next.hyper_connection.epsilon f32              = 0.000001
+0.00.579.000 I llama_model_loader: - kv  40:       glm5-next.expert_feed_forward_length u32              = 2048
+0.00.579.001 I llama_model_loader: - kv  41: glm5-next.expert_shared_feed_forward_length u32              = 2048
+0.00.579.002 I llama_model_loader: - kv  42:              glm5-next.expert_shared_count u32              = 1
+0.00.579.002 I llama_model_loader: - kv  43:        glm5-next.leading_dense_block_count u32              = 3
+0.00.579.003 I llama_model_loader: - kv  44:             glm5-next.expert_weights_scale f32              = 2.500000
+0.00.579.004 I llama_model_loader: - kv  45:              glm5-next.expert_weights_norm bool             = true
+0.00.579.014 I llama_model_loader: - kv  46:                 glm5-next.swiglu_clamp_exp arr[f32,46]      = [10.000000, 10.000000, 10.000000, 10....
+0.00.579.021 I llama_model_loader: - kv  47:               glm5-next.swiglu_clamp_shexp arr[f32,46]      = [10.000000, 10.000000, 10.000000, 10....
+0.00.579.021 I llama_model_loader: - kv  48:             glm5-next.nextn_predict_layers u32              = 1
+0.00.579.022 I llama_model_loader: - kv  49:                       tokenizer.ggml.model str              = gpt2
+0.00.579.022 I llama_model_loader: - kv  50:                         tokenizer.ggml.pre str              = glm4
+0.00.587.665 I llama_model_loader: - kv  51:                      tokenizer.ggml.tokens arr[str,154880]  = ["!", "\"", "#", "$", "%", "&", "'", ...
+0.00.590.184 I llama_model_loader: - kv  52:                  tokenizer.ggml.token_type arr[i32,154880]  = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+0.00.607.615 I llama_model_loader: - kv  53:                      tokenizer.ggml.merges arr[str,321649]  = ["Ġ Ġ", "Ġ ĠĠĠ", "ĠĠ ĠĠ", "...
+0.00.607.620 I llama_model_loader: - kv  54:                tokenizer.ggml.eos_token_id u32              = 154820
+0.00.607.620 I llama_model_loader: - kv  55:            tokenizer.ggml.padding_token_id u32              = 154820
+0.00.607.621 I llama_model_loader: - kv  56:                tokenizer.ggml.bos_token_id u32              = 154822
+0.00.607.621 I llama_model_loader: - kv  57:                tokenizer.ggml.eot_token_id u32              = 154827
+0.00.607.621 I llama_model_loader: - kv  58:            tokenizer.ggml.unknown_token_id u32              = 154820
+0.00.607.622 I llama_model_loader: - kv  59:                tokenizer.ggml.eom_token_id u32              = 154829
+0.00.607.624 I llama_model_loader: - kv  60:               general.quantization_version u32              = 2
+0.00.607.624 I llama_model_loader: - kv  61:                          general.file_type u32              = 10
+0.00.607.625 I llama_model_loader: - kv  62:                      quantize.imatrix.file str              = GLM-5.3-Flash-GGUF/imatrix_unsloth.gguf
+0.00.607.626 I llama_model_loader: - kv  63:                   quantize.imatrix.dataset str              = unsloth_calibration_GLM-5.3-Flash.txt
+0.00.607.626 I llama_model_loader: - kv  64:             quantize.imatrix.entries_count u32              = 809
+0.00.607.627 I llama_model_loader: - kv  65:              quantize.imatrix.chunks_count u32              = 88
+0.00.607.627 I llama_model_loader: - kv  66:                                   split.no u16              = 0
+0.00.607.628 I llama_model_loader: - kv  67:                        split.tensors.count i32              = 1412
+0.00.607.628 I llama_model_loader: - kv  68:                                split.count u16              = 4
+0.00.607.630 I llama_model_loader: - kv  69:                    tokenizer.chat_template str              = [gMASK]<sop>\n{%- set effective_reason...
+0.00.607.630 I llama_model_loader: - kv  70:                       general.quantized_by str              = Unsloth
+0.00.607.631 I llama_model_loader: - kv  71:                           general.repo_url str              = https://huggingface.co/unsloth
+0.00.607.631 I llama_model_loader: - kv  72: glm5-next.attention.indexer.index_share_mtp bool             = true
+0.00.607.635 I llama_model_loader: - type  f32:  638 tensors
+0.00.607.635 I llama_model_loader: - type q8_0:  346 tensors
+0.00.607.636 I llama_model_loader: - type q2_K:    2 tensors
+0.00.607.636 I llama_model_loader: - type q3_K:    1 tensors
+0.00.607.636 I llama_model_loader: - type q4_K:    1 tensors
+0.00.607.637 I llama_model_loader: - type q5_K:  181 tensors
+0.00.607.637 I llama_model_loader: - type q6_K:  117 tensors
+0.00.607.637 I llama_model_loader: - type iq2_xs:   82 tensors
+0.00.607.638 I llama_model_loader: - type iq3_xxs:   41 tensors
+0.00.607.638 I llama_model_loader: - type iq4_xs:    3 tensors
+0.00.607.640 I print_info: file format = GGUF V3 (latest)
+0.00.607.642 I print_info: file type   = Q2_K - Medium
+0.00.607.644 I print_info: file size   = 101.24 GiB (2.71 BPW) 
+0.00.607.752 I llama_prepare_model_devices: using device CUDA0 (NVIDIA GB10) (000f:01:00.0) - 120164 MiB free
+0.00.695.853 I load: 0 unused tokens
+0.00.708.002 W load: special_eot_id is not in special_eog_ids - the tokenizer config may be incorrect
+0.00.708.006 W load: special_eom_id is not in special_eog_ids - the tokenizer config may be incorrect
+0.00.708.006 I load: printing all EOG tokens:
+0.00.708.007 I load:   - 154820 ('<|endoftext|>')
+0.00.708.007 I load:   - 154827 ('<|user|>')
+0.00.708.007 I load:   - 154829 ('<|observation|>')
+0.00.708.117 I load: special tokens cache size = 36
+0.00.738.666 I load: token to piece cache size = 0.9811 MB
+0.00.738.713 I print_info: arch                  = glm5-next
+0.00.738.716 I print_info: vocab_only            = 0
+0.00.738.716 I print_info: no_alloc              = 0
+0.00.738.717 I print_info: n_ctx_train           = 1048576
+0.00.738.721 I print_info: n_embd_inp            = 4096
+0.00.738.722 I print_info: n_embd                = 4096
+0.00.738.724 I print_info: n_embd_out            = 4096
+0.00.738.725 I print_info: n_layer               = 45
+0.00.738.726 I print_info: n_layer_all           = 46
+0.00.738.759 I print_info: n_head                = 64
+0.00.738.773 I print_info: n_head_kv             = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1]
+0.00.738.776 I print_info: n_rot                 = 0
+0.00.738.777 I print_info: n_swa                 = 0
+0.00.738.781 I print_info: is_swa_any            = 0
+0.00.738.782 I print_info: non_causal_type       = 0
+0.00.738.782 I print_info: n_embd_head_k         = 512
+0.00.738.783 I print_info: n_embd_head_v         = 512
+0.00.738.789 I print_info: n_gqa                 = [0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 64]
+0.00.738.799 I print_info: n_embd_k_gqa          = [0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 512]
+0.00.738.810 I print_info: n_embd_v_gqa          = [0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 512]
+0.00.738.817 I print_info: f_norm_eps            = 1.0e-06
+0.00.738.818 I print_info: f_norm_rms_eps        = 1.0e-05
+0.00.738.819 I print_info: f_clamp_kqv           = 0.0e+00
+0.00.738.820 I print_info: f_max_alibi_bias      = 0.0e+00
+0.00.738.821 I print_info: f_logit_scale         = 0.0e+00
+0.00.738.821 I print_info: f_attn_scale          = 0.0e+00
+0.00.738.822 I print_info: f_attn_value_scale    = 0.0000
+0.00.738.829 I print_info: n_ff                  = 12288
+0.00.738.830 I print_info: n_expert              = 288
+0.00.738.835 I print_info: n_expert_used         = 8
+0.00.738.836 I print_info: n_expert_groups       = 1
+0.00.738.837 I print_info: n_group_used          = 1
+0.00.738.837 I print_info: causal attn           = 1
+0.00.738.838 I print_info: pooling type          = -1
+0.00.738.839 I print_info: rope type             = -1
+0.00.738.840 I print_info: rope scaling          = linear
+0.00.738.843 I print_info: freq_base_train       = 10000.0
+0.00.738.844 I print_info: freq_scale_train      = 1
+0.00.738.844 I print_info: n_ctx_orig_yarn       = 1048576
+0.00.738.845 I print_info: rope_yarn_log_mul     = 0.0000
+0.00.738.845 I print_info: rope_finetuned        = unknown
+0.00.738.849 I print_info: model type            = 320B.A18B
+0.00.738.850 I print_info: model params          = 320.76 B
+0.00.738.851 I print_info: general.name          = GLM 5.3 Flash
+0.00.738.868 I print_info: vocab type            = BPE
+0.00.738.871 I print_info: n_vocab               = 154880
+0.00.738.871 I print_info: n_merges              = 321649
+0.00.738.872 I print_info: BOS token             = 154822 '[gMASK]'
+0.00.738.872 I print_info: EOS token             = 154820 '<|endoftext|>'
+0.00.738.873 I print_info: EOT token             = 154827 '<|user|>'
+0.00.738.873 I print_info: EOM token             = 154829 '<|observation|>'
+0.00.738.874 I print_info: UNK token             = 154820 '<|endoftext|>'
+0.00.738.874 I print_info: PAD token             = 154820 '<|endoftext|>'
+0.00.738.875 I print_info: LF token              = 198 'Ċ'
+0.00.738.875 I print_info: FIM PRE token         = 154838 '<|code_prefix|>'
+0.00.738.875 I print_info: FIM SUF token         = 154840 '<|code_suffix|>'
+0.00.738.875 I print_info: FIM MID token         = 154839 '<|code_middle|>'
+0.00.738.876 I print_info: EOG token             = 154820 '<|endoftext|>'
+0.00.738.877 I print_info: EOG token             = 154827 '<|user|>'
+0.00.738.877 I print_info: EOG token             = 154829 '<|observation|>'
+0.00.738.878 I print_info: max token length      = 1024
+0.00.738.989 I load_tensors: loading model tensors, this can take a while... (load_mode = mmap)
+0.00.932.285 W llama_model_loader: tensor overrides to CPU are used with mmap enabled - consider using --load-mode none for better performance
+0.03.040.901 W model has unused tensor blk.45.attn_norm.weight (size = 16384 bytes) -- ignoring
+0.03.040.906 W model has unused tensor blk.45.ffn_norm.weight (size = 16384 bytes) -- ignoring
+0.03.040.908 W model has unused tensor blk.45.attn_q_a_norm.weight (size = 6144 bytes) -- ignoring
+0.03.040.910 W model has unused tensor blk.45.attn_kv_a_norm.weight (size = 2048 bytes) -- ignoring
+0.03.040.912 W model has unused tensor blk.45.attn_q_a.weight (size = 4325376 bytes) -- ignoring
+0.03.040.914 W model has unused tensor blk.45.attn_q_b.weight (size = 26738688 bytes) -- ignoring
+0.03.040.916 W model has unused tensor blk.45.attn_kv_a_mqa.weight (size = 2228224 bytes) -- ignoring
+0.03.040.918 W model has unused tensor blk.45.attn_k_b.weight (size = 8912896 bytes) -- ignoring
+0.03.040.920 W model has unused tensor blk.45.attn_v_b.weight (size = 8912896 bytes) -- ignoring
+0.03.040.923 W model has unused tensor blk.45.attn_output.weight (size = 46137344 bytes) -- ignoring
+0.03.040.925 W model has unused tensor blk.45.indexer.k_norm.weight (size = 512 bytes) -- ignoring
+0.03.040.928 W model has unused tensor blk.45.indexer.k_norm.bias (size = 512 bytes) -- ignoring
+0.03.040.930 W model has unused tensor blk.45.indexer.proj.weight (size = 524288 bytes) -- ignoring
+0.03.040.933 W model has unused tensor blk.45.indexer.attn_k.weight (size = 557056 bytes) -- ignoring
+0.03.040.936 W model has unused tensor blk.45.indexer.attn_q_b.weight (size = 6684672 bytes) -- ignoring
+0.03.040.939 W model has unused tensor blk.45.indexer_compressor_gate.weight (size = 557056 bytes) -- ignoring
+0.03.040.941 W model has unused tensor blk.45.indexer_compressor_ape.weight (size = 2048 bytes) -- ignoring
+0.03.040.944 W model has unused tensor blk.45.ffn_gate_inp.weight (size = 4718592 bytes) -- ignoring
+0.03.040.947 W model has unused tensor blk.45.exp_probs_b.bias (size = 1152 bytes) -- ignoring
+0.03.040.949 W model has unused tensor blk.45.ffn_gate_exps.weight (size = 792723456 bytes) -- ignoring
+0.03.040.952 W model has unused tensor blk.45.ffn_down_exps.weight (size = 1038090240 bytes) -- ignoring
+0.03.040.955 W model has unused tensor blk.45.ffn_up_exps.weight (size = 792723456 bytes) -- ignoring
+0.03.040.958 W model has unused tensor blk.45.ffn_gate_shexp.weight (size = 5767168 bytes) -- ignoring
+0.03.040.962 W model has unused tensor blk.45.ffn_down_shexp.weight (size = 6881280 bytes) -- ignoring
+0.03.040.965 W model has unused tensor blk.45.ffn_up_shexp.weight (size = 5767168 bytes) -- ignoring
+0.03.040.970 W model has unused tensor blk.45.nextn.eh_proj.weight (size = 35651584 bytes) -- ignoring
+0.03.040.973 W model has unused tensor blk.45.nextn.enorm.weight (size = 16384 bytes) -- ignoring
+0.03.040.976 W model has unused tensor blk.45.nextn.hnorm.weight (size = 16384 bytes) -- ignoring
+0.03.040.984 W model has unused tensor blk.45.nextn.shared_head_norm.weight (size = 16384 bytes) -- ignoring
+0.03.042.411 I load_tensors: expert store: 126 host expert tensors (99.0 GB) excluded from the mapping prefetch
+0.03.279.703 I load_tensors: offloading output layer to GPU
+0.03.279.708 I load_tensors: offloading 45 repeating layers to GPU
+0.03.279.709 I load_tensors: offloaded 47/47 layers to GPU
+0.03.279.714 I load_tensors:   CPU_Mapped model buffer size =   415.94 MiB
+0.03.279.716 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.717 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.717 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.718 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.718 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.718 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.719 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.719 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.719 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.720 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.720 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.720 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.721 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.721 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.721 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.722 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.722 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.722 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.722 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.723 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.723 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.723 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.724 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.724 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.724 I load_tensors:   CPU_Mapped model buffer size =  1224.00 MiB
+0.03.279.725 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.725 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.725 I load_tensors:   CPU_Mapped model buffer size =  1224.00 MiB
+0.03.279.726 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.726 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.726 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.729 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.729 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.729 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.730 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.730 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.730 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.731 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.731 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.731 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.732 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.732 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.732 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.733 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.733 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.733 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.733 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.734 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.734 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.742 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.743 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.743 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.743 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.744 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.744 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.744 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.744 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.745 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.745 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.745 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.746 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.746 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.746 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.747 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.747 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.747 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.748 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.748 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.748 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.748 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.749 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.749 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.750 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.750 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.750 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.751 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.751 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.751 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.752 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.752 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.752 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.753 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.753 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.753 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.754 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.754 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.754 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.754 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.755 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.755 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.755 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.756 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.756 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.756 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.757 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.757 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.757 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.758 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.758 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.758 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.758 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.759 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.759 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.759 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.760 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.760 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.760 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.761 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.761 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.761 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.762 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.762 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.762 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.762 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.763 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.763 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.763 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.764 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.764 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.764 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.765 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.279.765 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.765 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.766 I load_tensors:   CPU_Mapped model buffer size =  1224.00 MiB
+0.03.279.766 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.766 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.279.767 I load_tensors:        CUDA0 model buffer size =  6153.73 MiB
+0.12.680.048 W load_tensors: madvise(MADV_PAGEOUT) failed for 4 of 4 mappings: Cannot allocate memory
+0.12.680.053 I load_tensors: expert store: the mapping's page cache was released after the load
+0.12.682.938 I cmn  common_init_: added <|endoftext|> logit bias = -inf
+0.12.682.944 I cmn  common_init_: added <|user|> logit bias = -inf
+0.12.682.945 I cmn  common_init_: added <|observation|> logit bias = -inf
+0.12.683.333 I llama_context: constructing llama_context
+0.12.683.340 I llama_context: n_seq_max             = 4
+0.12.683.340 I llama_context: n_ctx                 = 4194304
+0.12.683.340 I llama_context: n_ctx_seq             = 1048576
+0.12.683.340 I llama_context: n_batch               = 2048
+0.12.683.341 I llama_context: n_ubatch              = 2048
+0.12.683.341 I llama_context: causal_attn           = 1
+0.12.683.342 I llama_context: flash_attn            = enabled
+0.12.683.343 I llama_context: kv_unified            = false
+0.12.683.346 I llama_context: freq_base             = 10000.0
+0.12.683.346 I llama_context: freq_scale            = 1
+0.12.683.346 I llama_context: n_rs_seq              = 0
+0.12.683.347 I llama_context: n_outputs_max         = 4
+0.12.683.347 I llama_context: n_outputs_max_per_seq = 1
+0.12.684.530 I llama_context:  CUDA_Host  output buffer size =     2.36 MiB
+0.13.430.075 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (683.8 ms)
+0.13.430.102 I llama_kv_cache:      CUDA0 KV buffer size = 45056.00 MiB
+0.13.430.133 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.13.435.570 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.4 ms)
+0.13.440.681 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.1 ms)
+0.13.445.781 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.1 ms)
+0.13.450.850 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.1 ms)
+0.13.450.860 I llama_kv_cache: size = 45056.00 MiB (1048576 cells,  11 layers,  4/4 seqs), K (f16): 45056.00 MiB, V (f16):    0.00 MiB
+0.13.450.863 I llama_kv_cache: n_rot_k = 0, n_embd_head_k_all = 512
+0.13.450.863 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+0.13.472.971 I llama_memory_recurrent:      CUDA0 RS buffer size =   582.25 MiB
+0.13.472.983 I llama_memory_recurrent: size =  582.25 MiB (     4 cells,  45 layers,  4 seqs  0 rs_seq), R (f32):   38.25 MiB, S (f32):  544.00 MiB, P (f32):    0.00 MiB
+0.13.472.989 I operator(): creating indexer KV cache, size = 1048576 cells
+0.14.038.071 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (506.5 ms)
+0.14.038.088 I llama_kv_cache:      CUDA0 KV buffer size = 33792.00 MiB
+0.14.038.104 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.14.041.852 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (3.7 ms)
+0.14.045.312 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (3.5 ms)
+0.14.048.765 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (3.4 ms)
+0.14.052.197 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (3.4 ms)
+0.14.052.203 I llama_kv_cache: size = 33792.00 MiB (1048576 cells,  11 layers,  4/4 seqs), K (f16): 33792.00 MiB, V (f16):    0.00 MiB
+0.14.052.205 I llama_kv_cache: n_rot_k = 0, n_embd_head_k_all = 384
+0.14.052.207 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+0.14.052.852 I impl: expert store /store/glm53flash-q2.k3xs: 43 layers x 288 experts, records up to 10878976 bytes, reads of 1024 KiB through io_uring
+0.14.052.891 I impl: expert store: layers [3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43], iq2_xs/iq2_xs/iq3_xxs: stride 8388608 B (bytes), aligned CUDA loads
+0.14.052.893 I impl: expert store: layers [11], iq3_xxs/iq3_xxs/iq4_xs: stride 12582912 B (bytes), aligned CUDA loads
+0.14.052.894 I impl: expert store: layers [12,44], iq2_xs/iq2_xs/iq4_xs: stride 10485760 B (bytes), aligned CUDA loads
+0.14.052.920 I prefill bank: 3456.00 MiB shared landing replaces staging; decode cache budget unchanged
+0.14.052.939 I impl: expert store: LFU eviction, half-life 262144 planned ids; volatile frequency state
+0.14.053.161 W store_region_alloc: mbind of 71304 MiB to the CPU nodes (mask 0x1) failed: Operation not permitted
+0.15.248.171 I expert store: THP bank huge backing=74767663104/74767663104 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=74767663104 bytes (before cudaHostRegister)
+0.18.023.914 I prefill bank: memfd alias registered ok
+0.18.024.122 W store_region_alloc: mbind of 2460 MiB to the CPU nodes (mask 0x1) failed: Operation not permitted
+0.18.182.658 I expert store: THP bank huge backing=2579496960/2579496960 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=2579496960 bytes (before cudaHostRegister)
+0.18.523.523 I prefill bank: memfd alias registered ok
+0.18.523.616 W store_region_alloc: mbind of 4220 MiB to the CPU nodes (mask 0x1) failed: Operation not permitted
+0.18.763.670 I expert store: THP bank huge backing=4424990720/4424990720 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=4424990720 bytes (before cudaHostRegister)
+0.19.150.139 I prefill bank: memfd alias registered ok
+0.19.150.183 W store_region_alloc: mbind of 0 MiB to the CPU nodes (mask 0x1) failed: Operation not permitted
+0.19.152.481 I ggml_backend_cuda_set_host_bank_hook: host bank hook: asynchronous (GPU-side wait on a mapped mailbox, CUDA graphs stay on)
+0.19.152.484 I impl: expert store: self-prefetch on (a layer's misses are read while its shared expert computes)
+0.19.152.519 I impl: expert store: split expert GEMV on (the resident experts' matmuls run while a layer's misses are read; the late matmul has 1 rows; the zero record is slot 8912 of each group)
+0.19.152.522 I impl: expert store: slot maps registered with the GPU, the lookups run there and the fills in its host hook (LLAMA_EXPERT_STORE_GPU_SLOTS=0 for the CPU split)
+0.19.152.525 I prefill bank enabled: batches over 32 tokens use resident records and shared landing slots; replaced staging 2988.00 MiB
+0.25.061.827 I snapshot_restore: expert store: cache snapshot restored: 9130 experts, 74.7 GB read in 5.9 s (12.7 GB/s)
+0.25.061.971 I valve_start: expert store: memory valve on: host reserve 6144 MiB, floor 50% of the slots, sampled every 500 ms (no PSI trigger: /proc/pressure/memory not writable), released slots re-armed after 10 s of calm
+0.25.061.974 I impl: expert store: host cache below is filled from the store, expert matmuls run on the GPU from the registered cache, batches up to 32 tokens from the cache (larger ones through a 2988.00 MiB staging, allocated when one comes)
+0.25.061.977 I impl:        CPU MoE cache size = 81440.00 MiB for 94446.00 MiB of host experts
+0.25.061.979 I impl: 39 layers, iq3_xxs:  8912 slots (79.3%), 0 of them on the HBM node, stride 8388608 B (bytes)
+0.25.061.979 I impl:  1 layers, iq4_xs:   204 slots (70.8%), 0 of them on the HBM node, stride 12582912 B (bytes)
+0.25.061.980 I impl:  2 layers, iq4_xs:   421 slots (73.1%), 0 of them on the HBM node, stride 10485760 B (bytes)
+0.25.061.985 I sched_reserve: reserving ...
+0.25.086.998 I resolve_fused_ops: resolving fused DeepSeek V4 HC support:
+0.25.090.379 I resolve_fused_ops: fused DeepSeek V4 HC pre enabled
+0.25.092.661 I resolve_fused_ops: fused DeepSeek V4 HC comb enabled
+0.25.094.926 I resolve_fused_ops: fused DeepSeek V4 HC post enabled
+0.28.068.028 I expert store: THP valve returned 3305111552 bytes (2 MiB pages)
+0.28.068.046 W valve_release: expert store: memory valve: host MemAvailable 4.75 GB under the 6.44 GB reserve (sample): released 394 slots (3.31 GB), 3.31 GB of the host cache released in all
+0.28.385.276 I sched_reserve:      CUDA0 compute buffer size = 17245.97 MiB
+0.28.385.283 I sched_reserve:  CUDA_Host compute buffer size =  8380.36 MiB
+0.28.385.285 I sched_reserve: graph (pp bs=2048, tg bs=4): nodes = 8039 / 8081, splits = 2 / 2, input objects = 4 / 4, input tensors = 16 / 16
+0.28.385.287 I sched_reserve: reserve took 3323.30 ms, sched copies = 1
+0.28.385.333 I cmn          init: llama threadpool init, n_threads = 8
+0.28.451.716 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 0, n_diff = 1
+0.30.909.274 I lock_memory_once: expert store: locked 97568 MiB of process memory (176 mappings, 2390 ms), the model file mappings (259953 MiB) stay pageable
+0.31.036.250 I cmn  common_conte: the context does not support partial sequence removal
+0.31.106.363 I srv    load_model: speculative decoding will use checkpoints
+0.31.106.375 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 1048576, kv_unified = 'false'
+0.31.106.391 I spec common_specu: no implementations specified for speculative decoding
+0.31.106.396 I slot   load_model: id  0 | task -1 | new slot, n_ctx = 1048576
+0.31.106.402 I slot   load_model: id  1 | task -1 | new slot, n_ctx = 1048576
+0.31.106.405 I slot   load_model: id  2 | task -1 | new slot, n_ctx = 1048576
+0.31.106.405 I slot   load_model: id  3 | task -1 | new slot, n_ctx = 1048576
+0.31.106.417 I srv    load_model: prompt cache is disabled - use `--cache-ram N` to enable it
+0.31.106.418 I srv    load_model: for more info see https://github.com/ggml-org/llama.cpp/pull/16391
+0.31.106.418 I srv    load_model: context checkpoints enabled, max = 32, min spacing = 8192
+0.31.106.431 W srv          init: --cache-idle-slots requires --cache-ram, disabling
+0.31.118.778 I srv          init: init: chat template, example_format: '[gMASK]<sop><|system|>Reasoning Effort: Max<|system|>You are a helpful assistant<|user|>Hello<|assistant|><think></think>Hi there<|user|>How are you?<|assistant|><think>'
+0.31.119.002 I srv          init: init: chat template, thinking = 1
+0.31.119.018 I srv          init: preserve_reasoning kwarg: true
+0.31.119.022 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+0.31.119.100 I srv  llama_server: model loaded
+0.31.119.112 I srv  llama_server: listening on http://0.0.0.0:8080
+0.31.119.299 I srv  update_slots: all slots are idle
+0.31.409.934 I expert store: THP valve returned 33554432 bytes (2 MiB pages)
+0.31.410.113 I expert store: THP valve returned 58720256 bytes (2 MiB pages)
+0.31.410.279 I expert store: THP valve returned 83886080 bytes (2 MiB pages)
+0.31.410.311 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+0.31.410.489 I expert store: THP valve returned 92274688 bytes (2 MiB pages)
+0.31.410.630 I expert store: THP valve returned 67108864 bytes (2 MiB pages)
+0.31.410.670 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+0.31.410.866 I expert store: THP valve returned 92274688 bytes (2 MiB pages)
+0.31.410.961 I expert store: THP valve returned 41943040 bytes (2 MiB pages)
+0.31.410.991 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+0.31.411.167 I expert store: THP valve returned 92274688 bytes (2 MiB pages)
+0.31.411.345 I expert store: THP valve returned 92274688 bytes (2 MiB pages)
+0.31.411.620 I expert store: THP valve returned 142606336 bytes (2 MiB pages)
+0.31.411.692 I expert store: THP valve returned 25165824 bytes (2 MiB pages)
+0.31.411.867 I expert store: THP valve returned 83886080 bytes (2 MiB pages)
+0.31.411.918 I expert store: THP valve returned 16777216 bytes (2 MiB pages)
+0.31.411.987 I expert store: THP valve returned 25165824 bytes (2 MiB pages)
+0.31.412.045 I expert store: THP valve returned 25165824 bytes (2 MiB pages)
+0.31.412.224 I expert store: THP valve returned 92274688 bytes (2 MiB pages)
+0.31.412.312 I expert store: THP valve returned 41943040 bytes (2 MiB pages)
+0.31.412.526 I expert store: THP valve returned 109051904 bytes (2 MiB pages)
+0.31.412.587 I expert store: THP valve returned 16777216 bytes (2 MiB pages)
+0.31.412.894 I expert store: THP valve returned 150994944 bytes (2 MiB pages)
+0.31.412.983 I expert store: THP valve returned 33554432 bytes (2 MiB pages)
+0.31.413.148 I expert store: THP valve returned 83886080 bytes (2 MiB pages)
+0.31.413.579 I expert store: THP valve returned 226492416 bytes (2 MiB pages)
+0.31.413.749 I expert store: THP valve returned 75497472 bytes (2 MiB pages)
+0.31.413.935 I expert store: THP valve returned 92274688 bytes (2 MiB pages)
+0.31.414.267 I expert store: THP valve returned 176160768 bytes (2 MiB pages)
+0.31.414.349 I expert store: THP valve returned 33554432 bytes (2 MiB pages)
+0.31.414.527 I expert store: THP valve returned 92274688 bytes (2 MiB pages)
+0.31.414.626 I expert store: THP valve returned 41943040 bytes (2 MiB pages)
+0.31.414.928 I expert store: THP valve returned 150994944 bytes (2 MiB pages)
+0.31.415.037 I expert store: THP valve returned 50331648 bytes (2 MiB pages)
+0.31.415.097 I expert store: THP valve returned 25165824 bytes (2 MiB pages)
+0.31.415.129 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+0.31.415.138 W valve_release: expert store: memory valve: host MemAvailable 5.56 GB under the 6.44 GB reserve (sample): released 298 slots (2.50 GB), 5.80 GB of the host cache released in all
+0.32.977.871 I srv  server_strea: conv_id= (empty=1)
+0.32.978.029 I slot get_availabl: id  0 | task -1 |  - skipping, slot is empty
+0.32.978.032 I slot get_availabl: id  1 | task -1 |  - skipping, slot is empty
+0.32.978.032 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+0.32.978.033 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+0.32.978.037 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.32.978.070 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+0.32.978.081 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.32.978.083 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.32.978.100 I slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+0.32.978.105 I slot   operator(): id  0 | task 0 | cached n_tokens = 0, memory_seq_rm [0, end)
+0.33.007.449 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 1), splits = 2, n_same = 0, n_diff = 2
+0.33.231.809 I slot   operator(): id  0 | task 0 | cached n_tokens = 6, memory_seq_rm [6, end)
+0.33.232.824 I slot init_sampler: id  0 | task 0 | init sampler, took 0.01 ms, tokens: text = 10, total = 10
+0.33.323.053 I slot create_check: id  0 | task 0 | created context checkpoint 1 of 32 (pos_min = 5, pos_max = 5, n_tokens = 6, size = 145.563 MiB)
+0.33.328.533 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 0, n_diff = 3
+0.39.982.716 I fill_late: expert store: 34597 lookups, hit rate 93.9%, 17.4 GB read for decode, 0.0 GB for prefill
+0.39.982.722 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.07 ms (0.5 records, 59.01 GB/s), between fills 2.62 ms
+0.39.982.730 I fill_late: expert store: memory valve: host MemAvailable 7.58 GB (lowest 4.75, reserve 6.44), 692 host slots released (5.80 GB); 2 releases, 0 re-arms, 0 PSI wake-ups
+0.39.982.734 I fill_late: expert store: split GEMV: 3970 early lookups, 7.7 of 8 experts complete at the early lookup, 0.34 read under the early matmul (1 rows), 325 lookups with more misses (0.10 records read at the early lookup), plan 0.096 ms, wait at the real lookup 0.20 ms, 0 early lookups without a real one
+0.39.982.736 I fill_late: expert store: self-prefetch: 84 posts, 0.1 records and 0.09 ms of reads per post
+0.40.345.688 I slot print_timing: id  0 | task 0 | n_gen =    100, tg =  14.43 t/s, tg_3s =  14.58 t/s
+0.43.371.453 I slot print_timing: id  0 | task 0 | n_gen =    143, tg =  14.36 t/s, tg_3s =  14.21 t/s
+0.46.397.919 I slot print_timing: id  0 | task 0 | n_gen =    187, tg =  14.41 t/s, tg_3s =  14.54 t/s
+0.46.795.119 I fill_late: expert store: 67365 lookups, hit rate 94.0%, 33.7 GB read for decode, 0.0 GB for prefill
+0.46.795.122 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.04 ms (0.5 records, 113.96 GB/s), between fills 2.62 ms
+0.46.795.125 I fill_late: expert store: memory valve: host MemAvailable 7.59 GB (lowest 4.75, reserve 6.44), 692 host slots released (5.80 GB); 2 releases, 0 re-arms, 0 PSI wake-ups
+0.46.795.130 I fill_late: expert store: split GEMV: 8066 early lookups, 7.6 of 8 experts complete at the early lookup, 0.35 read under the early matmul (1 rows), 692 lookups with more misses (0.10 records read at the early lookup), plan 0.103 ms, wait at the real lookup 0.21 ms, 0 early lookups without a real one
+0.46.795.131 I fill_late: expert store: self-prefetch: 84 posts, 0.1 records and 0.09 ms of reads per post
+0.49.402.946 I slot print_timing: id  0 | task 0 | n_gen =    233, tg =  14.58 t/s, tg_3s =  15.31 t/s
+0.50.259.266 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 1, n_diff = 3
+0.50.340.264 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 2, n_diff = 3
+0.50.965.299 I slot print_timing: id  0 | task 0 | prompt eval time =     508.14 ms /    10 tokens (   50.81 ms per token,    19.68 tokens per second)
+0.50.965.302 I slot print_timing: id  0 | task 0 |        eval time =   17479.04 ms /   256 tokens (   68.55 ms per token,    14.59 tokens per second)
+0.50.965.303 I slot print_timing: id  0 | task 0 |       total time =   17987.19 ms /   266 tokens
+0.50.965.307 I slot print_timing: id  0 | task 0 |    graphs reused =        252
+0.50.965.308 I slot print_timing: id  0 | task 0 |   graph reallocs =          2    /     3        (same size) / (changed size)
+0.50.965.330 I slot      release: id  0 | task 0 | stop processing: n_tokens = 265, truncated = 0
+0.50.965.339 I srv  update_slots: all slots are idle
+0.50.967.010 I srv  server_strea: conv_id= (empty=1)
+0.50.967.116 I slot get_availabl: id  0 | task -1 |  - checking sim = 1.000 (10/10) > 0.100
+0.50.967.118 I slot get_availabl: id  1 | task -1 |  - skipping, slot is empty
+0.50.967.118 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+0.50.967.119 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+0.50.967.120 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.038
+0.50.967.139 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+0.50.967.147 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.50.967.150 I slot launch_slot_: id  0 | task 258 | processing task, is_child = 0
+0.50.967.153 I slot   operator(): id  0 | task 258 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+0.50.967.155 I slot   operator(): id  0 | task 258 | erased invalidated context checkpoint (pos_min = 5, pos_max = 5, n_tokens = 6, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+0.50.972.916 I slot   operator(): id  0 | task 258 | cached n_tokens = 0, memory_seq_rm [0, end)
+0.51.138.849 I slot   operator(): id  0 | task 258 | cached n_tokens = 6, memory_seq_rm [6, end)
+0.51.139.853 I slot init_sampler: id  0 | task 258 | init sampler, took 0.00 ms, tokens: text = 10, total = 10
+0.51.208.805 I slot create_check: id  0 | task 258 | created context checkpoint 1 of 32 (pos_min = 5, pos_max = 5, n_tokens = 6, size = 145.563 MiB)
+0.51.211.655 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 2, n_diff = 4
+0.53.358.669 I fill_late: expert store: 101685 lookups, hit rate 94.7%, 44.6 GB read for decode, 0.0 GB for prefill
+0.53.358.672 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.4 records, 114.32 GB/s), between fills 2.85 ms
+0.53.358.676 I fill_late: expert store: memory valve: host MemAvailable 7.56 GB (lowest 4.75, reserve 6.44), 692 host slots released (5.80 GB); 2 releases, 0 re-arms, 0 PSI wake-ups
+0.53.358.680 I fill_late: expert store: split GEMV: 12078 early lookups, 7.7 of 8 experts complete at the early lookup, 0.32 read under the early matmul (1 rows), 867 lookups with more misses (0.09 records read at the early lookup), plan 0.086 ms, wait at the real lookup 0.19 ms, 0 early lookups without a real one
+0.53.358.687 I fill_late: expert store: self-prefetch: 126 posts, 0.1 records and 0.08 ms of reads per post
+0.57.515.405 I slot print_timing: id  0 | task 258 | n_gen =    100, tg =  16.01 t/s, tg_3s =  16.17 t/s
+0.59.466.988 I fill_late: expert store: 134453 lookups, hit rate 95.3%, 52.6 GB read for decode, 0.0 GB for prefill
+0.59.466.991 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.4 records, 134.78 GB/s), between fills 2.85 ms
+0.59.466.995 I fill_late: expert store: memory valve: host MemAvailable 7.59 GB (lowest 4.75, reserve 6.44), 692 host slots released (5.80 GB); 2 releases, 0 re-arms, 0 PSI wake-ups
+0.59.466.999 I fill_late: expert store: split GEMV: 16174 early lookups, 7.7 of 8 experts complete at the early lookup, 0.29 read under the early matmul (1 rows), 973 lookups with more misses (0.07 records read at the early lookup), plan 0.072 ms, wait at the real lookup 0.18 ms, 0 early lookups without a real one
+0.59.467.004 I fill_late: expert store: self-prefetch: 126 posts, 0.1 records and 0.08 ms of reads per post
+1.00.532.325 I slot print_timing: id  0 | task 258 | n_gen =    148, tg =  15.98 t/s, tg_3s =  15.91 t/s
+1.03.542.110 I slot print_timing: id  0 | task 258 | n_gen =    197, tg =  16.05 t/s, tg_3s =  16.28 t/s
+1.05.424.344 I fill_late: expert store: 167221 lookups, hit rate 95.8%, 58.5 GB read for decode, 0.0 GB for prefill
+1.05.424.347 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 149.95 GB/s), between fills 2.85 ms
+1.05.424.351 I fill_late: expert store: memory valve: host MemAvailable 7.60 GB (lowest 4.75, reserve 6.44), 692 host slots released (5.80 GB); 2 releases, 0 re-arms, 0 PSI wake-ups
+1.05.424.356 I fill_late: expert store: split GEMV: 20270 early lookups, 7.7 of 8 experts complete at the early lookup, 0.26 read under the early matmul (1 rows), 1048 lookups with more misses (0.06 records read at the early lookup), plan 0.063 ms, wait at the real lookup 0.16 ms, 0 early lookups without a real one
+1.05.424.361 I fill_late: expert store: self-prefetch: 126 posts, 0.1 records and 0.08 ms of reads per post
+1.06.495.209 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 3, n_diff = 4
+1.06.570.658 I slot print_timing: id  0 | task 258 | n_gen =    247, tg =  16.14 t/s, tg_3s =  16.51 t/s
+1.06.572.647 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 4, n_diff = 4
+1.07.189.972 I slot print_timing: id  0 | task 258 | prompt eval time =     364.91 ms /    10 tokens (   36.49 ms per token,    27.40 tokens per second)
+1.07.189.976 I slot print_timing: id  0 | task 258 |        eval time =   15857.90 ms /   256 tokens (   62.19 ms per token,    16.08 tokens per second)
+1.07.189.977 I slot print_timing: id  0 | task 258 |       total time =   16222.81 ms /   266 tokens
+1.07.189.978 I slot print_timing: id  0 | task 258 |    graphs reused =        504
+1.07.189.978 I slot print_timing: id  0 | task 258 |   graph reallocs =          4    /     4        (same size) / (changed size)
+1.07.189.989 I slot      release: id  0 | task 258 | stop processing: n_tokens = 265, truncated = 0
+1.07.189.997 I srv  update_slots: all slots are idle
+1.07.191.577 I srv  server_strea: conv_id= (empty=1)
+1.07.191.679 I slot get_availabl: id  0 | task -1 |  - checking sim = 1.000 (10/10) > 0.100
+1.07.191.681 I slot get_availabl: id  1 | task -1 |  - skipping, slot is empty
+1.07.191.681 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+1.07.191.682 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+1.07.191.682 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.038
+1.07.191.706 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+1.07.191.712 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+1.07.191.713 I slot launch_slot_: id  0 | task 516 | processing task, is_child = 0
+1.07.191.718 I slot   operator(): id  0 | task 516 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+1.07.191.720 I slot   operator(): id  0 | task 516 | erased invalidated context checkpoint (pos_min = 5, pos_max = 5, n_tokens = 6, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+1.07.197.924 I slot   operator(): id  0 | task 516 | cached n_tokens = 0, memory_seq_rm [0, end)
+1.07.365.004 I slot   operator(): id  0 | task 516 | cached n_tokens = 6, memory_seq_rm [6, end)
+1.07.366.012 I slot init_sampler: id  0 | task 516 | init sampler, took 0.00 ms, tokens: text = 10, total = 10
+1.07.431.148 I slot create_check: id  0 | task 516 | created context checkpoint 1 of 32 (pos_min = 5, pos_max = 5, n_tokens = 6, size = 145.563 MiB)
+1.07.433.998 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 4, n_diff = 5
+1.11.693.201 I fill_late: expert store: 201541 lookups, hit rate 96.1%, 65.5 GB read for decode, 0.0 GB for prefill
+1.11.693.204 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 135.73 GB/s), between fills 2.94 ms
+1.11.693.208 I fill_late: expert store: memory valve: host MemAvailable 7.59 GB (lowest 4.75, reserve 6.44), 692 host slots released (5.80 GB); 2 releases, 0 re-arms, 0 PSI wake-ups
+1.11.693.212 I fill_late: expert store: split GEMV: 24282 early lookups, 7.8 of 8 experts complete at the early lookup, 0.24 read under the early matmul (1 rows), 1129 lookups with more misses (0.05 records read at the early lookup), plan 0.056 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+1.11.693.213 I fill_late: expert store: self-prefetch: 168 posts, 0.1 records and 0.07 ms of reads per post
+1.13.600.654 I slot print_timing: id  0 | task 516 | n_gen =    100, tg =  16.37 t/s, tg_3s =  16.54 t/s
+1.16.643.000 I slot print_timing: id  0 | task 516 | n_gen =    149, tg =  16.28 t/s, tg_3s =  16.11 t/s
+1.17.725.785 I fill_late: expert store: 234309 lookups, hit rate 96.3%, 72.3 GB read for decode, 0.0 GB for prefill
+1.17.725.788 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 149.96 GB/s), between fills 2.94 ms
+1.17.725.791 I fill_late: expert store: memory valve: host MemAvailable 7.61 GB (lowest 4.75, reserve 6.44), 692 host slots released (5.80 GB); 2 releases, 0 re-arms, 0 PSI wake-ups
+1.17.725.796 I fill_late: expert store: split GEMV: 28378 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 1224 lookups with more misses (0.05 records read at the early lookup), plan 0.052 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+1.17.725.801 I fill_late: expert store: self-prefetch: 168 posts, 0.1 records and 0.07 ms of reads per post
+1.19.643.624 I slot print_timing: id  0 | task 516 | n_gen =    198, tg =  16.30 t/s, tg_3s =  16.33 t/s
+1.22.514.671 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 5, n_diff = 5
+1.22.586.350 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 6, n_diff = 5
+1.22.652.415 I slot print_timing: id  0 | task 516 | n_gen =    248, tg =  16.36 t/s, tg_3s =  16.62 t/s
+1.23.160.734 I slot print_timing: id  0 | task 516 | prompt eval time =     363.11 ms /    10 tokens (   36.31 ms per token,    27.54 tokens per second)
+1.23.160.737 I slot print_timing: id  0 | task 516 |        eval time =   15605.90 ms /   256 tokens (   61.20 ms per token,    16.34 tokens per second)
+1.23.160.737 I slot print_timing: id  0 | task 516 |       total time =   15969.00 ms /   266 tokens
+1.23.160.739 I slot print_timing: id  0 | task 516 |    graphs reused =        756
+1.23.160.739 I slot print_timing: id  0 | task 516 |   graph reallocs =          6    /     5        (same size) / (changed size)
+1.23.160.750 I slot      release: id  0 | task 516 | stop processing: n_tokens = 265, truncated = 0
+1.23.160.758 I srv  update_slots: all slots are idle
+1.23.162.466 I srv  server_strea: conv_id= (empty=1)
+1.23.162.581 I slot get_availabl: id  0 | task -1 |  - checking sim = 1.000 (10/10) > 0.100
+1.23.162.583 I slot get_availabl: id  1 | task -1 |  - skipping, slot is empty
+1.23.162.583 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+1.23.162.583 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+1.23.162.584 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.038
+1.23.162.602 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+1.23.162.608 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+1.23.162.608 I slot launch_slot_: id  0 | task 774 | processing task, is_child = 0
+1.23.162.611 I slot   operator(): id  0 | task 774 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+1.23.162.613 I slot   operator(): id  0 | task 774 | erased invalidated context checkpoint (pos_min = 5, pos_max = 5, n_tokens = 6, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+1.23.169.108 I slot   operator(): id  0 | task 774 | cached n_tokens = 0, memory_seq_rm [0, end)
+1.23.334.337 I slot   operator(): id  0 | task 774 | cached n_tokens = 6, memory_seq_rm [6, end)
+1.23.335.348 I slot init_sampler: id  0 | task 774 | init sampler, took 0.00 ms, tokens: text = 10, total = 10
+1.23.399.579 I slot create_check: id  0 | task 774 | created context checkpoint 1 of 32 (pos_min = 5, pos_max = 5, n_tokens = 6, size = 145.563 MiB)
+1.23.402.423 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 6, n_diff = 6
+1.23.924.962 I fill_late: expert store: 268629 lookups, hit rate 96.5%, 78.4 GB read for decode, 0.0 GB for prefill
+1.23.924.966 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 137.24 GB/s), between fills 2.99 ms
+1.23.924.969 I fill_late: expert store: memory valve: host MemAvailable 7.59 GB (lowest 4.75, reserve 6.44), 692 host slots released (5.80 GB); 2 releases, 0 re-arms, 0 PSI wake-ups
+1.23.924.974 I fill_late: expert store: split GEMV: 32390 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 1274 lookups with more misses (0.05 records read at the early lookup), plan 0.048 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+1.23.924.974 I fill_late: expert store: self-prefetch: 210 posts, 0.1 records and 0.08 ms of reads per post
+1.29.491.605 I slot print_timing: id  0 | task 774 | n_gen =    100, tg =  16.58 t/s, tg_3s =  16.75 t/s
+1.29.778.619 I fill_late: expert store: 301397 lookups, hit rate 96.7%, 83.0 GB read for decode, 0.0 GB for prefill
+1.29.778.622 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 145.27 GB/s), between fills 2.99 ms
+1.29.778.625 I fill_late: expert store: memory valve: host MemAvailable 7.61 GB (lowest 4.75, reserve 6.44), 692 host slots released (5.80 GB); 2 releases, 0 re-arms, 0 PSI wake-ups
+1.29.778.631 I fill_late: expert store: split GEMV: 36486 early lookups, 7.8 of 8 experts complete at the early lookup, 0.21 read under the early matmul (1 rows), 1315 lookups with more misses (0.04 records read at the early lookup), plan 0.044 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+1.29.778.633 I fill_late: expert store: self-prefetch: 210 posts, 0.1 records and 0.08 ms of reads per post
+1.32.531.397 I slot print_timing: id  0 | task 774 | n_gen =    150, tg =  16.54 t/s, tg_3s =  16.45 t/s
+1.35.535.725 I slot print_timing: id  0 | task 774 | n_gen =    200, tg =  16.56 t/s, tg_3s =  16.64 t/s
+1.35.667.682 I fill_late: expert store: 334165 lookups, hit rate 96.8%, 87.8 GB read for decode, 0.0 GB for prefill
+1.35.667.685 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.01 ms (0.3 records, 153.74 GB/s), between fills 2.99 ms
+1.35.667.689 I fill_late: expert store: memory valve: host MemAvailable 7.59 GB (lowest 4.75, reserve 6.44), 692 host slots released (5.80 GB); 2 releases, 0 re-arms, 0 PSI wake-ups
+1.35.667.694 I fill_late: expert store: split GEMV: 40582 early lookups, 7.8 of 8 experts complete at the early lookup, 0.20 read under the early matmul (1 rows), 1376 lookups with more misses (0.04 records read at the early lookup), plan 0.042 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+1.35.667.694 I fill_late: expert store: self-prefetch: 210 posts, 0.1 records and 0.08 ms of reads per post
+1.38.264.658 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 7, n_diff = 6
+1.38.335.683 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 8, n_diff = 6
+1.38.592.333 I slot print_timing: id  0 | task 774 | n_gen =    251, tg =  16.59 t/s, tg_3s =  16.69 t/s
+1.38.906.051 I slot print_timing: id  0 | task 774 | prompt eval time =     359.04 ms /    10 tokens (   35.90 ms per token,    27.85 tokens per second)
+1.38.906.054 I slot print_timing: id  0 | task 774 |        eval time =   15384.40 ms /   256 tokens (   60.33 ms per token,    16.58 tokens per second)
+1.38.906.054 I slot print_timing: id  0 | task 774 |       total time =   15743.44 ms /   266 tokens
+1.38.906.055 I slot print_timing: id  0 | task 774 |    graphs reused =       1008
+1.38.906.056 I slot print_timing: id  0 | task 774 |   graph reallocs =          8    /     6        (same size) / (changed size)
+1.38.906.067 I slot      release: id  0 | task 774 | stop processing: n_tokens = 265, truncated = 0
+1.38.906.074 I srv  update_slots: all slots are idle
+1.38.953.320 I srv  server_strea: conv_id= (empty=1)
+1.38.967.659 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/16414) > 0.100
+1.38.967.660 I slot get_availabl: id  1 | task -1 |  - skipping, slot is empty
+1.38.967.661 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+1.38.967.661 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+1.38.967.663 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+1.38.967.686 I slot launch_slot_: id  1 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+1.38.967.691 I slot launch_slot_: id  1 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+1.38.967.692 I slot launch_slot_: id  1 | task 1032 | processing task, is_child = 0
+1.38.967.866 I expert store: THP valve returned 16777216 bytes (2 MiB pages)
+1.38.967.887 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.967.921 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.967.941 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.967.962 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.967.988 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.008 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.045 I expert store: THP valve returned 16777216 bytes (2 MiB pages)
+1.38.968.065 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.091 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.113 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.150 I expert store: THP valve returned 16777216 bytes (2 MiB pages)
+1.38.968.170 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.198 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.217 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.240 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.271 I expert store: THP valve returned 16777216 bytes (2 MiB pages)
+1.38.968.294 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.317 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.340 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.359 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.379 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.402 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.422 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.456 I expert store: THP valve returned 16777216 bytes (2 MiB pages)
+1.38.968.474 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.498 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.532 I expert store: THP valve returned 16777216 bytes (2 MiB pages)
+1.38.968.551 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.569 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.595 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.613 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.636 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.655 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.673 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.696 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.714 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.746 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.769 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.788 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.811 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.833 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.855 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.873 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.891 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.915 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.932 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.955 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.973 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.968.990 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.013 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.031 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.055 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.074 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.092 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.116 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.136 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.160 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.177 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.196 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.224 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.243 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.267 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.285 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.304 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.326 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.343 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.367 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.388 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.407 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.431 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.969.435 W valve_release: expert store: memory valve: host MemAvailable 7.60 GB under the 6.44 GB reserve (elastic KV): released 77 slots (0.65 GB), 6.45 GB of the host cache released in all
+1.38.982.834 I elastic_fit_stream: elastic KV (reserve) stream 1: 4352 -> 20992 of 1048576 cells, 440.0 MiB mapped in all streams (13.4 ms)
+1.38.982.911 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.982.937 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.982.970 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.982.994 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.013 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.039 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.058 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.077 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.103 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.124 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.144 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.174 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.194 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.211 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.239 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.257 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.278 I expert store: THP valve returned 8388608 bytes (2 MiB pages)
+1.38.983.282 W valve_release: expert store: memory valve: host MemAvailable 8.06 GB under the 6.44 GB reserve (elastic KV): released 17 slots (0.14 GB), 6.59 GB of the host cache released in all
+1.38.993.106 I elastic_fit_stream: elastic KV idx_ (reserve) stream 1: 4352 -> 20992 of 1048576 cells, 308.0 MiB mapped in all streams (9.8 ms)
+1.38.993.114 I slot   operator(): id  1 | task 1032 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 16414
+1.38.993.116 I slot   operator(): id  1 | task 1032 | cached n_tokens = 0, memory_seq_rm [0, end)
+1.44.080.571 I slot print_timing: id  1 | task 1032 | prompt processing, n_tokens =   2048, progress = 0.12, t =   5.09 s / 402.57 tokens per second
+1.44.080.579 I slot   operator(): id  1 | task 1032 | cached n_tokens = 2048, memory_seq_rm [2048, end)
+1.44.098.397 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 9, n_diff = 6
+1.49.973.510 I slot print_timing: id  1 | task 1032 | prompt processing, n_tokens =   4096, progress = 0.25, t =  10.98 s / 373.03 tokens per second
+1.49.973.513 I slot   operator(): id  1 | task 1032 | cached n_tokens = 4096, memory_seq_rm [4096, end)
+1.49.981.140 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 10, n_diff = 6
+1.55.886.133 I slot print_timing: id  1 | task 1032 | prompt processing, n_tokens =   6144, progress = 0.37, t =  16.89 s / 363.70 tokens per second
+1.55.886.136 I slot   operator(): id  1 | task 1032 | cached n_tokens = 6144, memory_seq_rm [6144, end)
+1.55.892.588 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 11, n_diff = 6
+2.01.939.431 I slot print_timing: id  1 | task 1032 | prompt processing, n_tokens =   8192, progress = 0.50, t =  22.95 s / 357.01 tokens per second
+2.01.939.434 I slot   operator(): id  1 | task 1032 | cached n_tokens = 8192, memory_seq_rm [8192, end)
+2.01.946.041 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 12, n_diff = 6
+2.09.126.031 I slot print_timing: id  1 | task 1032 | prompt processing, n_tokens =  10240, progress = 0.62, t =  30.13 s / 339.83 tokens per second
+2.09.126.034 I slot   operator(): id  1 | task 1032 | cached n_tokens = 10240, memory_seq_rm [10240, end)
+2.09.132.763 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 13, n_diff = 6
+2.14.071.723 I expert store: THP bank huge backing=16777216/16777216 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=16777216 bytes (quiescent regrow)
+2.14.241.621 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.14.412.768 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.14.584.576 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.14.757.197 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.14.929.902 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.15.104.750 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.15.280.768 I expert store: THP bank huge backing=16777216/16777216 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=16777216 bytes (quiescent regrow)
+2.15.454.577 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.15.628.419 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.15.806.119 I expert store: THP bank huge backing=100663296/100663296 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=100663296 bytes (quiescent regrow)
+2.15.982.282 I expert store: THP bank huge backing=16777216/16777216 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=16777216 bytes (quiescent regrow)
+2.16.162.150 I expert store: THP bank huge backing=150994944/150994944 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=150994944 bytes (quiescent regrow)
+2.16.341.280 I expert store: THP bank huge backing=125829120/125829120 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=125829120 bytes (quiescent regrow)
+2.16.521.926 I expert store: THP bank huge backing=226492416/226492416 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=226492416 bytes (quiescent regrow)
+2.16.697.837 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.16.875.419 I expert store: THP bank huge backing=75497472/75497472 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=75497472 bytes (quiescent regrow)
+2.17.053.526 I expert store: THP bank huge backing=92274688/92274688 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=92274688 bytes (quiescent regrow)
+2.17.233.936 I expert store: THP bank huge backing=176160768/176160768 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=176160768 bytes (quiescent regrow)
+2.17.413.104 I expert store: THP bank huge backing=134217728/134217728 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=134217728 bytes (quiescent regrow)
+2.17.590.329 I expert store: THP bank huge backing=41943040/41943040 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=41943040 bytes (quiescent regrow)
+2.17.769.789 I expert store: THP bank huge backing=150994944/150994944 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=150994944 bytes (quiescent regrow)
+2.17.947.372 I expert store: THP bank huge backing=50331648/50331648 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=50331648 bytes (quiescent regrow)
+2.18.123.826 I expert store: THP bank huge backing=25165824/25165824 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=25165824 bytes (quiescent regrow)
+2.18.300.435 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.18.475.708 I expert store: THP bank huge backing=16777216/16777216 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=16777216 bytes (quiescent regrow)
+2.18.651.372 I expert store: THP bank huge backing=16777216/16777216 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=16777216 bytes (quiescent regrow)
+2.18.826.318 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.19.001.761 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.19.176.898 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.19.352.794 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.19.528.363 I expert store: THP bank huge backing=16777216/16777216 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=16777216 bytes (quiescent regrow)
+2.19.704.957 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.19.881.067 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.20.056.807 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.20.232.927 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.20.407.277 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.20.581.764 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.20.755.691 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.20.930.470 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.21.104.699 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.21.282.324 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.21.458.638 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.21.634.057 I expert store: THP bank huge backing=16777216/16777216 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=16777216 bytes (quiescent regrow)
+2.21.808.449 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.21.982.052 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.22.156.812 I expert store: THP bank huge backing=16777216/16777216 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=16777216 bytes (quiescent regrow)
+2.22.331.989 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.22.506.959 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.22.681.754 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.22.855.798 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.23.030.900 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.23.204.783 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.23.380.456 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.23.554.743 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.23.728.236 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.23.901.971 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.24.075.701 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.24.248.939 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.24.423.059 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.24.596.492 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.24.771.290 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.24.945.341 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.25.120.552 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.25.294.883 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.25.469.867 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.25.643.179 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.25.816.170 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.25.989.844 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.26.163.540 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.26.337.867 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.26.511.857 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.26.684.412 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.26.858.146 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.27.031.655 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.27.204.985 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.27.380.089 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.27.554.648 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.27.729.064 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.27.903.458 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.28.077.367 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.28.251.676 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.28.426.185 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.28.599.522 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.28.773.996 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.28.948.955 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.29.124.272 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.29.297.956 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.29.473.676 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.29.647.014 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.29.820.650 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.29.994.707 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.30.168.639 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.30.342.387 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.30.517.445 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.30.691.144 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.30.864.785 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.31.039.112 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.31.212.642 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.31.212.666 I valve_rearm: expert store: memory valve: host calm for 10 s: 256 slots (2.15 GB) re-armed, 530 still released
+2.31.967.895 I expert store: THP bank huge backing=33554432/33554432 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=33554432 bytes (quiescent regrow)
+2.32.148.653 I expert store: THP bank huge backing=58720256/58720256 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=58720256 bytes (quiescent regrow)
+2.32.328.175 I expert store: THP bank huge backing=83886080/83886080 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=83886080 bytes (quiescent regrow)
+2.32.505.215 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.32.683.287 I expert store: THP bank huge backing=92274688/92274688 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=92274688 bytes (quiescent regrow)
+2.32.861.314 I expert store: THP bank huge backing=67108864/67108864 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=67108864 bytes (quiescent regrow)
+2.33.036.132 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.33.212.484 I expert store: THP bank huge backing=92274688/92274688 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=92274688 bytes (quiescent regrow)
+2.33.387.759 I expert store: THP bank huge backing=41943040/41943040 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=41943040 bytes (quiescent regrow)
+2.33.562.733 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.33.739.388 I expert store: THP bank huge backing=92274688/92274688 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=92274688 bytes (quiescent regrow)
+2.33.916.122 I expert store: THP bank huge backing=92274688/92274688 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=92274688 bytes (quiescent regrow)
+2.34.093.780 I expert store: THP bank huge backing=142606336/142606336 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=142606336 bytes (quiescent regrow)
+2.34.268.564 I expert store: THP bank huge backing=25165824/25165824 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=25165824 bytes (quiescent regrow)
+2.34.445.659 I expert store: THP bank huge backing=83886080/83886080 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=83886080 bytes (quiescent regrow)
+2.34.621.528 I expert store: THP bank huge backing=16777216/16777216 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=16777216 bytes (quiescent regrow)
+2.34.795.837 I expert store: THP bank huge backing=25165824/25165824 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=25165824 bytes (quiescent regrow)
+2.34.970.635 I expert store: THP bank huge backing=25165824/25165824 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=25165824 bytes (quiescent regrow)
+2.35.147.935 I expert store: THP bank huge backing=92274688/92274688 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=92274688 bytes (quiescent regrow)
+2.35.323.808 I expert store: THP bank huge backing=41943040/41943040 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=41943040 bytes (quiescent regrow)
+2.35.497.963 I expert store: THP bank huge backing=8388608/8388608 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=8388608 bytes (quiescent regrow)
+2.35.692.027 I expert store: THP bank huge backing=1006632960/1006632960 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=1006632960 bytes (quiescent regrow)
+2.35.692.035 I valve_rearm: expert store: memory valve: host calm for 10 s: 256 slots (2.15 GB) re-armed, 274 still released
+2.36.459.618 I expert store: THP bank huge backing=2147483648/2147483648 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=2147483648 bytes (quiescent regrow)
+2.36.459.626 I valve_rearm: expert store: memory valve: host calm for 10 s: 256 slots (2.15 GB) re-armed, 18 still released
+2.36.874.414 I slot print_timing: id  1 | task 1032 | prompt processing, n_tokens =  12288, progress = 0.75, t =  57.88 s / 212.30 tokens per second
+2.36.874.417 I slot   operator(): id  1 | task 1032 | cached n_tokens = 12288, memory_seq_rm [12288, end)
+2.36.880.867 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 14, n_diff = 6
+2.37.185.062 I expert store: THP bank huge backing=150994944/150994944 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=150994944 bytes (quiescent regrow)
+2.37.185.073 I valve_rearm: expert store: memory valve: host calm for 10 s: 18 slots (0.15 GB) re-armed, 0 still released
+2.43.548.360 I slot print_timing: id  1 | task 1032 | prompt processing, n_tokens =  14336, progress = 0.87, t =  64.56 s / 222.07 tokens per second
+2.43.548.364 I slot   operator(): id  1 | task 1032 | cached n_tokens = 14336, memory_seq_rm [14336, end)
+2.46.364.792 I slot print_timing: id  1 | task 1032 | prompt processing, n_tokens =  14366, progress = 0.88, t =  67.37 s / 213.24 tokens per second
+2.46.364.795 I slot   operator(): id  1 | task 1032 | cached n_tokens = 14366, memory_seq_rm [14366, end)
+2.46.395.319 I slot create_check: id  1 | task 1032 | created context checkpoint 1 of 32 (pos_min = 14365, pos_max = 14365, n_tokens = 14366, size = 145.563 MiB)
+2.51.615.310 I slot print_timing: id  1 | task 1032 | prompt processing, n_tokens =  16410, progress = 1.00, t =  72.62 s / 225.96 tokens per second
+2.51.615.313 I slot   operator(): id  1 | task 1032 | cached n_tokens = 16410, memory_seq_rm [16410, end)
+2.51.618.186 I slot init_sampler: id  1 | task 1032 | init sampler, took 1.84 ms, tokens: text = 16414, total = 16414
+2.52.758.711 I slot create_check: id  1 | task 1032 | created context checkpoint 2 of 32 (pos_min = 16409, pos_max = 16409, n_tokens = 16410, size = 145.563 MiB)
+2.52.762.289 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 14, n_diff = 7
+2.55.824.612 I fill_late: expert store: 370084 lookups, hit rate 96.7%, 100.9 GB read for decode, 118.5 GB for prefill
+2.55.824.615 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 94.76 GB/s), between fills 5.22 ms
+2.55.824.619 I fill_late: expert store: memory valve: host MemAvailable 9.48 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+2.55.824.625 I fill_late: expert store: split GEMV: 44595 early lookups, 7.8 of 8 experts complete at the early lookup, 0.20 read under the early matmul (1 rows), 1500 lookups with more misses (0.04 records read at the early lookup), plan 0.041 ms, wait at the real lookup 0.12 ms, 0 early lookups without a real one
+2.55.824.626 I fill_late: expert store: self-prefetch: 252 posts, 0.1 records and 0.08 ms of reads per post
+2.59.764.796 I slot print_timing: id  1 | task 1032 | n_gen =    100, tg =  14.45 t/s, tg_3s =  14.60 t/s
+3.01.708.447 I slot print_timing: id  1 | task 1032 | prompt eval time =   73920.79 ms / 16414 tokens (    4.50 ms per token,   222.05 tokens per second)
+3.01.708.450 I slot print_timing: id  1 | task 1032 |        eval time =    8794.54 ms /   128 tokens (   69.25 ms per token,    14.44 tokens per second)
+3.01.708.451 I slot print_timing: id  1 | task 1032 |       total time =   82715.33 ms / 16542 tokens
+3.01.708.452 I slot print_timing: id  1 | task 1032 |    graphs reused =       1134
+3.01.708.452 I slot print_timing: id  1 | task 1032 |   graph reallocs =         14    /     7        (same size) / (changed size)
+3.01.708.834 I slot      release: id  1 | task 1032 | stop processing: n_tokens = 16541, truncated = 0
+3.01.708.841 I srv  update_slots: all slots are idle
+3.01.828.041 I srv  server_strea: conv_id= (empty=1)
+3.01.828.060 I srv  server_strea: conv_id= (empty=1)
+3.01.828.175 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/21) > 0.100
+3.01.828.178 I slot get_availabl: id  1 | task -1 |  - checking sim = 0.143 (3/21) > 0.100
+3.01.828.179 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+3.01.828.179 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+3.01.828.180 I slot get_availabl: id  1 | task -1 | selected slot by LCP similarity, f_sim_best = 0.143 (> 0.100 thold), f_keep = 0.000
+3.01.828.206 I slot launch_slot_: id  1 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+3.01.828.212 I slot launch_slot_: id  1 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+3.01.828.213 I slot launch_slot_: id  1 | task 1170 | processing task, is_child = 0
+3.01.828.215 I slot get_availabl: id  0 | task -1 |  - checking sim = 1.000 (10/10) > 0.100
+3.01.828.215 I slot get_availabl: id  1 | task 1170 |  - skipping, is_processing = 1
+3.01.828.215 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+3.01.828.215 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+3.01.828.216 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.038
+3.01.828.226 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+3.01.828.229 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+3.01.828.230 I slot launch_slot_: id  0 | task 1171 | processing task, is_child = 0
+3.01.828.237 I slot   operator(): id  1 | task 1170 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 21
+3.01.828.240 I slot   operator(): id  1 | task 1170 | erased invalidated context checkpoint (pos_min = 14365, pos_max = 14365, n_tokens = 14366, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+3.01.829.083 I srv  server_strea: conv_id= (empty=1)
+3.01.829.359 I srv  server_strea: conv_id= (empty=1)
+3.01.834.811 I slot   operator(): id  1 | task 1170 | erased invalidated context checkpoint (pos_min = 16409, pos_max = 16409, n_tokens = 16410, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+3.01.841.252 I slot   operator(): id  1 | task 1170 | cached n_tokens = 0, memory_seq_rm [0, end)
+3.02.303.619 I slot get_availabl: id  0 | task 1171 |  - skipping, is_processing = 1
+3.02.303.622 I slot get_availabl: id  1 | task 1170 |  - skipping, is_processing = 1
+3.02.303.623 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+3.02.303.623 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+3.02.303.626 I slot get_availabl: id  2 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+3.02.303.658 I slot launch_slot_: id  2 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+3.02.303.668 I slot launch_slot_: id  2 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+3.02.303.669 I slot launch_slot_: id  2 | task 1173 | processing task, is_child = 0
+3.02.303.670 I slot get_availabl: id  0 | task 1171 |  - skipping, is_processing = 1
+3.02.303.671 I slot get_availabl: id  1 | task 1170 |  - skipping, is_processing = 1
+3.02.303.671 I slot get_availabl: id  2 | task 1173 |  - skipping, is_processing = 1
+3.02.303.672 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+3.02.303.673 I slot get_availabl: id  3 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+3.02.303.682 I slot launch_slot_: id  3 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+3.02.303.684 I slot launch_slot_: id  3 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+3.02.303.685 I slot launch_slot_: id  3 | task 1174 | processing task, is_child = 0
+3.02.303.697 I slot   operator(): id  1 | task 1170 | cached n_tokens = 17, memory_seq_rm [17, end)
+3.02.304.876 I slot init_sampler: id  1 | task 1170 | init sampler, took 0.00 ms, tokens: text = 21, total = 21
+3.02.335.786 I slot create_check: id  1 | task 1170 | created context checkpoint 1 of 32 (pos_min = 16, pos_max = 16, n_tokens = 17, size = 145.563 MiB)
+3.02.338.647 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 14, n_diff = 8
+3.03.328.223 I fill_late: expert store: 405932 lookups, hit rate 96.5%, 116.3 GB read for decode, 118.5 GB for prefill
+3.03.328.226 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.3 records, 85.97 GB/s), between fills 5.33 ms
+3.03.328.229 I fill_late: expert store: memory valve: host MemAvailable 9.63 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+3.03.328.234 I fill_late: expert store: split GEMV: 48607 early lookups, 7.8 of 8 experts complete at the early lookup, 0.21 read under the early matmul (1 rows), 1791 lookups with more misses (0.04 records read at the early lookup), plan 0.046 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+3.03.328.235 I fill_late: expert store: self-prefetch: 294 posts, 0.1 records and 0.09 ms of reads per post
+3.09.459.856 I slot print_timing: id  1 | task 1170 | n_gen =    100, tg =  14.24 t/s, tg_3s =  14.38 t/s
+3.10.034.889 I fill_late: expert store: 438700 lookups, hit rate 96.4%, 131.3 GB read for decode, 118.5 GB for prefill
+3.10.034.891 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.3 records, 97.03 GB/s), between fills 5.33 ms
+3.10.034.895 I fill_late: expert store: memory valve: host MemAvailable 9.65 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+3.10.034.900 I fill_late: expert store: split GEMV: 52703 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 2107 lookups with more misses (0.05 records read at the early lookup), plan 0.049 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+3.10.034.900 I fill_late: expert store: self-prefetch: 294 posts, 0.1 records and 0.09 ms of reads per post
+3.12.501.553 I slot print_timing: id  1 | task 1170 | n_gen =    147, tg =  14.61 t/s, tg_3s =  15.45 t/s
+3.15.512.771 I slot print_timing: id  1 | task 1170 | n_gen =    194, tg =  14.84 t/s, tg_3s =  15.61 t/s
+3.16.308.616 I fill_late: expert store: 471468 lookups, hit rate 96.4%, 141.1 GB read for decode, 118.5 GB for prefill
+3.16.308.618 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 104.29 GB/s), between fills 5.33 ms
+3.16.308.622 I fill_late: expert store: memory valve: host MemAvailable 9.65 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+3.16.308.626 I fill_late: expert store: split GEMV: 56799 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 2268 lookups with more misses (0.05 records read at the early lookup), plan 0.050 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+3.16.308.627 I fill_late: expert store: self-prefetch: 294 posts, 0.1 records and 0.09 ms of reads per post
+3.17.756.044 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 15, n_diff = 8
+3.18.351.406 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 16, n_diff = 8
+3.18.572.996 I slot print_timing: id  1 | task 1170 | n_gen =    239, tg =  14.81 t/s, tg_3s =  14.70 t/s
+3.19.654.053 I slot print_timing: id  1 | task 1170 | prompt eval time =     679.82 ms /    21 tokens (   32.37 ms per token,    30.89 tokens per second)
+3.19.654.058 I slot print_timing: id  1 | task 1170 |        eval time =   17145.99 ms /   256 tokens (   67.24 ms per token,    14.87 tokens per second)
+3.19.654.058 I slot print_timing: id  1 | task 1170 |       total time =   17825.81 ms /   277 tokens
+3.19.654.060 I slot print_timing: id  1 | task 1170 |    graphs reused =       1386
+3.19.654.060 I slot print_timing: id  1 | task 1170 |   graph reallocs =         16    /     8        (same size) / (changed size)
+3.19.654.079 I slot      release: id  1 | task 1170 | stop processing: n_tokens = 276, truncated = 0
+3.19.654.089 I slot   operator(): id  0 | task 1171 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+3.19.654.092 I slot   operator(): id  0 | task 1171 | erased invalidated context checkpoint (pos_min = 5, pos_max = 5, n_tokens = 6, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+3.19.660.434 I slot   operator(): id  0 | task 1171 | cached n_tokens = 0, memory_seq_rm [0, end)
+3.19.821.961 I slot   operator(): id  0 | task 1171 | cached n_tokens = 6, memory_seq_rm [6, end)
+3.19.822.914 I slot init_sampler: id  0 | task 1171 | init sampler, took 0.00 ms, tokens: text = 10, total = 10
+3.19.886.755 I slot create_check: id  0 | task 1171 | created context checkpoint 1 of 32 (pos_min = 5, pos_max = 5, n_tokens = 6, size = 145.563 MiB)
+3.19.889.672 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 16, n_diff = 9
+3.22.803.988 I fill_late: expert store: 505788 lookups, hit rate 96.4%, 150.4 GB read for decode, 118.5 GB for prefill
+3.22.803.991 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 105.24 GB/s), between fills 5.04 ms
+3.22.803.995 I fill_late: expert store: memory valve: host MemAvailable 9.66 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+3.22.803.999 I fill_late: expert store: split GEMV: 60811 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 2426 lookups with more misses (0.05 records read at the early lookup), plan 0.050 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+3.22.804.000 I fill_late: expert store: self-prefetch: 336 posts, 0.1 records and 0.09 ms of reads per post
+3.26.069.787 I slot print_timing: id  0 | task 1171 | n_gen =    100, tg =  16.32 t/s, tg_3s =  16.49 t/s
+3.28.808.008 I fill_late: expert store: 538556 lookups, hit rate 96.5%, 156.6 GB read for decode, 118.5 GB for prefill
+3.28.808.012 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 109.59 GB/s), between fills 5.04 ms
+3.28.808.015 I fill_late: expert store: memory valve: host MemAvailable 9.68 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+3.28.808.022 I fill_late: expert store: split GEMV: 64907 early lookups, 7.8 of 8 experts complete at the early lookup, 0.21 read under the early matmul (1 rows), 2509 lookups with more misses (0.05 records read at the early lookup), plan 0.048 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+3.28.808.029 I fill_late: expert store: self-prefetch: 336 posts, 0.1 records and 0.09 ms of reads per post
+3.29.086.338 I slot print_timing: id  0 | task 1171 | n_gen =    149, tg =  16.30 t/s, tg_3s =  16.24 t/s
+3.32.095.628 I slot print_timing: id  0 | task 1171 | n_gen =    199, tg =  16.38 t/s, tg_3s =  16.62 t/s
+3.33.696.937 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 17, n_diff = 9
+3.34.663.019 I fill_late: expert store: 571324 lookups, hit rate 96.6%, 161.0 GB read for decode, 118.5 GB for prefill
+3.34.663.022 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 112.63 GB/s), between fills 5.04 ms
+3.34.663.027 I fill_late: expert store: memory valve: host MemAvailable 9.67 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+3.34.663.034 I fill_late: expert store: split GEMV: 69003 early lookups, 7.8 of 8 experts complete at the early lookup, 0.21 read under the early matmul (1 rows), 2543 lookups with more misses (0.04 records read at the early lookup), plan 0.046 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+3.34.663.035 I fill_late: expert store: self-prefetch: 336 posts, 0.1 records and 0.09 ms of reads per post
+3.34.981.143 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 18, n_diff = 9
+3.35.119.323 I slot print_timing: id  0 | task 1171 | n_gen =    249, tg =  16.41 t/s, tg_3s =  16.54 t/s
+3.35.553.668 I slot print_timing: id  0 | task 1171 | prompt eval time =     351.22 ms /    10 tokens (   35.12 ms per token,    28.47 tokens per second)
+3.35.553.671 I slot print_timing: id  0 | task 1171 |        eval time =   15548.35 ms /   256 tokens (   60.97 ms per token,    16.40 tokens per second)
+3.35.553.672 I slot print_timing: id  0 | task 1171 |       total time =   15899.57 ms /   266 tokens
+3.35.553.673 I slot print_timing: id  0 | task 1171 |    graphs reused =       1638
+3.35.553.673 I slot print_timing: id  0 | task 1171 |   graph reallocs =         18    /     9        (same size) / (changed size)
+3.35.553.688 I slot      release: id  0 | task 1171 | stop processing: n_tokens = 265, truncated = 0
+3.35.553.697 I slot   operator(): id  2 | task 1173 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 19
+3.35.553.698 I slot   operator(): id  2 | task 1173 | cached n_tokens = 0, memory_seq_rm [0, end)
+3.35.960.118 I slot   operator(): id  2 | task 1173 | cached n_tokens = 15, memory_seq_rm [15, end)
+3.35.961.227 I slot init_sampler: id  2 | task 1173 | init sampler, took 0.00 ms, tokens: text = 19, total = 19
+3.35.992.692 I slot create_check: id  2 | task 1173 | created context checkpoint 1 of 32 (pos_min = 14, pos_max = 14, n_tokens = 15, size = 145.563 MiB)
+3.35.998.228 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 18, n_diff = 10
+3.41.760.957 I fill_late: expert store: 607022 lookups, hit rate 96.5%, 176.9 GB read for decode, 118.5 GB for prefill
+3.41.760.961 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 106.85 GB/s), between fills 4.95 ms
+3.41.760.964 I fill_late: expert store: memory valve: host MemAvailable 9.49 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+3.41.760.969 I fill_late: expert store: split GEMV: 73015 early lookups, 7.8 of 8 experts complete at the early lookup, 0.21 read under the early matmul (1 rows), 2824 lookups with more misses (0.05 records read at the early lookup), plan 0.048 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+3.41.760.971 I fill_late: expert store: self-prefetch: 378 posts, 0.1 records and 0.10 ms of reads per post
+3.42.957.127 I slot print_timing: id  2 | task 1173 | n_gen =    100, tg =  14.54 t/s, tg_3s =  14.68 t/s
+3.46.020.956 I slot print_timing: id  2 | task 1173 | n_gen =    143, tg =  14.38 t/s, tg_3s =  14.03 t/s
+3.48.394.101 I fill_late: expert store: 639790 lookups, hit rate 96.4%, 191.0 GB read for decode, 118.5 GB for prefill
+3.48.394.104 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 115.31 GB/s), between fills 4.95 ms
+3.48.394.107 I fill_late: expert store: memory valve: host MemAvailable 9.50 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+3.48.394.110 I fill_late: expert store: split GEMV: 77111 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 3124 lookups with more misses (0.05 records read at the early lookup), plan 0.051 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+3.48.394.111 I fill_late: expert store: self-prefetch: 378 posts, 0.1 records and 0.10 ms of reads per post
+3.49.055.366 I slot print_timing: id  2 | task 1173 | n_gen =    190, tg =  14.64 t/s, tg_3s =  15.49 t/s
+3.50.295.027 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 19, n_diff = 10
+3.52.114.785 I slot print_timing: id  2 | task 1173 | n_gen =    237, tg =  14.78 t/s, tg_3s =  15.36 t/s
+3.52.180.987 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 20, n_diff = 10
+3.53.361.850 I slot print_timing: id  2 | task 1173 | prompt eval time =     593.31 ms /    19 tokens (   31.23 ms per token,    32.02 tokens per second)
+3.53.361.854 I slot print_timing: id  2 | task 1173 |        eval time =   17214.83 ms /   256 tokens (   67.51 ms per token,    14.81 tokens per second)
+3.53.361.854 I slot print_timing: id  2 | task 1173 |       total time =   17808.15 ms /   275 tokens
+3.53.361.855 I slot print_timing: id  2 | task 1173 |    graphs reused =       1890
+3.53.361.856 I slot print_timing: id  2 | task 1173 |   graph reallocs =         20    /    10        (same size) / (changed size)
+3.53.361.870 I slot      release: id  2 | task 1173 | stop processing: n_tokens = 274, truncated = 0
+3.53.361.878 I slot   operator(): id  3 | task 1174 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 18
+3.53.361.880 I slot   operator(): id  3 | task 1174 | cached n_tokens = 0, memory_seq_rm [0, end)
+3.53.755.360 I slot   operator(): id  3 | task 1174 | cached n_tokens = 14, memory_seq_rm [14, end)
+3.53.756.536 I slot init_sampler: id  3 | task 1174 | init sampler, took 0.01 ms, tokens: text = 18, total = 18
+3.53.787.945 I slot create_check: id  3 | task 1174 | created context checkpoint 1 of 32 (pos_min = 13, pos_max = 13, n_tokens = 14, size = 145.563 MiB)
+3.53.790.818 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 20, n_diff = 11
+3.55.590.454 I fill_late: expert store: 675201 lookups, hit rate 96.3%, 207.6 GB read for decode, 118.5 GB for prefill
+3.55.590.457 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 106.10 GB/s), between fills 4.85 ms
+3.55.590.460 I fill_late: expert store: memory valve: host MemAvailable 9.32 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+3.55.590.465 I fill_late: expert store: split GEMV: 81123 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 3417 lookups with more misses (0.05 records read at the early lookup), plan 0.053 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+3.55.590.466 I fill_late: expert store: self-prefetch: 420 posts, 0.1 records and 0.10 ms of reads per post
+4.01.270.884 I slot print_timing: id  3 | task 1174 | n_gen =    100, tg =  13.64 t/s, tg_3s =  13.77 t/s
+4.02.457.117 I fill_late: expert store: 707969 lookups, hit rate 96.2%, 224.0 GB read for decode, 118.5 GB for prefill
+4.02.457.120 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 114.50 GB/s), between fills 4.85 ms
+4.02.457.124 I fill_late: expert store: memory valve: host MemAvailable 9.33 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+4.02.457.130 I fill_late: expert store: split GEMV: 85219 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 3806 lookups with more misses (0.05 records read at the early lookup), plan 0.056 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+4.02.457.131 I fill_late: expert store: self-prefetch: 420 posts, 0.1 records and 0.10 ms of reads per post
+4.04.328.020 I slot print_timing: id  3 | task 1174 | n_gen =    147, tg =  14.15 t/s, tg_3s =  15.37 t/s
+4.07.368.027 I slot print_timing: id  3 | task 1174 | n_gen =    190, tg =  14.15 t/s, tg_3s =  14.14 t/s
+4.07.656.288 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 21, n_diff = 11
+4.09.102.188 I fill_late: expert store: 740737 lookups, hit rate 96.1%, 237.8 GB read for decode, 118.5 GB for prefill
+4.09.102.191 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 121.55 GB/s), between fills 4.85 ms
+4.09.102.195 I fill_late: expert store: memory valve: host MemAvailable 9.35 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+4.09.102.202 I fill_late: expert store: split GEMV: 89315 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 4116 lookups with more misses (0.06 records read at the early lookup), plan 0.058 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+4.09.102.203 I fill_late: expert store: self-prefetch: 420 posts, 0.1 records and 0.10 ms of reads per post
+4.10.407.133 I slot print_timing: id  3 | task 1174 | n_gen =    234, tg =  14.21 t/s, tg_3s =  14.48 t/s
+4.10.794.471 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 22, n_diff = 11
+4.12.010.886 I slot print_timing: id  3 | task 1174 | prompt eval time =     648.70 ms /    18 tokens (   36.04 ms per token,    27.75 tokens per second)
+4.12.010.890 I slot print_timing: id  3 | task 1174 |        eval time =   18000.30 ms /   256 tokens (   70.59 ms per token,    14.17 tokens per second)
+4.12.010.890 I slot print_timing: id  3 | task 1174 |       total time =   18649.00 ms /   274 tokens
+4.12.010.892 I slot print_timing: id  3 | task 1174 |    graphs reused =       2142
+4.12.010.892 I slot print_timing: id  3 | task 1174 |   graph reallocs =         22    /    11        (same size) / (changed size)
+4.12.010.906 I slot      release: id  3 | task 1174 | stop processing: n_tokens = 273, truncated = 0
+4.12.010.912 I srv  update_slots: all slots are idle
+4.12.012.924 I srv  server_strea: conv_id= (empty=1)
+4.12.012.939 I srv  server_strea: conv_id= (empty=1)
+4.12.013.053 I srv  server_strea: conv_id= (empty=1)
+4.12.013.062 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.111 (2/18) > 0.100
+4.12.013.063 I slot get_availabl: id  1 | task -1 |  - checking sim = 0.000 (0/18) > 0.100
+4.12.013.064 I slot get_availabl: id  2 | task -1 |  - checking sim = 0.000 (0/18) > 0.100
+4.12.013.064 I slot get_availabl: id  3 | task -1 |  - checking sim = 1.000 (18/18) > 0.100
+4.12.013.065 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.066
+4.12.013.083 I srv  server_strea: conv_id= (empty=1)
+4.12.013.089 I slot launch_slot_: id  3 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+4.12.013.096 I slot launch_slot_: id  3 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+4.12.013.097 I slot launch_slot_: id  3 | task 2202 | processing task, is_child = 0
+4.12.013.099 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/19) > 0.100
+4.12.013.100 I slot get_availabl: id  1 | task -1 |  - checking sim = 0.000 (0/19) > 0.100
+4.12.013.101 I slot get_availabl: id  2 | task -1 |  - checking sim = 1.000 (19/19) > 0.100
+4.12.013.101 I slot get_availabl: id  3 | task 2202 |  - skipping, is_processing = 1
+4.12.013.101 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.069
+4.12.013.111 I slot launch_slot_: id  2 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+4.12.013.113 I slot launch_slot_: id  2 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+4.12.013.114 I slot launch_slot_: id  2 | task 2203 | processing task, is_child = 0
+4.12.013.117 I slot   operator(): id  3 | task 2202 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 18
+4.12.013.119 I slot   operator(): id  3 | task 2202 | erased invalidated context checkpoint (pos_min = 13, pos_max = 13, n_tokens = 14, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+4.12.019.695 I slot   operator(): id  3 | task 2202 | cached n_tokens = 0, memory_seq_rm [0, end)
+4.12.308.542 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/21) > 0.100
+4.12.308.546 I slot get_availabl: id  1 | task -1 |  - checking sim = 1.000 (21/21) > 0.100
+4.12.308.547 I slot get_availabl: id  2 | task 2203 |  - skipping, is_processing = 1
+4.12.308.547 I slot get_availabl: id  3 | task 2202 |  - skipping, is_processing = 1
+4.12.308.549 I slot get_availabl: id  1 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.076
+4.12.308.579 I slot launch_slot_: id  1 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+4.12.308.591 I slot launch_slot_: id  1 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+4.12.308.593 I slot launch_slot_: id  1 | task 2204 | processing task, is_child = 0
+4.12.308.595 I slot get_availabl: id  0 | task -1 |  - checking sim = 1.000 (10/10) > 0.100
+4.12.308.595 I slot get_availabl: id  1 | task 2204 |  - skipping, is_processing = 1
+4.12.308.595 I slot get_availabl: id  2 | task 2203 |  - skipping, is_processing = 1
+4.12.308.596 I slot get_availabl: id  3 | task 2202 |  - skipping, is_processing = 1
+4.12.308.596 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.038
+4.12.308.606 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+4.12.308.608 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+4.12.308.608 I slot launch_slot_: id  0 | task 2206 | processing task, is_child = 0
+4.12.308.619 I slot   operator(): id  3 | task 2202 | cached n_tokens = 14, memory_seq_rm [14, end)
+4.12.309.787 I slot init_sampler: id  3 | task 2202 | init sampler, took 0.00 ms, tokens: text = 18, total = 18
+4.12.340.590 I slot create_check: id  3 | task 2202 | created context checkpoint 1 of 32 (pos_min = 13, pos_max = 13, n_tokens = 14, size = 145.563 MiB)
+4.12.343.463 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 22, n_diff = 12
+4.15.888.409 I fill_late: expert store: 776148 lookups, hit rate 96.1%, 250.0 GB read for decode, 118.5 GB for prefill
+4.15.888.413 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 120.54 GB/s), between fills 4.78 ms
+4.15.888.417 I fill_late: expert store: memory valve: host MemAvailable 9.32 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+4.15.888.423 I fill_late: expert store: split GEMV: 93327 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 4351 lookups with more misses (0.06 records read at the early lookup), plan 0.059 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+4.15.888.423 I fill_late: expert store: self-prefetch: 462 posts, 0.1 records and 0.09 ms of reads per post
+4.18.606.340 I slot print_timing: id  3 | task 2202 | n_gen =    100, tg =  16.15 t/s, tg_3s =  16.31 t/s
+4.21.606.844 I slot print_timing: id  3 | task 2202 | n_gen =    149, tg =  16.21 t/s, tg_3s =  16.33 t/s
+4.21.891.787 I fill_late: expert store: 808916 lookups, hit rate 96.2%, 256.3 GB read for decode, 118.5 GB for prefill
+4.21.891.790 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 123.58 GB/s), between fills 4.78 ms
+4.21.891.794 I fill_late: expert store: memory valve: host MemAvailable 9.31 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+4.21.891.801 I fill_late: expert store: split GEMV: 97423 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 4440 lookups with more misses (0.06 records read at the early lookup), plan 0.058 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+4.21.891.802 I fill_late: expert store: self-prefetch: 462 posts, 0.1 records and 0.09 ms of reads per post
+4.24.583.149 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 23, n_diff = 12
+4.24.660.661 I slot print_timing: id  3 | task 2202 | n_gen =    195, tg =  15.92 t/s, tg_3s =  15.06 t/s
+4.27.507.574 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 24, n_diff = 12
+4.27.660.717 I slot print_timing: id  3 | task 2202 | n_gen =    241, tg =  15.81 t/s, tg_3s =  15.33 t/s
+4.28.343.842 I fill_late: expert store: 841684 lookups, hit rate 96.2%, 267.6 GB read for decode, 118.5 GB for prefill
+4.28.343.844 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 129.01 GB/s), between fills 4.78 ms
+4.28.343.848 I fill_late: expert store: memory valve: host MemAvailable 9.34 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+4.28.343.851 I fill_late: expert store: split GEMV: 101519 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 4681 lookups with more misses (0.06 records read at the early lookup), plan 0.058 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+4.28.343.852 I fill_late: expert store: self-prefetch: 462 posts, 0.1 records and 0.09 ms of reads per post
+4.28.658.052 I slot print_timing: id  3 | task 2202 | prompt eval time =     463.78 ms /    18 tokens (   25.77 ms per token,    38.81 tokens per second)
+4.28.658.055 I slot print_timing: id  3 | task 2202 |        eval time =   16181.15 ms /   256 tokens (   63.46 ms per token,    15.76 tokens per second)
+4.28.658.056 I slot print_timing: id  3 | task 2202 |       total time =   16644.93 ms /   274 tokens
+4.28.658.057 I slot print_timing: id  3 | task 2202 |    graphs reused =       2394
+4.28.658.057 I slot print_timing: id  3 | task 2202 |   graph reallocs =         24    /    12        (same size) / (changed size)
+4.28.658.075 I slot      release: id  3 | task 2202 | stop processing: n_tokens = 273, truncated = 0
+4.28.658.084 I slot   operator(): id  2 | task 2203 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 19
+4.28.658.087 I slot   operator(): id  2 | task 2203 | erased invalidated context checkpoint (pos_min = 14, pos_max = 14, n_tokens = 15, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+4.28.665.339 I slot   operator(): id  2 | task 2203 | cached n_tokens = 0, memory_seq_rm [0, end)
+4.28.997.052 I slot   operator(): id  2 | task 2203 | cached n_tokens = 15, memory_seq_rm [15, end)
+4.28.998.213 I slot init_sampler: id  2 | task 2203 | init sampler, took 0.00 ms, tokens: text = 19, total = 19
+4.29.030.795 I slot create_check: id  2 | task 2203 | created context checkpoint 1 of 32 (pos_min = 14, pos_max = 14, n_tokens = 15, size = 145.563 MiB)
+4.29.033.726 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 24, n_diff = 13
+4.34.799.683 I fill_late: expert store: 877382 lookups, hit rate 96.2%, 276.1 GB read for decode, 118.5 GB for prefill
+4.34.799.686 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 125.14 GB/s), between fills 4.74 ms
+4.34.799.690 I fill_late: expert store: memory valve: host MemAvailable 9.34 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+4.34.799.695 I fill_late: expert store: split GEMV: 105531 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 4777 lookups with more misses (0.06 records read at the early lookup), plan 0.057 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+4.34.799.696 I fill_late: expert store: self-prefetch: 504 posts, 0.1 records and 0.09 ms of reads per post
+4.35.353.889 I slot print_timing: id  2 | task 2203 | n_gen =    100, tg =  15.98 t/s, tg_3s =  16.14 t/s
+4.38.358.110 I slot print_timing: id  2 | task 2203 | n_gen =    145, tg =  15.65 t/s, tg_3s =  14.98 t/s
+4.41.059.649 I fill_late: expert store: 910150 lookups, hit rate 96.2%, 285.5 GB read for decode, 118.5 GB for prefill
+4.41.059.652 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 129.43 GB/s), between fills 4.74 ms
+4.41.059.656 I fill_late: expert store: memory valve: host MemAvailable 9.33 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+4.41.059.662 I fill_late: expert store: split GEMV: 109627 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 4953 lookups with more misses (0.06 records read at the early lookup), plan 0.057 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+4.41.059.664 I fill_late: expert store: self-prefetch: 504 posts, 0.1 records and 0.09 ms of reads per post
+4.41.302.867 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 25, n_diff = 13
+4.41.366.387 I slot print_timing: id  2 | task 2203 | n_gen =    194, tg =  15.81 t/s, tg_3s =  16.29 t/s
+4.44.138.716 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 26, n_diff = 13
+4.44.410.013 I slot print_timing: id  2 | task 2203 | n_gen =    242, tg =  15.80 t/s, tg_3s =  15.77 t/s
+4.45.290.970 I slot print_timing: id  2 | task 2203 | prompt eval time =     500.10 ms /    19 tokens (   26.32 ms per token,    37.99 tokens per second)
+4.45.290.974 I slot print_timing: id  2 | task 2203 |        eval time =   16132.78 ms /   256 tokens (   63.27 ms per token,    15.81 tokens per second)
+4.45.290.974 I slot print_timing: id  2 | task 2203 |       total time =   16632.88 ms /   275 tokens
+4.45.290.975 I slot print_timing: id  2 | task 2203 |    graphs reused =       2646
+4.45.290.976 I slot print_timing: id  2 | task 2203 |   graph reallocs =         26    /    13        (same size) / (changed size)
+4.45.290.992 I slot      release: id  2 | task 2203 | stop processing: n_tokens = 274, truncated = 0
+4.45.291.001 I slot   operator(): id  1 | task 2204 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 21
+4.45.291.004 I slot   operator(): id  1 | task 2204 | erased invalidated context checkpoint (pos_min = 16, pos_max = 16, n_tokens = 17, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+4.45.297.734 I slot   operator(): id  1 | task 2204 | cached n_tokens = 0, memory_seq_rm [0, end)
+4.45.682.002 I slot   operator(): id  1 | task 2204 | cached n_tokens = 17, memory_seq_rm [17, end)
+4.45.683.176 I slot init_sampler: id  1 | task 2204 | init sampler, took 0.00 ms, tokens: text = 21, total = 21
+4.45.713.808 I slot create_check: id  1 | task 2204 | created context checkpoint 1 of 32 (pos_min = 16, pos_max = 16, n_tokens = 17, size = 145.563 MiB)
+4.45.716.662 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 26, n_diff = 14
+4.47.655.523 I fill_late: expert store: 945998 lookups, hit rate 96.3%, 294.9 GB read for decode, 118.5 GB for prefill
+4.47.655.526 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 123.62 GB/s), between fills 4.71 ms
+4.47.655.529 I fill_late: expert store: memory valve: host MemAvailable 9.31 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+4.47.655.534 I fill_late: expert store: split GEMV: 113639 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 5053 lookups with more misses (0.05 records read at the early lookup), plan 0.057 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+4.47.655.535 I fill_late: expert store: self-prefetch: 546 posts, 0.1 records and 0.09 ms of reads per post
+4.52.051.907 I slot print_timing: id  1 | task 2204 | n_gen =    100, tg =  15.97 t/s, tg_3s =  16.13 t/s
+4.53.743.792 I fill_late: expert store: 978766 lookups, hit rate 96.3%, 302.0 GB read for decode, 118.5 GB for prefill
+4.53.743.795 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 126.61 GB/s), between fills 4.71 ms
+4.53.743.799 I fill_late: expert store: memory valve: host MemAvailable 9.31 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+4.53.743.808 I fill_late: expert store: split GEMV: 117735 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 5150 lookups with more misses (0.05 records read at the early lookup), plan 0.056 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+4.53.743.809 I fill_late: expert store: self-prefetch: 546 posts, 0.1 records and 0.09 ms of reads per post
+4.55.092.116 I slot print_timing: id  1 | task 2204 | n_gen =    149, tg =  16.02 t/s, tg_3s =  16.12 t/s
+4.57.931.509 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 27, n_diff = 14
+4.58.137.603 I slot print_timing: id  1 | task 2204 | n_gen =    198, tg =  16.04 t/s, tg_3s =  16.09 t/s
+4.59.892.517 I fill_late: expert store: 1011534 lookups, hit rate 96.3%, 310.0 GB read for decode, 118.5 GB for prefill
+4.59.892.521 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 129.96 GB/s), between fills 4.71 ms
+4.59.892.525 I fill_late: expert store: memory valve: host MemAvailable 9.33 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+4.59.892.531 I fill_late: expert store: split GEMV: 121831 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 5282 lookups with more misses (0.05 records read at the early lookup), plan 0.055 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+4.59.892.535 I fill_late: expert store: self-prefetch: 546 posts, 0.1 records and 0.09 ms of reads per post
+5.00.582.717 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 28, n_diff = 14
+5.01.183.818 I slot print_timing: id  1 | task 2204 | n_gen =    245, tg =  15.91 t/s, tg_3s =  15.43 t/s
+5.01.857.380 I slot print_timing: id  1 | task 2204 | prompt eval time =     561.28 ms /    21 tokens (   26.73 ms per token,    37.41 tokens per second)
+5.01.857.383 I slot print_timing: id  1 | task 2204 |        eval time =   16005.10 ms /   256 tokens (   62.77 ms per token,    15.93 tokens per second)
+5.01.857.384 I slot print_timing: id  1 | task 2204 |       total time =   16566.37 ms /   277 tokens
+5.01.857.385 I slot print_timing: id  1 | task 2204 |    graphs reused =       2898
+5.01.857.386 I slot print_timing: id  1 | task 2204 |   graph reallocs =         28    /    14        (same size) / (changed size)
+5.01.857.400 I slot      release: id  1 | task 2204 | stop processing: n_tokens = 276, truncated = 0
+5.01.857.409 I slot   operator(): id  0 | task 2206 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+5.01.857.411 I slot   operator(): id  0 | task 2206 | erased invalidated context checkpoint (pos_min = 5, pos_max = 5, n_tokens = 6, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+5.01.864.544 I slot   operator(): id  0 | task 2206 | cached n_tokens = 0, memory_seq_rm [0, end)
+5.02.032.927 I slot   operator(): id  0 | task 2206 | cached n_tokens = 6, memory_seq_rm [6, end)
+5.02.033.926 I slot init_sampler: id  0 | task 2206 | init sampler, took 0.00 ms, tokens: text = 10, total = 10
+5.02.100.187 I slot create_check: id  0 | task 2206 | created context checkpoint 1 of 32 (pos_min = 5, pos_max = 5, n_tokens = 6, size = 145.563 MiB)
+5.02.103.073 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 28, n_diff = 15
+5.06.310.776 I fill_late: expert store: 1045854 lookups, hit rate 96.4%, 318.6 GB read for decode, 118.5 GB for prefill
+5.06.310.779 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 128.13 GB/s), between fills 4.60 ms
+5.06.310.783 I fill_late: expert store: memory valve: host MemAvailable 9.34 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+5.06.310.790 I fill_late: expert store: split GEMV: 125843 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 5391 lookups with more misses (0.05 records read at the early lookup), plan 0.055 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+5.06.310.791 I fill_late: expert store: self-prefetch: 588 posts, 0.1 records and 0.09 ms of reads per post
+5.08.750.106 I slot print_timing: id  0 | task 2206 | n_gen =    100, tg =  15.18 t/s, tg_3s =  15.34 t/s
+5.11.799.181 I slot print_timing: id  0 | task 2206 | n_gen =    144, tg =  14.94 t/s, tg_3s =  14.43 t/s
+5.13.077.509 I fill_late: expert store: 1078622 lookups, hit rate 96.3%, 333.8 GB read for decode, 118.5 GB for prefill
+5.13.077.513 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 134.24 GB/s), between fills 4.60 ms
+5.13.077.518 I fill_late: expert store: memory valve: host MemAvailable 9.33 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+5.13.077.524 I fill_late: expert store: split GEMV: 129939 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 5755 lookups with more misses (0.05 records read at the early lookup), plan 0.056 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+5.13.077.525 I fill_late: expert store: self-prefetch: 588 posts, 0.1 records and 0.09 ms of reads per post
+5.14.801.954 I slot print_timing: id  0 | task 2206 | n_gen =    190, tg =  15.03 t/s, tg_3s =  15.32 t/s
+5.15.041.969 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 29, n_diff = 15
+5.17.829.308 I slot print_timing: id  0 | task 2206 | n_gen =    239, tg =  15.26 t/s, tg_3s =  16.19 t/s
+5.18.338.588 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 30, n_diff = 15
+5.18.947.456 I slot print_timing: id  0 | task 2206 | prompt eval time =     371.90 ms /    10 tokens (   37.19 ms per token,    26.89 tokens per second)
+5.18.947.459 I slot print_timing: id  0 | task 2206 |        eval time =   16718.13 ms /   256 tokens (   65.56 ms per token,    15.25 tokens per second)
+5.18.947.460 I slot print_timing: id  0 | task 2206 |       total time =   17090.04 ms /   266 tokens
+5.18.947.461 I slot print_timing: id  0 | task 2206 |    graphs reused =       3150
+5.18.947.461 I slot print_timing: id  0 | task 2206 |   graph reallocs =         30    /    15        (same size) / (changed size)
+5.18.947.473 I slot      release: id  0 | task 2206 | stop processing: n_tokens = 265, truncated = 0
+5.18.947.480 I srv  update_slots: all slots are idle
+5.18.995.182 I srv  server_strea: conv_id= (empty=1)
+5.19.009.715 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/16414) > 0.100
+5.19.009.717 I slot get_availabl: id  1 | task -1 |  - checking sim = 0.000 (3/16414) > 0.100
+5.19.009.718 I slot get_availabl: id  2 | task -1 |  - checking sim = 0.000 (0/16414) > 0.100
+5.19.009.718 I slot get_availabl: id  3 | task -1 |  - checking sim = 0.000 (0/16414) > 0.100
+5.19.009.720 I slot get_availabl: id  3 | task -1 | selected slot by LRU, n_tokens = 273, t_last = 624958839348
+5.19.009.751 I slot launch_slot_: id  3 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+5.19.009.756 I slot launch_slot_: id  3 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+5.19.009.757 I slot launch_slot_: id  3 | task 3234 | processing task, is_child = 0
+5.19.023.482 I elastic_fit_stream: elastic KV (reserve) stream 3: 4352 -> 20992 of 1048576 cells, 616.0 MiB mapped in all streams (13.7 ms)
+5.19.033.421 I elastic_fit_stream: elastic KV idx_ (reserve) stream 3: 4352 -> 20992 of 1048576 cells, 440.0 MiB mapped in all streams (9.9 ms)
+5.19.033.429 I slot   operator(): id  3 | task 3234 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 16414
+5.19.033.432 I slot   operator(): id  3 | task 3234 | erased invalidated context checkpoint (pos_min = 13, pos_max = 13, n_tokens = 14, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+5.19.040.143 I slot   operator(): id  3 | task 3234 | cached n_tokens = 0, memory_seq_rm [0, end)
+5.23.582.521 I slot print_timing: id  3 | task 3234 | prompt processing, n_tokens =   2048, progress = 0.12, t =   4.55 s / 450.21 tokens per second
+5.23.582.529 I slot   operator(): id  3 | task 3234 | cached n_tokens = 2048, memory_seq_rm [2048, end)
+5.23.594.270 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 31, n_diff = 15
+5.29.144.774 I slot print_timing: id  3 | task 3234 | prompt processing, n_tokens =   4096, progress = 0.25, t =  10.11 s / 405.09 tokens per second
+5.29.144.778 I slot   operator(): id  3 | task 3234 | cached n_tokens = 4096, memory_seq_rm [4096, end)
+5.29.152.420 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 32, n_diff = 15
+5.34.685.633 I slot print_timing: id  3 | task 3234 | prompt processing, n_tokens =   6144, progress = 0.37, t =  15.65 s / 392.53 tokens per second
+5.34.685.637 I slot   operator(): id  3 | task 3234 | cached n_tokens = 6144, memory_seq_rm [6144, end)
+5.34.692.716 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 33, n_diff = 15
+5.40.366.416 I slot print_timing: id  3 | task 3234 | prompt processing, n_tokens =   8192, progress = 0.50, t =  21.33 s / 384.01 tokens per second
+5.40.366.418 I slot   operator(): id  3 | task 3234 | cached n_tokens = 8192, memory_seq_rm [8192, end)
+5.40.373.216 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 34, n_diff = 15
+5.46.174.647 I slot print_timing: id  3 | task 3234 | prompt processing, n_tokens =  10240, progress = 0.62, t =  27.14 s / 377.29 tokens per second
+5.46.174.650 I slot   operator(): id  3 | task 3234 | cached n_tokens = 10240, memory_seq_rm [10240, end)
+5.46.181.583 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 35, n_diff = 15
+5.52.124.085 I slot print_timing: id  3 | task 3234 | prompt processing, n_tokens =  12288, progress = 0.75, t =  33.09 s / 371.34 tokens per second
+5.52.124.089 I slot   operator(): id  3 | task 3234 | cached n_tokens = 12288, memory_seq_rm [12288, end)
+5.52.131.046 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 36, n_diff = 15
+5.58.218.927 I slot print_timing: id  3 | task 3234 | prompt processing, n_tokens =  14336, progress = 0.87, t =  39.19 s / 365.85 tokens per second
+5.58.218.930 I slot   operator(): id  3 | task 3234 | cached n_tokens = 14336, memory_seq_rm [14336, end)
+5.59.392.722 I snapshot_save: expert store: cache snapshot (periodic): 9537 resident experts, 57.3 KB to /snapshot/glm53flash-q2.k3sn
+6.00.021.101 I slot print_timing: id  3 | task 3234 | prompt processing, n_tokens =  14366, progress = 0.88, t =  40.99 s / 350.50 tokens per second
+6.00.021.104 I slot   operator(): id  3 | task 3234 | cached n_tokens = 14366, memory_seq_rm [14366, end)
+6.00.052.174 I slot create_check: id  3 | task 3234 | created context checkpoint 1 of 32 (pos_min = 14365, pos_max = 14365, n_tokens = 14366, size = 145.563 MiB)
+6.05.307.982 I slot print_timing: id  3 | task 3234 | prompt processing, n_tokens =  16410, progress = 1.00, t =  46.27 s / 354.62 tokens per second
+6.05.307.986 I slot   operator(): id  3 | task 3234 | cached n_tokens = 16410, memory_seq_rm [16410, end)
+6.05.310.885 I slot init_sampler: id  3 | task 3234 | init sampler, took 1.86 ms, tokens: text = 16414, total = 16414
+6.06.451.237 I slot create_check: id  3 | task 3234 | created context checkpoint 2 of 32 (pos_min = 16409, pos_max = 16409, n_tokens = 16410, size = 145.563 MiB)
+6.06.455.032 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 36, n_diff = 16
+6.06.890.626 I fill_late: expert store: 1114480 lookups, hit rate 96.3%, 346.3 GB read for decode, 201.6 GB for prefill
+6.06.890.628 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 120.49 GB/s), between fills 4.64 ms
+6.06.890.632 I fill_late: expert store: memory valve: host MemAvailable 8.85 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+6.06.890.636 I fill_late: expert store: split GEMV: 133952 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 5886 lookups with more misses (0.05 records read at the early lookup), plan 0.056 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+6.06.890.641 I fill_late: expert store: self-prefetch: 630 posts, 0.1 records and 0.08 ms of reads per post
+6.14.102.785 I slot print_timing: id  3 | task 3234 | n_gen =    100, tg =  13.31 t/s, tg_3s =  13.44 t/s
+6.14.166.885 I fill_late: expert store: 1147248 lookups, hit rate 96.2%, 363.6 GB read for decode, 201.6 GB for prefill
+6.14.166.888 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 126.50 GB/s), between fills 4.64 ms
+6.14.166.893 I fill_late: expert store: memory valve: host MemAvailable 8.85 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+6.14.166.899 I fill_late: expert store: split GEMV: 138048 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 6370 lookups with more misses (0.06 records read at the early lookup), plan 0.059 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+6.14.166.901 I fill_late: expert store: self-prefetch: 630 posts, 0.1 records and 0.08 ms of reads per post
+6.16.114.540 I slot print_timing: id  3 | task 3234 | prompt eval time =   47629.78 ms / 16414 tokens (    2.90 ms per token,   344.62 tokens per second)
+6.16.114.543 I slot print_timing: id  3 | task 3234 |        eval time =    9451.33 ms /   128 tokens (   74.42 ms per token,    13.44 tokens per second)
+6.16.114.544 I slot print_timing: id  3 | task 3234 |       total time =   57081.11 ms / 16542 tokens
+6.16.114.545 I slot print_timing: id  3 | task 3234 |    graphs reused =       3276
+6.16.114.546 I slot print_timing: id  3 | task 3234 |   graph reallocs =         36    /    16        (same size) / (changed size)
+6.16.114.924 I slot      release: id  3 | task 3234 | stop processing: n_tokens = 16541, truncated = 0
+6.16.114.932 I srv  update_slots: all slots are idle
+6.16.116.843 I srv  server_strea: conv_id= (empty=1)
+6.16.116.950 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/19) > 0.100
+6.16.116.952 I slot get_availabl: id  1 | task -1 |  - checking sim = 0.000 (0/19) > 0.100
+6.16.116.953 I slot get_availabl: id  2 | task -1 |  - checking sim = 1.000 (19/19) > 0.100
+6.16.116.954 I slot get_availabl: id  3 | task -1 |  - checking sim = 0.000 (0/19) > 0.100
+6.16.116.954 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.069
+6.16.116.978 I slot launch_slot_: id  2 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+6.16.116.987 I slot launch_slot_: id  2 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+6.16.116.988 I slot launch_slot_: id  2 | task 3372 | processing task, is_child = 0
+6.16.116.992 I slot   operator(): id  2 | task 3372 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 19
+6.16.116.997 I slot   operator(): id  2 | task 3372 | checking checkpoint with [14, 14] against 18...
+6.16.120.211 I slot   operator(): id  2 | task 3372 | restored context checkpoint (pos_min = 14, pos_max = 14, n_tokens = 15, n_past = 15, size = 145.563 MiB)
+6.16.120.213 I slot   operator(): id  2 | task 3372 | cached n_tokens = 15, memory_seq_rm [15, end)
+6.16.121.228 I slot init_sampler: id  2 | task 3372 | init sampler, took 0.00 ms, tokens: text = 19, total = 19
+6.16.121.232 I slot create_check: id  2 | task 3372 | superseding context checkpoint at n_tokens = 15
+6.16.159.280 I slot create_check: id  2 | task 3372 | created context checkpoint 1 of 32 (pos_min = 14, pos_max = 14, n_tokens = 15, size = 145.563 MiB)
+6.19.629.232 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 37, n_diff = 16
+6.20.739.532 I fill_late: expert store: 1180651 lookups, hit rate 96.2%, 372.5 GB read for decode, 201.6 GB for prefill
+6.20.739.535 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 128.79 GB/s), between fills 4.61 ms
+6.20.739.538 I fill_late: expert store: memory valve: host MemAvailable 8.84 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+6.20.739.542 I fill_late: expert store: split GEMV: 142102 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 6530 lookups with more misses (0.06 records read at the early lookup), plan 0.059 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+6.20.739.543 I fill_late: expert store: self-prefetch: 672 posts, 0.1 records and 0.08 ms of reads per post
+6.22.632.907 I slot print_timing: id  2 | task 3372 | n_gen =    100, tg =  15.62 t/s, tg_3s =  15.78 t/s
+6.25.678.514 I slot print_timing: id  2 | task 3372 | n_gen =    145, tg =  15.35 t/s, tg_3s =  14.78 t/s
+6.27.123.700 I fill_late: expert store: 1213419 lookups, hit rate 96.2%, 381.8 GB read for decode, 201.6 GB for prefill
+6.27.123.704 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 132.03 GB/s), between fills 4.61 ms
+6.27.123.708 I fill_late: expert store: memory valve: host MemAvailable 8.82 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+6.27.123.714 I fill_late: expert store: split GEMV: 146198 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 6712 lookups with more misses (0.06 records read at the early lookup), plan 0.059 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+6.27.123.716 I fill_late: expert store: self-prefetch: 672 posts, 0.1 records and 0.08 ms of reads per post
+6.28.736.409 I slot print_timing: id  2 | task 3372 | n_gen =    194, tg =  15.51 t/s, tg_3s =  16.02 t/s
+6.31.534.484 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 38, n_diff = 16
+6.31.744.560 I slot print_timing: id  2 | task 3372 | n_gen =    241, tg =  15.53 t/s, tg_3s =  15.62 t/s
+6.32.703.168 I slot print_timing: id  2 | task 3372 | prompt eval time =     177.96 ms /     4 tokens (   44.49 ms per token,    22.48 tokens per second)
+6.32.703.171 I slot print_timing: id  2 | task 3372 |        eval time =   16408.21 ms /   256 tokens (   64.35 ms per token,    15.54 tokens per second)
+6.32.703.172 I slot print_timing: id  2 | task 3372 |       total time =   16586.17 ms /   260 tokens
+6.32.703.173 I slot print_timing: id  2 | task 3372 |    graphs reused =       3528
+6.32.703.173 I slot print_timing: id  2 | task 3372 |   graph reallocs =         38    /    16        (same size) / (changed size)
+6.32.703.185 I slot      release: id  2 | task 3372 | stop processing: n_tokens = 274, truncated = 0
+6.32.703.193 I srv  update_slots: all slots are idle
+6.32.707.455 I srv  server_strea: conv_id= (empty=1)
+6.32.716.440 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/16414) > 0.100
+6.32.716.443 I slot get_availabl: id  1 | task -1 |  - checking sim = 0.000 (3/16414) > 0.100
+6.32.716.443 I slot get_availabl: id  2 | task -1 |  - checking sim = 0.000 (0/16414) > 0.100
+6.32.716.450 I slot get_availabl: id  3 | task -1 |  - checking sim = 1.000 (16414/16414) > 0.100
+6.32.716.451 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.992
+6.32.716.482 I slot launch_slot_: id  3 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+6.32.716.487 I slot launch_slot_: id  3 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+6.32.716.488 I slot launch_slot_: id  3 | task 3629 | processing task, is_child = 0
+6.32.716.492 I slot   operator(): id  3 | task 3629 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 16414
+6.32.716.500 I slot   operator(): id  3 | task 3629 | checking checkpoint with [16409, 16409] against 16413...
+6.32.719.722 I slot   operator(): id  3 | task 3629 | restored context checkpoint (pos_min = 16409, pos_max = 16409, n_tokens = 16410, n_past = 16410, size = 145.563 MiB)
+6.32.719.723 I slot   operator(): id  3 | task 3629 | cached n_tokens = 16410, memory_seq_rm [16410, end)
+6.32.722.536 I slot init_sampler: id  3 | task 3629 | init sampler, took 1.83 ms, tokens: text = 16414, total = 16414
+6.32.722.539 I slot create_check: id  3 | task 3629 | superseding context checkpoint at n_tokens = 16410
+6.32.759.380 I slot create_check: id  3 | task 3629 | created context checkpoint 2 of 32 (pos_min = 16409, pos_max = 16409, n_tokens = 16410, size = 145.563 MiB)
+6.33.565.741 I fill_late: expert store: 1246716 lookups, hit rate 96.3%, 389.7 GB read for decode, 201.6 GB for prefill
+6.33.565.744 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 131.86 GB/s), between fills 4.60 ms
+6.33.565.748 I fill_late: expert store: memory valve: host MemAvailable 8.86 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+6.33.565.755 I fill_late: expert store: split GEMV: 150252 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 6819 lookups with more misses (0.06 records read at the early lookup), plan 0.058 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+6.33.565.756 I fill_late: expert store: self-prefetch: 714 posts, 0.1 records and 0.08 ms of reads per post
+6.39.535.271 I slot print_timing: id  3 | task 3629 | n_gen =    100, tg =  15.02 t/s, tg_3s =  15.17 t/s
+6.39.993.668 I fill_late: expert store: 1279484 lookups, hit rate 96.3%, 397.8 GB read for decode, 201.6 GB for prefill
+6.39.993.671 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 134.59 GB/s), between fills 4.60 ms
+6.39.993.674 I fill_late: expert store: memory valve: host MemAvailable 8.84 GB (lowest 4.75, reserve 6.44), 0 host slots released (0.00 GB); 4 releases, 4 re-arms, 0 PSI wake-ups
+6.39.993.678 I fill_late: expert store: split GEMV: 154348 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 6954 lookups with more misses (0.06 records read at the early lookup), plan 0.058 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+6.39.993.679 I fill_late: expert store: self-prefetch: 714 posts, 0.1 records and 0.08 ms of reads per post
+6.41.387.311 I slot print_timing: id  3 | task 3629 | prompt eval time =     225.80 ms /     4 tokens (   56.45 ms per token,    17.71 tokens per second)
+6.41.387.314 I slot print_timing: id  3 | task 3629 |        eval time =    8445.01 ms /   128 tokens (   66.50 ms per token,    15.04 tokens per second)
+6.41.387.314 I slot print_timing: id  3 | task 3629 |       total time =    8670.81 ms /   132 tokens
+6.41.387.315 I slot print_timing: id  3 | task 3629 |    graphs reused =       3654
+6.41.387.316 I slot print_timing: id  3 | task 3629 |   graph reallocs =         38    /    16        (same size) / (changed size)
+6.41.387.692 I slot      release: id  3 | task 3629 | stop processing: n_tokens = 16541, truncated = 0
+6.41.387.701 I srv  update_slots: all slots are idle
