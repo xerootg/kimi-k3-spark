@@ -1,0 +1,77 @@
+device NVIDIA GB10 sm_121, 48 SMs, L2 24 MiB; canUseHostPtrForRegistered=1 pageableAccess=1 usesHostPageTables=1 nativeAtomics=1 integrated=1; page 4096
+== dev, 12.0 GiB
+  host 0xfddd20000000 device 0xfddd20000000 (same)
+  depth   16384 gather4k    211.4 us/token mean (best  207.1),  109.3 GB/s
+  depth   16384 gather1k    210.5 us/token mean (best  208.4),  109.7 GB/s
+  depth   16384 scan         33.9 us/token mean (best   33.0),  340.1 GB/s of keys (11.5 MB)
+  depth  100000 gather4k    217.2 us/token mean (best  213.2),  106.4 GB/s
+  depth  100000 gather1k    216.1 us/token mean (best  213.2),  106.9 GB/s
+  depth  100000 scan        337.0 us/token mean (best  330.8),  208.9 GB/s of keys (70.4 MB)
+  depth  262144 gather4k    217.2 us/token mean (best  213.6),  106.4 GB/s
+  depth  262144 gather1k    216.7 us/token mean (best  214.0),  106.6 GB/s
+  depth  262144 scan        813.9 us/token mean (best  809.2),  226.7 GB/s of keys (184.5 MB)
+  depth 1000000 gather4k    266.4 us/token mean (best  261.5),   86.7 GB/s
+  depth 1000000 gather1k    816.5 us/token mean (best  793.9),   28.3 GB/s
+  depth 1000000 scan       2993.7 us/token mean (best 2985.3),  235.2 GB/s of keys (704.0 MB)
+== reg, 12.0 GiB
+  reg: MADV_HUGEPAGE=0 (-1 = not asked) cpu node mask=0x0 mbind=0
+  host 0xfddd3c000000 device 0xfddd3c000000 (same)
+  memset via device ptr: ok
+  memcpy DeviceToDevice into it (host view): ok
+  memcpy HostToDevice into it: ok
+  kernel write, host reads it: ok
+  host write, GPU copy sees it: ok
+  ops all ok
+  depth   16384 gather4k    212.0 us/token mean (best  208.6),  109.0 GB/s
+  depth   16384 gather1k    214.1 us/token mean (best  210.7),  107.9 GB/s
+  depth   16384 scan         45.1 us/token mean (best   43.2),  255.7 GB/s of keys (11.5 MB)
+  depth  100000 gather4k    217.5 us/token mean (best  214.7),  106.2 GB/s
+  depth  100000 gather1k    219.7 us/token mean (best  217.3),  105.2 GB/s
+  depth  100000 scan        460.1 us/token mean (best  450.8),  153.0 GB/s of keys (70.4 MB)
+  depth  262144 gather4k    218.4 us/token mean (best  214.5),  105.8 GB/s
+  depth  262144 gather1k    220.0 us/token mean (best  217.6),  105.0 GB/s
+  depth  262144 scan       1152.7 us/token mean (best 1142.9),  160.1 GB/s of keys (184.5 MB)
+  depth 1000000 gather4k    218.4 us/token mean (best  215.4),  105.8 GB/s
+  depth 1000000 gather1k    220.7 us/token mean (best  218.4),  104.7 GB/s
+  depth 1000000 scan       4342.4 us/token mean (best 4285.0),  162.1 GB/s of keys (704.0 MB)
+== regnothp, 12.0 GiB
+  regnothp: MADV_HUGEPAGE=-1 (-1 = not asked) cpu node mask=0x0 mbind=0
+  host 0xfddd3c000000 device 0xfddd3c000000 (same)
+  memset via device ptr: ok
+  memcpy DeviceToDevice into it (host view): ok
+  memcpy HostToDevice into it: ok
+  kernel write, host reads it: ok
+  host write, GPU copy sees it: ok
+  ops all ok
+  depth   16384 gather4k    226.9 us/token mean (best  212.5),  101.8 GB/s
+  depth   16384 gather1k    216.9 us/token mean (best  213.2),  106.5 GB/s
+  depth   16384 scan         46.1 us/token mean (best   45.2),  250.0 GB/s of keys (11.5 MB)
+  depth  100000 gather4k    280.8 us/token mean (best  277.3),   82.3 GB/s
+  depth  100000 gather1k    810.5 us/token mean (best  805.5),   28.5 GB/s
+  depth  100000 scan        967.0 us/token mean (best  960.9),   72.8 GB/s of keys (70.4 MB)
+  depth  262144 gather4k    351.3 us/token mean (best  346.5),   65.8 GB/s
+  depth  262144 gather1k   1103.6 us/token mean (best 1098.2),   20.9 GB/s
+  depth  262144 scan       2462.0 us/token mean (best 2456.6),   75.0 GB/s of keys (184.5 MB)
+  depth 1000000 gather4k    411.4 us/token mean (best  408.2),   56.1 GB/s
+  depth 1000000 gather1k   1359.3 us/token mean (best 1350.6),   17.0 GB/s
+  depth 1000000 scan       9020.9 us/token mean (best 9006.9),   78.0 GB/s of keys (704.0 MB)
+== halloc, 12.0 GiB
+  host 0xfddd20000000 device 0xfddd20000000 (same)
+  memset via device ptr: ok
+  memcpy DeviceToDevice into it (host view): ok
+  memcpy HostToDevice into it: ok
+  kernel write, host reads it: ok
+  host write, GPU copy sees it: ok
+  ops all ok
+  depth   16384 gather4k    220.3 us/token mean (best  217.2),  104.9 GB/s
+  depth   16384 gather1k    220.5 us/token mean (best  216.3),  104.8 GB/s
+  depth   16384 scan         84.5 us/token mean (best   82.2),  136.5 GB/s of keys (11.5 MB)
+  depth  100000 gather4k    320.2 us/token mean (best  314.7),   72.2 GB/s
+  depth  100000 gather1k    870.2 us/token mean (best  863.8),   26.5 GB/s
+  depth  100000 scan       1129.4 us/token mean (best 1107.4),   62.3 GB/s of keys (70.4 MB)
+  depth  262144 gather4k    401.0 us/token mean (best  395.9),   57.6 GB/s
+  depth  262144 gather1k   1180.1 us/token mean (best 1172.7),   19.6 GB/s
+  depth  262144 scan       2766.1 us/token mean (best 2758.8),   66.7 GB/s of keys (184.5 MB)
+  depth 1000000 gather4k    593.2 us/token mean (best  586.0),   38.9 GB/s
+  depth 1000000 gather1k   2060.9 us/token mean (best 2034.4),   11.2 GB/s
+  depth 1000000 scan       9565.0 us/token mean (best 9551.3),   73.6 GB/s of keys (704.0 MB)

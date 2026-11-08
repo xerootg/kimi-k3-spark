@@ -1046,3 +1046,35 @@ of the first four flags alone, the four together and all five together. Kernel l
 
 Production setting: `GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1
 GGML_CUDA_FUSE_CONV_STATE=1`.
+
+## 0051-kv-host-memory
+
+`LLAMA_KV_HOST=1` (exact value, inert when unset) puts the KV buffers of GPU layers in host memory that the GPU reads
+and writes directly. For GLM-5.3-Flash that is the attention KV (`cache_k_l*`, 11.0 KiB per token) and the DSA
+indexer cache (`cache_idx_k_l*`, 8.2 KiB per token); the KDA recurrent state stays in device memory. Built to test
+the GH200 idea of keeping the KV in Grace memory and reading it over NVLink-C2C (`docs/ideas.md`).
+
+- The buffer keeps the GPU's ordinary buffer type, so the scheduler still runs attention and the indexer on the GPU
+  and CUDA graphs, views and copies treat it as any CUDA buffer. `--no-kv-offload` is different: it moves those ops
+  to the CPU.
+- Memory: anonymous `mmap`, `MADV_HUGEPAGE`, `mbind` to the NUMA nodes that have CPUs (only when there is more than
+  one node; on the GH200 this keeps the pages off the HBM node), populated on the CPU, then `cudaHostRegister`. This
+  is the expert host bank's path (345 GB/s over C2C in `docs/uvm-experiment.md`). `cudaMallocManaged` was not used
+  because the driver can migrate pages to HBM, which hides the thing being measured. `cudaHostAlloc` was not used
+  because it gives no NUMA control and, on the GB10, had the slowest scattered reads (below). With unified addressing
+  the device address equals the host address; the startup log line says so.
+- `LLAMA_KV_HOST_THP=0/1` overrides the huge-page default: on with 4 KiB base pages, off with 64 KiB pages (the
+  GH200 kernel, where a THP is 512 MiB). On the GB10, without huge pages the GPU's scattered reads are 2-6x slower.
+- Replaces elastic KV (0045) for these caches: the whole context is allocated in host memory at start, and a warning
+  is logged when `LLAMA_ELASTIC_KV=1` is also set.
+- Copies into or out of such a buffer use `cudaMemcpyDefault` (the direction is inferred); other buffers keep their
+  explicit kinds. On the GB10, explicit kinds also worked on registered memory (kvprobe checks).
+- The op profiler (`GGML_CUDA_OP_PROFILE`) appends `kv=cache_k`, `kv=cache_idx_k` or `kv=cache_r` to the key of
+  any node that reads or writes a cache, in either placement, so attention and the indexer's gathers can be compared.
+- CUDA side: `ggml_backend_cuda_host_kv_buffer_alloc(device, size, thp)` via `get_proc_address`.
+
+**Spark (GB10, GLM-5.3-Flash Q2, 2026-11-08):** same binary, production env and args except elastic KV off and
+`--ctx-size 262144` in both legs. Output byte-identical at every depth and on a 32k needle, decode speed unchanged
+within noise. The GB10's host and device memory are the same LPDDR5X, so this measures correctness and the cost of
+the coherent host-access path, not the GH200's C2C link. Numbers are in `docs/experiments.md`. GH200 window prepared
+in `docs/evidence/glm-windows-2026-10-30/kv-placement/gh200-kvhost.sh`.

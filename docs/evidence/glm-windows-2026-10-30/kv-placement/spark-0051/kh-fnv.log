@@ -1,0 +1,32 @@
+=== LEG Dfnv placement=D mode=fnv extra=[ LLAMA_LOGITS_FNV=1] 03:09:32
+READY Dfnv after 26s
+0.12.683.651 I llama_kv_cache:      CUDA0 KV buffer size =  2816.00 MiB
+0.12.774.956 I llama_kv_cache:      CUDA0 KV buffer size =  2112.00 MiB
+{"kind": "conc", "tag": "Dfnv", "n": 1, "round": "warm", "agg_tps": 15.55, "wall_s": 16.47, "gen": 256, "per_stream_tps": [15.88], "md5": ["53816a69bc"], "t0": 1794132599.0386338, "t1": 1794132615.5056436}
+{"kind": "depth", "tag": "Dfnv-depth", "target": 16384, "prompt_n": 16414, "prefill_tps": 346.53, "prefill_s": 47.37, "decode_n": 64, "decode_tps": 14.91, "md5": "9c80718286", "t0": 1794132615.538173, "t1": 1794132667.1632555}
+{"kind": "needle", "tag": "Dfnv-needle", "prompt_n": 31734, "decode_tps": 13.46, "found": true, "content": " 4729-ALPHA-PLUM\nAnswer: 4729-ALPHA-PLUM\n", "md5": "092e1feda9", "t0": 1794132667.2115958, "t1": 1794132765.1661868}
+fnv lines 345
+lowest MemAvailable 19288 MiB; now 121078 MiB; END Dfnv 03:12:48
+=== LEG Hfnv placement=H mode=fnv extra=[LLAMA_KV_HOST=1 LLAMA_LOGITS_FNV=1] 03:12:48
+READY Hfnv after 28s
+0.12.738.997 I ggml_backend_cuda_host_kv_buffer_alloc: 2816.00 MiB of host memory for device 0: THP advised (100% huge), NUMA single node (cpu node mask 0x1 of 1 nodes), device address == host address
+0.12.739.052 I operator(): LLAMA_KV_HOST: attention KV cache, 2816.00 MiB in host memory, read by CUDA0 directly
+0.12.739.057 I llama_kv_cache:      CUDA0 KV buffer size =  2816.00 MiB
+0.12.879.189 I ggml_backend_cuda_host_kv_buffer_alloc: 2112.00 MiB of host memory for device 0: THP advised (100% huge), NUMA single node (cpu node mask 0x1 of 1 nodes), device address == host address
+0.12.879.219 I operator(): LLAMA_KV_HOST: idx_ KV cache, 2112.00 MiB in host memory, read by CUDA0 directly
+0.12.879.224 I llama_kv_cache:      CUDA0 KV buffer size =  2112.00 MiB
+{"kind": "conc", "tag": "Hfnv", "n": 1, "round": "warm", "agg_tps": 15.57, "wall_s": 16.44, "gen": 256, "per_stream_tps": [15.9], "md5": ["53816a69bc"], "t0": 1794132795.5097263, "t1": 1794132811.9480963}
+{"kind": "depth", "tag": "Hfnv-depth", "target": 16384, "prompt_n": 16414, "prefill_tps": 345.42, "prefill_s": 47.52, "decode_n": 64, "decode_tps": 15.0, "md5": "9c80718286", "t0": 1794132811.9790184, "t1": 1794132863.722469}
+{"kind": "needle", "tag": "Hfnv-needle", "prompt_n": 31734, "decode_tps": 13.4, "found": true, "content": " 4729-ALPHA-PLUM\nAnswer: 4729-ALPHA-PLUM\n", "md5": "092e1feda9", "t0": 1794132863.7551966, "t1": 1794132962.0734687}
+fnv lines 345
+lowest MemAvailable 19426 MiB; now 121054 MiB; END Hfnv 03:16:04
+=== LEG D2fnv placement=D mode=fnv extra=[ LLAMA_LOGITS_FNV=1] 03:16:04
+READY D2fnv after 26s
+0.12.654.381 I llama_kv_cache:      CUDA0 KV buffer size =  2816.00 MiB
+0.12.745.287 I llama_kv_cache:      CUDA0 KV buffer size =  2112.00 MiB
+{"kind": "conc", "tag": "D2fnv", "n": 1, "round": "warm", "agg_tps": 15.52, "wall_s": 16.5, "gen": 256, "per_stream_tps": [15.85], "md5": ["53816a69bc"], "t0": 1794132990.5471668, "t1": 1794133007.04292}
+{"kind": "depth", "tag": "D2fnv-depth", "target": 16384, "prompt_n": 16414, "prefill_tps": 343.21, "prefill_s": 47.83, "decode_n": 64, "decode_tps": 14.88, "md5": "9c80718286", "t0": 1794133007.0794005, "t1": 1794133059.162806}
+{"kind": "needle", "tag": "D2fnv-needle", "prompt_n": 31734, "decode_tps": 13.15, "found": true, "content": " 4729-ALPHA-PLUM\nAnswer: 4729-ALPHA-PLUM\n", "md5": "092e1feda9", "t0": 1794133059.1941738, "t1": 1794133157.653498}
+fnv lines 345
+lowest MemAvailable 19192 MiB; now 120957 MiB; END D2fnv 03:19:19
+KH-FNV-DONE 03:19:19

@@ -1,0 +1,154 @@
+== legs-kh/server-Dprof.log
+  16k: 2 decode blocks, 71.00 ms of node time per graph
+     12.750 ms/graph  MUL_MAT [dev] q5_K
+      9.795 ms/graph  MUL_MAT [dev] q6_K
+      9.045 ms/graph  GET_ROWS [host] i32
+      4.700 ms/graph  MUL_MAT [dev] q8_0
+      1.730 ms/graph  MUL_MAT [dev] q4_K
+      1.565 ms/graph  fused:MUL_MAT [dev] q5_K
+      1.535 ms/graph  fused:MUL_MAT [dev] q6_K
+      1.360 ms/graph  fused:MUL
+      1.155 ms/graph  MUL_MAT [dev] f32
+      1.000 ms/graph  fused:RMS_NORM
+      0.835 ms/graph  fused:GATED_DELTA_NET
+      0.740 ms/graph  CPY kv=cache_r
+      0.605 ms/graph  CONCAT
+      0.585 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.580 ms/graph  fused:MUL_MAT [dev] q8_0
+      0.575 ms/graph  TOP_K
+      0.495 ms/graph  RMS_NORM
+      0.420 ms/graph  fused:UNARY
+      0.375 ms/graph  CONT
+      0.330 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.275 ms/graph  GLU
+      0.275 ms/graph  fused:SSM_CONV
+      0.270 ms/graph  LIGHTNING_INDEXER
+      0.115 ms/graph  MUL_MAT_ID [host] iq4_xs node=ffn_moe_down-11 n_tok=1
+      0.115 ms/graph  MUL_MAT_ID [host] iq4_xs node=ffn_moe_down-12 n_tok=1
+  100k: 2 decode blocks, 71.70 ms of node time per graph
+     14.200 ms/graph  MUL_MAT [dev] q5_K
+     10.225 ms/graph  MUL_MAT [dev] q6_K
+      6.110 ms/graph  GET_ROWS [host] i32
+      5.175 ms/graph  MUL_MAT [dev] q8_0
+      1.835 ms/graph  MUL_MAT [dev] q4_K
+      1.605 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      1.595 ms/graph  fused:MUL_MAT [dev] q6_K
+      1.445 ms/graph  fused:MUL
+      1.200 ms/graph  MUL_MAT [dev] f32
+      1.035 ms/graph  fused:RMS_NORM
+      1.005 ms/graph  LIGHTNING_INDEXER
+      0.940 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.860 ms/graph  fused:GATED_DELTA_NET
+      0.650 ms/graph  fused:MUL_MAT [dev] q5_K
+      0.615 ms/graph  fused:MUL_MAT [dev] q8_0
+      0.580 ms/graph  TOP_K
+      0.505 ms/graph  RMS_NORM
+      0.430 ms/graph  fused:UNARY
+      0.395 ms/graph  CONCAT
+      0.385 ms/graph  CONT
+      0.325 ms/graph  GLU
+      0.250 ms/graph  CPY kv=cache_r
+      0.230 ms/graph  MUL_MAT_ID [host] iq4_xs node=ffn_moe_down-11 n_tok=1
+      0.225 ms/graph  MUL_MAT_ID [host] iq4_xs node=ffn_moe_down-44 n_tok=1
+  needle: 1 decode blocks, 74.60 ms of node time per graph
+     13.900 ms/graph  MUL_MAT [dev] q5_K
+     11.830 ms/graph  GET_ROWS [host] i32
+      9.770 ms/graph  MUL_MAT [dev] q6_K
+      4.830 ms/graph  MUL_MAT [dev] q8_0
+      1.750 ms/graph  MUL_MAT [dev] q4_K
+      1.620 ms/graph  fused:MUL_MAT [dev] q6_K
+      1.410 ms/graph  fused:MUL
+      1.160 ms/graph  MUL_MAT [dev] f32
+      1.000 ms/graph  fused:RMS_NORM
+      0.840 ms/graph  fused:GATED_DELTA_NET
+      0.780 ms/graph  CPY kv=cache_r
+      0.650 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.620 ms/graph  CONCAT
+      0.590 ms/graph  fused:MUL_MAT [dev] q8_0
+      0.570 ms/graph  TOP_K
+      0.570 ms/graph  fused:MUL_MAT [dev] q5_K
+      0.530 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.490 ms/graph  RMS_NORM
+      0.420 ms/graph  fused:UNARY
+      0.380 ms/graph  CONT
+      0.380 ms/graph  LIGHTNING_INDEXER
+      0.330 ms/graph  GLU
+      0.280 ms/graph  fused:SSM_CONV
+      0.220 ms/graph  MUL_MAT_ID [host] iq4_xs node=ffn_moe_down-44 n_tok=1
+== legs-kh/server-Hprof.log
+  16k: 2 decode blocks, 71.80 ms of node time per graph
+     12.740 ms/graph  MUL_MAT [dev] q5_K
+      9.765 ms/graph  MUL_MAT [dev] q6_K
+      9.670 ms/graph  GET_ROWS [host] i32
+      4.740 ms/graph  MUL_MAT [dev] q8_0
+      1.710 ms/graph  MUL_MAT [dev] q4_K
+      1.555 ms/graph  fused:MUL_MAT [dev] q5_K
+      1.545 ms/graph  fused:MUL_MAT [dev] q6_K
+      1.385 ms/graph  fused:MUL
+      1.160 ms/graph  MUL_MAT [dev] f32
+      1.020 ms/graph  fused:RMS_NORM
+      0.860 ms/graph  fused:GATED_DELTA_NET
+      0.750 ms/graph  CPY kv=cache_r
+      0.605 ms/graph  CONCAT
+      0.590 ms/graph  fused:MUL_MAT [dev] q8_0
+      0.575 ms/graph  TOP_K
+      0.565 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.500 ms/graph  RMS_NORM
+      0.430 ms/graph  fused:UNARY
+      0.390 ms/graph  CONT
+      0.290 ms/graph  fused:SSM_CONV
+      0.285 ms/graph  GLU
+      0.280 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.275 ms/graph  LIGHTNING_INDEXER
+      0.230 ms/graph  MUL_MAT_ID [host] iq4_xs node=ffn_moe_down-12 n_tok=1
+  100k: 2 decode blocks, 69.45 ms of node time per graph
+     13.735 ms/graph  MUL_MAT [dev] q5_K
+      9.720 ms/graph  MUL_MAT [dev] q6_K
+      6.120 ms/graph  GET_ROWS [host] i32
+      4.945 ms/graph  MUL_MAT [dev] q8_0
+      1.725 ms/graph  MUL_MAT [dev] q4_K
+      1.525 ms/graph  fused:MUL_MAT [dev] q6_K
+      1.445 ms/graph  fused:MUL
+      1.230 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      1.155 ms/graph  MUL_MAT [dev] f32
+      1.025 ms/graph  fused:RMS_NORM
+      0.990 ms/graph  LIGHTNING_INDEXER
+      0.865 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.855 ms/graph  fused:GATED_DELTA_NET
+      0.610 ms/graph  fused:MUL_MAT [dev] q5_K
+      0.585 ms/graph  fused:MUL_MAT [dev] q8_0
+      0.580 ms/graph  TOP_K
+      0.500 ms/graph  RMS_NORM
+      0.425 ms/graph  fused:UNARY
+      0.385 ms/graph  CONCAT
+      0.380 ms/graph  CONT
+      0.330 ms/graph  GLU
+      0.250 ms/graph  CPY kv=cache_r
+      0.230 ms/graph  MUL_MAT_ID [host] iq4_xs node=ffn_moe_down-12 n_tok=1
+      0.115 ms/graph  MUL_MAT_ID [host] iq4_xs node=ffn_moe_down-11 n_tok=1
+      0.115 ms/graph  MUL_MAT_ID [host] iq4_xs node=ffn_moe_down-44 n_tok=1
+  needle: 1 decode blocks, 74.00 ms of node time per graph
+     13.800 ms/graph  MUL_MAT [dev] q5_K
+     11.320 ms/graph  GET_ROWS [host] i32
+      9.660 ms/graph  MUL_MAT [dev] q6_K
+      4.790 ms/graph  MUL_MAT [dev] q8_0
+      1.720 ms/graph  MUL_MAT [dev] q4_K
+      1.590 ms/graph  fused:MUL_MAT [dev] q6_K
+      1.470 ms/graph  fused:MUL
+      1.170 ms/graph  MUL_MAT [dev] f32
+      1.020 ms/graph  fused:RMS_NORM
+      0.870 ms/graph  fused:GATED_DELTA_NET
+      0.790 ms/graph  CPY kv=cache_r
+      0.630 ms/graph  CONCAT
+      0.610 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.590 ms/graph  fused:MUL_MAT [dev] q8_0
+      0.580 ms/graph  TOP_K
+      0.560 ms/graph  fused:MUL_MAT [dev] q5_K
+      0.500 ms/graph  RMS_NORM
+      0.460 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.440 ms/graph  fused:UNARY
+      0.390 ms/graph  LIGHTNING_INDEXER
+      0.380 ms/graph  CONT
+      0.340 ms/graph  GLU
+      0.300 ms/graph  fused:SSM_CONV
+      0.230 ms/graph  MUL_MAT_ID [host] iq4_xs node=ffn_moe_down-44 n_tok=1

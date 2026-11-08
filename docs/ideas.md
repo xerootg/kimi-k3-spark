@@ -20,7 +20,7 @@ measurement), **partly** (right direction, smaller payoff than hoped), **no** (n
 | 2026-11-08 | Compress the KV (8-bit) | rejected | none |
 | 2026-11-08 | Park idle conversations' KV on NVMe, reload on demand | sane | include in the multi-slot build |
 | 2026-11-08 | Several 1M conversations on the GH200; leave KV in HBM and serve as many as fit | sane | follows the per-conversation build |
-| 2026-11-08 | Keep the KV in Grace memory and let the GPU read it over the fast link | promising | prototype and measure on the GH200 |
+| 2026-11-08 | Keep the KV in Grace memory and let the GPU read it over the fast link | promising (built, correct on the Spark) | GH200 window, script ready (~1 h) |
 | 2026-11-08 | The Spark as the general local failover for the GH200 | sane | Juno done in argo-things #159; public endpoint and workbench next |
 | 2026-11-08 | Crack the 1M-token context ceiling | promising | test past 1M on the Spark after the KV-placement prototype |
 
@@ -117,9 +117,26 @@ Verdict: promising. Checked on paper 2026-11-08 (ledger entry of that date):
 - Payoff: about 19 GB of HBM freed per 1M conversation, and room for tens of 1M conversations in Grace memory with no
   reload step.
 
-Next: a patch that allocates the KV and indexer caches in GPU-accessible Grace memory (the expert host bank already
-does this), then measure decode at 16k, 100k and 500k against HBM placement, with md5 checks. Needs the GH200 for
-about an hour of downtime.
+Built and checked on the Spark 2026-11-08 (patch 0051, `LLAMA_KV_HOST=1`; ledger entry "KV in host memory, patch
+0051"). Both caches sit in registered, huge-page host memory, and attention and the indexer still run on the GPU.
+Output is byte-identical to device placement at 16k, 100k and 200k and on a needle test, and decode speed is the
+same. The Spark's host and device memory are the same chips, so this proves correctness and prices the host-access
+path, not the link:
+
+- Scattered attention gathers cost the same through the host path.
+- The indexer's streaming scan reads ~1.4x slower.
+- Huge pages are essential: without them the GPU's scattered reads are 2-6x slower.
+
+On the Spark the KV ops are 2-5 % of a token up to 100k. The indexer's part grows with depth: ~2.4 ms at 100k,
+~20 ms at 1M by extrapolation.
+
+GH200 estimate: at 500k the indexer reads ~350 MB per token. That is about 1.2 ms over C2C against 0.2 ms from HBM,
+plus whatever latency the scattered reads add. So expect a few percent slower decode at 500k-1M, for 9.6-19 GB of
+HBM freed per conversation.
+
+Next: the GH200 window (`docs/evidence/glm-windows-2026-10-30/kv-placement/gh200-kvhost.sh`). Build before the
+downtime, then about an hour down: microbenchmark, HBM vs Grace decode at 16k / 100k / 500k with md5s, and per-op
+profiles at 100k / 500k.
 
 ## The Spark as the GH200's failover (2026-11-08)
 

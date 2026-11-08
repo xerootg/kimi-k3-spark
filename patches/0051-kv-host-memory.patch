@@ -1,0 +1,401 @@
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index 57d273b..2be216d 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -1021,6 +1021,8 @@ struct ggml_backend_cuda_buffer_context {
+     std::string name;
+     std::unique_ptr<ggml_cuda_elastic_map> elastic;
+     size_t va_size = 0;
++    void * host_ptr = nullptr; // patch 0051: the buffer is registered host memory (mmap), dev_ptr is its device address
++    size_t host_size = 0;
+ 
+     ggml_backend_cuda_buffer_context(int device, void * dev_ptr) :
+         device(device), dev_ptr(dev_ptr),
+@@ -1028,6 +1030,15 @@ struct ggml_backend_cuda_buffer_context {
+     }
+ 
+     ~ggml_backend_cuda_buffer_context() {
++#if defined(__linux__)
++        if (host_ptr) {
++            ggml_cuda_set_device(device);
++            CUDA_CHECK(cudaDeviceSynchronize());
++            CUDA_CHECK(cudaHostUnregister(host_ptr));
++            munmap(host_ptr, host_size);
++            return;
++        }
++#endif
+ #if defined(GGML_USE_VMM)
+         if (elastic) {
+             ggml_cuda_set_device(device);
+@@ -1054,6 +1065,15 @@ static bool ggml_backend_buffer_is_cuda(ggml_backend_buffer_t buffer) {
+     return buffer->iface.free_buffer == ggml_backend_cuda_buffer_free_buffer;
+ }
+ 
++// patch 0051: copies into or out of a host-backed CUDA buffer let the driver infer the direction (unified
++// addressing); every other buffer keeps its explicit kind
++static cudaMemcpyKind ggml_cuda_buf_copy_kind(ggml_backend_buffer_t buffer, cudaMemcpyKind kind) {
++    if (buffer != nullptr && ggml_backend_buffer_is_cuda(buffer) && ((ggml_backend_cuda_buffer_context *) buffer->context)->host_ptr != nullptr) {
++        return cudaMemcpyDefault;
++    }
++    return kind;
++}
++
+ static void * ggml_backend_cuda_buffer_get_base(ggml_backend_buffer_t buffer) {
+     ggml_backend_cuda_buffer_context * ctx = (ggml_backend_cuda_buffer_context *)buffer->context;
+     return ctx->dev_ptr;
+@@ -1094,7 +1114,7 @@ static void ggml_backend_cuda_buffer_set_tensor(ggml_backend_buffer_t buffer, gg
+     ggml_backend_cuda_buffer_context * ctx = (ggml_backend_cuda_buffer_context *) buffer->context;
+ 
+     ggml_cuda_set_device(ctx->device);
+-    CUDA_CHECK(cudaMemcpyAsync((char *) tensor->data + offset, data, size, cudaMemcpyHostToDevice, cudaStreamPerThread));
++    CUDA_CHECK(cudaMemcpyAsync((char *) tensor->data + offset, data, size, ggml_cuda_buf_copy_kind(buffer, cudaMemcpyHostToDevice), cudaStreamPerThread));
+     CUDA_CHECK(cudaStreamSynchronize(cudaStreamPerThread));
+ }
+ 
+@@ -1102,7 +1122,7 @@ static void ggml_backend_cuda_buffer_get_tensor(ggml_backend_buffer_t buffer, co
+     ggml_backend_cuda_buffer_context * ctx = (ggml_backend_cuda_buffer_context *) buffer->context;
+ 
+     ggml_cuda_set_device(ctx->device);
+-    CUDA_CHECK(cudaMemcpyAsync(data, (const char *) tensor->data + offset, size, cudaMemcpyDeviceToHost, cudaStreamPerThread));
++    CUDA_CHECK(cudaMemcpyAsync(data, (const char *) tensor->data + offset, size, ggml_cuda_buf_copy_kind(buffer, cudaMemcpyDeviceToHost), cudaStreamPerThread));
+     CUDA_CHECK(cudaStreamSynchronize(cudaStreamPerThread));
+ }
+ 
+@@ -1112,7 +1132,7 @@ static void ggml_backend_cuda_buffer_set_tensor_2d(ggml_backend_buffer_t buffer,
+ 
+     ggml_cuda_set_device(ctx->device);
+     CUDA_CHECK(cudaMemcpy2DAsync(
+-        (char *) tensor->data + offset, stride_tensor, data, stride_data, size, n_copies, cudaMemcpyHostToDevice, cudaStreamPerThread));
++        (char *) tensor->data + offset, stride_tensor, data, stride_data, size, n_copies, ggml_cuda_buf_copy_kind(buffer, cudaMemcpyHostToDevice), cudaStreamPerThread));
+     CUDA_CHECK(cudaStreamSynchronize(cudaStreamPerThread));
+ }
+ 
+@@ -1122,7 +1142,7 @@ static void ggml_backend_cuda_buffer_get_tensor_2d(ggml_backend_buffer_t buffer,
+ 
+     ggml_cuda_set_device(ctx->device);
+     CUDA_CHECK(cudaMemcpy2DAsync(
+-        data, stride_data, (const char *) tensor->data + offset, stride_tensor, size, n_copies, cudaMemcpyDeviceToHost, cudaStreamPerThread));
++        data, stride_data, (const char *) tensor->data + offset, stride_tensor, size, n_copies, ggml_cuda_buf_copy_kind(buffer, cudaMemcpyDeviceToHost), cudaStreamPerThread));
+     CUDA_CHECK(cudaStreamSynchronize(cudaStreamPerThread));
+ }
+ 
+@@ -1135,7 +1155,7 @@ static bool ggml_backend_cuda_buffer_cpy_tensor(ggml_backend_buffer_t buffer, co
+         const int src_physical = ggml_cuda_get_physical_device(src_ctx->device);
+         const int dst_physical = ggml_cuda_get_physical_device(dst_ctx->device);
+         if (src_physical == dst_physical) {
+-            CUDA_CHECK(cudaMemcpyAsync(dst->data, src->data, ggml_nbytes(src), cudaMemcpyDeviceToDevice, cudaStreamPerThread));
++            CUDA_CHECK(cudaMemcpyAsync(dst->data, src->data, ggml_nbytes(src), ggml_cuda_buf_copy_kind(src->buffer, ggml_cuda_buf_copy_kind(dst->buffer, cudaMemcpyDeviceToDevice)), cudaStreamPerThread));
+         } else {
+ #ifdef GGML_CUDA_NO_PEER_COPY
+             return false;
+@@ -1319,6 +1339,115 @@ static ggml_backend_buffer_t ggml_backend_cuda_elastic_buffer_alloc(int device,
+ #endif
+ }
+ 
++#if defined(__linux__)
++#include <sys/syscall.h>
++#include <dirent.h>
++#include <cerrno>
++#endif
++
++// kimi-k3-spark patch 0051: a buffer of the device's ordinary buffer type (so the scheduler keeps every op that uses
++// it on this GPU, and CUDA graphs, views and the copy paths treat it as any CUDA buffer) whose memory is host memory
++// the GPU reads and writes directly: anonymous mmap, optionally MADV_HUGEPAGE, bound to the NUMA nodes that have CPUs
++// when there is more than one node (on the GH200 node 1 is the HBM; this keeps the pages in Grace memory), populated
++// on the CPU so no GPU access ever faults, then cudaHostRegister'ed (the expert host bank's path, 345 GB/s over
++// NVLink-C2C in docs/uvm-experiment.md; cudaMallocManaged can migrate pages to HBM and cudaHostAlloc gives no node
++// control). With unified addressing the device address equals the host address. nullptr on failure.
++static ggml_backend_buffer_t ggml_backend_cuda_host_kv_buffer_alloc(int device, size_t size, int thp) {
++#if defined(__linux__)
++    if (device < 0 || device >= ggml_backend_cuda_get_device_count() || size == 0) {
++        return nullptr;
++    }
++    const size_t page = (size_t) sysconf(_SC_PAGESIZE);
++    const size_t map_size = (size + page - 1)/page*page;
++    void * p = mmap(nullptr, map_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
++    if (p == MAP_FAILED) {
++        GGML_LOG_ERROR("%s: mmap of %.2f MiB failed: %s\n", __func__, map_size/1024.0/1024.0, strerror(errno));
++        return nullptr;
++    }
++    const int advice = thp ? madvise(p, map_size, MADV_HUGEPAGE) : -1;
++    unsigned long mask = 0;
++    int n_nodes = 0;
++    if (DIR * d = opendir("/sys/devices/system/node")) {
++        while (dirent * e = readdir(d)) {
++            int n = 0;
++            if (sscanf(e->d_name, "node%d", &n) != 1 || n < 0 || n >= 64) {
++                continue;
++            }
++            n_nodes++;
++            const std::string path = std::string("/sys/devices/system/node/") + e->d_name + "/cpulist";
++            char line[64] = {0};
++            if (FILE * f = fopen(path.c_str(), "r")) {
++                if (fgets(line, sizeof(line), f) == nullptr) {
++                    line[0] = 0;
++                }
++                fclose(f);
++            }
++            if (line[0] >= '0' && line[0] <= '9') {
++                mask |= 1ul << n;
++            }
++        }
++        closedir(d);
++    }
++    int bound = 0;
++    if (n_nodes > 1 && mask != 0) {
++        bound = syscall(SYS_mbind, p, map_size, 2 /* MPOL_BIND */, &mask, 8*sizeof(mask) + 1, 0) == 0 ? 1 : -1;
++    }
++#ifndef MADV_POPULATE_WRITE
++#define MADV_POPULATE_WRITE 23
++#endif
++    if (madvise(p, map_size, MADV_POPULATE_WRITE) != 0) {
++        for (size_t off = 0; off < map_size; off += page) {
++            ((volatile char *) p)[off] = 0;
++        }
++    }
++    // the huge-page share of the mapping, as the kernel reports it
++    size_t huge = 0;
++    if (FILE * f = fopen("/proc/self/smaps", "r")) {
++        char line[512];
++        bool in = false;
++        while (fgets(line, sizeof(line), f)) {
++            unsigned long a, b;
++            size_t kb;
++            if (sscanf(line, "%lx-%lx", &a, &b) == 2 && strchr(line, ' ') != nullptr && strchr(line, '-') < strchr(line, ' ')) {
++                in = a >= (uintptr_t) p && b <= (uintptr_t) p + map_size;
++            } else if (in && sscanf(line, "AnonHugePages: %zu kB", &kb) == 1) {
++                huge += kb*1024;
++            }
++        }
++        fclose(f);
++    }
++    ggml_cuda_set_device(device);
++    cudaError_t err = cudaHostRegister(p, map_size, cudaHostRegisterPortable | cudaHostRegisterMapped);
++    if (err != cudaSuccess) {
++        (void) cudaGetLastError();
++        GGML_LOG_ERROR("%s: cudaHostRegister of %.2f MiB failed: %s\n", __func__, map_size/1024.0/1024.0, cudaGetErrorString(err));
++        munmap(p, map_size);
++        return nullptr;
++    }
++    void * dptr = nullptr;
++    err = cudaHostGetDevicePointer(&dptr, p, 0);
++    if (err != cudaSuccess || dptr == nullptr) {
++        (void) cudaGetLastError();
++        GGML_LOG_ERROR("%s: no device address for registered host memory: %s\n", __func__, cudaGetErrorString(err));
++        CUDA_CHECK(cudaHostUnregister(p));
++        munmap(p, map_size);
++        return nullptr;
++    }
++    GGML_LOG_INFO("%s: %.2f MiB of host memory for device %d: THP %s (%.0f%% huge), NUMA %s (cpu node mask 0x%lx of %d nodes), device address %s host address\n",
++        __func__, map_size/1024.0/1024.0, device, thp ? (advice == 0 ? "advised" : "advice failed") : "off", 100.0*huge/map_size,
++        bound > 0 ? "bound" : bound < 0 ? "bind FAILED" : "single node", mask, n_nodes, dptr == p ? "==" : "!=");
++    ggml_backend_cuda_buffer_context * ctx = new ggml_backend_cuda_buffer_context(device, dptr);
++    ctx->host_ptr = p;
++    ctx->host_size = map_size;
++    return ggml_backend_buffer_init(ggml_backend_cuda_buffer_type(device), ggml_backend_cuda_buffer_interface, ctx, size);
++#else
++    GGML_UNUSED(device);
++    GGML_UNUSED(size);
++    GGML_UNUSED(thp);
++    return nullptr;
++#endif
++}
++
+ // Map exactly the chunks that overlap the n byte ranges [offs[i], offs[i] + lens[i]) of an elastic buffer: chunks
+ // newly needed are mapped and zeroed, and with shrink also the chunks no range touches any more are unmapped (after
+ // the device is idle). Returns the bytes mapped afterwards, or SIZE_MAX if a chunk could not be mapped (the chunks
+@@ -2241,6 +2370,19 @@ static void ggml_cuda_op_profile_end(ggml_backend_cuda_context & ctx, const ggml
+             key += " n_tok=" + std::to_string(node->src[1] ? node->src[1]->ne[2] : 0);
+         }
+     }
++    // patch 0051: name the KV cache a node reads or writes (cache_k = attention latents, cache_idx_k = indexer
++    // rows), the same in either placement, so FLASH_ATTN_EXT and the indexer's gathers can be compared
++    for (int i = -1; i < GGML_MAX_SRC; ++i) {
++        const ggml_tensor * t = i < 0 ? node->view_src : node->src[i];
++        while (t != nullptr && t->view_src != nullptr) {
++            t = t->view_src;
++        }
++        if (t != nullptr && strncmp(t->name, "cache_", 6) == 0) {
++            const char * l = strstr(t->name, "_l");
++            key += " kv=" + (l ? std::string(t->name, l - t->name) : std::string(t->name));
++            break;
++        }
++    }
+     if (ggml_cuda_host_bank_hook_stats() && node->op == GGML_OP_GET_ROWS) {
+         key += strncmp(node->name, "moe_early-", 10) == 0 ? " early" :
+                strncmp(node->name, "moe_nowait", 10) == 0 ? " merge" :
+@@ -3663,7 +3805,7 @@ static void ggml_backend_cuda_set_tensor_async(ggml_backend_t backend, ggml_tens
+ 
+     GGML_ASSERT(buf->buft == ggml_backend_cuda_buffer_type(cuda_ctx->device) && "unsupported buffer type");
+ 
+-    CUDA_CHECK(cudaMemcpyAsync((char *) tensor->data + offset, data, size, cudaMemcpyHostToDevice, cuda_ctx->stream()));
++    CUDA_CHECK(cudaMemcpyAsync((char *) tensor->data + offset, data, size, ggml_cuda_buf_copy_kind(buf, cudaMemcpyHostToDevice), cuda_ctx->stream()));
+ }
+ 
+ static void ggml_backend_cuda_get_tensor_async(ggml_backend_t backend, const ggml_tensor * tensor, void * data, size_t offset, size_t size) {
+@@ -3672,7 +3814,7 @@ static void ggml_backend_cuda_get_tensor_async(ggml_backend_t backend, const ggm
+ 
+     GGML_ASSERT(buf->buft == ggml_backend_cuda_buffer_type(cuda_ctx->device) && "unsupported buffer type");
+ 
+-    CUDA_CHECK(cudaMemcpyAsync(data, (const char *) tensor->data + offset, size, cudaMemcpyDeviceToHost, cuda_ctx->stream()));
++    CUDA_CHECK(cudaMemcpyAsync(data, (const char *) tensor->data + offset, size, ggml_cuda_buf_copy_kind(buf, cudaMemcpyDeviceToHost), cuda_ctx->stream()));
+ }
+ 
+ static void ggml_backend_cuda_set_tensor_2d_async(ggml_backend_t backend, struct ggml_tensor * tensor, const void * data,
+@@ -3683,7 +3825,7 @@ static void ggml_backend_cuda_set_tensor_2d_async(ggml_backend_t backend, struct
+     GGML_ASSERT(buf->buft == ggml_backend_cuda_buffer_type(cuda_ctx->device) && "unsupported buffer type");
+ 
+     CUDA_CHECK(cudaMemcpy2DAsync(
+-        (char *) tensor->data + offset, stride_tensor, data, stride_data, size, n_copies, cudaMemcpyHostToDevice, cuda_ctx->stream()));
++        (char *) tensor->data + offset, stride_tensor, data, stride_data, size, n_copies, ggml_cuda_buf_copy_kind(buf, cudaMemcpyHostToDevice), cuda_ctx->stream()));
+ }
+ 
+ static void ggml_backend_cuda_get_tensor_2d_async(ggml_backend_t backend, const struct ggml_tensor * tensor, void * data,
+@@ -3694,7 +3836,7 @@ static void ggml_backend_cuda_get_tensor_2d_async(ggml_backend_t backend, const
+     GGML_ASSERT(buf->buft == ggml_backend_cuda_buffer_type(cuda_ctx->device) && "unsupported buffer type");
+ 
+     CUDA_CHECK(cudaMemcpy2DAsync(
+-        data, stride_data, (const char *) tensor->data + offset, stride_tensor, size, n_copies, cudaMemcpyDeviceToHost, cuda_ctx->stream()));
++        data, stride_data, (const char *) tensor->data + offset, stride_tensor, size, n_copies, ggml_cuda_buf_copy_kind(buf, cudaMemcpyDeviceToHost), cuda_ctx->stream()));
+ }
+ 
+ static bool ggml_backend_cuda_cpy_tensor_async(ggml_backend_t backend_src, ggml_backend_t backend_dst, const ggml_tensor * src, ggml_tensor * dst) {
+@@ -3730,7 +3872,7 @@ static bool ggml_backend_cuda_cpy_tensor_async(ggml_backend_t backend_src, ggml_
+         const int src_physical = ggml_cuda_get_physical_device(cuda_ctx_src->device);
+         const int dst_physical = ggml_cuda_get_physical_device(cuda_ctx_dst->device);
+         if (src_physical == dst_physical) {
+-            CUDA_CHECK(cudaMemcpyAsync(dst->data, src->data, ggml_nbytes(dst), cudaMemcpyDeviceToDevice, cuda_ctx_src->stream()));
++            CUDA_CHECK(cudaMemcpyAsync(dst->data, src->data, ggml_nbytes(dst), ggml_cuda_buf_copy_kind(buf_src, ggml_cuda_buf_copy_kind(buf_dst, cudaMemcpyDeviceToDevice)), cuda_ctx_src->stream()));
+         } else {
+ #ifdef GGML_CUDA_NO_PEER_COPY
+             return false;
+@@ -3751,7 +3893,7 @@ static bool ggml_backend_cuda_cpy_tensor_async(ggml_backend_t backend_src, ggml_
+         CUDA_CHECK(cudaStreamWaitEvent(cuda_ctx_dst->stream(), cuda_ctx_src->copy_event, 0));
+     } else {
+         // src and dst are on the same backend
+-        CUDA_CHECK(cudaMemcpyAsync(dst->data, src->data, ggml_nbytes(dst), cudaMemcpyDeviceToDevice, cuda_ctx_src->stream()));
++        CUDA_CHECK(cudaMemcpyAsync(dst->data, src->data, ggml_nbytes(dst), ggml_cuda_buf_copy_kind(buf_src, ggml_cuda_buf_copy_kind(buf_dst, cudaMemcpyDeviceToDevice)), cuda_ctx_src->stream()));
+     }
+     return true;
+ }
+@@ -8025,6 +8167,9 @@ static void * ggml_backend_cuda_reg_get_proc_address(ggml_backend_reg_t reg, con
+     if (strcmp(name, "ggml_backend_cuda_elastic_buffer_alloc") == 0) {
+         return (void *)ggml_backend_cuda_elastic_buffer_alloc;
+     }
++    if (strcmp(name, "ggml_backend_cuda_host_kv_buffer_alloc") == 0) {
++        return (void *)ggml_backend_cuda_host_kv_buffer_alloc;
++    }
+     if (strcmp(name, "ggml_backend_cuda_elastic_buffer_set_ranges") == 0) {
+         return (void *)ggml_backend_cuda_elastic_buffer_set_ranges;
+     }
+diff --git a/src/llama-kv-cache.cpp b/src/llama-kv-cache.cpp
+index 486a91f..40478e1 100644
+--- a/src/llama-kv-cache.cpp
++++ b/src/llama-kv-cache.cpp
+@@ -16,6 +16,9 @@
+ #include <map>
+ #include <stdexcept>
+ #include <unordered_map>
++#if defined(__linux__)
++#include <unistd.h>
++#endif
+ 
+ static bool ggml_is_power_of_2(int n) {
+     return (n & (n - 1)) == 0;
+@@ -281,8 +284,21 @@ llama_kv_cache::llama_kv_cache(
+         const char * v = getenv("LLAMA_ELASTIC_KV");
+         return v != nullptr && v[0] == '1' && v[1] == '\0';
+     }();
+-    const bool elastic_ok = elastic_env && !hparams.no_alloc && other == nullptr && n_stream == 1 && (!v_trans || is_mla);
+-    if (elastic_env && !elastic_ok) {
++    // kimi-k3-spark patch 0051: LLAMA_KV_HOST=1 puts the KV buffers of GPU layers in registered host memory that the
++    // GPU reads directly; the buffers keep the GPU's buffer type, so attention and the indexer still run on the GPU
++    // (unlike --no-kv-offload, which moves them to the CPU). LLAMA_KV_HOST_THP=0/1 overrides the huge-page default (on
++    // with 4 KiB base pages, off with 64 KiB ones, where a THP is 512 MiB). Replaces elastic KV: the whole context is
++    // allocated (in host memory) up front.
++    static const bool host_env = [] {
++        const char * v = getenv("LLAMA_KV_HOST");
++        return v != nullptr && v[0] == '1' && v[1] == '\0';
++    }();
++    const bool host_ok = host_env && offload && !hparams.no_alloc;
++    if (host_ok && elastic_env) {
++        LLAMA_LOG_WARN("%s: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory\n", __func__);
++    }
++    const bool elastic_ok = elastic_env && !host_ok && !hparams.no_alloc && other == nullptr && n_stream == 1 && (!v_trans || is_mla);
++    if (elastic_env && !host_ok && !elastic_ok) {
+         LLAMA_LOG_WARN("%s: LLAMA_ELASTIC_KV=1 ignored: needs one KV stream, no transposed V (flash attention) and unshared cells\n", __func__);
+     }
+     if (elastic_ok) {
+@@ -334,17 +350,70 @@ llama_kv_cache::llama_kv_cache(
+         return buf;
+     };
+ 
++    // patch 0051: a host-memory buffer of the GPU's buffer type, with the context's tensors placed as the ordinary
++    // allocator would
++    auto host_alloc = [&](ggml_context * ctx, ggml_backend_buffer_type_t buft) -> ggml_backend_buffer_t {
++        ggml_backend_dev_t dev = ggml_backend_buft_get_device(buft);
++        if (dev == nullptr || (ggml_backend_dev_type(dev) != GGML_BACKEND_DEVICE_TYPE_GPU && ggml_backend_dev_type(dev) != GGML_BACKEND_DEVICE_TYPE_IGPU)) {
++            return nullptr;
++        }
++        ggml_backend_reg_t reg = ggml_backend_dev_backend_reg(dev);
++        auto alloc_fn = (ggml_backend_buffer_t (*)(int, size_t, int)) ggml_backend_reg_get_proc_address(reg, "ggml_backend_cuda_host_kv_buffer_alloc");
++        if (alloc_fn == nullptr || ggml_backend_dev_buffer_type(dev) != buft) {
++            return nullptr;
++        }
++        int idx = -1;
++        for (size_t i = 0; i < ggml_backend_reg_dev_count(reg); ++i) {
++            if (ggml_backend_reg_dev_get(reg, i) == dev) {
++                idx = (int) i;
++            }
++        }
++#if defined(__linux__)
++        int thp = sysconf(_SC_PAGESIZE) <= 4096 ? 1 : 0;
++#else
++        int thp = 0;
++#endif
++        if (const char * v = getenv("LLAMA_KV_HOST_THP")) {
++            thp = atoi(v) != 0;
++        }
++        const size_t size = ggml_backend_alloc_ctx_tensors_from_buft_size(ctx, buft);
++        ggml_backend_buffer_t buf = idx >= 0 && size > 0 ? alloc_fn(idx, size, thp) : nullptr;
++        if (buf == nullptr) {
++            throw std::runtime_error("LLAMA_KV_HOST=1: could not allocate the KV cache in host memory");
++        }
++        ggml_tallocr talloc = ggml_tallocr_new(buf);
++        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
++            if (t->data == nullptr && t->view_src == nullptr) {
++                if (ggml_tallocr_alloc(&talloc, t) != GGML_STATUS_SUCCESS) {
++                    ggml_backend_buffer_free(buf);
++                    throw std::runtime_error("LLAMA_KV_HOST=1: placing the KV tensors failed");
++                }
++            }
++        }
++        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
++            if (t->view_src != nullptr && t->buffer == nullptr) {
++                ggml_backend_view_init(t);
++            }
++        }
++        LLAMA_LOG_INFO("%s: LLAMA_KV_HOST: %s%s KV cache, %.2f MiB in host memory, read by %s directly\n", __func__,
++            name_tag, name_tag[0] ? "" : "attention", size/1024.0/1024.0, ggml_backend_dev_name(dev));
++        return buf;
++    };
++
+     // allocate tensors and initialize the buffers to avoid NaNs in the padding
+     for (auto & [buft, ctx] : ctx_map) {
+         ggml_backend_buffer_t buf = nullptr;
+-        if (elastic_ok) {
++        if (host_ok) {
++            buf = host_alloc(ctx.get(), buft);
++        }
++        if (buf == nullptr && elastic_ok) {
+             buf = elastic_alloc(ctx.get(), buft);
+             if (buf != nullptr) {
+                 elastic_raw.push_back(buf);
+             }
+         }
+         if (buf != nullptr) {
+-            // elastic: placed above, nothing mapped yet
++            // elastic or host (0051): placed above
+         } else if (hparams.no_alloc) {
+             buf = ggml_backend_buft_alloc_buffer(buft, /*size =*/ 0); // dummy buffer
+             for (ggml_tensor * t = ggml_get_first_tensor(ctx.get()); t != nullptr; t = ggml_get_next_tensor(ctx.get(), t)) {

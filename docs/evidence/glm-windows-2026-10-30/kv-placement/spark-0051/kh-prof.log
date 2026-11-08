@@ -1,0 +1,23 @@
+=== LEG Dprof placement=D mode=prof extra=[ GGML_CUDA_OP_PROFILE=16 LLAMA_LOGITS_FNV=1] 02:51:33
+READY Dprof after 26s
+0.12.568.257 I llama_kv_cache:      CUDA0 KV buffer size =  2816.00 MiB
+0.12.665.771 I llama_kv_cache:      CUDA0 KV buffer size =  2112.00 MiB
+{"kind": "depth", "tag": "Dprof-depth", "target": 16384, "prompt_n": 16414, "prefill_tps": 341.11, "prefill_s": 48.12, "decode_n": 64, "decode_tps": 12.72, "md5": "9c80718286", "t0": 1794131520.1325426, "t1": 1794131573.2286034}
+{"kind": "depth", "tag": "Dprof-depth", "target": 100000, "prompt_n": 99676, "prefill_tps": 312.53, "prefill_s": 318.94, "decode_n": 64, "decode_tps": 12.57, "md5": "9c80718286", "t0": 1794131573.24105, "t1": 1794131897.2484007}
+{"kind": "needle", "tag": "Dprof-needle", "prompt_n": 31734, "decode_tps": 12.03, "found": true, "content": " 4729-ALPHA-PLUM\nAnswer: 4729-ALPHA-PLUM\n", "md5": "092e1feda9", "t0": 1794131897.2803185, "t1": 1794131993.995137}
+fnv lines 153
+lowest MemAvailable 19324 MiB; now 121043 MiB; END Dprof 02:59:56
+=== LEG Hprof placement=H mode=prof extra=[LLAMA_KV_HOST=1 GGML_CUDA_OP_PROFILE=16 LLAMA_LOGITS_FNV=1] 02:59:56
+READY Hprof after 26s
+0.12.680.707 I ggml_backend_cuda_host_kv_buffer_alloc: 2816.00 MiB of host memory for device 0: THP advised (100% huge), NUMA single node (cpu node mask 0x1 of 1 nodes), device address == host address
+0.12.680.760 I operator(): LLAMA_KV_HOST: attention KV cache, 2816.00 MiB in host memory, read by CUDA0 directly
+0.12.680.766 I llama_kv_cache:      CUDA0 KV buffer size =  2816.00 MiB
+0.12.818.050 I ggml_backend_cuda_host_kv_buffer_alloc: 2112.00 MiB of host memory for device 0: THP advised (100% huge), NUMA single node (cpu node mask 0x1 of 1 nodes), device address == host address
+0.12.818.080 I operator(): LLAMA_KV_HOST: idx_ KV cache, 2112.00 MiB in host memory, read by CUDA0 directly
+0.12.818.085 I llama_kv_cache:      CUDA0 KV buffer size =  2112.00 MiB
+{"kind": "depth", "tag": "Hprof-depth", "target": 16384, "prompt_n": 16414, "prefill_tps": 340.3, "prefill_s": 48.23, "decode_n": 64, "decode_tps": 12.69, "md5": "9c80718286", "t0": 1794132022.1425889, "t1": 1794132075.3657923}
+{"kind": "depth", "tag": "Hprof-depth", "target": 100000, "prompt_n": 99676, "prefill_tps": 310.56, "prefill_s": 320.95, "decode_n": 64, "decode_tps": 12.97, "md5": "9c80718286", "t0": 1794132075.37837, "t1": 1794132401.2482936}
+{"kind": "needle", "tag": "Hprof-needle", "prompt_n": 31734, "decode_tps": 12.18, "found": true, "content": " 4729-ALPHA-PLUM\nAnswer: 4729-ALPHA-PLUM\n", "md5": "092e1feda9", "t0": 1794132401.2805, "t1": 1794132498.6439676}
+fnv lines 153
+lowest MemAvailable 19406 MiB; now 121035 MiB; END Hprof 03:08:20
+KH-PROF-DONE 03:08:20

@@ -1,0 +1,10 @@
+Hperf pid 28230 02:12:49: anonymous mappings of 2000-3000 MiB (KV is 2816 MiB attention + 2112 MiB indexer at ctx 262144)
+e73bdd800000-e73c77400000 Size:            2519040 kB
+e73bdd800000-e73c77400000 AnonHugePages:   2519040 kB
+e73bdd800000-e73c77400000 Locked:          2519040 kB
+e74f90000000-e75040000000 Size:            2883584 kB
+e74f90000000-e75040000000 AnonHugePages:   2883584 kB
+e74f90000000-e75040000000 Locked:          2883584 kB
+e753a8600000-e7542c600000 Size:            2162688 kB
+e753a8600000-e7542c600000 AnonHugePages:   2162688 kB
+e753a8600000-e7542c600000 Locked:          2162688 kB

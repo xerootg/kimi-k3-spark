@@ -1,0 +1,7 @@
+Dperf pid 108616 02:31:13: anonymous mappings of 2000-3000 MiB (KV is 2816 MiB attention + 2112 MiB indexer at ctx 262144)
+ed3a6d800000-ed3b07400000 Size:            2519040 kB
+ed3a6d800000-ed3b07400000 AnonHugePages:   2519040 kB
+ed3a6d800000-ed3b07400000 Locked:          2519040 kB
+ed4e20000000-ed4ea4000000 Size:            2162688 kB
+ed4e20000000-ed4ea4000000 AnonHugePages:         0 kB
+ed4e20000000-ed4ea4000000 Locked:                0 kB

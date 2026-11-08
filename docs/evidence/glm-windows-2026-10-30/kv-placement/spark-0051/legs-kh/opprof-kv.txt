@@ -1,0 +1,38 @@
+== legs-kh/server-Dprof.log
+  16k: 2 decode blocks, 71.00 ms of node time per graph
+      0.740 ms/graph  CPY kv=cache_r
+      0.585 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.575 ms/graph  TOP_K
+      0.330 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.270 ms/graph  LIGHTNING_INDEXER
+  100k: 2 decode blocks, 71.70 ms of node time per graph
+      1.605 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      1.005 ms/graph  LIGHTNING_INDEXER
+      0.940 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.580 ms/graph  TOP_K
+      0.250 ms/graph  CPY kv=cache_r
+  needle: 1 decode blocks, 74.60 ms of node time per graph
+      0.780 ms/graph  CPY kv=cache_r
+      0.650 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.570 ms/graph  TOP_K
+      0.530 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.380 ms/graph  LIGHTNING_INDEXER
+== legs-kh/server-Hprof.log
+  16k: 2 decode blocks, 71.80 ms of node time per graph
+      0.750 ms/graph  CPY kv=cache_r
+      0.575 ms/graph  TOP_K
+      0.565 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.280 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.275 ms/graph  LIGHTNING_INDEXER
+  100k: 2 decode blocks, 69.45 ms of node time per graph
+      1.230 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.990 ms/graph  LIGHTNING_INDEXER
+      0.865 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.580 ms/graph  TOP_K
+      0.250 ms/graph  CPY kv=cache_r
+  needle: 1 decode blocks, 74.00 ms of node time per graph
+      0.790 ms/graph  CPY kv=cache_r
+      0.610 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.580 ms/graph  TOP_K
+      0.460 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.390 ms/graph  LIGHTNING_INDEXER
