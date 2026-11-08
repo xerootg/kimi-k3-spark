@@ -21,6 +21,8 @@ measurement), **partly** (right direction, smaller payoff than hoped), **no** (n
 | 2026-11-08 | Park idle conversations' KV on NVMe, reload on demand | sane | include in the multi-slot build |
 | 2026-11-08 | Several 1M conversations on the GH200; leave KV in HBM and serve as many as fit | sane | follows the per-conversation build |
 | 2026-11-08 | Keep the KV in Grace memory and let the GPU read it over the fast link | promising | prototype and measure on the GH200 |
+| 2026-11-08 | The Spark as the general local failover for the GH200 | sane | Juno done in argo-things #159; public endpoint and workbench next |
+| 2026-11-08 | Crack the 1M-token context ceiling | promising | test past 1M on the Spark after the KV-placement prototype |
 
 ## NUC round trips (2026-11-06)
 
@@ -118,3 +120,38 @@ Verdict: promising. Checked on paper 2026-11-08 (ledger entry of that date):
 Next: a patch that allocates the KV and indexer caches in GPU-accessible Grace memory (the expert host bank already
 does this), then measure decode at 16k, 100k and 500k against HBM placement, with md5 checks. Needs the GH200 for
 about an hour of downtime.
+
+## The Spark as the GH200's failover (2026-11-08)
+
+Idea: when the GH200 is down, its clients should land on the Spark, which serves the same model, before going to a
+hosted model.
+
+Verdict: sane. Both servers run GLM-5.3-Flash (Q4 on the GH200, Q2 on the Spark) with the same API key and a 1M
+context. The Spark is slower (decode ~17 against ~50 tok/s, prompts ~320 against ~1,400 tok/s), so a cold 120k-token
+session takes minutes to load there, but conversations stay on owned hardware. Output differs between the two
+quantizations; each server stays reproducible on its own. Juno's chain (gh200, then spark, then Sonnet) is argo-things
+#159; her utility calls cannot fail over until OpenClaw 2026.11.1. Still to do: the public endpoint
+(kimi-gh200-api) and the RE workbench's LLM profile, and the hef-posters vision calls, which have no fallback.
+
+## Past the 1M-token ceiling (2026-11-08)
+
+Idea: serve conversations longer than the model's 1M-token training context.
+
+Verdict: promising, untested. Nothing in Flash's architecture fixes a maximum length: the 11 attention layers use no
+positional encoding at all (`rope.dimension_count = 0`, "nope MLA"), the 35 KDA layers carry a fixed-size state, and
+the indexer's only position term (`indexer_kpool_ape`) is a position inside a pool of 4 tokens, not in the sequence.
+llama.cpp accepts a larger `--ctx-size` with a warning (`n_ctx_seq > n_ctx_train -- possible training context
+overflow`). The DSA top-2048 selection also caps how many tokens each attention step mixes, which may help it hold up
+past the trained length. Risks, in order:
+
+- Quality: the model never saw a sequence this long, so retrieval and coherence past 1M must be measured, not
+  assumed (needle-in-a-haystack at 1.2M, 1.5M and 2M, plus a long coding transcript).
+- Integer overflow: a 2M-cell K tensor per layer is 2 GiB, past signed 32-bit byte offsets; kernels that index with
+  `int` would break past about 2.1M cells (this bit the expert store once, fixed in the 32-bit offset entry).
+- Memory and time: a 2M conversation is about 38 GB of KV plus indexer cache. Loading 2M tokens takes the Spark about
+  two hours at ~320 tok/s or less; on the GH200 it does not fit in HBM next to the experts, so it depends on the
+  Grace-memory placement idea above.
+
+Next: after the KV-placement prototype releases the Spark, run 1.2M / 1.5M / 2M contexts there with retrieval checks
+and an offset audit of the attention, indexer and KV-copy kernels.
+
