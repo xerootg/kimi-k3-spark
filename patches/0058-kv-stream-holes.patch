@@ -1,0 +1,186 @@
+diff --git a/src/llama-kv-cache.cpp b/src/llama-kv-cache.cpp
+index 1fe7d7d..14456a2 100644
+--- a/src/llama-kv-cache.cpp
++++ b/src/llama-kv-cache.cpp
+@@ -3332,6 +3332,15 @@ uint32_t llama_kv_cache_context::get_n_stream() const {
+     return sinfos[i_cur].n_stream();
+ }
+ 
++uint32_t llama_kv_cache_context::get_stream_offsets(std::vector<int32_t> & offs) const {
++    const auto & cur = sinfos[i_cur];
++    offs.clear();
++    for (uint32_t s = 0; s < cur.n_stream(); ++s) {
++        offs.push_back((int32_t) cur.strm[s] - (int32_t) cur.s0);
++    }
++    return cur.s1 - cur.s0 + 1;
++}
++
+ ggml_tensor * llama_kv_cache_context::get_k_stream(ggml_context * ctx, int32_t il, uint32_t stream) const {
+     const auto & current = sinfos[i_cur];
+     GGML_ASSERT(stream < current.n_stream());
+diff --git a/src/llama-kv-cache.h b/src/llama-kv-cache.h
+index 77ee0af..43b4c9e 100644
+--- a/src/llama-kv-cache.h
++++ b/src/llama-kv-cache.h
+@@ -445,6 +445,11 @@ public:
+     uint32_t get_n_stream() const;
+     ggml_tensor * get_k_stream(ggml_context * ctx, int32_t il, uint32_t stream) const;
+ 
++    // kimi-k3-spark patch 0058: the streams get_k/get_v view for the current ubatch span [s0, s1]; offs gets each of the
++    // ubatch's sequences' stream minus s0, in ubatch order. Returns s1 - s0 + 1, which is larger than offs.size() when
++    // the ubatch's streams are not contiguous (a split with stream holes, LLAMA_KV_STREAM_HOLES=1).
++    uint32_t get_stream_offsets(std::vector<int32_t> & offs) const;
++
+     ggml_type type_k() const;
+     ggml_type type_v() const;
+ 
+diff --git a/src/llama-memory-hybrid-idx.cpp b/src/llama-memory-hybrid-idx.cpp
+index 2c5a576..75b96ff 100644
+--- a/src/llama-memory-hybrid-idx.cpp
++++ b/src/llama-memory-hybrid-idx.cpp
+@@ -2,6 +2,8 @@
+ 
+ #include <algorithm>
+ #include <cmath>
++#include <cstdlib>
++#include <cstring>
+ #include <type_traits>
+ 
+ #include "llama-impl.h"
+@@ -96,7 +98,17 @@ llama_memory_context_ptr llama_memory_hybrid_idx::init_batch(llama_batch_allocr
+                 //   so that the rollback snapshots remain valid
+                 const uint32_t n_rs_seq = get_mem_recr()->n_rs_seq;
+ 
+-                ubatch = balloc.split_equal(n_ubatch, !unified, n_rs_seq > 0 ? n_rs_seq + 1 : 0);
++                // kimi-k3-spark patch 0058: LLAMA_KV_STREAM_HOLES=1 (exact value, inert when unset) lets one ubatch hold
++                // sequences whose streams are not contiguous (e.g. slots 0, 1, 2 and 4 decoding while slot 3 is idle).
++                // The sequential split would run one ubatch per contiguous run of streams, so each decode step became
++                // several forward passes and the alternating graph shapes kept CUDA graphs from being reused. The
++                // model graph pads the hole streams (glm5-next: build_dsa_layer).
++                static const bool stream_holes = [] {
++                    const char * e = getenv("LLAMA_KV_STREAM_HOLES");
++                    return e != nullptr && strcmp(e, "1") == 0;
++                }();
++
++                ubatch = balloc.split_equal(n_ubatch, !unified && !stream_holes, n_rs_seq > 0 ? n_rs_seq + 1 : 0);
+             }
+ 
+             if (ubatch.n_tokens == 0) {
+diff --git a/src/models/glm5-next.cpp b/src/models/glm5-next.cpp
+index 90870bd..c280209 100644
+--- a/src/models/glm5-next.cpp
++++ b/src/models/glm5-next.cpp
+@@ -242,6 +242,31 @@ public:
+     void set_input(const llama_ubatch * ubatch) override {
+         mctx->get_idx()->set_input_k_idxs(k_idxs, ubatch);
+         mctx->set_input_kpool(pool_cells, pool_idxs, pool_mask, tail_idxs, sel_mask, new_pool_idxs, new_pool_rep, ubatch);
++        if (stream_pad != nullptr) {
++            set_input_stream_holes();
++        }
++    }
++
++    // patch 0058: row maps between the ubatch's tokens (sequence-major) and the attention's padded streams [s0, s1]
++    void set_input_stream_holes() {
++        std::vector<int32_t> offs;
++        const uint32_t ns    = mctx->get_attn()->get_stream_offsets(offs);
++        const int64_t  n_seq = (int64_t) offs.size();
++        const int64_t  n_tps = stream_unpad->ne[0] / n_seq;
++        GGML_ASSERT(stream_pad->ne[0] == (int64_t) ns*n_tps && n_seq*n_tps == stream_unpad->ne[0]);
++        GGML_ASSERT(ggml_backend_buffer_is_host(stream_pad->buffer) && ggml_backend_buffer_is_host(stream_unpad->buffer));
++        int32_t * pad   = (int32_t *) stream_pad->data;
++        int32_t * unpad = (int32_t *) stream_unpad->data;
++        // a hole stream repeats the first sequence's rows: finite inputs, and its outputs are never read
++        for (int64_t r = 0; r < (int64_t) ns*n_tps; ++r) {
++            pad[r] = (int32_t) (r % n_tps);
++        }
++        for (int64_t j = 0; j < n_seq; ++j) {
++            for (int64_t i = 0; i < n_tps; ++i) {
++                pad  [offs[j]*n_tps + i] = (int32_t) (j*n_tps + i);
++                unpad[j*n_tps + i]       = (int32_t) (offs[j]*n_tps + i);
++            }
++        }
+     }
+ 
+     bool can_reuse(const llm_graph_params & params) override {
+@@ -262,6 +287,16 @@ public:
+         res &= n_kv              == idx->get_n_kv();
+         res &= n_new             == std::max(mctx->get_n_kpool_new(), 1u);
+ 
++        // patch 0058: the stream padding follows the streams the attention views
++        std::vector<int32_t> offs;
++        const uint32_t ns = mctx->get_attn()->get_stream_offsets(offs);
++        const bool holes = ns != (uint32_t) offs.size();
++        res &= holes == (stream_pad != nullptr);
++        if (holes && stream_pad != nullptr) {
++            res &= stream_pad->ne[0]   == (int64_t) ns*(params.ubatch.n_tokens/offs.size());
++            res &= stream_unpad->ne[0] == params.ubatch.n_tokens;
++        }
++
+         return res;
+     }
+ 
+@@ -276,6 +311,9 @@ public:
+     ggml_tensor * new_pool_idxs = nullptr; // I32     [kpool, n_new]   members of the pools completed this ubatch
+     ggml_tensor * new_pool_flat = nullptr; // I32     [kpool*n_new]    view of new_pool_idxs, shared by the layers
+     ggml_tensor * new_pool_rep  = nullptr; // I64     [n_new]          cell to write each new pooled key into
++    // patch 0058, only when the ubatch's attention streams have holes (LLAMA_KV_STREAM_HOLES=1)
++    ggml_tensor * stream_pad    = nullptr; // I32     [ns*n_tps]       token row of each padded-stream row
++    ggml_tensor * stream_unpad  = nullptr; // I32     [n_tokens]       padded-stream row of each token
+ 
+     const llama_memory_hybrid_idx_context * mctx;
+     const uint32_t kpool;
+@@ -341,6 +379,22 @@ llama_model_glm5_next::llm_graph_input_kpool * llama_model_glm5_next::graph::bui
+     inp->new_pool_rep = ggml_new_tensor_1d(ctx0, GGML_TYPE_I64, n_new);
+     ggml_set_input(inp->new_pool_rep);
+ 
++    // patch 0058: streams with holes get padding row maps
++    {
++        std::vector<int32_t> offs;
++        const uint32_t ns = mctx_hyb->get_attn()->get_stream_offsets(offs);
++        if (ns != (uint32_t) offs.size()) {
++            GGML_ASSERT(!offs.empty() && n_tokens % offs.size() == 0);
++            const int64_t n_tps = n_tokens / (int64_t) offs.size();
++            inp->stream_pad   = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, (int64_t) ns*n_tps);
++            inp->stream_unpad = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_tokens);
++            ggml_set_input(inp->stream_pad);
++            ggml_set_input(inp->stream_unpad);
++            ggml_build_forward_expand(gf, inp->stream_pad);
++            ggml_build_forward_expand(gf, inp->stream_unpad);
++        }
++    }
++
+     return (llm_graph_input_kpool *) res->add_input(std::move(inp));
+ }
+ 
+@@ -1085,7 +1139,30 @@ ggml_tensor * llama_model_glm5_next::graph::build_dsa_layer(
+     ggml_tensor * k = mctx_mla->get_k(ctx0, il);
+     ggml_tensor * v = ggml_view_4d(ctx0, k, kv_lora_rank, k->ne[1], k->ne[2], k->ne[3], k->nb[1], k->nb[2], k->nb[3], 0);
+ 
+-    ggml_tensor * out = build_attn_mha(q_absorbed, k, v, nullptr, sel, nullptr, layer.wv_b, inp_kpool->n_sel, kq_scale, il);
++    ggml_tensor * out = nullptr;
++    if (inp_kpool->stream_pad != nullptr) {
++        // patch 0058: the KV view spans the streams [s0, s1] and some of them are not in this ubatch. Give the attention
++        // one query row per viewed stream (a hole repeats the first sequence's rows), then keep only the real rows.
++        // Every real stream's attention reads the same query, mask and cells as without holes.
++        const int64_t ns    = k->ne[3];
++        const int64_t n_tps = sel->ne[1];
++        GGML_ASSERT(inp_kpool->stream_pad->ne[0] == ns*n_tps);
++
++        ggml_tensor * q_pad = ggml_cont(ctx0, q_absorbed); // [kv_lora_rank, n_head, n_tokens]
++        q_pad = ggml_reshape_2d(ctx0, q_pad, q_pad->ne[0]*q_pad->ne[1], q_pad->ne[2]);
++        q_pad = ggml_get_rows(ctx0, q_pad, inp_kpool->stream_pad);
++        q_pad = ggml_reshape_3d(ctx0, q_pad, q_absorbed->ne[0], q_absorbed->ne[1], ns*n_tps);
++
++        ggml_tensor * sel_pad = ggml_reshape_2d(ctx0, sel, sel->ne[0], sel->ne[1]*sel->ne[2]*sel->ne[3]);
++        sel_pad = ggml_get_rows(ctx0, sel_pad, inp_kpool->stream_pad);
++        sel_pad = ggml_cast(ctx0, sel_pad, sel->type);
++        sel_pad = ggml_reshape_4d(ctx0, sel_pad, sel->ne[0], n_tps, 1, ns);
++
++        out = build_attn_mha(q_pad, k, v, nullptr, sel_pad, nullptr, layer.wv_b, inp_kpool->n_sel, kq_scale, il);
++        out = ggml_get_rows(ctx0, out, inp_kpool->stream_unpad);
++    } else {
++        out = build_attn_mha(q_absorbed, k, v, nullptr, sel, nullptr, layer.wv_b, inp_kpool->n_sel, kq_scale, il);
++    }
+     cb(out, "kqv_out", il);
+ 
+     out = ggml_mul_mat(ctx0, layer.wo, out);

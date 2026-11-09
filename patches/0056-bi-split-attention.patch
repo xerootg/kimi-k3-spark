@@ -1,0 +1,341 @@
+diff --git a/ggml/src/ggml-cuda/common.cuh b/ggml/src/ggml-cuda/common.cuh
+index 72f59d2..e348be7 100644
+--- a/ggml/src/ggml-cuda/common.cuh
++++ b/ggml/src/ggml-cuda/common.cuh
+@@ -44,6 +44,38 @@ static inline bool ggml_cuda_batch_invariant() {
+     return on;
+ }
+ 
++// kimi-k3-spark patch 0056: GGML_CUDA_BI_ATTN_CHUNK=<cells> (unset or 0: one block per output tile, as in 0054): the
++// fixed chunk of a stream's sparse index list that one block of batch-invariant decode attention covers. The value
++// changes the bytes (another split), so a server keeps one value.
++static inline int ggml_cuda_bi_attn_chunk() {
++    static const int chunk = [] {
++        const char * e = getenv("GGML_CUDA_BI_ATTN_CHUNK");
++        return e != nullptr ? std::max(0, atoi(e)) : 0;
++    }();
++    return chunk;
++}
++
++// kimi-k3-spark patch 0056: GGML_CUDA_BI_FUSE=1 keeps, in batch-invariant mode, the one-column variants that compute
++// the same bits as the plain kernels: the matvec fusions (gate/up/GLU, bias, routed+shared expert) and the small-K
++// row packing. Patch 0054 turned them off; with them a token's bytes stay the same (measured, docs/experiments.md).
++static inline bool ggml_cuda_bi_fuse() {
++    static const bool on = [] {
++        const char * e = getenv("GGML_CUDA_BI_FUSE");
++        return e != nullptr && strcmp(e, "1") == 0;
++    }();
++    return on;
++}
++
++// kimi-k3-spark patch 0056: GGML_CUDA_BI_TOPK_SORT=1 keeps patch 0054's batch-invariant top-k (sort the whole row)
++// instead of the exact radix select; both give the same bytes.
++static inline bool ggml_cuda_bi_topk_sort() {
++    static const bool on = [] {
++        const char * e = getenv("GGML_CUDA_BI_TOPK_SORT");
++        return e != nullptr && strcmp(e, "1") == 0;
++    }();
++    return on;
++}
++
+ #if defined(GGML_USE_HIP)
+ #include "vendors/hip.h"
+ #elif defined(GGML_USE_MUSA)
+diff --git a/ggml/src/ggml-cuda/fattn-common.cuh b/ggml/src/ggml-cuda/fattn-common.cuh
+index 7e759da..e87906c 100644
+--- a/ggml/src/ggml-cuda/fattn-common.cuh
++++ b/ggml/src/ggml-cuda/fattn-common.cuh
+@@ -1097,6 +1097,16 @@ void launch_fattn(
+     const int ntiles_z_gqa = ((gqa_ratio + ncols2 - 1) / ncols2);
+     const int ntiles_dst   = ntiles_x * ntiles_z_gqa * K->ne[2] * Q->ne[3];
+ 
++    // patch 0056: batch-invariant split of decode attention. With GGML_CUDA_BATCH_INVARIANT=1 one query per stream
++    // (decode) on the sparse gather path splits each output tile's index list into fixed chunks of
++    // GGML_CUDA_BI_ATTN_CHUNK cells (rounded down to whole KV tiles of the kernel, at least one), one block per chunk, and combines
++    // the partial results of a tile in a fixed order (the uniform stream-K fixup, last chunk first). A chunk covers the
++    // same cells of the stream's own list whatever else is in the batch; the chunks past the stream's live count are
++    // empty and combine as exact no-ops, so the number of chunks (it follows the batch's longest list) does not change
++    // the bytes. At least two chunks per tile always, so every tile takes the same combine path.
++    const bool bi_split = use_sparse && stream_k && ggml_cuda_batch_invariant() && Q->ne[1] == 1 && ggml_cuda_bi_attn_chunk() > 0;
++    int bi_chunk_tiles  = 0;
++
+     // sparse: a query tile of ncols1 queries shares one index list, the union of the queries' visible columns
+     int32_t n_kv_max = 0;
+     if (use_sparse) {
+@@ -1104,6 +1114,12 @@ void launch_fattn(
+         const int32_t n_kv_max_query = ggml_get_op_params_i32(KQV, 4);
+         GGML_ASSERT(n_kv_max_query > 0);
+         n_kv_max = std::min<int64_t>(K->ne[1], int64_t(ncols1)*n_kv_max_query);
++        if (bi_split) {
++            // the lists get padded with -1 up to a whole number of chunks, at least two
++            bi_chunk_tiles = std::max(1, ggml_cuda_bi_attn_chunk() / nbatch_fa);
++            const int chunk = bi_chunk_tiles*nbatch_fa;
++            n_kv_max = std::max(2*chunk, ((n_kv_max + chunk - 1) / chunk) * chunk);
++        }
+ 
+         const size_t n_lists = size_t(ntiles_x) * mask->ne[3];
+ 
+@@ -1172,7 +1188,11 @@ void launch_fattn(
+         blocks_num.y = 1;
+         blocks_num.z = 1;
+ 
+-        if(use_stream_k) {
++        if (bi_split) {
++            // patch 0056: one block per chunk of every tile; ntiles_KV is a multiple of the chunk (see above)
++            GGML_ASSERT(ntiles_KV % bi_chunk_tiles == 0 && ntiles_KV / bi_chunk_tiles >= 2);
++            blocks_num.x = ntiles_dst * (ntiles_KV / bi_chunk_tiles);
++        } else if(use_stream_k) {
+             const int nblocks_stream_k_raw = std::min(max_blocks, ntiles_KV*ntiles_dst);
+             // Round down to a multiple of ntiles_dst so that each output tile gets the same number of blocks (avoids fixup).
+             // Only do this if the occupancy loss from rounding is acceptable.
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index 988d361..2bd0c58 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -3017,7 +3017,8 @@ static bool ggml_cuda_should_fuse_mul_mat_vec_f(const ggml_tensor * tensor) {
+     }
+ 
+     // patch 0054: the vector-kernel fusions only exist for one column, a batch computes the unfused ops
+-    if (ggml_cuda_batch_invariant()) {
++    // (patch 0056: GGML_CUDA_BI_FUSE=1 keeps them for one column, for testing whether fused and unfused agree bitwise)
++    if (ggml_cuda_batch_invariant() && !ggml_cuda_bi_fuse()) {
+         return false;
+     }
+ 
+@@ -3069,7 +3070,7 @@ static bool ggml_cuda_should_fuse_mul_mat_vec_q(const ggml_tensor * tensor) {
+ 
+     // patch 0054: dense (MUL_MAT) fusions only exist for one column; MUL_MAT_ID fusions run the per-token MoE kernel
+     // at every width and stay
+-    if (ggml_cuda_batch_invariant() && tensor->op == GGML_OP_MUL_MAT) {
++    if (ggml_cuda_batch_invariant() && tensor->op == GGML_OP_MUL_MAT && !ggml_cuda_bi_fuse()) {
+         return false;
+     }
+ 
+@@ -3104,7 +3105,7 @@ static bool ggml_cuda_should_fuse_mul_mat_vec_q(const ggml_tensor * tensor) {
+ static bool ggml_cuda_match_shared_expert(const ggml_cgraph * graph, int routed_idx, int shared_idx) {
+     if (ggml_cuda_fusion_class_disabled(ggml_cuda_fusion_class::shared_expert)) { return false; }
+     // patch 0054: the shared expert computes as a plain dense matvec at every width
+-    if (ggml_cuda_batch_invariant()) { return false; }
++    if (ggml_cuda_batch_invariant() && !ggml_cuda_bi_fuse()) { return false; }
+     if (routed_idx + 2 >= graph->n_nodes || shared_idx + 2 >= graph->n_nodes || shared_idx < routed_idx + 3) {
+         return false;
+     }
+diff --git a/ggml/src/ggml-cuda/mmvq.cu b/ggml/src/ggml-cuda/mmvq.cu
+index a478554..c6eb611 100644
+--- a/ggml/src/ggml-cuda/mmvq.cu
++++ b/ggml/src/ggml-cuda/mmvq.cu
+@@ -1539,7 +1539,11 @@ static void mul_mat_vec_q_switch_ncols_dst(
+                     stream);
+             };
+ 
+-            if (!batch_invariant && should_use_small_k(c_ncols_dst)) {
++            // patch 0056: small-K only packs more rows into a block, each row keeps the same warps and K partition, so
++            // it computes the same bits and batch-invariant mode may keep it (GGML_CUDA_BI_FUSE=1); halve-iters doubles
++            // the warps of a row and stays off
++            if ((!batch_invariant || ggml_cuda_bi_fuse()) && should_use_small_k(c_ncols_dst) &&
++                    (!batch_invariant || calc_nwarps(type, 1, table_id, true) == calc_nwarps(type, 1, table_id))) {
+                 launch(std::true_type{},  std::false_type{});
+             } else if (!batch_invariant && should_halve_iters()) {
+                 launch(std::false_type{}, std::true_type{});
+diff --git a/ggml/src/ggml-cuda/top-k.cu b/ggml/src/ggml-cuda/top-k.cu
+index 6f4c1b5..e86794c 100644
+--- a/ggml/src/ggml-cuda/top-k.cu
++++ b/ggml/src/ggml-cuda/top-k.cu
+@@ -278,6 +278,185 @@ static void top_k_argsort_cuda(
+     }
+ }
+ 
++// patch 0056: exact batch-invariant top-k by radix select. The result is defined by the total order of patch 0054
++// (value descending with -0 equal to +0, then lower index first): the k first entries of that order, in that order.
++// Every key (value, index) is unique, so any exact algorithm gives the same bytes; this one reads the row five times
++// (four 8-bit histogram passes for the k-th value, one ordered pass that keeps the k winners) and sorts only the k
++// winners in shared memory, where 0054 sorted the whole row. One block per row: nothing depends on the other rows.
++static __device__ __forceinline__ uint32_t top_k_bi_key(const float v) {
++    const uint32_t b = __float_as_uint(v == 0.0f ? 0.0f : v); // -0 sorts with +0
++    return (b & 0x80000000u) ? ~b : (b | 0x80000000u);         // larger float -> larger key
++}
++
++template <int nthreads>
++__launch_bounds__(nthreads, 1)
++static __global__ void k_top_k_bi_exact(const float * __restrict__ x, int * __restrict__ dst, const int ncols, const int k,
++                                        const int k_pad) {
++    extern __shared__ unsigned long long top_k_bi_cand[]; // k_pad keys: (key << 32) | ~index, 0 = padding
++    __shared__ uint32_t hist[256];
++    __shared__ uint32_t warp_cnt[nthreads/WARP_SIZE];
++    __shared__ uint32_t s_prefix;
++    __shared__ uint32_t s_mask;
++    __shared__ uint32_t s_need;  // winners still to place among the keys that match the prefix
++    __shared__ uint32_t s_taken; // winners collected
++    __shared__ uint32_t s_eq_seen;
++    __shared__ bool     s_done;
++
++    static_assert(nthreads % WARP_SIZE == 0 && nthreads/WARP_SIZE <= WARP_SIZE, "bad nthreads");
++    const int     tid  = threadIdx.x;
++    const int     lane = tid % WARP_SIZE;
++    const int     warp = tid / WARP_SIZE;
++    const float * xr   = x   + int64_t(blockIdx.x)*ncols;
++    int         * dr   = dst + int64_t(blockIdx.x)*k;
++
++    if (tid == 0) {
++        s_prefix = 0;
++        s_mask   = 0;
++        s_need   = k;
++    }
++
++    // the k-th largest key, 8 bits at a time from the top
++    for (int shift = 24; shift >= 0; shift -= 8) {
++        for (int i = tid; i < 256; i += nthreads) {
++            hist[i] = 0;
++        }
++        __syncthreads();
++        const uint32_t prefix = s_prefix;
++        const uint32_t mask   = s_mask;
++        for (int i = tid; i < ncols; i += nthreads) {
++            const uint32_t u = top_k_bi_key(xr[i]);
++            if ((u & mask) == prefix) {
++                atomicAdd(&hist[(u >> shift) & 0xFF], 1u);
++            }
++        }
++        __syncthreads();
++        if (warp == 0) {
++            // lane l owns bins 255-8l down to 248-8l; find the bin where the count from the top reaches s_need
++            const uint32_t need = s_need;
++            uint32_t sum = 0;
++#pragma unroll
++            for (int j = 0; j < 8; ++j) {
++                sum += hist[255 - 8*lane - j];
++            }
++            uint32_t incl = sum;
++#pragma unroll
++            for (int off = 1; off < WARP_SIZE; off <<= 1) {
++                const uint32_t t = __shfl_up_sync(0xFFFFFFFF, incl, off);
++                if (lane >= off) {
++                    incl += t;
++                }
++            }
++            const uint32_t excl  = incl - sum;
++            const uint32_t found = __ballot_sync(0xFFFFFFFF, incl >= need);
++            const int      owner = __ffs(found) - 1; // found != 0: the matching keys number at least need
++            if (lane == owner) {
++                uint32_t acc = excl;
++                int bin = 255 - 8*lane;
++                for (int j = 0; j < 7; ++j, --bin) {
++                    const uint32_t h = hist[bin];
++                    if (acc + h >= need) {
++                        break;
++                    }
++                    acc += h;
++                }
++                s_need   = need - acc;
++                s_prefix = prefix | (uint32_t(bin) << shift);
++                s_mask   = mask   | (0xFFu << shift);
++            }
++        }
++        __syncthreads();
++    }
++
++    // keep every key above the k-th and the first (by index) s_need keys equal to it
++    const uint32_t kth   = s_prefix;
++    const uint32_t n_eq  = s_need;
++    if (tid == 0) {
++        s_taken   = 0;
++        s_eq_seen = 0;
++    }
++    __syncthreads();
++    for (int base = 0; base < ncols; base += nthreads) {
++        const int i = base + tid;
++        uint32_t u  = 0;
++        if (i < ncols) {
++            u = top_k_bi_key(xr[i]);
++        }
++        const bool     gt  = i < ncols && u >  kth;
++        const bool     eq  = i < ncols && u == kth;
++        const uint32_t bal = __ballot_sync(0xFFFFFFFF, eq);
++        if (lane == 0) {
++            warp_cnt[warp] = __popc(bal);
++        }
++        __syncthreads();
++        uint32_t before = s_eq_seen + __popc(bal & ((1u << lane) - 1u));
++        for (int w = 0; w < warp; ++w) {
++            before += warp_cnt[w];
++        }
++        if (gt || (eq && before < n_eq)) {
++            const uint32_t slot = atomicAdd(&s_taken, 1u);
++            top_k_bi_cand[slot] = (uint64_t(u) << 32) | uint64_t(0xFFFFFFFFu - uint32_t(i));
++        }
++        __syncthreads();
++        if (tid == 0) {
++            uint32_t total = 0;
++            for (int w = 0; w < nthreads/WARP_SIZE; ++w) {
++                total += warp_cnt[w];
++            }
++            s_eq_seen += total;
++            s_done     = s_taken >= uint32_t(k);
++        }
++        __syncthreads();
++        if (s_done) {
++            break; // uniform: s_done changes only between the next two barriers
++        }
++    }
++    for (int j = k + tid; j < k_pad; j += nthreads) {
++        top_k_bi_cand[j] = 0;
++    }
++    __syncthreads();
++
++    // sort the winners, largest key first (keys are unique, padding last)
++    for (int kk = 2; kk <= k_pad; kk <<= 1) {
++        for (int j = kk >> 1; j > 0; j >>= 1) {
++            for (int t = tid; t < k_pad; t += nthreads) {
++                const int ixj = t ^ j;
++                if (ixj > t) {
++                    const unsigned long long a = top_k_bi_cand[t];
++                    const unsigned long long b = top_k_bi_cand[ixj];
++                    if ((t & kk) == 0 ? a < b : a > b) {
++                        top_k_bi_cand[t]   = b;
++                        top_k_bi_cand[ixj] = a;
++                    }
++                }
++            }
++            __syncthreads();
++        }
++    }
++    for (int j = tid; j < k; j += nthreads) {
++        dr[j] = int(0xFFFFFFFFu - uint32_t(top_k_bi_cand[j] & 0xFFFFFFFFull));
++    }
++}
++
++// false: not handled (k too large for shared memory), the caller sorts
++static bool top_k_bi_exact_cuda(const float * x, int * dst, const int64_t ncols, const int64_t nrows, const int64_t k,
++                                cudaStream_t stream) {
++    if (k < 1 || k > ncols || ncols > INT_MAX || nrows > INT_MAX) {
++        return false;
++    }
++    const int    k_pad  = next_power_of_2((int) k);
++    const size_t nbytes = size_t(k_pad) * sizeof(unsigned long long);
++    if (nbytes > ggml_cuda_info().devices[ggml_cuda_get_device()].smpb) {
++        return false;
++    }
++    if (ncols <= 2048) {
++        k_top_k_bi_exact<256><<<(int) nrows, 256, nbytes, stream>>>(x, dst, (int) ncols, (int) k, k_pad);
++    } else {
++        k_top_k_bi_exact<1024><<<(int) nrows, 1024, nbytes, stream>>>(x, dst, (int) ncols, (int) k, k_pad);
++    }
++    CUDA_CHECK(cudaGetLastError());
++    return true;
++}
++
+ void ggml_cuda_op_top_k(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+     const ggml_tensor * src0   = dst->src[0];
+     const float *       src0_d = (const float *) src0->data;
+@@ -298,6 +477,11 @@ void ggml_cuda_op_top_k(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+ 
+     // patch 0054: batch invariance. The k first entries of the total-order argsort: the selected set (and its order)
+     // does not depend on the number of rows, the row width beyond the live entries or tie handling of a kernel.
++    // patch 0056: the same k entries in the same order from an exact radix select (one block per row) instead of
++    // sorting the whole row; GGML_CUDA_BI_TOPK_SORT=1 keeps the 0054 full sort (same bytes, for A/B timing).
++    if (ggml_cuda_batch_invariant() && !ggml_cuda_bi_topk_sort() && top_k_bi_exact_cuda(src0_d, dst_d, ncols, nrows, k, stream)) {
++        return;
++    }
+     if (ggml_cuda_batch_invariant()) {
+         const int64_t chunk_nrows = ggml_cuda_chunk_nrows((size_t) ncols * sizeof(int), nrows);
+         ggml_cuda_pool_alloc<int> tmp_alloc(pool, (size_t) ncols * chunk_nrows);

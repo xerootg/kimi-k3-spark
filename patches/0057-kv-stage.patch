@@ -1,0 +1,135 @@
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index 2bd0c58..4452cc8 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -3505,6 +3505,117 @@ static void ggml_cuda_mul_mat_id(ggml_backend_cuda_context & ctx, ggml_tensor *
+         nb1, nb2, nb3, stream);
+ }
+ 
++// kimi-k3-spark patch 0057: GGML_CUDA_KV_STAGE=1 (exact value, inert when unset). Prompt attention over a KV cache in
++// host memory (patch 0051, LLAMA_KV_HOST=1) first copies the viewed KV of the layer into a device scratch buffer and runs
++// the same kernel on the copy: the gather of a prompt ubatch re-reads the selected cells many times, which over
++// NVLink-C2C costs about half of the prefill speed (GH200 window gh200-bi), while one streaming copy of the stream's KV
++// costs ~1 ms per layer at 100k cells. Same kernel, same values: same bytes. Decode (fewer than
++// GGML_CUDA_KV_STAGE_MIN_TOKENS queries, default 32) reads the host memory directly as before. A copy larger than
++// GGML_CUDA_KV_STAGE_MAX_MIB (default 1024, a 1M-cell stream of 1 KiB cells) is not made. The scratch comes from the
++// device pool, which keeps its high-water mark.
++static bool ggml_cuda_kv_stage_enabled() {
++    static const bool on = [] {
++        const char * e = getenv("GGML_CUDA_KV_STAGE");
++        return e != nullptr && strcmp(e, "1") == 0;
++    }();
++    return on;
++}
++
++static bool ggml_cuda_tensor_in_host_kv(const ggml_tensor * t) {
++    const ggml_tensor * base = t->view_src ? t->view_src : t;
++    ggml_backend_buffer_t buf = base->buffer ? base->buffer : t->buffer;
++    if (buf == nullptr || !ggml_backend_buffer_is_cuda(buf)) {
++        return false;
++    }
++    return ((ggml_backend_cuda_buffer_context *) buf->context)->host_ptr != nullptr;
++}
++
++// bytes one stream (index 3) of t spans
++static size_t ggml_cuda_kv_stage_span(const ggml_tensor * t) {
++    size_t w = ggml_row_size(t->type, t->ne[0]);
++    for (int i = 1; i < 3; ++i) {
++        w += size_t(t->ne[i] - 1)*t->nb[i];
++    }
++    return w;
++}
++
++static void ggml_cuda_flash_attn_ext_kv_stage(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
++    static const int64_t min_tokens = [] {
++        const char * e = getenv("GGML_CUDA_KV_STAGE_MIN_TOKENS");
++        return e != nullptr ? std::max<int64_t>(2, atoll(e)) : int64_t(32);
++    }();
++    static const size_t max_bytes = [] {
++        const char * e = getenv("GGML_CUDA_KV_STAGE_MAX_MIB");
++        return size_t(e != nullptr ? std::max<long long>(0, atoll(e)) : 1024ll) << 20;
++    }();
++
++    const ggml_tensor * Q = dst->src[0];
++    const ggml_tensor * K = dst->src[1];
++    const ggml_tensor * V = dst->src[2];
++
++    if (Q->ne[1] < min_tokens || !ggml_cuda_tensor_in_host_kv(K) || K->ne[0] == 0 || K->ne[1] == 0) {
++        ggml_cuda_flash_attn_ext(ctx, dst);
++        return;
++    }
++
++    const bool V_is_K_view = V->view_src && (V->view_src == K || (V->view_src == K->view_src && V->view_offs == K->view_offs));
++    const bool V_inside_K  = V_is_K_view && V->nb[3] == K->nb[3] && (const char *) V->data >= (const char *) K->data &&
++                             (size_t) ((const char *) V->data - (const char *) K->data) + ggml_cuda_kv_stage_span(V) <= ggml_cuda_kv_stage_span(K);
++    const bool stage_V     = !V_inside_K && ggml_cuda_tensor_in_host_kv(V);
++
++    const size_t span_K  = ggml_cuda_kv_stage_span(K);
++    const size_t pitch_K = GGML_PAD(span_K, 256);
++    const size_t span_V  = stage_V ? ggml_cuda_kv_stage_span(V) : 0;
++    const size_t pitch_V = GGML_PAD(span_V, 256);
++    const size_t total   = pitch_K*K->ne[3] + (stage_V ? pitch_V*V->ne[3] : 0);
++    if (total > max_bytes || (V_is_K_view && !V_inside_K)) {
++        ggml_cuda_flash_attn_ext(ctx, dst);
++        return;
++    }
++
++    cudaStream_t stream = ctx.stream();
++    ggml_cuda_pool_alloc<char> scratch(ctx.pool(), total);
++
++    ggml_tensor K_s = *K;
++    K_s.data      = scratch.get();
++    K_s.view_src  = nullptr;
++    K_s.view_offs = 0;
++    CUDA_CHECK(cudaMemcpy2DAsync(K_s.data, pitch_K, K->data, K->ne[3] > 1 ? K->nb[3] : span_K, span_K, K->ne[3],
++                                 cudaMemcpyDefault, stream));
++    if (K->ne[3] > 1) {
++        K_s.nb[3] = pitch_K;
++    }
++
++    ggml_tensor V_s = *V;
++    if (V_inside_K) {
++        V_s.data      = (char *) K_s.data + ((const char *) V->data - (const char *) K->data);
++        V_s.nb[3]     = K_s.nb[3];
++        V_s.view_src  = &K_s;
++        V_s.view_offs = (size_t) ((const char *) V->data - (const char *) K->data);
++    } else if (stage_V) {
++        V_s.data      = scratch.get() + pitch_K*K->ne[3];
++        V_s.view_src  = nullptr;
++        V_s.view_offs = 0;
++        CUDA_CHECK(cudaMemcpy2DAsync(V_s.data, pitch_V, V->data, V->ne[3] > 1 ? V->nb[3] : span_V, span_V, V->ne[3],
++                                     cudaMemcpyDefault, stream));
++        if (V->ne[3] > 1) {
++            V_s.nb[3] = pitch_V;
++        }
++    }
++
++    static bool logged = false;
++    if (!logged) {
++        logged = true;
++        GGML_LOG_INFO("%s: prompt attention over host KV reads a device copy (first: %lld queries, %.1f MiB)\n", __func__,
++            (long long) Q->ne[1], total/1024.0/1024.0);
++    }
++
++    ggml_tensor dst_s = *dst;
++    dst_s.src[1] = &K_s;
++    dst_s.src[2] = &V_s;
++    ggml_cuda_flash_attn_ext(ctx, &dst_s);
++}
++
+ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct ggml_tensor * dst) {
+     switch (dst->op) {
+         case GGML_OP_ARGMAX:
+@@ -3809,7 +3920,11 @@ static bool ggml_cuda_compute_forward(ggml_backend_cuda_context & ctx, struct gg
+             ggml_cuda_op_argsort(ctx, dst);
+             break;
+         case GGML_OP_FLASH_ATTN_EXT:
+-            ggml_cuda_flash_attn_ext(ctx, dst);
++            if (ggml_cuda_kv_stage_enabled()) {
++                ggml_cuda_flash_attn_ext_kv_stage(ctx, dst); // patch 0057
++            } else {
++                ggml_cuda_flash_attn_ext(ctx, dst);
++            }
+             break;
+         case GGML_OP_CROSS_ENTROPY_LOSS:
+             ggml_cuda_cross_entropy_loss(ctx, dst);

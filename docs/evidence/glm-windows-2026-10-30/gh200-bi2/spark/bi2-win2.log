@@ -1,0 +1,86 @@
+=== LEG H0 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128] 16:25:13
+READY H0 after 42s
+0.13.214.386 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (729.8 ms)
+0.13.214.443 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.855.384 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (538.3 ms)
+0.13.855.415 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 32.57, "prefill_tps": 0.31, "decode_n": 256, "decode_tps": 1.8, "md5": "ce2fc95752", "t0": 1794241556.7953784, "t1": 1794241730.9314818, "kind": "solo", "tag": "H0"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.72, "prefill_tps": 26.34, "decode_n": 256, "decode_tps": 14.2, "md5": "bb64203d71", "t0": 1794241730.9315462, "t1": 1794241749.6104314, "kind": "solo", "tag": "H0"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.76, "prefill_tps": 23.59, "decode_n": 256, "decode_tps": 13.57, "md5": "2d592efcb6", "t0": 1794241749.6104927, "t1": 1794241769.1682777, "kind": "solo", "tag": "H0"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.87, "prefill_tps": 24.21, "decode_n": 256, "decode_tps": 12.55, "md5": "1aab74269d", "t0": 1794241769.1683362, "t1": 1794241790.35317, "kind": "solo", "tag": "H0"}
+{"kind": "multi", "tag": "H0", "n": 3, "round": "warm", "agg_tps": 19.72, "wall_s": 38.94, "gen": 768, "per_stream_tps": [6.63, 6.73, 6.84], "md5": ["ce2fc95752", "bb64203d71", "1aab74269d"], "specs": ["p0", "p1", "p3"], "prefill_tps": [21.88, 33.68, 33.69], "t0": 1794241790.3832047, "t1": 1794241829.326693}
+{"kind": "multi", "tag": "H0", "n": 3, "round": 1, "agg_tps": 20.55, "wall_s": 37.38, "gen": 768, "per_stream_tps": [6.91, 7.02, 7.16], "md5": ["ce2fc95752", "bb64203d71", "1aab74269d"], "specs": ["p0", "p1", "p3"], "prefill_tps": [21.16, 32.2, 31.23], "t0": 1794241829.3271058, "t1": 1794241866.7026944}
+{"kind": "multi", "tag": "H0", "n": 3, "round": 2, "agg_tps": 20.77, "wall_s": 36.97, "gen": 768, "per_stream_tps": [7.1, 7.01, 7.24], "md5": ["ce2fc95752", "bb64203d71", "1aab74269d"], "specs": ["p0", "p1", "p3"], "prefill_tps": [21.33, 32.08, 31.29], "t0": 1794241866.7030895, "t1": 1794241903.671705}
+{"kind": "multi", "tag": "H0", "n": 2, "round": "warm", "agg_tps": 11.62, "wall_s": 44.05, "gen": 512, "per_stream_tps": [5.86, 5.97], "md5": ["ce2fc95752", "2d592efcb6"], "specs": ["p0", "p2"], "prefill_tps": [21.01, 22.01], "t0": 1794241903.701976, "t1": 1794241947.7529316}
+{"kind": "multi", "tag": "H0", "n": 2, "round": 1, "agg_tps": 12.73, "wall_s": 40.22, "gen": 512, "per_stream_tps": [6.51, 6.43], "md5": ["ce2fc95752", "2d592efcb6"], "specs": ["p0", "p2"], "prefill_tps": [22.19, 31.31], "t0": 1794241947.7533548, "t1": 1794241987.974923}
+{"kind": "multi", "tag": "H0", "n": 2, "round": 2, "agg_tps": 12.96, "wall_s": 39.5, "gen": 512, "per_stream_tps": [6.62, 6.55], "md5": ["ce2fc95752", "2d592efcb6"], "specs": ["p0", "p2"], "prefill_tps": [22.33, 33.49], "t0": 1794241987.9752545, "t1": 1794242027.4730272}
+{"kind": "multi", "tag": "H0", "n": 3, "round": "warm", "agg_tps": 4.23, "wall_s": 151.35, "gen": 640, "per_stream_tps": [1.69, 8.18, 6.91], "md5": ["bb64203d71", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p3", "L16384"], "prefill_tps": [29.09, 32.98, 138.11], "t0": 1794242027.5081332, "t1": 1794242178.8553355}
+{"kind": "multi", "tag": "H0", "n": 3, "round": 1, "agg_tps": 8.33, "wall_s": 76.8, "gen": 640, "per_stream_tps": [3.34, 8.97, 7.71], "md5": ["bb64203d71", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p3", "L16384"], "prefill_tps": [34.94, 34.54, 347.57], "t0": 1794242178.8556697, "t1": 1794242255.65548}
+{"kind": "multi", "tag": "H0", "n": 4, "round": "warm", "agg_tps": 22.56, "wall_s": 45.4, "gen": 1024, "per_stream_tps": [5.68, 5.83, 5.76, 5.92], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [21.3, 35.94, 28.76, 34.7], "t0": 1794242255.7104495, "t1": 1794242301.1073744}
+{"kind": "multi", "tag": "H0", "n": 4, "round": 1, "agg_tps": 23.25, "wall_s": 44.04, "gen": 1024, "per_stream_tps": [6.08, 6.02, 5.95, 5.87], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.14, 35.65, 33.98, 33.45], "t0": 1794242301.107869, "t1": 1794242345.1449516}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 47.33, "prefill_tps": 346.81, "decode_n": 128, "decode_tps": 13.06, "md5": "145c14aa8b", "t0": 1794242345.1759288, "t1": 1794242402.2540162, "kind": "solo", "tag": "H0"}
+elastic lines: 18; refused: 0
+lowest MemAvailable 5026 MiB; now 120997 MiB; END H0 16:40:10
+BI-LEG-DONE H0 16:40:10
+=== LEG H1 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 LLAMA_KV_STREAM_HOLES=1] 16:40:10
+READY H1 after 28s
+0.13.276.819 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (725.0 ms)
+0.13.276.878 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.922.066 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (536.9 ms)
+0.13.922.097 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.86, "decode_n": 256, "decode_tps": 14.92, "md5": "ce2fc95752", "t0": 1794242439.7525609, "t1": 1794242457.2720742, "kind": "solo", "tag": "H1"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.72, "prefill_tps": 26.41, "decode_n": 256, "decode_tps": 14.97, "md5": "bb64203d71", "t0": 1794242457.272141, "t1": 1794242475.0322518, "kind": "solo", "tag": "H1"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.76, "prefill_tps": 23.68, "decode_n": 256, "decode_tps": 14.34, "md5": "2d592efcb6", "t0": 1794242475.0323024, "t1": 1794242493.5764332, "kind": "solo", "tag": "H1"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.87, "prefill_tps": 24.15, "decode_n": 256, "decode_tps": 13.19, "md5": "1aab74269d", "t0": 1794242493.5764933, "t1": 1794242513.7772417, "kind": "solo", "tag": "H1"}
+{"kind": "multi", "tag": "H1", "n": 3, "round": "warm", "agg_tps": 20.04, "wall_s": 38.32, "gen": 768, "per_stream_tps": [6.74, 6.84, 6.96], "md5": ["ce2fc95752", "bb64203d71", "1aab74269d"], "specs": ["p0", "p1", "p3"], "prefill_tps": [22.36, 34.46, 34.0], "t0": 1794242513.8073397, "t1": 1794242552.128484}
+{"kind": "multi", "tag": "H1", "n": 3, "round": 1, "agg_tps": 20.84, "wall_s": 36.85, "gen": 768, "per_stream_tps": [7.13, 7.04, 7.26], "md5": ["ce2fc95752", "bb64203d71", "1aab74269d"], "specs": ["p0", "p1", "p3"], "prefill_tps": [21.92, 31.69, 31.3], "t0": 1794242552.129014, "t1": 1794242588.9756396}
+{"kind": "multi", "tag": "H1", "n": 3, "round": 2, "agg_tps": 21.03, "wall_s": 36.51, "gen": 768, "per_stream_tps": [7.07, 7.19, 7.33], "md5": ["ce2fc95752", "bb64203d71", "1aab74269d"], "specs": ["p0", "p1", "p3"], "prefill_tps": [21.96, 32.93, 31.53], "t0": 1794242588.9760525, "t1": 1794242625.4888875}
+{"kind": "multi", "tag": "H1", "n": 2, "round": "warm", "agg_tps": 15.9, "wall_s": 32.2, "gen": 512, "per_stream_tps": [8.05, 8.26], "md5": ["ce2fc95752", "2d592efcb6"], "specs": ["p0", "p2"], "prefill_tps": [21.69, 21.98], "t0": 1794242625.5196378, "t1": 1794242657.7186272}
+{"kind": "multi", "tag": "H1", "n": 2, "round": 1, "agg_tps": 18.11, "wall_s": 28.28, "gen": 512, "per_stream_tps": [9.17, 9.36], "md5": ["ce2fc95752", "2d592efcb6"], "specs": ["p0", "p2"], "prefill_tps": [21.27, 32.9], "t0": 1794242657.719059, "t1": 1794242685.9954388}
+{"kind": "multi", "tag": "H1", "n": 2, "round": 2, "agg_tps": 18.78, "wall_s": 27.26, "gen": 512, "per_stream_tps": [9.71, 9.54], "md5": ["ce2fc95752", "2d592efcb6"], "specs": ["p0", "p2"], "prefill_tps": [21.85, 33.74], "t0": 1794242685.9958339, "t1": 1794242713.253998}
+{"kind": "multi", "tag": "H1", "n": 3, "round": "warm", "agg_tps": 5.96, "wall_s": 107.43, "gen": 640, "per_stream_tps": [2.39, 8.06, 6.77], "md5": ["bb64203d71", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p3", "L16384"], "prefill_tps": [27.65, 32.59, 220.56], "t0": 1794242713.309192, "t1": 1794242820.7406204}
+{"kind": "multi", "tag": "H1", "n": 3, "round": 1, "agg_tps": 8.42, "wall_s": 75.97, "gen": 640, "per_stream_tps": [3.38, 9.06, 7.76], "md5": ["bb64203d71", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p3", "L16384"], "prefill_tps": [35.78, 34.13, 351.77], "t0": 1794242820.7410245, "t1": 1794242896.7097857}
+{"kind": "multi", "tag": "H1", "n": 4, "round": "warm", "agg_tps": 22.97, "wall_s": 44.59, "gen": 1024, "per_stream_tps": [6.02, 5.96, 5.89, 5.81], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [23.49, 36.3, 29.62, 34.24], "t0": 1794242896.764909, "t1": 1794242941.3525283}
+{"kind": "multi", "tag": "H1", "n": 4, "round": 1, "agg_tps": 23.65, "wall_s": 43.3, "gen": 1024, "per_stream_tps": [5.95, 6.1, 6.02, 6.19], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [22.67, 36.18, 35.45, 34.6], "t0": 1794242941.3530285, "t1": 1794242984.654475}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 47.24, "prefill_tps": 347.45, "decode_n": 128, "decode_tps": 13.61, "md5": "145c14aa8b", "t0": 1794242984.7054503, "t1": 1794243041.3048282, "kind": "solo", "tag": "H1"}
+elastic lines: 18; refused: 0
+lowest MemAvailable 5103 MiB; now 120995 MiB; END H1 16:50:45
+BI-LEG-DONE H1 16:50:45
+=== LEG H2 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 LLAMA_KV_STREAM_HOLES=1 GGML_CUDA_BI_FUSE=1] 16:50:45
+READY H2 after 28s
+0.13.245.373 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (730.4 ms)
+0.13.245.433 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.892.311 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (539.4 ms)
+0.13.892.343 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.87, "decode_n": 256, "decode_tps": 15.03, "md5": "ce2fc95752", "t0": 1794243074.1838942, "t1": 1794243091.5839474, "kind": "solo", "tag": "H2"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.72, "prefill_tps": 26.3, "decode_n": 256, "decode_tps": 15.05, "md5": "bb64203d71", "t0": 1794243091.5840147, "t1": 1794243109.2537313, "kind": "solo", "tag": "H2"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.76, "prefill_tps": 23.54, "decode_n": 256, "decode_tps": 14.39, "md5": "2d592efcb6", "t0": 1794243109.2537887, "t1": 1794243127.7373216, "kind": "solo", "tag": "H2"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.86, "prefill_tps": 24.32, "decode_n": 256, "decode_tps": 13.28, "md5": "1aab74269d", "t0": 1794243127.7373726, "t1": 1794243147.8089168, "kind": "solo", "tag": "H2"}
+{"kind": "multi", "tag": "H2", "n": 3, "round": "warm", "agg_tps": 20.09, "wall_s": 38.22, "gen": 768, "per_stream_tps": [6.76, 6.86, 6.98], "md5": ["ce2fc95752", "bb64203d71", "1aab74269d"], "specs": ["p0", "p1", "p3"], "prefill_tps": [22.38, 34.28, 33.57], "t0": 1794243147.839425, "t1": 1794243186.059259}
+{"kind": "multi", "tag": "H2", "n": 3, "round": 1, "agg_tps": 20.87, "wall_s": 36.79, "gen": 768, "per_stream_tps": [7.02, 7.14, 7.27], "md5": ["ce2fc95752", "bb64203d71", "1aab74269d"], "specs": ["p0", "p1", "p3"], "prefill_tps": [21.35, 32.37, 31.23], "t0": 1794243186.0596008, "t1": 1794243222.8511288}
+{"kind": "multi", "tag": "H2", "n": 3, "round": 2, "agg_tps": 21.03, "wall_s": 36.51, "gen": 768, "per_stream_tps": [7.07, 7.19, 7.33], "md5": ["ce2fc95752", "bb64203d71", "1aab74269d"], "specs": ["p0", "p1", "p3"], "prefill_tps": [21.52, 32.33, 31.33], "t0": 1794243222.8514576, "t1": 1794243259.364575}
+{"kind": "multi", "tag": "H2", "n": 2, "round": "warm", "agg_tps": 15.99, "wall_s": 32.02, "gen": 512, "per_stream_tps": [8.09, 8.3], "md5": ["ce2fc95752", "2d592efcb6"], "specs": ["p0", "p2"], "prefill_tps": [21.56, 22.04], "t0": 1794243259.395229, "t1": 1794243291.410882}
+{"kind": "multi", "tag": "H2", "n": 2, "round": 1, "agg_tps": 18.13, "wall_s": 28.24, "gen": 512, "per_stream_tps": [9.18, 9.37], "md5": ["ce2fc95752", "2d592efcb6"], "specs": ["p0", "p2"], "prefill_tps": [20.99, 32.72], "t0": 1794243291.4112766, "t1": 1794243319.6536233}
+{"kind": "multi", "tag": "H2", "n": 2, "round": 2, "agg_tps": 18.79, "wall_s": 27.25, "gen": 512, "per_stream_tps": [9.52, 9.71], "md5": ["ce2fc95752", "2d592efcb6"], "specs": ["p0", "p2"], "prefill_tps": [21.25, 34.31], "t0": 1794243319.6539605, "t1": 1794243346.9074836}
+{"kind": "multi", "tag": "H2", "n": 3, "round": "warm", "agg_tps": 6.05, "wall_s": 105.78, "gen": 640, "per_stream_tps": [2.43, 8.07, 6.78], "md5": ["bb64203d71", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p3", "L16384"], "prefill_tps": [27.04, 32.07, 225.46], "t0": 1794243346.9535677, "t1": 1794243452.7353003}
+{"kind": "multi", "tag": "H2", "n": 3, "round": 1, "agg_tps": 8.42, "wall_s": 76.01, "gen": 640, "per_stream_tps": [3.38, 9.07, 7.77], "md5": ["bb64203d71", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p3", "L16384"], "prefill_tps": [35.76, 34.37, 351.17], "t0": 1794243452.7357113, "t1": 1794243528.7459977}
+{"kind": "multi", "tag": "H2", "n": 4, "round": "warm", "agg_tps": 22.96, "wall_s": 44.61, "gen": 1024, "per_stream_tps": [5.87, 5.94, 6.02, 5.81], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [21.9, 36.58, 31.31, 33.31], "t0": 1794243528.7999747, "t1": 1794243573.4057827}
+{"kind": "multi", "tag": "H2", "n": 4, "round": 1, "agg_tps": 23.58, "wall_s": 43.43, "gen": 1024, "per_stream_tps": [6.01, 5.95, 6.17, 6.09], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [23.29, 34.89, 35.78, 34.63], "t0": 1794243573.406271, "t1": 1794243616.8350124}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 46.95, "prefill_tps": 349.63, "decode_n": 128, "decode_tps": 13.77, "md5": "145c14aa8b", "t0": 1794243616.8660011, "t1": 1794243673.070744, "kind": "solo", "tag": "H2"}
+elastic lines: 17; refused: 0
+lowest MemAvailable 5000 MiB; now 120970 MiB; END H2 17:01:17
+BI-LEG-DONE H2 17:01:17
+=== LEG P1F parallel=1 ctx=1048576 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1] 17:01:17
+READY P1F after 26s
+0.12.601.567 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.606.117 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (4.5 ms)
+0.12.629.786 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.632.893 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (3.1 ms)
+0.25.493.098 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.83, "decode_n": 256, "decode_tps": 15.66, "md5": "ce2fc95752", "t0": 1794243703.872073, "t1": 1794243720.5898082, "kind": "solo", "tag": "P1F"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.35, "prefill_tps": 28.4, "decode_n": 256, "decode_tps": 16.85, "md5": "ce2fc95752", "t0": 1794243720.5898716, "t1": 1794243736.0722966, "kind": "solo", "tag": "P1F"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 47.83, "prefill_tps": 343.18, "decode_n": 128, "decode_tps": 14.79, "md5": "145c14aa8b", "t0": 1794243736.072345, "t1": 1794243792.50838, "kind": "solo", "tag": "P1F"}
+elastic lines: 10; refused: 0
+lowest MemAvailable 9433 MiB; now 120993 MiB; END P1F 17:03:15
+BI-LEG-DONE P1F 17:03:15
+BI2-WIN2-DONE 17:03:15

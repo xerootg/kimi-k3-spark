@@ -1,0 +1,228 @@
+== legs/server-RS.log
+  request 0: 15 decode blocks, 33.81 ms of node time per graph
+      6.206 ms/graph  MUL_MAT [dev] q8_0
+      2.263 ms/graph  GET_ROWS [host] i32
+      1.333 ms/graph  fused:MUL_MAT [dev] q8_0
+      1.306 ms/graph  UNARY
+      1.025 ms/graph  fused:RMS_NORM
+      0.991 ms/graph  MUL
+      0.945 ms/graph  SCALE
+      0.909 ms/graph  ADD
+      0.889 ms/graph  CPY kv=cache_r
+      0.591 ms/graph  CONCAT
+      0.501 ms/graph  RMS_NORM
+      0.499 ms/graph  DSV4_HC_COMB
+      0.469 ms/graph  DSV4_HC_POST
+      0.430 ms/graph  fused:UNARY
+      0.429 ms/graph  SSM_CONV
+      0.419 ms/graph  CONT
+      0.380 ms/graph  DSV4_HC_PRE
+      0.341 ms/graph  MUL_MAT [dev] f32
+      0.240 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.221 ms/graph  GLU
+      0.220 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.210 ms/graph  fused:GATED_DELTA_NET
+      0.210 ms/graph  fused:MUL
+      0.170 ms/graph  GET_ROWS [dev] f32 kv=cache_r
+  request 1: 6 decode blocks, 34.52 ms of node time per graph
+      6.682 ms/graph  MUL_MAT [dev] q8_0
+      2.397 ms/graph  GET_ROWS [host] i32
+      1.300 ms/graph  UNARY
+      1.030 ms/graph  fused:RMS_NORM
+      1.000 ms/graph  MUL
+      0.980 ms/graph  fused:MUL_MAT [dev] q8_0
+      0.940 ms/graph  SCALE
+      0.912 ms/graph  ADD
+      0.890 ms/graph  CPY kv=cache_r
+      0.597 ms/graph  CONCAT
+      0.500 ms/graph  RMS_NORM
+      0.498 ms/graph  DSV4_HC_COMB
+      0.470 ms/graph  DSV4_HC_POST
+      0.470 ms/graph  TOP_K
+      0.430 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.430 ms/graph  SSM_CONV
+      0.430 ms/graph  fused:UNARY
+      0.420 ms/graph  CONT
+      0.380 ms/graph  DSV4_HC_PRE
+      0.350 ms/graph  MUL_MAT [dev] f32
+      0.310 ms/graph  GLU
+      0.220 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.210 ms/graph  fused:GATED_DELTA_NET
+      0.210 ms/graph  fused:MUL
+  request 2: 6 decode blocks, 33.43 ms of node time per graph
+      6.682 ms/graph  MUL_MAT [dev] q8_0
+      2.128 ms/graph  GET_ROWS [host] i32
+      1.298 ms/graph  UNARY
+      1.030 ms/graph  fused:RMS_NORM
+      1.000 ms/graph  fused:MUL_MAT [dev] q8_0
+      0.990 ms/graph  MUL
+      0.940 ms/graph  SCALE
+      0.917 ms/graph  ADD
+      0.890 ms/graph  CPY kv=cache_r
+      0.622 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.590 ms/graph  CONCAT
+      0.500 ms/graph  RMS_NORM
+      0.492 ms/graph  DSV4_HC_COMB
+      0.468 ms/graph  TOP_K
+      0.467 ms/graph  DSV4_HC_POST
+      0.430 ms/graph  SSM_CONV
+      0.430 ms/graph  fused:UNARY
+      0.420 ms/graph  CONT
+      0.380 ms/graph  DSV4_HC_PRE
+      0.350 ms/graph  MUL_MAT [dev] f32
+      0.310 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.310 ms/graph  GLU
+      0.220 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.220 ms/graph  LIGHTNING_INDEXER
+== legs/server-RN.log
+  request 0: 15 decode blocks, 37.09 ms of node time per graph
+      8.563 ms/graph  MUL_MAT [dev] q8_0
+      2.503 ms/graph  GET_ROWS [host] i32
+      1.369 ms/graph  UNARY
+      1.279 ms/graph  ADD
+      1.077 ms/graph  fused:RMS_NORM
+      1.021 ms/graph  MUL
+      0.975 ms/graph  SCALE
+      0.904 ms/graph  CPY kv=cache_r
+      0.620 ms/graph  CONCAT
+      0.530 ms/graph  RMS_NORM
+      0.510 ms/graph  DSV4_HC_COMB
+      0.480 ms/graph  DSV4_HC_POST
+      0.460 ms/graph  fused:UNARY
+      0.450 ms/graph  SSM_CONV
+      0.441 ms/graph  CONT
+      0.415 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.393 ms/graph  DSV4_HC_PRE
+      0.354 ms/graph  MUL_MAT [dev] f32
+      0.351 ms/graph  GLU
+      0.230 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.220 ms/graph  fused:GATED_DELTA_NET
+      0.220 ms/graph  fused:MUL
+      0.179 ms/graph  GET_ROWS [dev] f32 kv=cache_r
+      0.170 ms/graph  CPY
+  request 1: 6 decode blocks, 37.07 ms of node time per graph
+      8.597 ms/graph  MUL_MAT [dev] q8_0
+      2.593 ms/graph  GET_ROWS [host] i32
+      1.365 ms/graph  UNARY
+      1.280 ms/graph  ADD
+      1.077 ms/graph  fused:RMS_NORM
+      1.028 ms/graph  MUL
+      0.980 ms/graph  SCALE
+      0.910 ms/graph  CPY kv=cache_r
+      0.622 ms/graph  CONCAT
+      0.540 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.530 ms/graph  RMS_NORM
+      0.510 ms/graph  DSV4_HC_COMB
+      0.480 ms/graph  DSV4_HC_POST
+      0.460 ms/graph  fused:UNARY
+      0.450 ms/graph  SSM_CONV
+      0.440 ms/graph  CONT
+      0.398 ms/graph  DSV4_HC_PRE
+      0.358 ms/graph  MUL_MAT [dev] f32
+      0.350 ms/graph  GLU
+      0.240 ms/graph  TOP_K
+      0.230 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.220 ms/graph  fused:GATED_DELTA_NET
+      0.220 ms/graph  fused:MUL
+      0.190 ms/graph  ARGSORT
+  request 2: 6 decode blocks, 35.92 ms of node time per graph
+      8.617 ms/graph  MUL_MAT [dev] q8_0
+      2.425 ms/graph  GET_ROWS [host] i32
+      1.368 ms/graph  UNARY
+      1.288 ms/graph  ADD
+      1.080 ms/graph  fused:RMS_NORM
+      1.023 ms/graph  MUL
+      0.980 ms/graph  SCALE
+      0.905 ms/graph  CPY kv=cache_r
+      0.737 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.622 ms/graph  CONCAT
+      0.530 ms/graph  RMS_NORM
+      0.510 ms/graph  DSV4_HC_COMB
+      0.480 ms/graph  DSV4_HC_POST
+      0.460 ms/graph  fused:UNARY
+      0.450 ms/graph  SSM_CONV
+      0.440 ms/graph  CONT
+      0.400 ms/graph  DSV4_HC_PRE
+      0.380 ms/graph  TOP_K
+      0.360 ms/graph  MUL_MAT [dev] f32
+      0.355 ms/graph  GLU
+      0.310 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.230 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.220 ms/graph  LIGHTNING_INDEXER
+      0.220 ms/graph  fused:MUL
+== legs/server-RF.log
+  request 0: 15 decode blocks, 35.77 ms of node time per graph
+      6.861 ms/graph  MUL_MAT [dev] q8_0
+      2.407 ms/graph  GET_ROWS [host] i32
+      1.502 ms/graph  fused:MUL_MAT [dev] q8_0
+      1.296 ms/graph  UNARY
+      1.020 ms/graph  fused:RMS_NORM
+      0.990 ms/graph  MUL
+      0.942 ms/graph  SCALE
+      0.900 ms/graph  ADD
+      0.890 ms/graph  CPY kv=cache_r
+      0.591 ms/graph  CONCAT
+      0.504 ms/graph  RMS_NORM
+      0.490 ms/graph  DSV4_HC_COMB
+      0.470 ms/graph  DSV4_HC_POST
+      0.433 ms/graph  fused:UNARY
+      0.430 ms/graph  SSM_CONV
+      0.420 ms/graph  CONT
+      0.412 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.384 ms/graph  DSV4_HC_PRE
+      0.340 ms/graph  MUL_MAT [dev] f32
+      0.221 ms/graph  GLU
+      0.220 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.210 ms/graph  fused:GATED_DELTA_NET
+      0.210 ms/graph  fused:MUL
+      0.170 ms/graph  GET_ROWS [dev] f32 kv=cache_r
+  request 1: 6 decode blocks, 35.93 ms of node time per graph
+      7.313 ms/graph  MUL_MAT [dev] q8_0
+      2.563 ms/graph  GET_ROWS [host] i32
+      1.290 ms/graph  UNARY
+      1.150 ms/graph  fused:MUL_MAT [dev] q8_0
+      1.020 ms/graph  fused:RMS_NORM
+      0.988 ms/graph  MUL
+      0.940 ms/graph  SCALE
+      0.900 ms/graph  ADD
+      0.890 ms/graph  CPY kv=cache_r
+      0.592 ms/graph  CONCAT
+      0.530 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.500 ms/graph  RMS_NORM
+      0.490 ms/graph  DSV4_HC_COMB
+      0.470 ms/graph  DSV4_HC_POST
+      0.430 ms/graph  fused:UNARY
+      0.428 ms/graph  SSM_CONV
+      0.420 ms/graph  CONT
+      0.382 ms/graph  DSV4_HC_PRE
+      0.342 ms/graph  MUL_MAT [dev] f32
+      0.310 ms/graph  GLU
+      0.230 ms/graph  TOP_K
+      0.220 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.218 ms/graph  fused:MUL
+      0.210 ms/graph  fused:GATED_DELTA_NET
+  request 2: 6 decode blocks, 34.65 ms of node time per graph
+      7.330 ms/graph  MUL_MAT [dev] q8_0
+      2.258 ms/graph  GET_ROWS [host] i32
+      1.290 ms/graph  UNARY
+      1.170 ms/graph  fused:MUL_MAT [dev] q8_0
+      1.020 ms/graph  fused:RMS_NORM
+      0.990 ms/graph  MUL
+      0.938 ms/graph  SCALE
+      0.910 ms/graph  ADD
+      0.885 ms/graph  CPY kv=cache_r
+      0.730 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.597 ms/graph  CONCAT
+      0.500 ms/graph  RMS_NORM
+      0.490 ms/graph  DSV4_HC_COMB
+      0.470 ms/graph  DSV4_HC_POST
+      0.432 ms/graph  fused:UNARY
+      0.425 ms/graph  SSM_CONV
+      0.420 ms/graph  CONT
+      0.383 ms/graph  DSV4_HC_PRE
+      0.380 ms/graph  TOP_K
+      0.348 ms/graph  MUL_MAT [dev] f32
+      0.310 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k
+      0.310 ms/graph  GLU
+      0.220 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.220 ms/graph  LIGHTNING_INDEXER

@@ -1218,3 +1218,90 @@ While the 16k prompt resumes, Juno's decode pauses for its remaining ubatches (4
 `LLAMA_PRIORITY_HOLD_PROMPTS=1` she decodes at 14.1-14.4 tok/s and the 16k client's first token moves from 47 s to
 65 s. `LLAMA_SLOT_BATCH_MAX=2` with Juno and three others: Juno 7.1 tok/s, the three share the second position at
 3.6 tok/s each. A request without a key gets 401.
+
+## 0056-bi-split-attention
+
+Removes the depth cost and most of the single-stream cost of batch-invariant decode (0054) without giving up its rule:
+each client's bytes equal the same request alone, at any batch composition. Three parts, all inert unless set:
+
+- **`GGML_CUDA_BI_ATTN_CHUNK=<cells>`** (production: 128): with `GGML_CUDA_BATCH_INVARIANT=1`, decode attention on the
+  sparse gather path splits each output tile's index list into fixed chunks of that many cells (rounded down to the
+  kernel's KV tile, 64 cells for GLM-5.3-Flash's 512-wide MLA), one block per chunk, and combines a tile's partial
+  results in a fixed order (the uniform stream-K fixup, last chunk first). A chunk covers the same cells of the
+  stream's own list whatever else is in the batch; chunks past the stream's live count are empty and combine as exact
+  no-ops, so the number of chunks (it follows the batch's longest list) does not change the bytes. At least two chunks
+  per tile always, so every tile takes the same combine path. 0054 gave each tile one block over its whole list: 8
+  blocks for a single stream on a 132-SM GPU. The chunk size changes the bytes (another split), so a server keeps one.
+- **Exact top-k.** 0054 made the indexer's top-k batch invariant by sorting the whole row (total order: value, then
+  lower index, +0 equal to -0) in one block. The k first entries of that order are unique, so any exact algorithm
+  gives the same bytes: an 8-bit radix select for the k-th key (four histogram passes), one ordered pass that keeps the
+  winners (ties by lower index), a shared-memory bitonic sort of the k winners. One block per row. Always on in BI
+  mode; `GGML_CUDA_BI_TOPK_SORT=1` keeps the 0054 sort for A/B timing (same bytes, checked on the Spark and the
+  GH200). Standalone check against a CPU stable sort: 828 cases (ties, +-0, -inf, rows 1..262144, k 1..n) all equal.
+- **`GGML_CUDA_BI_FUSE=1`** (production: 1): keeps the one-column variants that compute the same bits as the plain
+  kernels, which 0054 turned off: the dense matvec fusions (gate/up/GLU, bias), the routed+shared expert fusion, and
+  the small-K row packing of MMVQ (it only packs more rows into a block; each row keeps the same warps and K
+  partition). GB10's halve-iters doubles a row's warps and stays off. Measured: the same bytes with and without it at
+  N=1..5 on both boxes.
+
+**GH200 (window gh200-bi3, one slot, Hopper sm_90, dev build = CI flags):** node time per token, CUDA graphs off.
+
+| Op (ms per token) | stock | 0054 | 0056 (chunk 128) | 0056 + `BI_FUSE` (fusions only, before small-K) |
+|---|---|---|---|---|
+| attention, 16k deep | 0.43 | 2.29 | 0.54 | 0.53 |
+| top-k, 16k deep | 0.47 | 1.72 | 0.24 | 0.23 |
+| attention, 64k deep | 0.62 | 2.50 | 0.74 | - |
+| top-k, 64k deep | 0.47 | 1.60 | 0.38 | - |
+| dense q8_0 matvecs (+ fused), short | 7.54 | 8.54 | 8.56 | 8.36 |
+| all nodes, short / 16k | 33.8 / 34.5 | 37.1 / 40.2 | 37.1 / 37.1 | 35.8 / 35.9 |
+
+Bytes on the GH200 are the 0054 production gold with every chunk size tried (64, 128, 256) and with `BI_FUSE`
+(Service check `bc32ecab82`, p0 `8e312d7bdd`, 16k `145c14aa8b`, 64k `8acec1b966`). On the Spark (Q2 weights) chunk 128
+changes the short prompts' bytes once (p0 `ce2fc95752`, p1 `bb64203d71`, p2 `2d592efcb6`; p3 and 16k unchanged), and
+every client keeps them alone and batched at N=1..4 with the 16k request, two server processes (windows bi2-1/bi2-2).
+
+## 0057-kv-stage
+
+`GGML_CUDA_KV_STAGE=1` (exact value, inert when unset): prompt attention over a KV cache in host memory (0051,
+`LLAMA_KV_HOST=1`) first copies the viewed KV of the layer into a device scratch buffer (one `cudaMemcpy2DAsync` per
+stream, from the device pool) and runs the same kernel on the copy. A prompt ubatch's sparse gather re-reads the
+selected cells many times, which over NVLink-C2C cost about half of the prefill speed; one streaming copy of the
+stream's KV costs ~1 ms per layer at 100k cells. Same kernel and values, so the same bytes. Decode (fewer than
+`GGML_CUDA_KV_STAGE_MIN_TOKENS` queries, default 32) still reads host memory directly. A copy larger than
+`GGML_CUDA_KV_STAGE_MAX_MIB` (default 1024: a 1M-cell stream of 1 KiB cells) is not made; the pool keeps its high-water
+mark. The first staged call logs one line (`prompt attention over host KV reads a device copy`).
+
+**GH200 (window gh200-bi3, five slots, 0054 + 0056, `--cache-ram 32768`):**
+
+| Prompt | KV in HBM (elastic) | KV in Grace (0051) | KV in Grace + 0057 |
+|---|---|---|---|
+| 16k: prefill / decode | 1538 / 37.9 tok/s | 989 / 36.7 | **1550** / 36.7 |
+| 100k: prefill / decode | 1360 / 32.4 | 649 / 37.9 | **1418** / 37.9 |
+| 500k: prefill / decode | 806 (window gh200-bi) | 476 (window gh200-bi) | **838** / 25.6 |
+| bytes (16k, 100k) | `9c80718286` | same | same |
+
+GPU memory peak unchanged (91.0 GB with the 500k request). On the Spark (same LPDDR5X both ways) the staged and direct
+legs give the same bytes and speed (window bi2-1).
+
+## 0058-kv-stream-holes
+
+`LLAMA_KV_STREAM_HOLES=1` (exact value, inert when unset): one ubatch may hold sequences whose KV streams are not
+contiguous. With `--parallel N` (non-unified KV, one stream per slot) llama.cpp split a batch into one ubatch per run
+of consecutive streams (`split_equal(sequential)`), because the attention views the streams `[s0, s1]` as one tensor.
+So clients on slots 0, 1, 2 and 4 decoded in two forward passes per step, and the alternating graph shapes stopped
+CUDA graphs: on the GH200 four clients made 49.6 tok/s on slots {0,1,2,4} against 67-69 on {0,1,2,3}, with stock
+batching as with 0054 (window gh200-bi3, legs HS and GS/GB). That was the "dip at exactly four streams" of window
+gh200-bi: the leg's earlier solo requests had given each prompt a home slot, so the four landed on {0,1,2,4}. Busy
+slots are rarely contiguous in production (a client in the middle finishes, the others continue).
+
+- The hybrid-idx memory (glm5-next, qwen4exp) splits non-sequentially when the variable is set.
+- glm5-next's DSA layer, when the viewed streams have holes, gives the attention one query row per viewed stream (a
+  hole repeats the first sequence's rows: finite inputs, outputs never read), pads the selection mask the same way
+  (`get_rows`, exact), and keeps only the real rows of the output. Every real stream's attention reads the same query,
+  mask and cells as without holes, so with 0054 the bytes do not change. Row maps are a graph input (I32, rebuilt when
+  the streams change); KV writes already used global cell indices. qwen4exp has no padding: do not set the variable
+  for it.
+
+**Spark (window bi2-2, four slots, 0054 + 0056 chunk 128):** p0 + p2 on slots {0,2}: 12.7-13.0 tok/s aggregate
+without, **18.1-18.8** with; p0 + p1 + p3 and the 16k mixes unchanged; every client its solo md5 in every round, also
+with `GGML_CUDA_BI_FUSE=1`.
