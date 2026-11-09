@@ -1255,10 +1255,16 @@ each client's bytes equal the same request alone, at any batch composition. Thre
 | dense q8_0 matvecs (+ fused), short | 7.54 | 8.54 | 8.56 | 8.36 |
 | all nodes, short / 16k | 33.8 / 34.5 | 37.1 / 40.2 | 37.1 / 37.1 | 35.8 / 35.9 |
 
-Bytes on the GH200 are the 0054 production gold with every chunk size tried (64, 128, 256) and with `BI_FUSE`
-(Service check `bc32ecab82`, p0 `8e312d7bdd`, 16k `145c14aa8b`, 64k `8acec1b966`). On the Spark (Q2 weights) chunk 128
-changes the short prompts' bytes once (p0 `ce2fc95752`, p1 `bb64203d71`, p2 `2d592efcb6`; p3 and 16k unchanged), and
-every client keeps them alone and batched at N=1..4 with the 16k request, two server processes (windows bi2-1/bi2-2).
+Bytes: the chunked attention changes some answers once, then every client keeps its bytes alone and batched. GH200
+(acceptance window gh200-bi4, CI image `ga5fa848`, five slots, N=1..5 with 16k and 64k mixes, two server processes):
+Service check `bc32ecab82`, p0 `8e312d7bdd`, p4 `e7851c4b56`, 16k `145c14aa8b`, 64k `8acec1b966` unchanged; new gold
+p1 `74fb633e8e`, p2 `f8531a5f07`, p3 `4d6338450b`. `BI_FUSE` and the exact top-k change nothing. Spark (Q2 weights,
+windows bi2-1/bi2-2): p0 `ce2fc95752`, p1 `bb64203d71`, p2 `2d592efcb6` new; p3 and 16k unchanged.
+
+**GH200 acceptance (window gh200-bi4, tok/s):** production #169 config vs the same plus 0056-0058 (`BI_ATTN_CHUNK=128`,
+`BI_FUSE=1`, `KV_STAGE=1`, `KV_STREAM_HOLES=1`): one client short 38-40 -> 42-43 (stock single-slot 50, the new config
+on one slot 49), after 16k 33-36 -> 39-43 (stock 41.6), after 64k 36 -> 41-42 (stock 43.8); N=4 on slots {0,1,2,4}
+50 -> 69; N=5 66 -> 66.7; prefill at 100k 647 -> 1422.
 
 ## 0057-kv-stage
 

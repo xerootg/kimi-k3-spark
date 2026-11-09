@@ -1,0 +1,210 @@
+=== LEG PR parallel=5 ctx=5242880 img=547208dca250-g64500e2 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1] xargs=[] cache_ram=65536 17:32:47
+READY PR after 45s
+0.11.098.214 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.206.407 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.206.444 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.206.445 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.400.269 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.232.149 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.232.180 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.232.182 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.44.076.968 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 87963 MiB
+--- gold.py 2 17:33:33
+{"kind": "gold", "tag": "PR", "md5": "bc32ecab82", "decode_tps": 33.86, "wall_s": 4.07}
+{"kind": "gold", "tag": "PR", "md5": "bc32ecab82", "decode_tps": 40.79, "wall_s": 3.33}
+--- ekbench.py solo p0 p1 p2 p3 p4 L16384 17:33:40
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 63.42, "decode_n": 256, "decode_tps": 40.23, "md5": "8e312d7bdd", "t0": 1794245620.9817588, "t1": 1794245627.506368, "kind": "solo", "tag": "PR"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.25, "prefill_tps": 75.86, "decode_n": 256, "decode_tps": 41.42, "md5": "03a690574e", "t0": 1794245627.5064988, "t1": 1794245633.9495745, "kind": "solo", "tag": "PR"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.24, "prefill_tps": 74.33, "decode_n": 256, "decode_tps": 39.96, "md5": "3dc71366a4", "t0": 1794245633.949663, "t1": 1794245640.6125507, "kind": "solo", "tag": "PR"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.28, "prefill_tps": 75.45, "decode_n": 256, "decode_tps": 40.48, "md5": "263b1c6f5a", "t0": 1794245640.612631, "t1": 1794245647.2310307, "kind": "solo", "tag": "PR"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.25, "prefill_tps": 84.8, "decode_n": 256, "decode_tps": 39.5, "md5": "e7851c4b56", "t0": 1794245647.2311099, "t1": 1794245653.9803739, "kind": "solo", "tag": "PR"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 16.29, "prefill_tps": 1007.89, "decode_n": 128, "decode_tps": 33.28, "md5": "145c14aa8b", "t0": 1794245653.9804652, "t1": 1794245674.1482573, "kind": "solo", "tag": "PR"}
+--- ekbench.py multi p0 p1 --rounds 2 17:34:34
+{"kind": "multi", "tag": "PR", "n": 2, "round": "warm", "agg_tps": 51.18, "wall_s": 10.0, "gen": 512, "per_stream_tps": [26.41, 27.03], "md5": ["8e312d7bdd", "03a690574e"], "specs": ["p0", "p1"], "prefill_tps": [64.51, 85.1], "t0": 1794245674.193444, "t1": 1794245684.19764}
+{"kind": "multi", "tag": "PR", "n": 2, "round": 1, "agg_tps": 56.06, "wall_s": 9.13, "gen": 512, "per_stream_tps": [28.52, 29.2], "md5": ["8e312d7bdd", "03a690574e"], "specs": ["p0", "p1"], "prefill_tps": [72.44, 91.28], "t0": 1794245684.1980908, "t1": 1794245693.331396}
+{"kind": "multi", "tag": "PR", "n": 2, "round": 2, "agg_tps": 57.81, "wall_s": 8.86, "gen": 512, "per_stream_tps": [29.42, 30.12], "md5": ["8e312d7bdd", "03a690574e"], "specs": ["p0", "p1"], "prefill_tps": [74.54, 94.88], "t0": 1794245693.3318105, "t1": 1794245702.1889076}
+--- ekbench.py multi p0 p1 p2 --rounds 2 17:35:02
+{"kind": "multi", "tag": "PR", "n": 3, "round": "warm", "agg_tps": 60.28, "wall_s": 12.74, "gen": 768, "per_stream_tps": [20.52, 20.86, 21.26], "md5": ["8e312d7bdd", "03a690574e", "3dc71366a4"], "specs": ["p0", "p1", "p2"], "prefill_tps": [74.93, 95.45, 77.51], "t0": 1794245702.2340686, "t1": 1794245714.9736557}
+{"kind": "multi", "tag": "PR", "n": 3, "round": 1, "agg_tps": 62.96, "wall_s": 12.2, "gen": 768, "per_stream_tps": [21.27, 21.63, 22.03], "md5": ["8e312d7bdd", "03a690574e", "3dc71366a4"], "specs": ["p0", "p1", "p2"], "prefill_tps": [74.62, 94.63, 83.86], "t0": 1794245714.9742997, "t1": 1794245727.1725824}
+{"kind": "multi", "tag": "PR", "n": 3, "round": 2, "agg_tps": 63.83, "wall_s": 12.03, "gen": 768, "per_stream_tps": [21.58, 21.96, 22.35], "md5": ["8e312d7bdd", "03a690574e", "3dc71366a4"], "specs": ["p0", "p1", "p2"], "prefill_tps": [72.12, 92.92, 87.35], "t0": 1794245727.173095, "t1": 1794245739.2058282}
+--- ekbench.py multi p0 p1 p2 p3 --rounds 2 17:35:39
+{"kind": "multi", "tag": "PR", "n": 4, "round": "warm", "agg_tps": 49.16, "wall_s": 20.83, "gen": 1024, "per_stream_tps": [12.45, 12.58, 12.71, 12.86], "md5": ["8e312d7bdd", "03a690574e", "3dc71366a4", "263b1c6f5a"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [72.13, 91.94, 89.16, 85.62], "t0": 1794245739.250424, "t1": 1794245760.0820184}
+{"kind": "multi", "tag": "PR", "n": 4, "round": 1, "agg_tps": 50.18, "wall_s": 20.41, "gen": 1024, "per_stream_tps": [12.63, 12.76, 12.88, 13.03], "md5": ["8e312d7bdd", "03a690574e", "3dc71366a4", "263b1c6f5a"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [74.78, 93.79, 92.95, 91.04], "t0": 1794245760.0826926, "t1": 1794245780.4892347}
+{"kind": "multi", "tag": "PR", "n": 4, "round": 2, "agg_tps": 50.48, "wall_s": 20.29, "gen": 1024, "per_stream_tps": [12.71, 12.84, 12.96, 13.11], "md5": ["8e312d7bdd", "03a690574e", "3dc71366a4", "263b1c6f5a"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [74.35, 92.68, 93.6, 94.33], "t0": 1794245780.4899182, "t1": 1794245800.7761393}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 17:36:40
+{"kind": "multi", "tag": "PR", "n": 5, "round": "warm", "agg_tps": 64.43, "wall_s": 19.87, "gen": 1280, "per_stream_tps": [13.09, 13.23, 13.37, 13.69, 13.53], "md5": ["8e312d7bdd", "03a690574e", "3dc71366a4", "263b1c6f5a", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [73.19, 92.24, 93.84, 95.89, 88.26], "t0": 1794245800.8230805, "t1": 1794245820.6886866}
+{"kind": "multi", "tag": "PR", "n": 5, "round": 1, "agg_tps": 65.58, "wall_s": 19.52, "gen": 1280, "per_stream_tps": [13.22, 13.36, 13.5, 13.83, 13.67], "md5": ["8e312d7bdd", "03a690574e", "3dc71366a4", "263b1c6f5a", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [72.63, 92.21, 92.94, 95.95, 90.39], "t0": 1794245820.6894758, "t1": 1794245840.2064986}
+{"kind": "multi", "tag": "PR", "n": 5, "round": 2, "agg_tps": 66.17, "wall_s": 19.34, "gen": 1280, "per_stream_tps": [13.34, 13.48, 13.62, 13.95, 13.79], "md5": ["8e312d7bdd", "03a690574e", "3dc71366a4", "263b1c6f5a", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [73.49, 93.03, 93.65, 96.61, 93.33], "t0": 1794245840.2072318, "t1": 1794245859.5520983}
+--- ekbench.py multi p0 L16384 --rounds 1 17:37:39
+{"kind": "multi", "tag": "PR", "n": 2, "round": "warm", "agg_tps": 15.33, "wall_s": 25.05, "gen": 384, "per_stream_tps": [10.3, 24.08], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [67.4, 1018.92], "t0": 1794245859.5991306, "t1": 1794245884.6540549}
+{"kind": "multi", "tag": "PR", "n": 2, "round": 1, "agg_tps": 15.6, "wall_s": 24.61, "gen": 384, "per_stream_tps": [10.48, 25.84], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [71.74, 1019.65], "t0": 1794245884.6546333, "t1": 1794245909.266736}
+--- ekbench.py multi p1 p2 p3 p4 L16384 --rounds 2 17:38:29
+{"kind": "multi", "tag": "PR", "n": 5, "round": "warm", "agg_tps": 32.57, "wall_s": 35.37, "gen": 1152, "per_stream_tps": [14.08, 14.23, 14.61, 14.42, 12.21], "md5": ["03a690574e", "3dc71366a4", "263b1c6f5a", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [88.44, 88.67, 93.29, 91.52, 979.72], "t0": 1794245909.3125186, "t1": 1794245944.6860416}
+{"kind": "multi", "tag": "PR", "n": 5, "round": 1, "agg_tps": 32.97, "wall_s": 34.94, "gen": 1152, "per_stream_tps": [13.88, 14.08, 14.5, 14.29, 11.87], "md5": ["03a690574e", "3dc71366a4", "263b1c6f5a", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [61.44, 70.3, 80.27, 78.34, 1019.88], "t0": 1794245944.6868742, "t1": 1794245979.6284246}
+{"kind": "multi", "tag": "PR", "n": 5, "round": 2, "agg_tps": 33.41, "wall_s": 34.48, "gen": 1152, "per_stream_tps": [14.08, 14.25, 14.63, 14.43, 12.23], "md5": ["03a690574e", "3dc71366a4", "263b1c6f5a", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [86.34, 86.36, 90.54, 89.63, 1021.63], "t0": 1794245979.629246, "t1": 1794246014.1130989}
+--- ekbench.py multi p0 p1 p2 p3 L65536 --rounds 1 17:40:14
+{"kind": "multi", "tag": "PR", "n": 5, "round": "warm", "agg_tps": 9.62, "wall_s": 119.76, "gen": 1152, "per_stream_tps": [2.14, 2.14, 2.15, 11.97, 12.23], "md5": ["8e312d7bdd", "03a690574e", "3dc71366a4", "263b1c6f5a", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [59.2, 85.77, 86.04, 89.16, 670.32], "t0": 1794246014.1596708, "t1": 1794246133.9171345}
+{"kind": "multi", "tag": "PR", "n": 5, "round": 1, "agg_tps": 9.67, "wall_s": 119.15, "gen": 1152, "per_stream_tps": [2.15, 2.15, 2.16, 12.12, 12.51], "md5": ["8e312d7bdd", "03a690574e", "3dc71366a4", "263b1c6f5a", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [64.1, 84.94, 85.43, 88.93, 672.67], "t0": 1794246133.917931, "t1": 1794246253.0663147}
+--- ekbench.py solo p0 L16384 L65536 17:44:13
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.15, "prefill_tps": 66.16, "decode_n": 256, "decode_tps": 38.23, "md5": "8e312d7bdd", "t0": 1794246253.1126795, "t1": 1794246259.9889028, "kind": "solo", "tag": "PR"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 16.09, "prefill_tps": 1020.08, "decode_n": 128, "decode_tps": 35.57, "md5": "145c14aa8b", "t0": 1794246259.9890113, "t1": 1794246279.6990623, "kind": "solo", "tag": "PR"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 97.15, "prefill_tps": 671.55, "decode_n": 128, "decode_tps": 35.96, "md5": "8acec1b966", "t0": 1794246279.699153, "t1": 1794246380.4637058, "kind": "solo", "tag": "PR"}
+--- bench.py depth --lens 100000 --n-predict 64 17:46:20
+{"kind": "depth", "tag": "PR", "target": 100000, "prompt_n": 99676, "prefill_tps": 646.95, "prefill_s": 154.07, "decode_n": 64, "decode_tps": 34.92, "md5": "9c80718286", "t0": 1794246380.5241024, "t1": 1794246536.514825}
+PEAK GPU 91007 MiB, LOWEST MemAvailable 131337 MiB; END PR 17:48:58
+GBI-LEG-DONE PR 17:48:58
+=== LEG A1 parallel=5 ctx=5242880 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 GGML_CUDA_KV_STAGE=1 LLAMA_KV_STREAM_HOLES=1] xargs=[] cache_ram=65536 17:49:00
+READY A1 after 42s
+0.10.896.562 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.038.789 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.038.852 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.038.858 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.236.534 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.110.902 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.110.932 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.110.934 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.44.174.685 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 87966 MiB
+--- gold.py 2 17:49:45
+{"kind": "gold", "tag": "A1", "md5": "bc32ecab82", "decode_tps": 34.99, "wall_s": 3.95}
+{"kind": "gold", "tag": "A1", "md5": "bc32ecab82", "decode_tps": 42.46, "wall_s": 3.22}
+--- ekbench.py solo p0 p1 p2 p3 p4 L16384 17:49:52
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 62.79, "decode_n": 256, "decode_tps": 42.14, "md5": "8e312d7bdd", "t0": 1794246592.6300244, "t1": 1794246598.8696842, "kind": "solo", "tag": "A1"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.25, "prefill_tps": 75.66, "decode_n": 256, "decode_tps": 43.21, "md5": "74fb633e8e", "t0": 1794246598.8697846, "t1": 1794246605.061326, "kind": "solo", "tag": "A1"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.24, "prefill_tps": 74.1, "decode_n": 256, "decode_tps": 41.63, "md5": "f8531a5f07", "t0": 1794246605.0614142, "t1": 1794246611.4722617, "kind": "solo", "tag": "A1"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.28, "prefill_tps": 74.54, "decode_n": 256, "decode_tps": 42.41, "md5": "4d6338450b", "t0": 1794246611.4723427, "t1": 1794246617.8095477, "kind": "solo", "tag": "A1"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.25, "prefill_tps": 83.97, "decode_n": 256, "decode_tps": 41.22, "md5": "e7851c4b56", "t0": 1794246617.8096323, "t1": 1794246624.2948704, "kind": "solo", "tag": "A1"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.24, "prefill_tps": 1603.44, "decode_n": 128, "decode_tps": 39.09, "md5": "145c14aa8b", "t0": 1794246624.2949517, "t1": 1794246637.8509064, "kind": "solo", "tag": "A1"}
+--- ekbench.py multi p0 p1 --rounds 2 17:50:37
+{"kind": "multi", "tag": "A1", "n": 2, "round": "warm", "agg_tps": 53.59, "wall_s": 9.55, "gen": 512, "per_stream_tps": [27.77, 28.45], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [65.35, 85.99], "t0": 1794246637.8953807, "t1": 1794246647.449208}
+{"kind": "multi", "tag": "A1", "n": 2, "round": 1, "agg_tps": 59.72, "wall_s": 8.57, "gen": 512, "per_stream_tps": [30.44, 31.2], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [74.02, 92.76], "t0": 1794246647.4496794, "t1": 1794246656.023136}
+{"kind": "multi", "tag": "A1", "n": 2, "round": 2, "agg_tps": 61.19, "wall_s": 8.37, "gen": 512, "per_stream_tps": [31.2, 31.98], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [76.05, 95.23], "t0": 1794246656.0235686, "t1": 1794246664.3906882}
+--- ekbench.py multi p0 p1 p2 --rounds 2 17:51:04
+{"kind": "multi", "tag": "A1", "n": 3, "round": "warm", "agg_tps": 62.95, "wall_s": 12.2, "gen": 768, "per_stream_tps": [22.28, 22.03, 21.66], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [76.98, 95.62, 76.94], "t0": 1794246664.4355366, "t1": 1794246676.635797}
+{"kind": "multi", "tag": "A1", "n": 3, "round": 1, "agg_tps": 65.23, "wall_s": 11.77, "gen": 768, "per_stream_tps": [22.89, 22.62, 22.22], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [74.53, 94.01, 83.05], "t0": 1794246676.636418, "t1": 1794246688.4101775}
+{"kind": "multi", "tag": "A1", "n": 3, "round": 2, "agg_tps": 66.27, "wall_s": 11.59, "gen": 768, "per_stream_tps": [23.28, 22.99, 22.57], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [72.79, 91.81, 87.35], "t0": 1794246688.4107409, "t1": 1794246700.0000117}
+--- ekbench.py multi p0 p1 p2 p3 --rounds 2 17:51:40
+{"kind": "multi", "tag": "A1", "n": 4, "round": "warm", "agg_tps": 67.03, "wall_s": 15.28, "gen": 1024, "per_stream_tps": [17.59, 17.42, 17.18, 17.89], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [72.61, 91.69, 88.77, 84.92], "t0": 1794246700.0447755, "t1": 1794246715.3205824}
+{"kind": "multi", "tag": "A1", "n": 4, "round": 1, "agg_tps": 68.82, "wall_s": 14.88, "gen": 1024, "per_stream_tps": [17.9, 17.73, 17.48, 18.2], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [73.41, 91.62, 90.9, 88.83], "t0": 1794246715.3212652, "t1": 1794246730.2007005}
+{"kind": "multi", "tag": "A1", "n": 4, "round": 2, "agg_tps": 69.25, "wall_s": 14.79, "gen": 1024, "per_stream_tps": [18.01, 17.84, 17.59, 18.31], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [74.07, 92.0, 91.59, 91.22], "t0": 1794246730.2013276, "t1": 1794246744.9880009}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 17:52:24
+{"kind": "multi", "tag": "A1", "n": 5, "round": "warm", "agg_tps": 65.09, "wall_s": 19.66, "gen": 1280, "per_stream_tps": [13.52, 13.42, 13.28, 13.86, 13.69], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [73.55, 91.78, 92.04, 92.29, 86.82], "t0": 1794246745.035396, "t1": 1794246764.6995988}
+{"kind": "multi", "tag": "A1", "n": 5, "round": 1, "agg_tps": 66.31, "wall_s": 19.3, "gen": 1280, "per_stream_tps": [13.66, 13.56, 13.42, 14.01, 13.84], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [73.42, 91.55, 92.12, 92.85, 88.44], "t0": 1794246764.700391, "t1": 1794246784.004033}
+{"kind": "multi", "tag": "A1", "n": 5, "round": 2, "agg_tps": 66.63, "wall_s": 19.21, "gen": 1280, "per_stream_tps": [13.73, 13.63, 13.48, 14.08, 13.91], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [72.93, 91.56, 91.41, 92.89, 89.64], "t0": 1794246784.00482, "t1": 1794246803.215065}
+--- ekbench.py multi p0 L16384 --rounds 1 17:53:23
+{"kind": "multi", "tag": "A1", "n": 2, "round": "warm", "agg_tps": 20.49, "wall_s": 18.74, "gen": 384, "per_stream_tps": [30.4, 23.07], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [72.75, 1630.79], "t0": 1794246803.261665, "t1": 1794246822.0013871}
+{"kind": "multi", "tag": "A1", "n": 2, "round": 1, "agg_tps": 20.85, "wall_s": 18.42, "gen": 384, "per_stream_tps": [31.52, 24.27], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [72.87, 1632.87], "t0": 1794246822.00191, "t1": 1794246840.4181194}
+--- ekbench.py multi p1 p2 p3 p4 L16384 --rounds 2 17:54:00
+{"kind": "multi", "tag": "A1", "n": 5, "round": "warm", "agg_tps": 40.05, "wall_s": 28.76, "gen": 1152, "per_stream_tps": [13.97, 14.12, 14.49, 14.31, 11.75], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [89.92, 89.04, 92.4, 90.46, 1637.1], "t0": 1794246840.4642146, "t1": 1794246869.2256882}
+{"kind": "multi", "tag": "A1", "n": 5, "round": 1, "agg_tps": 40.64, "wall_s": 28.34, "gen": 1152, "per_stream_tps": [14.14, 14.3, 14.68, 14.49, 11.95], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [90.04, 88.78, 92.21, 90.91, 1641.41], "t0": 1794246869.2264776, "t1": 1794246897.5696213}
+{"kind": "multi", "tag": "A1", "n": 5, "round": 2, "agg_tps": 41.01, "wall_s": 28.09, "gen": 1152, "per_stream_tps": [14.33, 14.5, 14.89, 14.69, 12.11], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [88.65, 88.76, 92.5, 91.56, 1643.4], "t0": 1794246897.5703921, "t1": 1794246925.6611392}
+--- ekbench.py multi p0 p1 p2 p3 L65536 --rounds 1 17:55:25
+{"kind": "multi", "tag": "A1", "n": 5, "round": "warm", "agg_tps": 17.96, "wall_s": 64.13, "gen": 1152, "per_stream_tps": [4.03, 4.02, 4.01, 13.72, 11.66], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [68.17, 88.72, 83.05, 70.38, 1470.88], "t0": 1794246925.7083275, "t1": 1794246989.838904}
+{"kind": "multi", "tag": "A1", "n": 5, "round": 1, "agg_tps": 18.26, "wall_s": 63.09, "gen": 1152, "per_stream_tps": [4.1, 4.09, 4.07, 14.07, 12.17], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [65.86, 85.35, 84.89, 88.7, 1487.9], "t0": 1794246989.8397486, "t1": 1794247052.9327204}
+--- ekbench.py solo p0 L16384 L65536 17:57:32
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.15, "prefill_tps": 66.06, "decode_n": 256, "decode_tps": 41.79, "md5": "8e312d7bdd", "t0": 1794247052.9798267, "t1": 1794247059.2920291, "kind": "solo", "tag": "A1"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.02, "prefill_tps": 1637.79, "decode_n": 128, "decode_tps": 42.55, "md5": "145c14aa8b", "t0": 1794247059.2921317, "t1": 1794247072.3501718, "kind": "solo", "tag": "A1"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 44.01, "prefill_tps": 1482.41, "decode_n": 128, "decode_tps": 41.44, "md5": "8acec1b966", "t0": 1794247072.3502808, "t1": 1794247119.5093167, "kind": "solo", "tag": "A1"}
+--- bench.py depth --lens 100000 --n-predict 64 17:58:39
+{"kind": "depth", "tag": "A1", "target": 100000, "prompt_n": 99676, "prefill_tps": 1421.96, "prefill_s": 70.1, "decode_n": 64, "decode_tps": 40.91, "md5": "9c80718286", "t0": 1794247119.5690815, "t1": 1794247191.3250334}
+PEAK GPU 91009 MiB, LOWEST MemAvailable 131364 MiB; END A1 17:59:53
+GBI-LEG-DONE A1 17:59:53
+=== LEG A2 parallel=5 ctx=5242880 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 GGML_CUDA_KV_STAGE=1 LLAMA_KV_STREAM_HOLES=1] xargs=[] cache_ram=65536 17:59:55
+READY A2 after 42s
+0.10.882.502 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.972.280 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.972.322 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.11.972.329 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.165.453 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.994.646 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.994.679 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.12.994.680 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.43.532.183 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 87964 MiB
+--- gold.py 2 18:00:40
+{"kind": "gold", "tag": "A2", "md5": "bc32ecab82", "decode_tps": 35.1, "wall_s": 3.94}
+{"kind": "gold", "tag": "A2", "md5": "bc32ecab82", "decode_tps": 42.54, "wall_s": 3.21}
+--- ekbench.py solo p0 p1 p2 p3 p4 L16384 18:00:47
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 62.88, "decode_n": 256, "decode_tps": 42.25, "md5": "8e312d7bdd", "t0": 1794247247.4353898, "t1": 1794247253.6602972, "kind": "solo", "tag": "A2"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.25, "prefill_tps": 75.94, "decode_n": 256, "decode_tps": 42.96, "md5": "74fb633e8e", "t0": 1794247253.6604111, "t1": 1794247259.8838763, "kind": "solo", "tag": "A2"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.24, "prefill_tps": 74.43, "decode_n": 256, "decode_tps": 41.7, "md5": "f8531a5f07", "t0": 1794247259.8839617, "t1": 1794247266.2831602, "kind": "solo", "tag": "A2"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.28, "prefill_tps": 75.05, "decode_n": 256, "decode_tps": 42.47, "md5": "4d6338450b", "t0": 1794247266.2832599, "t1": 1794247272.6088707, "kind": "solo", "tag": "A2"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.25, "prefill_tps": 84.15, "decode_n": 256, "decode_tps": 41.32, "md5": "e7851c4b56", "t0": 1794247272.60895, "t1": 1794247279.0787356, "kind": "solo", "tag": "A2"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.24, "prefill_tps": 1602.78, "decode_n": 128, "decode_tps": 39.14, "md5": "145c14aa8b", "t0": 1794247279.0788152, "t1": 1794247292.6343436, "kind": "solo", "tag": "A2"}
+--- ekbench.py multi p0 p1 --rounds 2 18:01:32
+{"kind": "multi", "tag": "A2", "n": 2, "round": "warm", "agg_tps": 53.45, "wall_s": 9.58, "gen": 512, "per_stream_tps": [27.68, 28.36], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [65.3, 86.06], "t0": 1794247292.678443, "t1": 1794247302.2569132}
+{"kind": "multi", "tag": "A2", "n": 2, "round": 1, "agg_tps": 58.86, "wall_s": 8.7, "gen": 512, "per_stream_tps": [30.01, 30.75], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [72.9, 92.47], "t0": 1794247302.2573972, "t1": 1794247310.9554195}
+{"kind": "multi", "tag": "A2", "n": 2, "round": 2, "agg_tps": 60.71, "wall_s": 8.43, "gen": 512, "per_stream_tps": [30.96, 31.73], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [74.81, 94.84], "t0": 1794247310.955898, "t1": 1794247319.3891513}
+--- ekbench.py multi p0 p1 p2 --rounds 2 18:01:59
+{"kind": "multi", "tag": "A2", "n": 3, "round": "warm", "agg_tps": 62.48, "wall_s": 12.29, "gen": 768, "per_stream_tps": [21.3, 21.66, 22.1], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [75.27, 95.45, 77.21], "t0": 1794247319.4352748, "t1": 1794247331.72788}
+{"kind": "multi", "tag": "A2", "n": 3, "round": 1, "agg_tps": 65.31, "wall_s": 11.76, "gen": 768, "per_stream_tps": [22.1, 22.49, 22.92], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [73.89, 94.25, 83.77], "t0": 1794247331.7284665, "t1": 1794247343.4874551}
+{"kind": "multi", "tag": "A2", "n": 3, "round": 2, "agg_tps": 66.34, "wall_s": 11.58, "gen": 768, "per_stream_tps": [22.45, 22.87, 23.3], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [72.28, 91.96, 88.07], "t0": 1794247343.4879844, "t1": 1794247355.0653267}
+--- ekbench.py multi p0 p1 p2 p3 --rounds 2 18:02:35
+{"kind": "multi", "tag": "A2", "n": 4, "round": "warm", "agg_tps": 67.2, "wall_s": 15.24, "gen": 1024, "per_stream_tps": [17.14, 17.38, 17.62, 17.92], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [71.91, 92.3, 89.96, 85.35], "t0": 1794247355.1106987, "t1": 1794247370.3490133}
+{"kind": "multi", "tag": "A2", "n": 4, "round": 1, "agg_tps": 68.88, "wall_s": 14.87, "gen": 1024, "per_stream_tps": [17.42, 17.67, 17.92, 18.22], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [72.7, 91.85, 91.83, 89.1], "t0": 1794247370.349647, "t1": 1794247385.2157621}
+{"kind": "multi", "tag": "A2", "n": 4, "round": 2, "agg_tps": 69.34, "wall_s": 14.77, "gen": 1024, "per_stream_tps": [17.54, 17.79, 18.04, 18.33], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [73.11, 92.31, 92.82, 91.51], "t0": 1794247385.2163925, "t1": 1794247399.9844477}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 18:03:19
+{"kind": "multi", "tag": "A2", "n": 5, "round": "warm", "agg_tps": 65.11, "wall_s": 19.66, "gen": 1280, "per_stream_tps": [13.24, 13.38, 13.52, 13.87, 13.7], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [72.37, 91.76, 93.03, 92.38, 87.14], "t0": 1794247400.0310128, "t1": 1794247419.6889257}
+{"kind": "multi", "tag": "A2", "n": 5, "round": 1, "agg_tps": 66.4, "wall_s": 19.28, "gen": 1280, "per_stream_tps": [13.39, 13.54, 13.68, 14.03, 13.86], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [72.2, 91.89, 93.26, 93.05, 88.73], "t0": 1794247419.6897018, "t1": 1794247438.9679306}
+{"kind": "multi", "tag": "A2", "n": 5, "round": 2, "agg_tps": 66.72, "wall_s": 19.18, "gen": 1280, "per_stream_tps": [13.46, 13.61, 13.75, 14.1, 13.93], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [71.93, 91.52, 93.03, 93.47, 89.84], "t0": 1794247438.9686682, "t1": 1794247458.1530914}
+--- ekbench.py multi p0 L16384 --rounds 1 18:04:18
+{"kind": "multi", "tag": "A2", "n": 2, "round": "warm", "agg_tps": 20.65, "wall_s": 18.59, "gen": 384, "per_stream_tps": [13.94, 24.34], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [67.89, 1631.16], "t0": 1794247458.200404, "t1": 1794247476.7929318}
+{"kind": "multi", "tag": "A2", "n": 2, "round": 1, "agg_tps": 21.04, "wall_s": 18.25, "gen": 384, "per_stream_tps": [14.18, 25.66], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [72.56, 1633.91], "t0": 1794247476.7935095, "t1": 1794247495.0485058}
+--- ekbench.py multi p1 p2 p3 p4 L16384 --rounds 2 18:04:55
+{"kind": "multi", "tag": "A2", "n": 5, "round": "warm", "agg_tps": 40.0, "wall_s": 28.8, "gen": 1152, "per_stream_tps": [14.08, 9.0, 14.45, 14.26, 11.94], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [90.16, 88.36, 92.55, 90.39, 1639.12], "t0": 1794247495.0946925, "t1": 1794247523.8921623}
+{"kind": "multi", "tag": "A2", "n": 5, "round": 1, "agg_tps": 40.58, "wall_s": 28.39, "gen": 1152, "per_stream_tps": [14.26, 9.08, 14.63, 14.44, 12.16], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [90.19, 87.96, 92.38, 91.12, 1643.21], "t0": 1794247523.8930156, "t1": 1794247552.2844026}
+{"kind": "multi", "tag": "A2", "n": 5, "round": 2, "agg_tps": 40.95, "wall_s": 28.13, "gen": 1152, "per_stream_tps": [14.46, 9.16, 14.84, 14.65, 12.35], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [88.95, 88.08, 92.84, 91.89, 1644.48], "t0": 1794247552.2851856, "t1": 1794247580.41678}
+--- ekbench.py multi p0 p1 p2 p3 L65536 --rounds 1 18:06:20
+{"kind": "multi", "tag": "A2", "n": 5, "round": "warm", "agg_tps": 18.2, "wall_s": 63.29, "gen": 1152, "per_stream_tps": [4.07, 4.09, 4.06, 14.2, 12.2], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [66.18, 88.76, 84.18, 90.97, 1475.22], "t0": 1794247580.4635978, "t1": 1794247643.7556744}
+{"kind": "multi", "tag": "A2", "n": 5, "round": 1, "agg_tps": 18.41, "wall_s": 62.59, "gen": 1152, "per_stream_tps": [4.12, 4.13, 4.11, 14.44, 12.48], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [67.43, 87.6, 86.82, 91.22, 1488.84], "t0": 1794247643.7564964, "t1": 1794247706.3442554}
+--- ekbench.py solo p0 L16384 L65536 18:08:26
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.15, "prefill_tps": 67.75, "decode_n": 256, "decode_tps": 42.53, "md5": "8e312d7bdd", "t0": 1794247706.390619, "t1": 1794247712.592787, "kind": "solo", "tag": "A2"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.01, "prefill_tps": 1639.56, "decode_n": 128, "decode_tps": 43.3, "md5": "145c14aa8b", "t0": 1794247712.5928893, "t1": 1794247725.5887809, "kind": "solo", "tag": "A2"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 43.97, "prefill_tps": 1483.65, "decode_n": 128, "decode_tps": 42.17, "md5": "8acec1b966", "t0": 1794247725.5888646, "t1": 1794247772.6586366, "kind": "solo", "tag": "A2"}
+PEAK GPU 91008 MiB, LOWEST MemAvailable 131478 MiB; END A2 18:09:34
+GBI-LEG-DONE A2 18:09:34
+=== LEG ST parallel=1 ctx=1048576 img=547208dca250-g7f117e1 opt=image extra=[] xargs=[] cache_ram=98304 18:09:35
+READY ST after 42s
+0.11.028.303 I llama_kv_cache:      CUDA0 KV buffer size = 11264.00 MiB
+0.11.028.333 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.11.030.549 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (2.2 ms)
+0.11.038.603 I llama_kv_cache:      CUDA0 KV buffer size =  8448.00 MiB
+0.11.038.627 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.11.040.160 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (1.5 ms)
+0.40.763.573 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79490 MiB
+--- gold.py 2 18:10:18
+{"kind": "gold", "tag": "ST", "md5": "2a73cda2a3", "decode_tps": 42.97, "wall_s": 3.18}
+{"kind": "gold", "tag": "ST", "md5": "2a73cda2a3", "decode_tps": 45.93, "wall_s": 2.96}
+--- ekbench.py solo p0 p0 p0 L16384 L65536 18:10:24
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.17, "prefill_tps": 58.3, "decode_n": 256, "decode_tps": 47.07, "md5": "9c146a59b5", "t0": 1794247824.943166, "t1": 1794247830.5570698, "kind": "solo", "tag": "ST"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 70.35, "decode_n": 256, "decode_tps": 48.53, "md5": "9c146a59b5", "t0": 1794247830.557178, "t1": 1794247835.9799054, "kind": "solo", "tag": "ST"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 74.51, "decode_n": 256, "decode_tps": 50.2, "md5": "9c146a59b5", "t0": 1794247835.9799922, "t1": 1794247841.1970763, "kind": "solo", "tag": "ST"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.02, "prefill_tps": 1637.75, "decode_n": 128, "decode_tps": 41.62, "md5": "145c14aa8b", "t0": 1794247841.197155, "t1": 1794247854.2876015, "kind": "solo", "tag": "ST"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 43.7, "prefill_tps": 1492.91, "decode_n": 128, "decode_tps": 43.79, "md5": "8acec1b966", "t0": 1794247854.2876868, "t1": 1794247900.9472525, "kind": "solo", "tag": "ST"}
+PEAK GPU 80981 MiB, LOWEST MemAvailable 247340 MiB; END ST 18:11:42
+GBI-LEG-DONE ST 18:11:43
+=== LEG A0 parallel=1 ctx=1048576 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 GGML_CUDA_KV_STAGE=1 LLAMA_KV_STREAM_HOLES=1] xargs=[] cache_ram=98304 18:11:44
+READY A0 after 39s
+0.10.884.559 I llama_kv_cache:      CUDA0 KV buffer size = 11264.00 MiB
+0.10.884.594 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.10.886.866 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (2.2 ms)
+0.10.894.952 I llama_kv_cache:      CUDA0 KV buffer size =  8448.00 MiB
+0.10.894.975 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.10.896.511 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (1.5 ms)
+0.40.548.960 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79485 MiB
+--- gold.py 2 18:12:25
+{"kind": "gold", "tag": "A0", "md5": "bc32ecab82", "decode_tps": 40.16, "wall_s": 3.38}
+{"kind": "gold", "tag": "A0", "md5": "bc32ecab82", "decode_tps": 44.1, "wall_s": 3.08}
+--- ekbench.py solo p0 p0 p0 L16384 L65536 18:12:31
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.17, "prefill_tps": 57.54, "decode_n": 256, "decode_tps": 44.47, "md5": "8e312d7bdd", "t0": 1794247951.9698799, "t1": 1794247957.9025733, "kind": "solo", "tag": "A0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 71.96, "decode_n": 256, "decode_tps": 46.8, "md5": "8e312d7bdd", "t0": 1794247957.9026766, "t1": 1794247963.5171402, "kind": "solo", "tag": "A0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 77.36, "decode_n": 256, "decode_tps": 49.09, "md5": "8e312d7bdd", "t0": 1794247963.517217, "t1": 1794247968.8434815, "kind": "solo", "tag": "A0"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.02, "prefill_tps": 1637.71, "decode_n": 128, "decode_tps": 40.42, "md5": "145c14aa8b", "t0": 1794247968.8435576, "t1": 1794247982.0254736, "kind": "solo", "tag": "A0"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 43.67, "prefill_tps": 1494.07, "decode_n": 128, "decode_tps": 43.5, "md5": "8acec1b966", "t0": 1794247982.0255573, "t1": 1794248028.669843, "kind": "solo", "tag": "A0"}
+PEAK GPU 80983 MiB, LOWEST MemAvailable 247272 MiB; END A0 18:13:50
+GBI-LEG-DONE A0 18:13:50
+no test server left
+GBI2-WIN2-DONE 18:13:50

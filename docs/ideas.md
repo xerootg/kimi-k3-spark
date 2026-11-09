@@ -161,6 +161,12 @@ Verdict now: partly. It is the only placement that gives every slot 1M without r
 into the production PR; the price is prefill speed at depth. Next: a prefill path that stages the active stream's KV
 in HBM (or reads it once per ubatch) so prefill stops streaming over the link.
 
+**Staging, 2026-11-09 (patch 0057, windows gh200-bi3/bi4):** prompt attention now copies the stream's KV of the layer
+into a device scratch buffer once per ubatch (~1 ms per layer at 100k cells) and gathers from there. Prefill with the
+KV in Grace: 16k 989 -> 1550 tok/s, 100k 649 -> 1418 (HBM 1360), 500k 476 -> 838 (HBM 806); same bytes in all three
+placements; decode unchanged; no extra HBM at the peak. Verdict now: sane. Grace memory gives every slot 1M with no
+price left at prompt time; decode still pays the link's latency at depth (+0.8 ms per token per stream at 500k).
+
 ## The Spark as the GH200's failover (2026-11-08)
 
 Idea: when the GH200 is down, its clients should land on the Spark, which serves the same model, before going to a
@@ -244,4 +250,12 @@ clients against 44 one at a time; Juno's first token 0.15-0.3 s under load, and 
 waiting for her current answer. The price on Hopper is larger than on the Spark: ~4 % single-stream short, ~16 % at
 16k depth (the invariant attention gives up stream-K, which a 132-SM GPU misses more), and a dip at exactly four
 streams. Next: argo-things #169 for the GH200, then an invariant attention with a fixed KV split.
+
+**Costs removed, 2026-11-09 (patches 0056-0058, windows gh200-bi3/bi4; #169 is production):** the invariant attention
+now splits each stream's cells into fixed chunks (parallel and still invariant), the top-k is an exact radix select,
+and the fused one-column kernels stay on because they compute the same bits. The "dip at four streams" was not batch
+invariance: when the busy slots are not contiguous (0, 1, 2 and 4) llama.cpp ran one pass per run of slots, stock
+alike; 0058 runs them in one pass. Against production #169: four clients 50 -> 69 tok/s, one client after 16k ~35 ->
+~43 (stock single slot 41.6), a 100k prompt 647 -> 1422 tok/s with the KV in Grace, every client still byte-identical
+alone or batched. Verdict now: sane, and close to free (~2 % short single-stream left).
 

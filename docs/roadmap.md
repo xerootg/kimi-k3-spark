@@ -348,10 +348,20 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   memory (0051, needs `LLAMA_KV_HOST_THP=1` on the 64 KiB kernel): every slot 1M, no HBM, no refusals, decode at
   depth +11-20 %, prefill at depth 35-55 % slower. Production PR argo-things #169 (Copilot: approval recommended after a Kubernetes canary; image g64500e2,
   `--parallel 5`, Grace KV, Juno's key in Secret `glm53-client-classes`).
-- **Next:** BI-mode decode attention with a fixed KV split (invariant and parallel: wins back the depth cost on
-  Hopper); the N=4 graph dip; a prefill path that does not stream the KV over C2C; a production PR for the Spark
-  (`--parallel 4`, 0054 + isolate + classes); parking idle slots' KV on NVMe when the pool is full (instead of
-  refusing); root-cause the GDN fusion crash.
+- **Done 2026-11-09 (Spark windows bi2-1/bi2-2, GH200 windows gh200-bi3/bi4): the costs of #169 removed.** 0056:
+  decode attention split into fixed 128-cell chunks of each stream's own list (attention at 16k 2.29 -> 0.54 ms per
+  token, stock 0.43), exact radix-select top-k (1.72 -> 0.24 ms, stock 0.47), and the bit-equal one-column kernels
+  kept in BI mode (fusions, small-K). 0057: prompt attention reads a device copy of the Grace KV (100k prompt 647 ->
+  1422 tok/s, HBM 1360; 500k 476 -> 838). 0058: one decode pass for non-contiguous busy slots; the "N=4 dip" was slots
+  {0,1,2,4} split into two passes per step with CUDA graphs stopped, stock alike (50 -> 69 tok/s). Acceptance on the
+  CI image `ga5fa848`: every client byte-identical alone and batched (N=1..5, 16k/64k mixes, two processes), Service
+  gold unchanged, new gold for three short test prompts; one client within ~2-3 % of stock single-slot. Production PR
+  in argo-things (image `ga5fa848` + `GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 GGML_CUDA_KV_STAGE=1
+  LLAMA_KV_STREAM_HOLES=1`).
+- **Next:** the ~2 % short single-stream gap (attention at short depth +0.17 ms; ops outside the profiler's top 24); a
+  multi-block top-k for rows past ~256k pools (250 us per row at 1M on the Spark); a production PR for the Spark
+  (`--parallel 4`, 0054 + 0056 + 0058 + isolate + classes); parking idle slots' KV on NVMe when the pool is full
+  (instead of refusing); root-cause the GDN fusion crash.
 
 ## Cluster layout for this work
 
