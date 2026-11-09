@@ -1,0 +1,39 @@
+=== LEG B5 parallel=5 ctx=5242880 img=547208dca250-ga5fa848 opt=/home/ubuntu/nc/out-a90 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1] xargs=[] cache_ram=65536 21:23:45
+READY B5 after 42s
+0.10.901.490 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.022.510 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.022.557 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.022.561 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.218.368 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.075.467 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.075.497 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.075.499 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.615.528 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.346.384 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79957 MiB
+--- gold.py 2 21:24:30
+{"kind": "gold", "tag": "B5", "md5": "bc32ecab82", "decode_tps": 41.06, "wall_s": 3.31}
+{"kind": "gold", "tag": "B5", "md5": "bc32ecab82", "decode_tps": 45.07, "wall_s": 3.01}
+--- ekbench.py solo p0 p0 p0 p0 p0 p0 p0 21:24:37
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 60.72, "decode_n": 256, "decode_tps": 44.53, "md5": "8e312d7bdd", "t0": 1794259477.2365768, "t1": 1794259483.1572192, "kind": "solo", "tag": "B5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 74.55, "decode_n": 256, "decode_tps": 46.45, "md5": "8e312d7bdd", "t0": 1794259483.1573462, "t1": 1794259488.8177571, "kind": "solo", "tag": "B5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 80.92, "decode_n": 256, "decode_tps": 48.47, "md5": "8e312d7bdd", "t0": 1794259488.8178382, "t1": 1794259494.2099533, "kind": "solo", "tag": "B5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 82.94, "decode_n": 256, "decode_tps": 49.63, "md5": "8e312d7bdd", "t0": 1794259494.2100303, "t1": 1794259499.475584, "kind": "solo", "tag": "B5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 83.22, "decode_n": 256, "decode_tps": 50.78, "md5": "8e312d7bdd", "t0": 1794259499.475668, "t1": 1794259504.6246958, "kind": "solo", "tag": "B5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 85.85, "decode_n": 256, "decode_tps": 51.25, "md5": "8e312d7bdd", "t0": 1794259504.6247773, "t1": 1794259509.7236614, "kind": "solo", "tag": "B5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 85.24, "decode_n": 256, "decode_tps": 51.67, "md5": "8e312d7bdd", "t0": 1794259509.7237442, "t1": 1794259514.7835882, "kind": "solo", "tag": "B5"}
+--- ekbench.py solo L16384 21:25:14
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.09, "prefill_tps": 1627.29, "decode_n": 128, "decode_tps": 38.22, "md5": "145c14aa8b", "t0": 1794259514.8283527, "t1": 1794259528.2823954, "kind": "solo", "tag": "B5"}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 21:25:28
+{"kind": "multi", "tag": "B5", "n": 5, "round": "warm", "agg_tps": 63.59, "wall_s": 20.13, "gen": 1280, "per_stream_tps": [12.9, 13.36, 13.21, 13.06, 13.52], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [80.27, 89.15, 79.06, 90.89, 89.58], "t0": 1794259528.3263774, "t1": 1794259548.45632}
+{"kind": "multi", "tag": "B5", "n": 5, "round": 1, "agg_tps": 68.48, "wall_s": 18.69, "gen": 1280, "per_stream_tps": [13.88, 14.37, 14.2, 14.05, 14.54], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [79.75, 94.35, 90.77, 96.77, 95.89], "t0": 1794259548.4571176, "t1": 1794259567.1492658}
+{"kind": "multi", "tag": "B5", "n": 5, "round": 2, "agg_tps": 69.81, "wall_s": 18.34, "gen": 1280, "per_stream_tps": [14.07, 14.56, 14.4, 14.24, 14.74], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [79.0, 95.24, 92.51, 97.99, 97.48], "t0": 1794259567.1500444, "t1": 1794259585.485166}
+--- ekbench.py multi p0 p1 p3 --rounds 1 21:26:25
+{"kind": "multi", "tag": "B5", "n": 3, "round": "warm", "agg_tps": 65.91, "wall_s": 11.65, "gen": 768, "per_stream_tps": [22.47, 23.33, 22.91], "md5": ["8e312d7bdd", "74fb633e8e", "4d6338450b"], "specs": ["p0", "p1", "p3"], "prefill_tps": [77.02, 94.03, 97.16], "t0": 1794259585.5326192, "t1": 1794259597.185258}
+{"kind": "multi", "tag": "B5", "n": 3, "round": 1, "agg_tps": 67.4, "wall_s": 11.4, "gen": 768, "per_stream_tps": [22.78, 23.65, 23.22], "md5": ["8e312d7bdd", "74fb633e8e", "4d6338450b"], "specs": ["p0", "p1", "p3"], "prefill_tps": [77.35, 95.06, 98.1], "t0": 1794259597.185793, "t1": 1794259608.5808644}
+--- ekbench.py multi p0 L16384 --rounds 1 21:26:48
+{"kind": "multi", "tag": "B5", "n": 2, "round": "warm", "agg_tps": 21.13, "wall_s": 18.18, "gen": 384, "per_stream_tps": [14.26, 25.42], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [72.87, 1639.68], "t0": 1794259608.6266832, "t1": 1794259626.8022933}
+{"kind": "multi", "tag": "B5", "n": 2, "round": 1, "agg_tps": 21.58, "wall_s": 17.8, "gen": 384, "per_stream_tps": [14.54, 27.14], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [77.36, 1642.81], "t0": 1794259626.802852, "t1": 1794259644.5985034}
+PEAK GPU 80223 MiB, LOWEST MemAvailable 146527 MiB; END B5 21:27:26
+NC-LEG-DONE B5 21:27:26
+NC1B-DONE 21:27:26

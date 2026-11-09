@@ -1,0 +1,505 @@
+== legs/server-R-P5.log
+  request 0: 7 decode blocks, 35.91 ms of node time per graph
+      6.197 ms/graph  MUL_MAT [dev] q8_0
+      2.911 ms/graph  GET_ROWS [host] i32 real
+      1.339 ms/graph  fused:MUL_MAT [dev] q8_0
+      1.300 ms/graph  UNARY
+      1.019 ms/graph  fused:RMS_NORM
+      0.987 ms/graph  MUL
+      0.939 ms/graph  SCALE
+      0.909 ms/graph  ADD
+      0.890 ms/graph  CPY kv=cache_r
+      0.591 ms/graph  CONCAT
+      0.500 ms/graph  DSV4_HC_COMB
+      0.500 ms/graph  RMS_NORM
+      0.496 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.470 ms/graph  DSV4_HC_POST
+      0.436 ms/graph  fused:UNARY
+      0.430 ms/graph  SSM_CONV
+      0.420 ms/graph  CONT
+      0.380 ms/graph  DSV4_HC_PRE
+      0.340 ms/graph  MUL_MAT [dev] f32
+      0.220 ms/graph  GET_ROWS [dev] f32 kv=cache_s real
+      0.220 ms/graph  GLU
+      0.210 ms/graph  fused:GATED_DELTA_NET
+      0.210 ms/graph  fused:MUL
+      0.171 ms/graph  GET_ROWS [dev] f32 kv=cache_r real
+      0.160 ms/graph  CPY
+      0.160 ms/graph  LIGHTNING_INDEXER
+      0.124 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-11 n_tok=1
+      0.123 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-3 n_tok=1
+      0.123 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-12 n_tok=1
+      0.121 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-3 n_tok=1
+      0.121 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-3 n_tok=1
+      0.120 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-27 n_tok=1
+      0.120 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-5 n_tok=1
+      0.120 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-5 n_tok=1
+      0.119 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-5 n_tok=1
+      0.117 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-21 n_tok=1
+      0.117 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-4 n_tok=1
+      0.117 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-6 n_tok=1
+      0.117 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-7 n_tok=1
+      0.116 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-19 n_tok=1
+      0.116 ms/graph  ARGSORT
+      0.116 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-9 n_tok=1
+      0.113 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-27 n_tok=1
+      0.113 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-4 n_tok=1
+      0.113 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-4 n_tok=1
+      0.113 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-44 n_tok=1
+      0.111 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-7 n_tok=1
+      0.111 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-19 n_tok=1
+      0.111 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-27 n_tok=1
+      0.111 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-7 n_tok=1
+      0.111 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-8 n_tok=1
+      0.110 ms/graph  FILL
+      0.110 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k real
+      0.110 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-19 n_tok=1
+      0.110 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-21 n_tok=1
+      0.110 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-6 n_tok=1
+      0.110 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-9 n_tok=1
+      0.110 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-21 n_tok=1
+      0.110 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-6 n_tok=1
+      0.110 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-9 n_tok=1
+      0.110 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-10 n_tok=1
+      0.110 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-13 n_tok=1
+      0.110 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-31 n_tok=1
+      0.109 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-17 n_tok=1
+      0.107 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-8 n_tok=1
+      0.107 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-13 n_tok=1
+      0.107 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_gate-11 n_tok=1
+      0.107 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_up-11 n_tok=1
+      0.107 ms/graph  REPEAT
+      0.106 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-31 n_tok=1
+      0.106 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-31 n_tok=1
+      0.106 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-8 n_tok=1
+      0.106 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-29 n_tok=1
+      0.104 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-10 n_tok=1
+      0.104 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-13 n_tok=1
+      0.104 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-10 n_tok=1
+      0.103 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-17 n_tok=1
+      0.103 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-26 n_tok=1
+      0.103 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-32 n_tok=1
+      0.101 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-17 n_tok=1
+      0.101 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-20 n_tok=1
+      0.101 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-25 n_tok=1
+      0.101 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-30 n_tok=1
+      0.100 ms/graph  GET_ROWS [dev] f32 real
+      0.100 ms/graph  SET_ROWS kv=cache_idx_k
+      0.100 ms/graph  TOP_K
+      0.100 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-16 n_tok=1
+      0.100 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-23 n_tok=1
+      0.100 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-41 n_tok=1
+      0.099 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-22 n_tok=1
+      0.099 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-15 n_tok=1
+      0.097 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-26 n_tok=1
+      0.097 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-29 n_tok=1
+      0.097 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-26 n_tok=1
+      0.097 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-29 n_tok=1
+      0.097 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-33 n_tok=1
+      0.097 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-43 n_tok=1
+      0.096 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-12 n_tok=1
+      0.096 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-16 n_tok=1
+      0.096 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-30 n_tok=1
+      0.096 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-32 n_tok=1
+      0.096 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-12 n_tok=1
+      0.096 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-30 n_tok=1
+      0.096 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-32 n_tok=1
+      0.096 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-18 n_tok=1
+      0.094 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-16 n_tok=1
+      0.094 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-23 n_tok=1
+      0.094 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-14 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-20 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-22 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-23 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-25 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-20 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-22 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-25 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-33 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-24 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-42 n_tok=1
+      0.091 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-15 n_tok=1
+      0.091 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-33 n_tok=1
+      0.091 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-15 n_tok=1
+      0.091 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-41 n_tok=1
+      0.091 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-39 n_tok=1
+      0.090 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-41 n_tok=1
+      0.090 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-43 n_tok=1
+      0.090 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-44 n_tok=1
+      0.090 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-43 n_tok=1
+      0.090 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-28 n_tok=1
+      0.089 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-18 n_tok=1
+      0.089 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-44 n_tok=1
+      0.089 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-36 n_tok=1
+      0.087 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-42 n_tok=1
+      0.087 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-18 n_tok=1
+      0.087 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-35 n_tok=1
+      0.086 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-24 n_tok=1
+      0.086 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-42 n_tok=1
+      0.086 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-34 n_tok=1
+      0.086 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-37 n_tok=1
+      0.084 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-28 n_tok=1
+      0.084 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-14 n_tok=1
+      0.084 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-24 n_tok=1
+      0.084 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-39 n_tok=1
+      0.084 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-14 n_tok=1
+      0.084 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-38 n_tok=1
+      0.083 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-28 n_tok=1
+      0.083 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-35 n_tok=1
+      0.083 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-39 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-35 n_tok=1
+      0.080 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-37 n_tok=1
+      0.080 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-36 n_tok=1
+      0.080 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-37 n_tok=1
+      0.079 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-36 n_tok=1
+      0.079 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-38 n_tok=1
+      0.079 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-40 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-34 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-34 n_tok=1
+      0.076 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-40 n_tok=1
+      0.076 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-38 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-40 n_tok=1
+      0.050 ms/graph  GET_ROWS [dev] i32 real
+      0.050 ms/graph  NORM
+      0.050 ms/graph  SET_ROWS kv=cache_k
+      0.050 ms/graph  SOFT_MAX
+      0.040 ms/graph  ARANGE
+      0.040 ms/graph  SET_ROWS
+      0.040 ms/graph  SUB
+      0.040 ms/graph  SUM_ROWS
+  request 1: 7 decode blocks, 31.89 ms of node time per graph
+      6.200 ms/graph  MUL_MAT [dev] q8_0
+      1.340 ms/graph  fused:MUL_MAT [dev] q8_0
+      1.303 ms/graph  UNARY
+      1.020 ms/graph  fused:RMS_NORM
+      0.990 ms/graph  MUL
+      0.940 ms/graph  SCALE
+      0.917 ms/graph  GET_ROWS [host] i32 real
+      0.910 ms/graph  ADD
+      0.890 ms/graph  CPY kv=cache_r
+      0.599 ms/graph  CONCAT
+      0.500 ms/graph  DSV4_HC_COMB
+      0.500 ms/graph  RMS_NORM
+      0.494 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.470 ms/graph  DSV4_HC_POST
+      0.436 ms/graph  fused:UNARY
+      0.430 ms/graph  SSM_CONV
+      0.420 ms/graph  CONT
+      0.380 ms/graph  DSV4_HC_PRE
+      0.340 ms/graph  MUL_MAT [dev] f32
+      0.220 ms/graph  GET_ROWS [dev] f32 kv=cache_s real
+      0.220 ms/graph  GLU
+      0.210 ms/graph  fused:GATED_DELTA_NET
+      0.210 ms/graph  fused:MUL
+      0.170 ms/graph  GET_ROWS [dev] f32 kv=cache_r real
+      0.160 ms/graph  CPY
+      0.160 ms/graph  LIGHTNING_INDEXER
+      0.124 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-3 n_tok=1
+      0.123 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-3 n_tok=1
+      0.123 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-3 n_tok=1
+      0.119 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-4 n_tok=1
+      0.119 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-5 n_tok=1
+      0.116 ms/graph  ARGSORT
+      0.114 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-5 n_tok=1
+      0.113 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-5 n_tok=1
+      0.111 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-4 n_tok=1
+      0.111 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-4 n_tok=1
+      0.111 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-6 n_tok=1
+      0.110 ms/graph  FILL
+      0.110 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k real
+      0.109 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-10 n_tok=1
+      0.109 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-27 n_tok=1
+      0.109 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-9 n_tok=1
+      0.106 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-10 n_tok=1
+      0.106 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-6 n_tok=1
+      0.106 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-10 n_tok=1
+      0.106 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-6 n_tok=1
+      0.106 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-8 n_tok=1
+      0.106 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-12 n_tok=1
+      0.104 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-7 n_tok=1
+      0.103 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-27 n_tok=1
+      0.103 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-9 n_tok=1
+      0.101 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-27 n_tok=1
+      0.100 ms/graph  GET_ROWS [dev] f32 real
+      0.100 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-44 n_tok=1
+      0.100 ms/graph  REPEAT
+      0.100 ms/graph  SET_ROWS kv=cache_idx_k
+      0.100 ms/graph  TOP_K
+      0.100 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-8 n_tok=1
+      0.100 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-8 n_tok=1
+      0.100 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-9 n_tok=1
+      0.099 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-7 n_tok=1
+      0.099 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-11 n_tok=1
+      0.097 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-7 n_tok=1
+      0.091 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-31 n_tok=1
+      0.089 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-31 n_tok=1
+      0.089 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-31 n_tok=1
+      0.089 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-17 n_tok=1
+      0.089 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-23 n_tok=1
+      0.087 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-16 n_tok=1
+      0.087 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-32 n_tok=1
+      0.086 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-13 n_tok=1
+      0.086 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-33 n_tok=1
+      0.083 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-12 n_tok=1
+      0.083 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-12 n_tok=1
+      0.083 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-21 n_tok=1
+      0.083 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_gate-11 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-16 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-17 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-13 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-16 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-17 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-23 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-20 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-41 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_up-11 n_tok=1
+      0.080 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-13 n_tok=1
+      0.080 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-23 n_tok=1
+      0.080 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-33 n_tok=1
+      0.080 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-33 n_tok=1
+      0.080 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-22 n_tok=1
+      0.080 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-28 n_tok=1
+      0.079 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-32 n_tok=1
+      0.079 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-32 n_tok=1
+      0.079 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-14 n_tok=1
+      0.079 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-15 n_tok=1
+      0.079 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-26 n_tok=1
+      0.079 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-37 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-44 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-44 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-30 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-38 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-43 n_tok=1
+      0.076 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-35 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-20 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-21 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-41 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-20 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-21 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-24 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-25 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-29 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-26 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-28 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-26 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-28 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-41 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-18 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-42 n_tok=1
+      0.071 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-30 n_tok=1
+      0.071 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-22 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-19 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-40 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-15 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-22 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-37 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-15 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-30 n_tok=1
+      0.069 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-14 n_tok=1
+      0.069 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-38 n_tok=1
+      0.069 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-14 n_tok=1
+      0.069 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-37 n_tok=1
+      0.069 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-38 n_tok=1
+      0.069 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-34 n_tok=1
+      0.067 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-24 n_tok=1
+      0.067 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-35 n_tok=1
+      0.067 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-43 n_tok=1
+      0.067 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-24 n_tok=1
+      0.067 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-35 n_tok=1
+      0.067 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-43 n_tok=1
+      0.066 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-25 n_tok=1
+      0.066 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-29 n_tok=1
+      0.066 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-42 n_tok=1
+      0.066 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-25 n_tok=1
+      0.066 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-29 n_tok=1
+      0.066 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-42 n_tok=1
+      0.066 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-39 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-18 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-18 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-40 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-36 n_tok=1
+      0.061 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-19 n_tok=1
+      0.061 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-39 n_tok=1
+      0.061 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-19 n_tok=1
+      0.061 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-39 n_tok=1
+      0.061 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-40 n_tok=1
+      0.060 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-34 n_tok=1
+      0.059 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-34 n_tok=1
+      0.057 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-36 n_tok=1
+      0.056 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-36 n_tok=1
+      0.050 ms/graph  GET_ROWS [dev] i32 real
+      0.050 ms/graph  NORM
+      0.050 ms/graph  SET_ROWS kv=cache_k
+      0.050 ms/graph  SOFT_MAX
+      0.040 ms/graph  ARANGE
+      0.040 ms/graph  SET_ROWS
+      0.040 ms/graph  SUB
+      0.040 ms/graph  SUM_ROWS
+  request 2: 7 decode blocks, 30.87 ms of node time per graph
+      6.204 ms/graph  MUL_MAT [dev] q8_0
+      1.340 ms/graph  fused:MUL_MAT [dev] q8_0
+      1.307 ms/graph  UNARY
+      1.020 ms/graph  fused:RMS_NORM
+      0.990 ms/graph  MUL
+      0.940 ms/graph  SCALE
+      0.910 ms/graph  ADD
+      0.890 ms/graph  CPY kv=cache_r
+      0.837 ms/graph  GET_ROWS [host] i32 real
+      0.599 ms/graph  CONCAT
+      0.500 ms/graph  DSV4_HC_COMB
+      0.500 ms/graph  RMS_NORM
+      0.493 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.470 ms/graph  DSV4_HC_POST
+      0.440 ms/graph  fused:UNARY
+      0.430 ms/graph  SSM_CONV
+      0.420 ms/graph  CONT
+      0.380 ms/graph  DSV4_HC_PRE
+      0.340 ms/graph  MUL_MAT [dev] f32
+      0.220 ms/graph  GET_ROWS [dev] f32 kv=cache_s real
+      0.220 ms/graph  GLU
+      0.210 ms/graph  fused:GATED_DELTA_NET
+      0.210 ms/graph  fused:MUL
+      0.170 ms/graph  GET_ROWS [dev] f32 kv=cache_r real
+      0.160 ms/graph  CPY
+      0.160 ms/graph  LIGHTNING_INDEXER
+      0.123 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-3 n_tok=1
+      0.119 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-3 n_tok=1
+      0.119 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-5 n_tok=1
+      0.117 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-3 n_tok=1
+      0.117 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-4 n_tok=1
+      0.116 ms/graph  ARGSORT
+      0.114 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-5 n_tok=1
+      0.114 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-5 n_tok=1
+      0.110 ms/graph  FILL
+      0.110 ms/graph  GET_ROWS [dev] f16 kv=cache_idx_k real
+      0.109 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-4 n_tok=1
+      0.109 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-4 n_tok=1
+      0.109 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-6 n_tok=1
+      0.104 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-6 n_tok=1
+      0.104 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-10 n_tok=1
+      0.103 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-6 n_tok=1
+      0.101 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-8 n_tok=1
+      0.100 ms/graph  GET_ROWS [dev] f32 real
+      0.100 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-7 n_tok=1
+      0.100 ms/graph  REPEAT
+      0.100 ms/graph  SET_ROWS kv=cache_idx_k
+      0.100 ms/graph  TOP_K
+      0.099 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-10 n_tok=1
+      0.099 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-10 n_tok=1
+      0.099 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-9 n_tok=1
+      0.096 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-12 n_tok=1
+      0.096 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-44 n_tok=1
+      0.094 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-7 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-8 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-7 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-8 n_tok=1
+      0.093 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-11 n_tok=1
+      0.089 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-9 n_tok=1
+      0.089 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-9 n_tok=1
+      0.087 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-27 n_tok=1
+      0.084 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-13 n_tok=1
+      0.083 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-16 n_tok=1
+      0.083 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-23 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-27 n_tok=1
+      0.081 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-27 n_tok=1
+      0.079 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-13 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-13 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-17 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-33 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_gate-11 n_tok=1
+      0.077 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_up-11 n_tok=1
+      0.076 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-16 n_tok=1
+      0.076 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-16 n_tok=1
+      0.076 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-15 n_tok=1
+      0.076 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-32 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-31 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-41 n_tok=1
+      0.074 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-43 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-23 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-44 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-12 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-23 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-14 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-29 n_tok=1
+      0.073 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-37 n_tok=1
+      0.071 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-12 n_tok=1
+      0.071 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-44 n_tok=1
+      0.071 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-18 n_tok=1
+      0.071 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-21 n_tok=1
+      0.071 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-28 n_tok=1
+      0.071 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-35 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-17 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-33 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-17 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-33 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-22 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-24 n_tok=1
+      0.070 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-38 n_tok=1
+      0.069 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-15 n_tok=1
+      0.069 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-41 n_tok=1
+      0.069 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-15 n_tok=1
+      0.069 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-41 n_tok=1
+      0.069 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-26 n_tok=1
+      0.067 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-31 n_tok=1
+      0.067 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-32 n_tok=1
+      0.067 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-32 n_tok=1
+      0.066 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-28 n_tok=1
+      0.066 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-43 n_tok=1
+      0.066 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-31 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-14 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-18 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-29 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-35 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-37 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-14 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-18 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-37 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-43 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-20 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-30 n_tok=1
+      0.064 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-42 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-21 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-22 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-21 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-22 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-28 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-29 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-35 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-25 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-34 n_tok=1
+      0.063 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-40 n_tok=1
+      0.061 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-24 n_tok=1
+      0.061 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-26 n_tok=1
+      0.061 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-38 n_tok=1
+      0.061 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-26 n_tok=1
+      0.061 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-38 n_tok=1
+      0.061 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-39 n_tok=1
+      0.060 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-24 n_tok=1
+      0.060 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-36 n_tok=1
+      0.059 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-30 n_tok=1
+      0.057 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-25 n_tok=1
+      0.057 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-40 n_tok=1
+      0.057 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-40 n_tok=1
+      0.057 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-19 n_tok=1
+      0.056 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-20 n_tok=1
+      0.056 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-34 n_tok=1
+      0.056 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-25 n_tok=1
+      0.056 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-30 n_tok=1
+      0.056 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-34 n_tok=1
+      0.054 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-42 n_tok=1
+      0.054 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-20 n_tok=1
+      0.054 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-42 n_tok=1
+      0.053 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-36 n_tok=1
+      0.053 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-39 n_tok=1
+      0.053 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-36 n_tok=1
+      0.051 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-39 n_tok=1
+      0.050 ms/graph  GET_ROWS [dev] i32 real
+      0.050 ms/graph  NORM
+      0.050 ms/graph  SET_ROWS kv=cache_k
+      0.050 ms/graph  SOFT_MAX
+      0.049 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-19 n_tok=1
+      0.049 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-19 n_tok=1
+      0.041 ms/graph  SET_ROWS
+      0.040 ms/graph  ARANGE
+      0.040 ms/graph  SUB
+      0.040 ms/graph  SUM_ROWS

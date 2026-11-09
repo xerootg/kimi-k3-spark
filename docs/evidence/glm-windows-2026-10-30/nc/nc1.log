@@ -1,0 +1,254 @@
+=== LEG ST parallel=1 ctx=1048576 img=547208dca250-g7f117e1 opt=image extra=[] xargs=[] cache_ram=98304 20:52:11
+READY ST after 42s
+0.11.094.056 I llama_kv_cache:      CUDA0 KV buffer size = 11264.00 MiB
+0.11.094.084 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.11.096.310 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (2.2 ms)
+0.11.104.349 I llama_kv_cache:      CUDA0 KV buffer size =  8448.00 MiB
+0.11.104.371 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.11.105.964 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (1.6 ms)
+0.40.530.610 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79491 MiB
+--- gold.py 2 20:52:54
+{"kind": "gold", "tag": "ST", "md5": "2a73cda2a3", "decode_tps": 44.25, "wall_s": 3.08}
+{"kind": "gold", "tag": "ST", "md5": "2a73cda2a3", "decode_tps": 47.43, "wall_s": 2.86}
+--- ekbench.py solo p0 p0 p0 p0 p0 p0 p0 20:53:00
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 62.33, "decode_n": 256, "decode_tps": 48.25, "md5": "9c146a59b5", "t0": 1794257580.3451118, "t1": 1794257585.8151746, "kind": "solo", "tag": "ST"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 74.6, "decode_n": 256, "decode_tps": 49.67, "md5": "9c146a59b5", "t0": 1794257585.8153338, "t1": 1794257591.1101868, "kind": "solo", "tag": "ST"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 77.26, "decode_n": 256, "decode_tps": 51.16, "md5": "9c146a59b5", "t0": 1794257591.1102943, "t1": 1794257596.226503, "kind": "solo", "tag": "ST"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 80.29, "decode_n": 256, "decode_tps": 51.85, "md5": "9c146a59b5", "t0": 1794257596.2265916, "t1": 1794257601.2717447, "kind": "solo", "tag": "ST"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 80.98, "decode_n": 256, "decode_tps": 52.71, "md5": "9c146a59b5", "t0": 1794257601.271823, "t1": 1794257606.2351217, "kind": "solo", "tag": "ST"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 82.18, "decode_n": 256, "decode_tps": 53.01, "md5": "9c146a59b5", "t0": 1794257606.2352014, "t1": 1794257611.1696317, "kind": "solo", "tag": "ST"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 81.89, "decode_n": 256, "decode_tps": 53.32, "md5": "9c146a59b5", "t0": 1794257611.1697185, "t1": 1794257616.0771368, "kind": "solo", "tag": "ST"}
+--- ekbench.py solo L16384 20:53:36
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.07, "prefill_tps": 1629.54, "decode_n": 128, "decode_tps": 41.47, "md5": "145c14aa8b", "t0": 1794257616.1204934, "t1": 1794257629.295042, "kind": "solo", "tag": "ST"}
+PEAK GPU 79991 MiB, LOWEST MemAvailable 248385 MiB; END ST 20:53:51
+NC-LEG-DONE ST 20:53:51
+=== LEG A0 parallel=1 ctx=1048576 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1] xargs=[] cache_ram=98304 20:53:52
+READY A0 after 39s
+0.10.770.359 I llama_kv_cache:      CUDA0 KV buffer size = 11264.00 MiB
+0.10.770.395 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.10.772.526 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (2.1 ms)
+0.10.780.550 I llama_kv_cache:      CUDA0 KV buffer size =  8448.00 MiB
+0.10.780.572 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.10.782.150 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (1.6 ms)
+0.40.324.872 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79491 MiB
+--- gold.py 2 20:54:32
+{"kind": "gold", "tag": "A0", "md5": "bc32ecab82", "decode_tps": 41.97, "wall_s": 3.24}
+{"kind": "gold", "tag": "A0", "md5": "bc32ecab82", "decode_tps": 46.16, "wall_s": 2.94}
+--- ekbench.py solo p0 p0 p0 p0 p0 p0 p0 20:54:38
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 61.33, "decode_n": 256, "decode_tps": 45.5, "md5": "8e312d7bdd", "t0": 1794257678.99279, "t1": 1794257684.7852197, "kind": "solo", "tag": "A0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 75.25, "decode_n": 256, "decode_tps": 47.54, "md5": "8e312d7bdd", "t0": 1794257684.7854075, "t1": 1794257690.3092816, "kind": "solo", "tag": "A0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 81.53, "decode_n": 256, "decode_tps": 49.61, "md5": "8e312d7bdd", "t0": 1794257690.309377, "t1": 1794257695.5750856, "kind": "solo", "tag": "A0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 84.08, "decode_n": 256, "decode_tps": 50.81, "md5": "8e312d7bdd", "t0": 1794257695.575169, "t1": 1794257700.7155652, "kind": "solo", "tag": "A0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 84.58, "decode_n": 256, "decode_tps": 52.02, "md5": "8e312d7bdd", "t0": 1794257700.715645, "t1": 1794257705.7385461, "kind": "solo", "tag": "A0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 86.42, "decode_n": 256, "decode_tps": 52.49, "md5": "8e312d7bdd", "t0": 1794257705.7386332, "t1": 1794257710.7153254, "kind": "solo", "tag": "A0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 85.97, "decode_n": 256, "decode_tps": 52.89, "md5": "8e312d7bdd", "t0": 1794257710.715414, "t1": 1794257715.6554418, "kind": "solo", "tag": "A0"}
+--- ekbench.py solo L16384 20:55:15
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.05, "prefill_tps": 1633.4, "decode_n": 128, "decode_tps": 40.05, "md5": "145c14aa8b", "t0": 1794257715.6991127, "t1": 1794257728.9582598, "kind": "solo", "tag": "A0"}
+PEAK GPU 79993 MiB, LOWEST MemAvailable 248450 MiB; END A0 20:55:31
+NC-LEG-DONE A0 20:55:31
+=== LEG A1G parallel=1 ctx=1048576 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1] xargs=[] cache_ram=65536 20:55:32
+READY A1G after 39s
+0.10.856.133 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.080.469 I ggml_backend_cuda_host_kv_buffer_alloc: 11264.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.080.506 I operator(): LLAMA_KV_HOST: attention KV cache, 11264.00 MiB in host memory, read by CUDA0 directly
+0.11.080.507 I llama_kv_cache:      CUDA0 KV buffer size = 11264.00 MiB
+0.11.119.560 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.301.270 I ggml_backend_cuda_host_kv_buffer_alloc: 8448.00 MiB of host memory for device 0: THP advised (97% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.301.296 I operator(): LLAMA_KV_HOST: idx_ KV cache, 8448.00 MiB in host memory, read by CUDA0 directly
+0.11.301.298 I llama_kv_cache:      CUDA0 KV buffer size =  8448.00 MiB
+0.41.138.843 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79377 MiB
+--- gold.py 2 20:56:14
+{"kind": "gold", "tag": "A1G", "md5": "bc32ecab82", "decode_tps": 41.76, "wall_s": 3.25}
+{"kind": "gold", "tag": "A1G", "md5": "bc32ecab82", "decode_tps": 45.91, "wall_s": 2.95}
+--- ekbench.py solo p0 p0 p0 p0 p0 p0 p0 20:56:20
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 61.08, "decode_n": 256, "decode_tps": 45.26, "md5": "8e312d7bdd", "t0": 1794257780.6371105, "t1": 1794257786.4588654, "kind": "solo", "tag": "A1G"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 74.99, "decode_n": 256, "decode_tps": 47.33, "md5": "8e312d7bdd", "t0": 1794257786.4589598, "t1": 1794257792.0077505, "kind": "solo", "tag": "A1G"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 81.33, "decode_n": 256, "decode_tps": 49.4, "md5": "8e312d7bdd", "t0": 1794257792.007833, "t1": 1794257797.2957492, "kind": "solo", "tag": "A1G"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 83.29, "decode_n": 256, "decode_tps": 50.56, "md5": "8e312d7bdd", "t0": 1794257797.2958264, "t1": 1794257802.4625685, "kind": "solo", "tag": "A1G"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 84.54, "decode_n": 256, "decode_tps": 51.82, "md5": "8e312d7bdd", "t0": 1794257802.4626462, "t1": 1794257807.5046406, "kind": "solo", "tag": "A1G"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 86.19, "decode_n": 256, "decode_tps": 52.28, "md5": "8e312d7bdd", "t0": 1794257807.504717, "t1": 1794257812.5011544, "kind": "solo", "tag": "A1G"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 85.71, "decode_n": 256, "decode_tps": 52.78, "md5": "8e312d7bdd", "t0": 1794257812.5012538, "t1": 1794257817.4523764, "kind": "solo", "tag": "A1G"}
+--- ekbench.py solo L16384 20:56:57
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.08, "prefill_tps": 1628.39, "decode_n": 128, "decode_tps": 38.68, "md5": "145c14aa8b", "t0": 1794257817.495966, "t1": 1794257830.898169, "kind": "solo", "tag": "A1G"}
+PEAK GPU 79641 MiB, LOWEST MemAvailable 229025 MiB; END A1G 20:57:12
+NC-LEG-DONE A1G 20:57:12
+=== LEG P5 parallel=5 ctx=5242880 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1] xargs=[] cache_ram=65536 20:57:13
+READY P5 after 42s
+0.10.832.138 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.947.089 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.947.128 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.11.947.130 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.144.425 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.001.522 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.001.552 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.001.553 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.43.646.711 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 87992 MiB
+--- gold.py 2 20:57:58
+{"kind": "gold", "tag": "P5", "md5": "bc32ecab82", "decode_tps": 37.29, "wall_s": 3.72}
+{"kind": "gold", "tag": "P5", "md5": "bc32ecab82", "decode_tps": 44.32, "wall_s": 3.08}
+--- ekbench.py solo p0 p0 p0 p0 p0 p0 p0 20:58:05
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.15, "prefill_tps": 67.31, "decode_n": 256, "decode_tps": 42.89, "md5": "8e312d7bdd", "t0": 1794257885.7745774, "t1": 1794257891.8980358, "kind": "solo", "tag": "P5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 72.72, "decode_n": 256, "decode_tps": 45.57, "md5": "8e312d7bdd", "t0": 1794257891.8981397, "t1": 1794257897.6687737, "kind": "solo", "tag": "P5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 77.45, "decode_n": 256, "decode_tps": 47.5, "md5": "8e312d7bdd", "t0": 1794257897.6688573, "t1": 1794257903.1745062, "kind": "solo", "tag": "P5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 79.84, "decode_n": 256, "decode_tps": 48.55, "md5": "8e312d7bdd", "t0": 1794257903.1745844, "t1": 1794257908.559932, "kind": "solo", "tag": "P5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 81.01, "decode_n": 256, "decode_tps": 49.72, "md5": "8e312d7bdd", "t0": 1794257908.5600116, "t1": 1794257913.8199706, "kind": "solo", "tag": "P5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 82.35, "decode_n": 256, "decode_tps": 50.14, "md5": "8e312d7bdd", "t0": 1794257913.8200457, "t1": 1794257919.0347276, "kind": "solo", "tag": "P5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 81.28, "decode_n": 256, "decode_tps": 50.54, "md5": "8e312d7bdd", "t0": 1794257919.0348055, "t1": 1794257924.21112, "kind": "solo", "tag": "P5"}
+--- ekbench.py solo L16384 20:58:44
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.37, "prefill_tps": 1582.94, "decode_n": 128, "decode_tps": 37.46, "md5": "145c14aa8b", "t0": 1794257924.2541552, "t1": 1794257938.0569403, "kind": "solo", "tag": "P5"}
+PEAK GPU 91008 MiB, LOWEST MemAvailable 133092 MiB; END P5 20:59:00
+NC-LEG-DONE P5 20:59:00
+=== LEG P5H parallel=5 ctx=5242880 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1] xargs=[] cache_ram=98304 20:59:00
+READY P5H after 42s
+0.11.482.382 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.11.482.428 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.11.485.321 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (2.9 ms)
+0.11.487.911 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (2.6 ms)
+0.11.490.529 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (2.6 ms)
+0.11.493.117 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (2.6 ms)
+0.11.495.688 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 1048576 cells, 330.0 MiB mapped in all streams (2.6 ms)
+0.12.007.367 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.12.007.393 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.009.429 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (2.0 ms)
+0.12.011.354 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (1.9 ms)
+0.12.013.275 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (1.9 ms)
+0.12.015.146 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (1.9 ms)
+0.12.017.016 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 1048576 cells, 220.0 MiB mapped in all streams (1.9 ms)
+GPU after load: 87749 MiB
+--- gold.py 2 20:59:45
+{"kind": "gold", "tag": "P5H", "md5": "bc32ecab82", "decode_tps": 37.06, "wall_s": 3.75}
+{"kind": "gold", "tag": "P5H", "md5": "bc32ecab82", "decode_tps": 44.4, "wall_s": 3.08}
+--- ekbench.py solo p0 p0 p0 p0 p0 p0 p0 20:59:52
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.15, "prefill_tps": 67.16, "decode_n": 256, "decode_tps": 42.82, "md5": "8e312d7bdd", "t0": 1794257992.7421389, "t1": 1794257998.8757153, "kind": "solo", "tag": "P5H"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 72.52, "decode_n": 256, "decode_tps": 45.6, "md5": "8e312d7bdd", "t0": 1794257998.875817, "t1": 1794258004.6426935, "kind": "solo", "tag": "P5H"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 76.97, "decode_n": 256, "decode_tps": 47.57, "md5": "8e312d7bdd", "t0": 1794258004.642776, "t1": 1794258010.1411433, "kind": "solo", "tag": "P5H"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 79.23, "decode_n": 256, "decode_tps": 48.55, "md5": "8e312d7bdd", "t0": 1794258010.14122, "t1": 1794258015.5277421, "kind": "solo", "tag": "P5H"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 80.96, "decode_n": 256, "decode_tps": 49.74, "md5": "8e312d7bdd", "t0": 1794258015.527821, "t1": 1794258020.7861433, "kind": "solo", "tag": "P5H"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 82.28, "decode_n": 256, "decode_tps": 50.17, "md5": "8e312d7bdd", "t0": 1794258020.7862418, "t1": 1794258025.9985845, "kind": "solo", "tag": "P5H"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 81.14, "decode_n": 256, "decode_tps": 50.59, "md5": "8e312d7bdd", "t0": 1794258025.9986625, "t1": 1794258031.1706736, "kind": "solo", "tag": "P5H"}
+--- ekbench.py solo L16384 21:00:31
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.38, "prefill_tps": 1580.7, "decode_n": 128, "decode_tps": 38.72, "md5": "145c14aa8b", "t0": 1794258031.2145736, "t1": 1794258044.9230256, "kind": "solo", "tag": "P5H"}
+PEAK GPU 88253 MiB, LOWEST MemAvailable 230858 MiB; END P5H 21:00:47
+NC-LEG-DONE P5H 21:00:47
+=== LEG ST5 parallel=5 ctx=5242880 img=547208dca250-g7f117e1 opt=image extra=[LLAMA_PREFILL_ISOLATE=1] xargs=[] cache_ram=98304 21:00:49
+LEG-FAIL ST5 died
+0.10.810.917 W load_tensors: madvise(MADV_PAGEOUT) failed for 6 of 6 mappings: Cannot allocate memory
+0.11.302.949 E ggml_backend_cuda_buffer_type_alloc_buffer: allocating 42240.00 MiB on device 0: cudaMalloc failed: out of memory
+0.11.302.963 E ggml_backend_buft_alloc_buffer_n_default: failed to allocate CUDA0 buffer of size 44291850240
+0.11.356.621 E llama_init_from_model: failed to initialize the context: failed to allocate buffer for kv cache
+0.11.356.640 E cmn  common_init_: failed to create context with model '/models/GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf'
+0.11.356.646 E cmn  common_init_: failed to create context with model '/models/GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf'
+0.11.356.651 E srv    load_model: failed to create_context with model '/models/GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf'
+0.11.361.574 E srv  llama_server: exiting due to model loading error
+LEG-FAIL ST5 not ready
+PEAK GPU 9226 MiB, LOWEST MemAvailable 510467 MiB; END ST5 21:01:03
+=== LEG CH parallel=5 ctx=5242880 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 LLAMA_LOGITS_FNV=1] xargs=[] cache_ram=65536 21:01:03
+READY CH after 42s
+0.10.065.914 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.186.495 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.186.545 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.11.186.550 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.11.381.768 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.219.131 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.219.164 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.12.219.165 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.43.596.634 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 87960 MiB
+--- chunk.py cold L16384 8 21:01:47
+{"kind": "chunk-cold", "tag": "CH", "n_tok": 16414, "prompt_n": 16414, "cache_n": 0, "prefill_tps": 1533.9, "md5": "5514f10f79", "t0": 1794258107.8780982, "t1": 1794258118.8168218}
+--- chunk.py cold L16384 8 21:01:58
+{"kind": "chunk-cold", "tag": "CH", "n_tok": 16414, "prompt_n": 16414, "cache_n": 0, "prefill_tps": 1631.5, "md5": "5514f10f79", "t0": 1794258118.8992133, "t1": 1794258129.1880999}
+--- chunk.py split L16384 6001 8 21:02:09
+{"kind": "chunk-prefix", "tag": "CH", "n_tok": 6001, "prompt_n": 6001, "cache_n": 0, "prefill_tps": 1691.6, "md5": "a764569973", "t0": 1794258129.269109, "t1": 1794258132.9054425}
+{"kind": "chunk-split", "tag": "CH", "n_tok": 16414, "prompt_n": 10413, "cache_n": 6001, "prefill_tps": 1551.4, "md5": "5514f10f79", "t0": 1794258132.9055142, "t1": 1794258139.8472893}
+--- chunk.py cold L65536 8 21:02:19
+{"kind": "chunk-cold", "tag": "CH", "n_tok": 65243, "prompt_n": 65243, "cache_n": 0, "prefill_tps": 1468.5, "md5": "ef961dada7", "t0": 1794258139.9739113, "t1": 1794258184.656951}
+--- chunk.py split L65536 30001 8 21:03:04
+{"kind": "chunk-prefix", "tag": "CH", "n_tok": 30001, "prompt_n": 30001, "cache_n": 0, "prefill_tps": 1477.6, "md5": "a764569973", "t0": 1794258184.784805, "t1": 1794258205.2933416}
+{"kind": "chunk-split", "tag": "CH", "n_tok": 65243, "prompt_n": 35242, "cache_n": 30001, "prefill_tps": 1496.4, "md5": "ef961dada7", "t0": 1794258205.2934873, "t1": 1794258229.0978372}
+PEAK GPU 91005 MiB, LOWEST MemAvailable 134446 MiB; END CH 21:03:51
+NC-LEG-DONE CH 21:03:51
+=== LEG CH2 parallel=5 ctx=5242880 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 LLAMA_LOGITS_FNV=1] xargs=[--batch-size 2048 --ubatch-size 2048] cache_ram=65536 21:03:52
+READY CH2 after 42s
+0.08.825.606 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.09.978.246 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.09.978.289 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.09.978.290 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.10.238.972 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.078.812 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.078.846 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.11.078.847 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.883.584 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 72429 MiB
+--- chunk.py cold L16384 8 21:04:36
+{"kind": "chunk-cold", "tag": "CH2", "n_tok": 16414, "prompt_n": 16414, "cache_n": 0, "prefill_tps": 1470.4, "md5": "f0f25a424a", "t0": 1794258276.9909892, "t1": 1794258288.398967}
+--- chunk.py cold L65536 8 21:04:48
+{"kind": "chunk-cold", "tag": "CH2", "n_tok": 65243, "prompt_n": 65243, "cache_n": 0, "prefill_tps": 1324.1, "md5": "ef961dada7", "t0": 1794258288.5265715, "t1": 1794258338.0657818}
+PEAK GPU 72619 MiB, LOWEST MemAvailable 148163 MiB; END CH2 21:05:40
+NC-LEG-DONE CH2 21:05:40
+=== LEG R-ST parallel=1 ctx=1048576 img=547208dca250-g7f117e1 opt=image extra=[GGML_CUDA_OP_PROFILE=16 LLAMA_EXPERT_STORE_HOOK_STATS=1] xargs=[] cache_ram=98304 21:05:41
+READY R-ST after 42s
+0.10.903.864 I llama_kv_cache:      CUDA0 KV buffer size = 11264.00 MiB
+0.10.903.895 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.10.906.153 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (2.2 ms)
+0.10.914.199 I llama_kv_cache:      CUDA0 KV buffer size =  8448.00 MiB
+0.10.914.219 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.10.915.722 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (1.5 ms)
+0.41.770.591 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79490 MiB
+--- ekbench.py solo p0 p0 p0 --n-predict 128 21:06:25
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 43.76, "decode_n": 128, "decode_tps": 25.39, "md5": "2a73cda2a3", "t0": 1794258386.0149841, "t1": 1794258391.269515, "kind": "solo", "tag": "R-ST"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.2, "prefill_tps": 50.43, "decode_n": 128, "decode_tps": 26.36, "md5": "2a73cda2a3", "t0": 1794258391.2696233, "t1": 1794258396.3103952, "kind": "solo", "tag": "R-ST"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.18, "prefill_tps": 54.44, "decode_n": 128, "decode_tps": 26.92, "md5": "2a73cda2a3", "t0": 1794258396.3104727, "t1": 1794258401.215073, "kind": "solo", "tag": "R-ST"}
+PEAK GPU 79498 MiB, LOWEST MemAvailable 249025 MiB; END R-ST 21:06:43
+NC-LEG-DONE R-ST 21:06:43
+=== LEG R-A0 parallel=1 ctx=1048576 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 GGML_CUDA_OP_PROFILE=16 LLAMA_EXPERT_STORE_HOOK_STATS=1] xargs=[] cache_ram=98304 21:06:44
+READY R-A0 after 42s
+0.10.894.146 I llama_kv_cache:      CUDA0 KV buffer size = 11264.00 MiB
+0.10.894.178 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.10.896.372 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (2.2 ms)
+0.10.904.267 I llama_kv_cache:      CUDA0 KV buffer size =  8448.00 MiB
+0.10.904.291 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.10.905.792 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (1.5 ms)
+0.41.251.889 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79488 MiB
+--- ekbench.py solo p0 p0 p0 --n-predict 128 21:07:27
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.22, "prefill_tps": 44.96, "decode_n": 128, "decode_tps": 25.04, "md5": "bc32ecab82", "t0": 1794258448.0000038, "t1": 1794258453.317061, "kind": "solo", "tag": "R-A0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.2, "prefill_tps": 51.01, "decode_n": 128, "decode_tps": 26.5, "md5": "bc32ecab82", "t0": 1794258453.3171637, "t1": 1794258458.3308797, "kind": "solo", "tag": "R-A0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.18, "prefill_tps": 54.91, "decode_n": 128, "decode_tps": 27.23, "md5": "bc32ecab82", "t0": 1794258458.3309681, "t1": 1794258463.1789653, "kind": "solo", "tag": "R-A0"}
+PEAK GPU 79496 MiB, LOWEST MemAvailable 249191 MiB; END R-A0 21:07:45
+NC-LEG-DONE R-A0 21:07:45
+=== LEG R-P5 parallel=5 ctx=5242880 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_OP_PROFILE=16 LLAMA_EXPERT_STORE_HOOK_STATS=1] xargs=[] cache_ram=65536 21:07:46
+READY R-P5 after 42s
+0.10.912.245 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.008.145 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.008.186 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.008.188 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.203.252 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.044.173 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.044.205 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.044.206 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.44.841.269 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 87965 MiB
+--- ekbench.py solo p0 p0 p0 --n-predict 128 21:08:31
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.34, "prefill_tps": 29.84, "decode_n": 128, "decode_tps": 23.16, "md5": "bc32ecab82", "t0": 1794258511.9630685, "t1": 1794258517.804187, "kind": "solo", "tag": "R-P5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.2, "prefill_tps": 49.62, "decode_n": 128, "decode_tps": 25.8, "md5": "bc32ecab82", "t0": 1794258517.8043122, "t1": 1794258522.9642906, "kind": "solo", "tag": "R-P5"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.19, "prefill_tps": 53.75, "decode_n": 128, "decode_tps": 26.52, "md5": "bc32ecab82", "t0": 1794258522.9643738, "t1": 1794258527.946895, "kind": "solo", "tag": "R-P5"}
+PEAK GPU 87972 MiB, LOWEST MemAvailable 133452 MiB; END R-P5 21:08:49
+NC-LEG-DONE R-P5 21:08:50
+=== LEG NS-ST parallel=1 ctx=1048576 img=547208dca250-g7f117e1 opt=image extra=[] xargs=[] cache_ram=98304 21:08:51
+LEG-FAIL NS-ST died
+/nsys/target-linux-sbsa-armv8/nsys: error while loading shared libraries: libbpf.so.1: cannot open shared object file: No such file or directory
+LEG-FAIL NS-ST not ready
+PEAK GPU 121 MiB, LOWEST MemAvailable 520539 MiB; END NS-ST 21:08:54
+=== LEG NS-A0 parallel=1 ctx=1048576 img=547208dca250-ga5fa848 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1] xargs=[] cache_ram=98304 21:08:55
+LEG-FAIL NS-A0 died
+/nsys/target-linux-sbsa-armv8/nsys: error while loading shared libraries: libbpf.so.1: cannot open shared object file: No such file or directory
+LEG-FAIL NS-A0 not ready
+PEAK GPU 90 MiB, LOWEST MemAvailable 520618 MiB; END NS-A0 21:08:58
+no test server left
+NC1-DONE 21:08:58

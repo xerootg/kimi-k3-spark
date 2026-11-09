@@ -1,0 +1,172 @@
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 6fe894d..b5581c7 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -6,6 +6,7 @@
+ #include "llama-impl.h"
+ #include "llama-batch.h"
+ #include "llama-io.h"
++#include "llama-kv-cache.h"
+ #include "llama-memory.h"
+ #include "llama-mmap.h"
+ #include "llama-model.h"
+@@ -718,6 +719,29 @@ void llama_context::sched_new(size_t max_nodes, bool parallel) {
+     ggml_backend_sched_set_realloc_callback(sched.get(), sched_graph_realloc, this);
+ }
+ 
++// kimi-k3-spark patch 0059: with LLAMA_PREFILL_ISOLATE=1 (patch 0035) a prompt ubatch always holds one sequence, so the
++// prompt graph is reserved for one sequence over one KV stream. The default worst case spreads the ubatch over every slot,
++// and with non-unified KV each of them views its whole stream: on the GH200 five 1M slots reserved 40.2 GB of compute
++// buffer instead of 28.0 GB, and the HBM expert tier paid for the difference. Batched decode (n_seq_max sequences of one
++// token each) is still reserved as before.
++bool llama_context::pp_reserve_one_seq() const {
++    static const bool isolate = [] {
++        const char * v = getenv("LLAMA_PREFILL_ISOLATE");
++        return v != nullptr && strcmp(v, "1") == 0;
++    }();
++    return isolate && cparams.n_seq_max > 1 && !cparams.kv_unified;
++}
++
++llama_memory_context_ptr llama_context::pp_reserve_mctx() {
++    llama_kv_cache_set_reserve_one_stream(true);
++    llama_memory_context_ptr res = memory->init_full();
++    llama_kv_cache_set_reserve_one_stream(false);
++    if (!res) {
++        throw std::runtime_error("failed to initialize memory module");
++    }
++    return res;
++}
++
+ void llama_context::sched_reserve() {
+     if (!sched_need_reserve) {
+         return;
+@@ -775,16 +799,25 @@ void llama_context::sched_reserve() {
+ 
+     const uint32_t n_outputs_pp = std::min(n_tokens, cparams.n_outputs_max);
+ 
++    // patch 0059: an isolated prompt ubatch holds one sequence (see pp_reserve_one_seq)
++    const uint32_t n_seqs_pp = pp_reserve_one_seq() ? 1 : n_seqs;
++    llama_memory_context_ptr mctx_pp_own;
++    if (memory && n_seqs_pp != n_seqs) {
++        mctx_pp_own = pp_reserve_mctx();
++        LLAMA_LOG_INFO("%s: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (%u slots)\n", __func__, n_seqs);
++    }
++    const llama_memory_context_i * mctx_pp = mctx_pp_own ? mctx_pp_own.get() : mctx.get();
++
+     // reserve pp (prompt processing) graph first so that buffers are only allocated once
+     {
+-        auto * gf = graph_reserve(n_tokens, n_seqs, n_outputs_pp, mctx.get(),
++        auto * gf = graph_reserve(n_tokens, n_seqs_pp, n_outputs_pp, mctx_pp,
+                 model.hparams.no_alloc, model.hparams.no_alloc ? backend_buf_exp_size.data() : nullptr);
+         if (!gf) {
+             if (cparams.pipeline_parallel) {
+                 LLAMA_LOG_WARN("%s: compute buffer allocation failed, retrying without pipeline parallelism\n", __func__);
+                 cparams.pipeline_parallel = false;
+                 sched_new(max_nodes, false);
+-                gf = graph_reserve(n_tokens, n_seqs, n_outputs_pp, mctx.get());
++                gf = graph_reserve(n_tokens, n_seqs_pp, n_outputs_pp, mctx_pp);
+             }
+             if (!gf) {
+                 throw std::runtime_error("failed to allocate compute pp buffers");
+@@ -830,7 +863,7 @@ void llama_context::sched_reserve() {
+                 gf = graph_reserve(n_tokens, 1,      n_outputs_pp, mctx.get(), model.hparams.no_alloc);
+                 break;
+             default:
+-                gf = graph_reserve(n_tokens, n_seqs, n_outputs_pp, mctx.get(), model.hparams.no_alloc);
++                gf = graph_reserve(n_tokens, n_seqs_pp, n_outputs_pp, mctx_pp, model.hparams.no_alloc);
+         };
+ 
+         if (!gf) {
+@@ -1020,7 +1053,9 @@ bool llama_context::memory_update(bool optimize) {
+ 
+         const uint32_t n_outputs_max = std::min(n_tokens, cparams.n_outputs_max);
+ 
+-        auto * gf = graph_reserve(n_tokens, n_seqs, n_outputs_max, mctx.get());
++        // patch 0059: the same one-sequence prompt graph as sched_reserve()
++        llama_memory_context_ptr mctx_pp = pp_reserve_one_seq() ? pp_reserve_mctx() : nullptr;
++        auto * gf = graph_reserve(n_tokens, mctx_pp ? 1 : n_seqs, n_outputs_max, mctx_pp ? mctx_pp.get() : mctx.get());
+         if (!gf) {
+             LLAMA_LOG_ERROR("%s: failed to reserve graph after the memory update\n", __func__);
+         }
+diff --git a/src/llama-context.h b/src/llama-context.h
+index 00c2977..9cc2826 100644
+--- a/src/llama-context.h
++++ b/src/llama-context.h
+@@ -58,6 +58,10 @@ struct llama_context {
+     //   - etc.
+     void sched_reserve();
+ 
++    // patch 0059: one-sequence prompt reserve under LLAMA_PREFILL_ISOLATE=1
++    bool pp_reserve_one_seq() const;
++    llama_memory_context_ptr pp_reserve_mctx();
++
+     void synchronize();
+ 
+     const llama_model   & get_model()   const;
+diff --git a/src/llama-kv-cache.cpp b/src/llama-kv-cache.cpp
+index 14456a2..1c00a86 100644
+--- a/src/llama-kv-cache.cpp
++++ b/src/llama-kv-cache.cpp
+@@ -3257,11 +3257,21 @@ void llama_kv_cache::state_clear(llama_seq_id seq_id, uint32_t strm, const slot_
+ 
+ llama_kv_cache_context::llama_kv_cache_context(llama_memory_status status) : status(status) {}
+ 
++static thread_local bool g_kv_reserve_one_stream = false; // patch 0059
++
++void llama_kv_cache_set_reserve_one_stream(bool on) {
++    g_kv_reserve_one_stream = on;
++}
++
++bool llama_kv_cache_get_reserve_one_stream() {
++    return g_kv_reserve_one_stream;
++}
++
+ llama_kv_cache_context::llama_kv_cache_context(
+         llama_kv_cache * kv) : status(LLAMA_MEMORY_STATUS_SUCCESS), kv(kv) {
+     n_kv = kv->get_size();
+ 
+-    const uint32_t n_stream = kv->get_n_stream();
++    const uint32_t n_stream = g_kv_reserve_one_stream ? 1 : kv->get_n_stream();
+ 
+     // create a dummy slot info - the actual data is irrelevant. we just need to build the graph
+     sinfos.resize(1);
+diff --git a/src/llama-kv-cache.h b/src/llama-kv-cache.h
+index 43b4c9e..ac83fc4 100644
+--- a/src/llama-kv-cache.h
++++ b/src/llama-kv-cache.h
+@@ -398,6 +398,11 @@ private:
+     void state_clear(llama_seq_id seq_id, uint32_t strm, const slot_info & sinfo);
+ };
+ 
++// kimi-k3-spark patch 0059: while set, init_full() builds its dummy context over one KV stream (the shape of an isolated
++// prompt ubatch, LLAMA_PREFILL_ISOLATE=1) instead of every stream; used only to reserve the prompt graph.
++void llama_kv_cache_set_reserve_one_stream(bool on);
++bool llama_kv_cache_get_reserve_one_stream();
++
+ class llama_kv_cache_context : public llama_memory_context_i {
+ public:
+     // some shorthands
+diff --git a/src/llama-memory-hybrid-idx.cpp b/src/llama-memory-hybrid-idx.cpp
+index 75b96ff..a4fa5d4 100644
+--- a/src/llama-memory-hybrid-idx.cpp
++++ b/src/llama-memory-hybrid-idx.cpp
+@@ -488,15 +488,17 @@ llama_memory_hybrid_idx_context::llama_memory_hybrid_idx_context(llama_memory_hy
+     mem(mem),
+     // graph reservation walks a full context, and qwen4exp builds the sparse attention only when this is set
+     // without it the reserved worst case is the dense graph, so ggml-alloc must grow the buffer on the first decode
++    // patch 0059: a one-sequence prompt reserve (LLAMA_PREFILL_ISOLATE=1) views one stream
+     ns_ubatch(mem->get_mem_idx() == nullptr ?
+-        std::vector<uint32_t>() : std::vector<uint32_t>{ mem->get_mem_idx()->get_n_stream() }),
++        std::vector<uint32_t>() : std::vector<uint32_t>{ llama_kv_cache_get_reserve_one_stream() ? 1u : mem->get_mem_idx()->get_n_stream() }),
+     ctx_idx(mem->get_mem_idx() == nullptr ? nullptr :
+         new llama_kv_cache_context(mem->get_mem_idx())) {
+     if (kpool_track()) {
+         mem->kpool_layout_update();
+         auto st = kpool_build_sizes();
+         const auto * idx = mem->get_mem_idx();
+-        const uint64_t n_pool_max = uint64_t(idx->get_size() / mem->get_kpool()) * idx->get_n_seq_max();
++        const uint64_t n_pool_max = uint64_t(idx->get_size() / mem->get_kpool()) *
++            (llama_kv_cache_get_reserve_one_stream() ? 1u : idx->get_n_seq_max()); // patch 0059
+         GGML_ASSERT(n_pool_max <= UINT32_MAX - 64);
+         st.n_pool_real = std::max(st.n_pool_real, uint32_t(n_pool_max));
+         st.n_new   = st.n_pool_real;

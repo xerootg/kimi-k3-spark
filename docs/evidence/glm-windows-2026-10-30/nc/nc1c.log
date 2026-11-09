@@ -1,0 +1,41 @@
+=== LEG B5F parallel=5 ctx=5242880 img=547208dca250-ga5fa848 opt=/home/ubuntu/nc/out-a90 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1] xargs=[] cache_ram=65536 21:28:21
+READY B5F after 45s
+0.10.948.959 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.056.548 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.056.590 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.056.592 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.252.251 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.095.366 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.095.395 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.095.397 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.562.239 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.302.260 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79970 MiB
+--- gold.py 2 21:29:07
+{"kind": "gold", "tag": "B5F", "md5": "bc32ecab82", "decode_tps": 44.47, "wall_s": 3.07}
+{"kind": "gold", "tag": "B5F", "md5": "bc32ecab82", "decode_tps": 49.18, "wall_s": 2.78}
+--- ekbench.py solo p0 p0 p0 p0 p0 p0 p0 21:29:13
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.17, "prefill_tps": 60.52, "decode_n": 256, "decode_tps": 48.47, "md5": "8e312d7bdd", "t0": 1794259753.5948076, "t1": 1794259759.0508578, "kind": "solo", "tag": "B5F"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 74.14, "decode_n": 256, "decode_tps": 50.8, "md5": "8e312d7bdd", "t0": 1794259759.05096, "t1": 1794259764.2424185, "kind": "solo", "tag": "B5F"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 80.5, "decode_n": 256, "decode_tps": 53.26, "md5": "8e312d7bdd", "t0": 1794259764.242499, "t1": 1794259769.1614032, "kind": "solo", "tag": "B5F"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 82.66, "decode_n": 256, "decode_tps": 54.56, "md5": "8e312d7bdd", "t0": 1794259769.16148, "t1": 1794259773.963077, "kind": "solo", "tag": "B5F"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 83.52, "decode_n": 256, "decode_tps": 56.04, "md5": "8e312d7bdd", "t0": 1794259773.9631557, "t1": 1794259778.6401389, "kind": "solo", "tag": "B5F"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 85.38, "decode_n": 256, "decode_tps": 56.6, "md5": "8e312d7bdd", "t0": 1794259778.6402156, "t1": 1794259783.2694407, "kind": "solo", "tag": "B5F"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 84.17, "decode_n": 256, "decode_tps": 57.22, "md5": "8e312d7bdd", "t0": 1794259783.2695203, "t1": 1794259787.852112, "kind": "solo", "tag": "B5F"}
+--- ekbench.py solo L16384 21:29:47
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.09, "prefill_tps": 1626.22, "decode_n": 128, "decode_tps": 40.07, "md5": "145c14aa8b", "t0": 1794259787.8954644, "t1": 1794259801.2015214, "kind": "solo", "tag": "B5F"}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 21:30:01
+{"kind": "multi", "tag": "B5F", "n": 5, "round": "warm", "agg_tps": 63.89, "wall_s": 20.03, "gen": 1280, "per_stream_tps": [12.97, 13.44, 13.6, 13.12, 13.29], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [78.5, 88.69, 78.04, 89.7, 88.49], "t0": 1794259801.2466073, "t1": 1794259821.280144}
+{"kind": "multi", "tag": "B5F", "n": 5, "round": 1, "agg_tps": 68.82, "wall_s": 18.6, "gen": 1280, "per_stream_tps": [13.96, 14.47, 14.63, 14.13, 14.3], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [78.59, 92.98, 89.51, 95.39, 95.0], "t0": 1794259821.2809463, "t1": 1794259839.8790243}
+{"kind": "multi", "tag": "B5F", "n": 5, "round": 2, "agg_tps": 70.15, "wall_s": 18.25, "gen": 1280, "per_stream_tps": [14.15, 14.67, 14.83, 14.32, 14.5], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [77.31, 93.91, 91.17, 96.26, 95.87], "t0": 1794259839.8797739, "t1": 1794259858.125495}
+--- ekbench.py multi p0 p1 p3 --rounds 1 21:30:58
+{"kind": "multi", "tag": "B5F", "n": 3, "round": "warm", "agg_tps": 66.44, "wall_s": 11.56, "gen": 768, "per_stream_tps": [22.68, 23.56, 23.12], "md5": ["8e312d7bdd", "74fb633e8e", "4d6338450b"], "specs": ["p0", "p1", "p3"], "prefill_tps": [75.95, 93.11, 96.32], "t0": 1794259858.173383, "t1": 1794259869.733079}
+{"kind": "multi", "tag": "B5F", "n": 3, "round": 1, "agg_tps": 67.97, "wall_s": 11.3, "gen": 768, "per_stream_tps": [22.98, 23.89, 23.44], "md5": ["8e312d7bdd", "74fb633e8e", "4d6338450b"], "specs": ["p0", "p1", "p3"], "prefill_tps": [76.11, 93.2, 96.67], "t0": 1794259869.733643, "t1": 1794259881.03249}
+--- ekbench.py multi p0 L16384 --rounds 1 21:31:21
+{"kind": "multi", "tag": "B5F", "n": 2, "round": "warm", "agg_tps": 21.39, "wall_s": 17.95, "gen": 384, "per_stream_tps": [14.45, 25.64], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [71.05, 1638.52], "t0": 1794259881.0781147, "t1": 1794259899.032272}
+{"kind": "multi", "tag": "B5F", "n": 2, "round": 1, "agg_tps": 21.87, "wall_s": 17.56, "gen": 384, "per_stream_tps": [14.74, 27.41], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [75.44, 1641.46], "t0": 1794259899.0327842, "t1": 1794259916.5932767}
+--- ekbench.py solo L65536 21:31:56
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 43.87, "prefill_tps": 1487.06, "decode_n": 128, "decode_tps": 42.18, "md5": "8acec1b966", "t0": 1794259916.6379113, "t1": 1794259963.6248424, "kind": "solo", "tag": "B5F"}
+PEAK GPU 80233 MiB, LOWEST MemAvailable 146570 MiB; END B5F 21:32:45
+NC-LEG-DONE B5F 21:32:45
+NC1C-DONE 21:32:45

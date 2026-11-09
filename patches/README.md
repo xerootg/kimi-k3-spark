@@ -1311,3 +1311,18 @@ slots are rarely contiguous in production (a client in the middle finishes, the 
 **Spark (window bi2-2, four slots, 0054 + 0056 chunk 128):** p0 + p2 on slots {0,2}: 12.7-13.0 tok/s aggregate
 without, **18.1-18.8** with; p0 + p1 + p3 and the 16k mixes unchanged; every client its solo md5 in every round, also
 with `GGML_CUDA_BI_FUSE=1`.
+
+## 0059-pp-reserve-one-seq
+
+With `LLAMA_PREFILL_ISOLATE=1` (0035) and `--parallel N` (non-unified KV), the prompt graph is reserved for one sequence
+over one KV stream, the shape every isolated prompt ubatch has. Upstream's worst case spreads the ubatch over all N slots:
+each slot views its whole stream, and the DSA indexer's pooled-key state is sized for N streams. Batched decode (N
+sequences of one token each) is reserved as before, and the reserve after a memory update (K-shift, stream copy) uses the
+same one-sequence prompt graph. No switch of its own: active whenever `LLAMA_PREFILL_ISOLATE=1` and N > 1. Kernels and
+shapes of every graph that runs are unchanged, so the bytes are too.
+
+**GH200, five 1M slots (window nc1, 2026-11-09, production config of #171 with a dev build):** CUDA compute buffer
+40,235 -> 28,008 MiB (the single-slot size), CUDA_Host 18,794 -> 10,540 MiB; the memory valve no longer releases 4.7 GB of
+the HBM expert tier at start (decode hit rate 99.9 % with 3.7 GB read from NVMe -> 100 %, tier share 47.5 -> 50.4 %).
+One client, seventh warm request: 50.5 -> 51.7 tok/s; five clients 66.7 -> 68.5-69.8. Every client its gold md5 at N=1, 2, 3,
+5 and next to the 16k request. On the Spark the compute buffer comes out of the same memory as the expert cache.
