@@ -297,3 +297,27 @@ Follow-up (Haley, 2026-11-09): use USB 3.2/4 directly between hosts. Checked the
 Next: owner's call on hardware (USB 10GbE adapters for bandwidth, or a QSFP cable plus a ConnectX NIC in a Thunderbolt
 enclosure for latency).
 
+## The NUC-to-NUC Thunderbolt link, measured (2026-11-09)
+
+Haley: "There should be a nuc to nuc link, test that out." It exists: nuc2 and nuc3 are cabled over Thunderbolt
+(`thunderbolt-net`, nuc3 thunderbolt1 10.77.23.2/30 to nuc2 thunderbolt0 10.77.23.1, link 10 Gb/s x 2 lanes, MTU 65000),
+and nuc3 is also cabled to nas-large (10.77.38.0/30). An OpenR mesh routes the nodes' LAN addresses over these links
+(`ip route`: 192.168.4.249 via 10.77.23.1 dev thunderbolt1 proto openr), so NUC-to-NUC traffic already uses it. nuc2 has a
+third link (thunderbolt1 10.77.28.1/30). The Spark is not on the mesh.
+
+Measured with `linktest.py` (Python TCP, TCP_NODELAY; 20000 round trips after 2000 warm-up; 4 streams for 5 s), both
+ends busy-polling to take CPU wake-up out (powersave governor on the NUCs):
+
+| path | round trip 64 B p50 / p99 | round trip with a 6 KiB reply | throughput |
+|---|---|---|---|
+| nuc3 -> nuc2, Thunderbolt | 134 / 147 us | 148 us | 14.6 Gb/s |
+| Spark -> nuc2, 2.5 GbE switched | 111 / 122 us | 122 us | 2.1-2.3 Gb/s |
+
+(Blocking receive instead of busy-polling: Thunderbolt 190 us, LAN 110-150 us.) So the Thunderbolt link gives about
+6x the bandwidth of the LAN with a slightly longer round trip: thunderbolt-net's own latency is ~130 us.
+
+What it is good for: bulk between the NUCs (a NUC reading the other's RAM-resident expert records at up to ~1.8 GB/s,
+model and KV copies, the two NUCs as one 128 GB pool for a model split by layers, where a token crosses the link once
+per stage, not once per layer). Not for cutting the Spark's per-layer round trips: the Spark is not on it, and its
+latency is no better than the LAN's.
+
