@@ -324,7 +324,7 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
 - **Found:** batched decode across slots is +30 % (N=2) / +49 % (N=4) aggregate but changes each client's bytes
   with the batch, so it is off under the reproducibility rule. The exact-batching knobs fix N=2 only and cost the
   gain. The 0050 switch `GGML_CUDA_FUSE_GDN_STATE` crashes multi-slot servers (guarded in 0052; root cause open).
-- **Candidate for production (Haley's call):** four resident slots served one request at a time
+- **Decided 2026-11-09 (Haley): fixed share per slot, three slots** (Juno, the workbench, Claude Code); was the candidate: four resident slots served one request at a time
   (`LLAMA_SLOT_SERIAL=1`), same bytes as today, single-stream speed ~4 % lower, and alternating clients (Juno, the
   workbench, Claude Code) stop evicting each other's KV. Canary script ready (`canary0052.sh`); needs the policy
   choice (shared pool with refuse, or fixed shares) and one reviewed argo-things PR.

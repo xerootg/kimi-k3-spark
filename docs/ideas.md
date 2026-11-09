@@ -13,7 +13,7 @@ measurement), **partly** (right direction, smaller payoff than hoped), **no** (n
 |---|---|---|---|
 | 2026-11-06 | NUCs make too many network round trips; we are using them wrong | sane | built (0049), off in production until multi-slot serving |
 | 2026-11-06 | Distribute inference to the NUCs once the faster links exist | partly | re-check when the links land |
-| 2026-11-08 | KV cache that resizes per conversation | sane, built (0052) | open decision: up to 1M each (refuse when full) or fixed shares; both are switches |
+| 2026-11-08 | KV cache that resizes per conversation | sane, built (0052) | decided 2026-11-09: fixed share per slot (Spark), three slots |
 | 2026-11-08 | Keep each conversation's KV contiguous | sane | part of the per-conversation design |
 | 2026-11-08 | SIMD can't help because the KV is not contiguous | premise wrong | none |
 | 2026-11-08 | Put the KV on another machine on the network | no (active), sane (idle parking) | parking only |
@@ -23,6 +23,7 @@ measurement), **partly** (right direction, smaller payoff than hoped), **no** (n
 | 2026-11-08 | Keep the KV in Grace memory and let the GPU read it over the fast link | promising (built, correct on the Spark) | GH200 window, script ready (~1 h) |
 | 2026-11-08 | The Spark as the general local failover for the GH200 | sane | Juno done in argo-things #159; public endpoint and workbench next |
 | 2026-11-08 | Crack the 1M-token context ceiling | promising, works at 1.087M (needles found) | long real transcript; binbcast fix before 2.09M |
+| 2026-11-09 | The GH200 should serve several customers at once, quickly, without losing quality | partly | serial slots with priority first; batch-invariant kernels later |
 
 ## NUC round trips (2026-11-06)
 
@@ -185,4 +186,32 @@ server's `n_ctx_train` cap) retrieved a fact from line 1 and one from the middle
 before falling into a greedy repetition loop. Prefill took 2 h 40 min (75 tok/s near 1M), decode at that depth
 7-9 tok/s. The offset audit found one hard limit: `binbcast.cu`'s 32-bit strides abort the prefill past ~2.09M cells
 at ubatch 2048 (fix known, not applied); everything else is 64-bit.
+
+## Several customers on the GH200 at once (2026-11-09)
+
+Idea: the three regular clients (Juno, the RE workbench, Claude Code) should all get fast answers from the GH200 at
+the same time, with no loss of quality; today the workbench and Juno contend.
+
+Verdict: partly. Two things are mixed together:
+
+- Keeping three conversations warm is easy. The GH200 already parks prompt caches in Grace memory
+  (`--cache-ram 98304`), and 0052 plus 0051 would keep three 1M conversations resident with room to spare. Memory is
+  not what makes Juno wait.
+- Generating for several at the same moment means batching, and batched decode changes each client's bytes depending
+  on who else is in the batch (Spark window ek: every client differed at N=2 and N=4). That is not lower quality: each
+  answer is computed at the same precision. It breaks the reproducibility rule, which is the owner's call to keep.
+  The exact-batching knobs fixed N=2 only and cost the whole gain on the Spark.
+
+So the contention is queueing: one server, one sequence at a time, and a deep workbench queue in front of Juno.
+
+Options, cheapest first:
+1. Serial slots with priority: Juno's requests pause the workbench between tokens, run alone, then the workbench
+   resumes. Every step is still a batch of one, so bytes stay identical. Total throughput is unchanged; Juno stops
+   waiting behind long workbench jobs. Needs a scheduler patch on top of 0052 and a GH200 window.
+2. Batch-invariant kernels: every matmul, attention and norm reduces in a fixed order whatever the batch size, so a
+   client's bytes no longer depend on the batch. Concurrent and reproducible; large kernel work, some single-stream
+   cost; not measured.
+
+Owner said 2026-11-09 that crashing Juno mid-run is the thing to avoid, and that the workbench already contends with
+her. Next: owner's choice between the options.
 
