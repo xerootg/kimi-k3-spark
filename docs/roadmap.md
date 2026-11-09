@@ -346,7 +346,7 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   stream-K), a dip to 49-50 at exactly N=4 (graph-related, open). Priority with the hold rule: Juno's first token
   0.15-0.3 s under load and near-solo decode (40-45 tok/s) while others' prompts are read or arrive. KV in Grace
   memory (0051, needs `LLAMA_KV_HOST_THP=1` on the 64 KiB kernel): every slot 1M, no HBM, no refusals, decode at
-  depth +11-20 %, prefill at depth 35-55 % slower. Production PR argo-things #169 (image g64500e2,
+  depth +11-20 %, prefill at depth 35-55 % slower. Production PR argo-things #169 (Copilot: approval recommended after a Kubernetes canary; image g64500e2,
   `--parallel 5`, Grace KV, Juno's key in Secret `glm53-client-classes`).
 - **Next:** BI-mode decode attention with a fixed KV split (invariant and parallel: wins back the depth cost on
   Hopper); the N=4 graph dip; a prefill path that does not stream the KV over C2C; a production PR for the Spark

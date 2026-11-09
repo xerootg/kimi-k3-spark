@@ -1,0 +1,237 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: glm53-gh200-canary
+  namespace: kimi-k3
+  labels:
+    app.kubernetes.io/name: glm53-gh200-canary
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: glm53-gh200-canary
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: glm53-gh200-canary
+    spec:
+      runtimeClassName: nvidia
+      nodeSelector:
+        kubernetes.io/hostname: gh200-dev
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Equal
+        value: present
+        effect: NoSchedule
+      - key: zone
+        operator: Equal
+        value: lambda
+        effect: NoSchedule
+      terminationGracePeriodSeconds: 300
+      containers:
+      - name: llama-server
+        image: ghcr.io/xerootg/llamacpp-spark:547208dca250-g64500e2
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - kill -INT 1; while kill -0 1 2>/dev/null; do sleep 1; done
+        args:
+        - -m
+        - /models/GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf
+        - --mmproj
+        - /models/mmproj-BF16.gguf
+        - --alias
+        - glm-5.3-flash
+        - --host
+        - 0.0.0.0
+        - --port
+        - '8080'
+        - --ctx-size
+        - '5242880'
+        - --parallel
+        - '5'
+        - --batch-size
+        - '4096'
+        - --ubatch-size
+        - '4096'
+        - --n-gpu-layers
+        - '999'
+        - --n-cpu-moe
+        - '999'
+        - --moe-cache-mib
+        - '189360'
+        - --cache-ram
+        - '65536'
+        - --temp
+        - '1.0'
+        - --top-p
+        - '0.95'
+        - --threads
+        - '16'
+        - --threads-batch
+        - '32'
+        - --flash-attn
+        - 'on'
+        - --jinja
+        - --metrics
+        - --no-warmup
+        - --fit
+        - 'off'
+        - --load-mode
+        - mmap
+        - -lv
+        - '4'
+        env:
+        - name: LLAMA_LOG_COLORS
+          value: '0'
+        - name: LLAMA_EXPERT_STORE
+          value: /store/glm53flash-q4.k3xs
+        - name: LLAMA_EXPERT_STORE_SNAPSHOT
+          value: /snapshot/glm53flash-q4-full.k3sn
+        - name: LLAMA_EXPERT_STORE_THREADS
+          value: '32'
+        - name: LLAMA_EXPERT_STORE_URING
+          value: '0'
+        - name: LLAMA_EXPERT_STORE_GPU_SLOTS
+          value: '1'
+        - name: LLAMA_EXPERT_STORE_BYTE_STRIDE
+          value: '1'
+        - name: LLAMA_EXPERT_STORE_SPLIT
+          value: '1'
+        - name: LLAMA_EXPERT_STORE_SPLIT_SKIP_ZERO
+          value: '1'
+        - name: LLAMA_EXPERT_STORE_HOOK_LEAN
+          value: '1'
+        - name: GGML_CUDA_MMQ_ID_TILING
+          value: '1'
+        - name: LLAMA_EXPERT_STORE_POLICY
+          value: lfu
+        - name: LLAMA_EXPERT_STORE_LFU_HALF_LIFE
+          value: '262144'
+        - name: LLAMA_EXPERT_STORE_HBM_MIB
+          value: '40960'
+        - name: LLAMA_EXPERT_STORE_VALVE_FLOOR
+          value: '10'
+        - name: LLAMA_EXPERT_STORE_HBM_DECAY
+          value: '512'
+        - name: LLAMA_EXPERT_STORE_RESERVE_MIB
+          value: '8192'
+        - name: LLAMA_EXPERT_STORE_HBM_RESERVE_MIB
+          value: '8192'
+        - name: LLAMA_ELASTIC_KV
+          value: '1'
+        - name: LLAMA_EXPERT_STORE_HBM_SPARE
+          value: '1'
+        - name: LLAMA_EXPERT_STORE_MAX_BATCH
+          value: '4096'
+        - name: LLAMA_EXPERT_STORE_PREFILL_BANK
+          value: '0'
+        - name: LLAMA_EXPERT_STORE_PREFETCH
+          value: '0'
+        - name: LLAMA_EXPERT_STORE_SELF_PREFETCH
+          value: '0'
+        - name: LLAMA_EXPERT_STORE_PREFILL_LOOKAHEAD
+          value: '0'
+        - name: LLAMA_EXPERT_STORE_THP_BANK
+          value: '0'
+        - name: GGML_CUDA_BATCH_INVARIANT
+          value: '1'
+        - name: LLAMA_PREFILL_ISOLATE
+          value: '1'
+        - name: LLAMA_KV_HOST
+          value: '1'
+        - name: LLAMA_KV_HOST_THP
+          value: '1'
+        - name: LLAMA_CLIENT_CLASSES
+          value: /client-classes/classes.txt
+        - name: LLAMA_SLOT_RESERVE
+          value: '1'
+        - name: LLAMA_PRIORITY_HOLD_PROMPTS
+          value: '1'
+        - name: LLAMA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kimi-api-key
+              key: LLAMA_API_KEY
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 30
+          failureThreshold: 120
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 15
+        resources:
+          requests:
+            cpu: '32'
+            memory: 300Gi
+            nvidia.com/gpu: '1'
+          limits:
+            nvidia.com/gpu: '1'
+        volumeMounts:
+        - name: models
+          mountPath: /models
+          readOnly: true
+        - name: store
+          mountPath: /store
+          readOnly: true
+        - name: snapshot
+          mountPath: /snapshot
+        - name: client-classes
+          mountPath: /client-classes
+          readOnly: true
+      volumes:
+      - name: models
+        hostPath:
+          path: /srv/glm-5.3-flash/q4
+          type: Directory
+      - name: store
+        hostPath:
+          path: /srv/glm-5.3-flash/store
+          type: Directory
+      - name: snapshot
+        hostPath:
+          path: /srv/glm-5.3-flash/gbi/snapk8s
+          type: Directory
+      - name: client-classes
+        secret:
+          secretName: glm53-client-classes
+          items:
+          - key: classes.txt
+            path: classes.txt
+          defaultMode: 256
+      initContainers:
+      - name: require-resident-artifacts
+        image: ghcr.io/xerootg/llamacpp-spark:547208dca250-g64500e2
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -ec
+        - test -s /snapshot/glm53flash-q4-full.k3sn; test -s /store/glm53flash-q4.k3xs;
+          test -s /models/GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf; test -s /models/mmproj-BF16.gguf
+        volumeMounts:
+        - name: models
+          mountPath: /models
+          readOnly: true
+        - name: store
+          mountPath: /store
+          readOnly: true
+        - name: snapshot
+          mountPath: /snapshot
