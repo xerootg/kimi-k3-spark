@@ -1,0 +1,24 @@
+=== PHASE LIVE 19:30:09
+--- gold --n 3 19:30:09
+{"tag": "shared", "spec": "qs128", "t_send": 0.0, "ttft_s": 0.4, "wall_s": 8.33, "prompt_n": 10, "cache_n": 0, "prefill_tps": 26.0, "decode_n": 128, "decode_tps": 16.01, "md5": "ee079496a4", "scenario": "gold", "run": "LIVE"}
+{"tag": "shared", "spec": "qs128", "t_send": 8.33, "ttft_s": 0.303, "wall_s": 7.54, "prompt_n": 10, "cache_n": 0, "prefill_tps": 33.1, "decode_n": 128, "decode_tps": 17.55, "md5": "ee079496a4", "scenario": "gold", "run": "LIVE"}
+{"tag": "shared", "spec": "qs128", "t_send": 15.87, "ttft_s": 0.283, "wall_s": 7.66, "prompt_n": 10, "cache_n": 0, "prefill_tps": 35.4, "decode_n": 128, "decode_tps": 17.22, "md5": "ee079496a4", "scenario": "gold", "run": "LIVE"}
+{"tag": "shared", "spec": "p0", "t_send": 23.53, "ttft_s": 0.294, "wall_s": 15.87, "prompt_n": 10, "cache_n": 0, "prefill_tps": 34.1, "decode_n": 256, "decode_tps": 16.38, "md5": "ce2fc95752", "scenario": "gold", "run": "LIVE"}
+{"tag": "shared", "spec": "p0", "t_send": 39.4, "ttft_s": 0.3, "wall_s": 15.54, "prompt_n": 10, "cache_n": 0, "prefill_tps": 33.4, "decode_n": 256, "decode_tps": 16.74, "md5": "ce2fc95752", "scenario": "gold", "run": "LIVE"}
+{"tag": "shared", "spec": "p0", "t_send": 54.94, "ttft_s": 0.299, "wall_s": 15.46, "prompt_n": 10, "cache_n": 0, "prefill_tps": 33.5, "decode_n": 256, "decode_tps": 16.82, "md5": "ce2fc95752", "scenario": "gold", "run": "LIVE"}
+--- gold --n 1 --who juno 19:31:20
+{"tag": "juno", "spec": "qs128", "t_send": 0.0, "ttft_s": 0.313, "wall_s": 7.81, "prompt_n": 10, "cache_n": 0, "prefill_tps": 33.5, "decode_n": 128, "decode_tps": 16.93, "md5": "ee079496a4", "scenario": "gold", "run": "LIVE"}
+{"tag": "juno", "spec": "p0", "t_send": 7.81, "ttft_s": 0.318, "wall_s": 15.51, "prompt_n": 10, "cache_n": 0, "prefill_tps": 31.5, "decode_n": 256, "decode_tps": 16.78, "md5": "ce2fc95752", "scenario": "gold", "run": "LIVE"}
+--- auth 19:31:43
+{"tag": "nokey", "spec": "p0", "t_send": 0.0, "error": 401, "body": "{\"error\":{\"message\":\"Invalid API Key\",\"type\":\"authentication_error\",\"code\":401}}", "scenario": "auth", "run": "LIVE"}
+{"tag": "wrongkey", "spec": "p0", "t_send": 0.01, "error": 401, "body": "{\"error\":{\"message\":\"Invalid API Key\",\"type\":\"authentication_error\",\"code\":401}}", "scenario": "auth", "run": "LIVE"}
+--- solo p1 p2 p3 19:31:43
+{"tag": "solo", "spec": "p1", "t_send": 0.0, "ttft_s": 0.65, "wall_s": 17.35, "prompt_n": 19, "cache_n": 0, "prefill_tps": 29.9, "decode_n": 256, "decode_tps": 15.27, "md5": "bb64203d71", "scenario": "solo", "run": "LIVE"}
+{"tag": "solo", "spec": "p2", "t_send": 17.35, "ttft_s": 0.662, "wall_s": 18.06, "prompt_n": 18, "cache_n": 0, "prefill_tps": 27.2, "decode_n": 256, "decode_tps": 14.66, "md5": "2d592efcb6", "scenario": "solo", "run": "LIVE"}
+{"tag": "solo", "spec": "p3", "t_send": 35.41, "ttft_s": 0.82, "wall_s": 19.25, "prompt_n": 21, "cache_n": 0, "prefill_tps": 25.6, "decode_n": 256, "decode_tps": 13.84, "md5": "1aab74269d", "scenario": "solo", "run": "LIVE"}
+--- ttft3 19:32:38
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 1.638, "wall_s": 42.61, "prompt_n": 18, "cache_n": 0, "prefill_tps": 38.2, "decode_n": 256, "decode_tps": 6.22, "md5": "2d592efcb6", "scenario": "ttft3", "run": "LIVE"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 1.167, "wall_s": 42.61, "prompt_n": 19, "cache_n": 0, "prefill_tps": 36.9, "decode_n": 256, "decode_tps": 6.15, "md5": "bb64203d71", "scenario": "ttft3", "run": "LIVE"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 0.652, "wall_s": 42.61, "prompt_n": 21, "cache_n": 0, "prefill_tps": 35.4, "decode_n": 256, "decode_tps": 6.08, "md5": "1aab74269d", "scenario": "ttft3", "run": "LIVE"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.462, "wall_s": 40.0, "prompt_n": 10, "cache_n": 0, "prefill_tps": 28.8, "decode_n": 256, "decode_tps": 6.45, "md5": "ce2fc95752", "scenario": "ttft3", "run": "LIVE"}
+PHASE-DONE LIVE 19:33:22
