@@ -1,0 +1,46 @@
+=== LEG SL0b parallel=5 ctx=5242880 img=547208dca250-ga5fa848 opt=/home/ubuntu/nc/out-a90 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_LOGITS_FNV=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_LOG=1] xargs=[] cache_ram=65536 22:41:58
+READY SL0b after 45s
+0.11.094.042 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.274.257 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.274.296 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.274.298 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.471.273 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.301.902 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.301.932 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.301.933 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.43.006.778 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.776.908 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80613 MiB
+--- chunk.py cold L16384 8 22:42:45
+{"kind": "chunk-cold", "tag": "SL0b", "n_tok": 16414, "prompt_n": 4, "cache_n": 0, "prefill_tps": 0.4, "md5": "5514f10f79", "t0": 1794264165.5871236, "t1": 1794264176.1626852}
+--- chunk.py cold L65536 8 22:42:56
+{"kind": "chunk-cold", "tag": "SL0b", "n_tok": 65243, "prompt_n": 4, "cache_n": 0, "prefill_tps": 0.1, "md5": "ef961dada7", "t0": 1794264176.2880335, "t1": 1794264221.023576}
+--- ekbench.py solo p0 p1 p2 p3 p4 22:43:41
+{"spec": "p0", "prompt_n": 4, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 27.69, "decode_n": 256, "decode_tps": 46.11, "md5": "8e312d7bdd", "t0": 1794264221.0695148, "t1": 1794264226.9652221, "kind": "solo", "tag": "SL0b"}
+{"spec": "p1", "prompt_n": 4, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 17.54, "decode_n": 256, "decode_tps": 44.41, "md5": "74fb633e8e", "t0": 1794264226.965346, "t1": 1794264232.9780483, "kind": "solo", "tag": "SL0b"}
+{"spec": "p2", "prompt_n": 4, "cache_n": 0, "prefill_s": 0.24, "prefill_tps": 16.68, "decode_n": 256, "decode_tps": 42.0, "md5": "f8531a5f07", "t0": 1794264232.9781356, "t1": 1794264239.3382142, "kind": "solo", "tag": "SL0b"}
+{"spec": "p3", "prompt_n": 4, "cache_n": 0, "prefill_s": 0.25, "prefill_tps": 15.71, "decode_n": 256, "decode_tps": 46.41, "md5": "4d6338450b", "t0": 1794264239.3383195, "t1": 1794264245.1365676, "kind": "solo", "tag": "SL0b"}
+{"spec": "p4", "prompt_n": 4, "cache_n": 0, "prefill_s": 0.24, "prefill_tps": 16.74, "decode_n": 256, "decode_tps": 43.59, "md5": "e7851c4b56", "t0": 1794264245.136647, "t1": 1794264251.2712872, "kind": "solo", "tag": "SL0b"}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 1 22:44:11
+{"kind": "multi", "tag": "SL0b", "n": 5, "round": "warm", "agg_tps": 67.35, "wall_s": 19.01, "gen": 1280, "per_stream_tps": [13.85, 14.01, 14.35, 13.74, 14.18], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [28.3, 18.67, 19.45, 17.7, 18.0], "t0": 1794264251.3158753, "t1": 1794264270.3213532}
+{"kind": "multi", "tag": "SL0b", "n": 5, "round": 1, "agg_tps": 69.49, "wall_s": 18.42, "gen": 1280, "per_stream_tps": [14.19, 14.35, 14.69, 14.08, 14.53], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [28.79, 19.28, 20.34, 18.31, 18.58], "t0": 1794264270.3221316, "t1": 1794264288.7421763}
+PEAK GPU 80869 MiB, LOWEST MemAvailable 144484 MiB; END SL0b 22:44:50
+NC-LEG-DONE SL0b 22:44:50
+=== LEG SL1Lb parallel=5 ctx=5242880 img=547208dca250-ga5fa848 opt=/home/ubuntu/nc/out-a90 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_LOGITS_FNV=1 LLAMA_PREFILL_SLICE_LAYERS=1 LLAMA_PREFILL_SLICE_LOG=1] xargs=[] cache_ram=65536 22:44:52
+READY SL1Lb after 42s
+0.10.798.017 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.939.387 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.939.428 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.11.939.430 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.134.130 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.976.513 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.976.547 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.12.976.548 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.530.296 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.291.180 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80614 MiB
+--- chunk.py cold L16384 8 22:45:37
+{"kind": "chunk-cold", "tag": "SL1Lb", "n_tok": 16414, "prompt_n": 4, "cache_n": 0, "prefill_tps": 0.2, "md5": "5514f10f79", "t0": 1794264337.2944405, "t1": 1794264353.794997}
+PEAK GPU 80867 MiB, LOWEST MemAvailable 148371 MiB; END SL1Lb 22:45:55
+NC-LEG-DONE SL1Lb 22:45:55
+NC2C-DONE 22:45:55
