@@ -358,10 +358,16 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   gold unchanged, new gold for three short test prompts; one client within ~2-3 % of stock single-slot. Production PR
   in argo-things (image `ga5fa848` + `GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 GGML_CUDA_KV_STAGE=1
   LLAMA_KV_STREAM_HOLES=1`).
+- **Spark four slots (2026-11-09, window spark4, argo-things #172):** Kubernetes canary of the production manifest:
+  image `ga5fa848`, `--parallel 4` of 256k (fixed share), elastic KV per slot with refuse, 0054 + 0056 (chunk 128,
+  fuse) + 0058 + isolate, client classes from the GH200's Secret with reserve and the hold rule. Every client
+  byte-identical alone and batched (new Spark gold p0 `ce2fc95752`), one client 16.5-16.8 tok/s, Juno + three others
+  23.0, Juno's first token 0.4-0.5 s, her decode 15 tok/s while another prompt is read (5.4 without the hold rule),
+  lowest MemAvailable 11.5 GB at 255k + 3 x 65k.
 - **Next:** the ~2 % short single-stream gap (attention at short depth +0.17 ms; ops outside the profiler's top 24); a
-  multi-block top-k for rows past ~256k pools (250 us per row at 1M on the Spark); a production PR for the Spark
-  (`--parallel 4`, 0054 + 0056 + 0058 + isolate + classes); parking idle slots' KV on NVMe when the pool is full
-  (instead of refusing); root-cause the GDN fusion crash.
+  multi-block top-k for rows past ~256k pools (250 us per row at 1M on the Spark); 0052's reserve/shrink churn on
+  prompts with more than 64k tokens left (~16 % of a 255k prompt's prefill on the Spark); parking idle slots' KV on
+  NVMe when the pool is full (instead of refusing); root-cause the GDN fusion crash.
 
 ## Cluster layout for this work
 

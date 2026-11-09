@@ -1,0 +1,26 @@
+=== PHASE B0 18:37:04
+--- gold --n 1 18:37:04
+{"tag": "shared", "spec": "qs128", "t_send": 0.0, "ttft_s": 0.469, "wall_s": 8.81, "prompt_n": 10, "cache_n": 0, "prefill_tps": 22.0, "decode_n": 128, "decode_tps": 15.22, "md5": "ee079496a4", "scenario": "gold", "run": "B0"}
+{"tag": "shared", "spec": "p0", "t_send": 8.81, "ttft_s": 0.312, "wall_s": 15.94, "prompt_n": 10, "cache_n": 0, "prefill_tps": 32.1, "decode_n": 256, "decode_tps": 16.32, "md5": "ce2fc95752", "scenario": "gold", "run": "B0"}
+--- ttft3 18:37:29
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 1.334, "wall_s": 44.56, "prompt_n": 18, "cache_n": 0, "prefill_tps": 28.4, "decode_n": 256, "decode_tps": 5.9, "md5": "2d592efcb6", "scenario": "ttft3", "run": "B0"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.701, "wall_s": 44.57, "prompt_n": 19, "cache_n": 0, "prefill_tps": 29.8, "decode_n": 256, "decode_tps": 5.81, "md5": "bb64203d71", "scenario": "ttft3", "run": "B0"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 2.099, "wall_s": 44.57, "prompt_n": 21, "cache_n": 0, "prefill_tps": 27.4, "decode_n": 256, "decode_tps": 6.0, "md5": "1aab74269d", "scenario": "ttft3", "run": "B0"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.371, "wall_s": 41.55, "prompt_n": 10, "cache_n": 0, "prefill_tps": 32.9, "decode_n": 256, "decode_tps": 6.19, "md5": "ce2fc95752", "scenario": "ttft3", "run": "B0"}
+--- prefill --delay 20 18:38:14
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 47.703, "wall_s": 61.51, "prompt_n": 16414, "cache_n": 0, "prefill_tps": 344.5, "decode_n": 128, "decode_tps": 9.2, "md5": "145c14aa8b", "scenario": "prefill", "run": "B0"}
+{"tag": "juno", "spec": "p0", "t_send": 20.0, "ttft_s": 2.737, "wall_s": 49.97, "prompt_n": 10, "cache_n": 0, "prefill_tps": 6.7, "decode_n": 256, "decode_tps": 5.4, "md5": "ce2fc95752", "scenario": "prefill", "run": "B0"}
+--- junofirst 18:39:24
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.439, "wall_s": 34.07, "prompt_n": 10, "cache_n": 0, "prefill_tps": 24.1, "decode_n": 256, "decode_tps": 7.58, "md5": "ce2fc95752", "scenario": "junofirst", "run": "B0"}
+{"tag": "low", "spec": "p1", "t_send": 1.0, "ttft_s": 0.6, "wall_s": 34.95, "prompt_n": 19, "cache_n": 0, "prefill_tps": 34.5, "decode_n": 256, "decode_tps": 7.42, "md5": "bb64203d71", "scenario": "junofirst", "run": "B0"}
+{"tag": "low", "spec": "p3", "t_send": 1.0, "ttft_s": 1.221, "wall_s": 34.95, "prompt_n": 21, "cache_n": 0, "prefill_tps": 33.7, "decode_n": 256, "decode_tps": 7.56, "md5": "1aab74269d", "scenario": "junofirst", "run": "B0"}
+{"tag": "low", "spec": "p2", "t_send": 1.0, "ttft_s": 33.68, "wall_s": 52.06, "prompt_n": 18, "cache_n": 0, "prefill_tps": 29.5, "decode_n": 256, "decode_tps": 13.88, "md5": "2d592efcb6", "scenario": "junofirst", "run": "B0"}
+--- mem L255000:a L65536:b L65536:c L65536:d@juno 18:40:17
+{"tag": "mem", "spec": "L255000:a", "t_send": 0.03, "ttft_s": 1406.536, "wall_s": 2226.02, "prompt_n": 254555, "cache_n": 0, "prefill_tps": 181.0, "decode_n": 128, "decode_tps": 0.15, "md5": "145c14aa8b", "scenario": "mem", "run": "B0"}
+{"tag": "mem", "spec": "L65536:b", "t_send": 0.51, "ttft_s": 1788.08, "wall_s": 2225.53, "prompt_n": 65246, "cache_n": 0, "prefill_tps": 170.8, "decode_n": 128, "decode_tps": 0.29, "md5": "8acec1b966", "scenario": "mem", "run": "B0"}
+{"tag": "mem", "spec": "L65536:c", "t_send": 1.02, "ttft_s": 2204.507, "wall_s": 2225.03, "prompt_n": 65246, "cache_n": 0, "prefill_tps": 156.5, "decode_n": 128, "decode_tps": 6.19, "md5": "8acec1b966", "scenario": "mem", "run": "B0"}
+{"tag": "mem", "spec": "L65536:d", "t_send": 1.52, "ttft_s": 230.961, "wall_s": 2224.53, "prompt_n": 65246, "cache_n": 0, "prefill_tps": 289.3, "decode_n": 128, "decode_tps": 0.06, "md5": "8acec1b966", "scenario": "mem", "run": "B0"}
+--- gold --n 1 19:17:23
+{"tag": "shared", "spec": "qs128", "t_send": 0.0, "ttft_s": 0.791, "wall_s": 10.51, "prompt_n": 10, "cache_n": 0, "prefill_tps": 12.9, "decode_n": 128, "decode_tps": 13.07, "md5": "ee079496a4", "scenario": "gold", "run": "B0"}
+{"tag": "shared", "spec": "p0", "t_send": 10.51, "ttft_s": 0.462, "wall_s": 19.26, "prompt_n": 10, "cache_n": 0, "prefill_tps": 21.7, "decode_n": 256, "decode_tps": 13.56, "md5": "ce2fc95752", "scenario": "gold", "run": "B0"}
+PHASE-DONE B0 19:17:53
