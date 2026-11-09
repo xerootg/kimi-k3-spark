@@ -1,0 +1,26 @@
+=== LEG W0 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1] 10:50:53
+W0 solo p0 53816a69bc 15.4 24.95
+W0 solo p0 53816a69bc 16.25 28.13
+W0 solo p0 53816a69bc 16.51 28.13
+W0 solo p0 53816a69bc 16.72 28.17
+W0 N=4 warm ['f2c99a7d44', 'e8a73da35b', '35cad6174a', 'dea2df6599'] 20.14 [5.14, 5.21, 5.1, 5.3]
+W0 N=4 1 ['f2c99a7d44', 'e8a73da35b', '35cad6174a', 'dea2df6599'] 21.7 [5.52, 5.59, 5.47, 5.66]
+lowest MemAvailable 5218 MiB; now 121026 MiB; END W0 10:54:09
+BI-LEG-DONE W0 10:54:09
+=== LEG W1 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1] 10:54:09
+W1 solo p0 3a7986622d 15.1 24.19
+W1 solo p0 3a7986622d 16.15 27.38
+W1 solo p0 3a7986622d 16.64 28.15
+W1 solo p0 3a7986622d 16.55 28.32
+W1 N=4 warm ['3a7986622d', 'bb5110ee45', '2866d894b9', '1aab74269d'] 20.07 [5.04, 5.11, 5.19, 5.27]
+W1 N=4 1 ['3a7986622d', 'bb5110ee45', '2866d894b9', '1aab74269d'] 21.23 [5.34, 5.41, 5.47, 5.56]
+lowest MemAvailable 5599 MiB; now 121018 MiB; END W1 10:57:27
+BI-LEG-DONE W1 10:57:27
+=== LEG W2 parallel=1 ctx=1048576 extra=[] 10:57:27
+W2 solo p0 53816a69bc 15.83 24.61
+W2 solo p0 53816a69bc 16.93 30.57
+W2 solo p0 53816a69bc 17.0 30.75
+W2 solo p0 53816a69bc 16.94 30.46
+lowest MemAvailable 10356 MiB; now 120983 MiB; END W2 10:58:59
+BI-LEG-DONE W2 10:58:59
+BI-WIN5-DONE 10:58:59

@@ -13,7 +13,7 @@ EXACT6="GGML_CUDA_EXACT_COLS=1 GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXACT_ATTN_COLS
 base_args() { # base_args PARALLEL CTX
   echo "-m $M --alias glm-5.3-flash --jinja --ctx-size $2 --parallel $1 --batch-size 2048 --ubatch-size 2048 --n-gpu-layers 999 --n-cpu-moe 999 --moe-cache-mib 78000 --cache-ram 0 --threads 8 --threads-batch 20 --flash-attn on --metrics --no-warmup --fit off --load-mode mmap -lv 4 --host 127.0.0.1 --port 18080"
 }
-B="python3 -I ekbench.py"
+B="${CLIENT:-python3 -I ekbench.py}"
 PID=""; WD=""
 start() { # start TAG "ENV" PARALLEL CTX
   local TAG=$1 EXTRA=$2

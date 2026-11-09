@@ -1,0 +1,373 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index b73cbec..799b53b 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -29,6 +29,9 @@
+ #include <random>
+ #include <utility>
+ #include <fstream>
++#include <climits>
++#include <sstream>
++#include <unordered_map>
+ 
+ // fix problem with std::min and std::max
+ #if defined(_WIN32)
+@@ -244,6 +247,100 @@ struct server_batch {
+     }
+ };
+ 
++// kimi-k3-spark patch 0055: per-client priority (see server-context.h)
++namespace {
++struct server_client_class {
++    int         priority = 0;
++    std::string name;
++};
++struct server_client_classes {
++    std::unordered_map<std::string, server_client_class> by_key;
++    int  top     = 0;     // highest configured priority
++    bool enabled = false;
++};
++server_client_classes & client_classes() {
++    static server_client_classes c;
++    return c;
++}
++int env_int(const char * name, int def) {
++    const char * v = std::getenv(name);
++    return v && *v ? std::atoi(v) : def;
++}
++} // namespace
++
++void server_client_classes_load(common_params & params) {
++    const char * path = std::getenv("LLAMA_CLIENT_CLASSES");
++    if (path == nullptr || *path == 0) {
++        return;
++    }
++    std::ifstream f(path);
++    if (!f) {
++        throw std::runtime_error(std::string("LLAMA_CLIENT_CLASSES: cannot open ") + path);
++    }
++    auto & c = client_classes();
++    std::string line;
++    int n = 0;
++    while (std::getline(f, line)) {
++        const size_t hash = line.find('#');
++        if (hash != std::string::npos) {
++            line.resize(hash);
++        }
++        std::istringstream ls(line);
++        std::string key, name;
++        int prio = 0;
++        if (!(ls >> key)) {
++            continue;
++        }
++        if (!(ls >> prio)) {
++            throw std::runtime_error("LLAMA_CLIENT_CLASSES: a line has a key but no priority");
++        }
++        if (!(ls >> name)) {
++            name = "class" + std::to_string(prio);
++        }
++        if (c.by_key.empty() || prio > c.top) {
++            c.top = prio;
++        }
++        c.by_key[key] = { prio, name };
++        if (std::find(params.api_keys.begin(), params.api_keys.end(), key) == params.api_keys.end()) {
++            params.api_keys.push_back(key);
++        }
++        n++;
++    }
++    c.enabled = n > 0;
++    SRV_INF("client classes: %d keys loaded, top priority %d (keys not logged)\n", n, c.top);
++}
++
++int server_client_priority(const std::map<std::string, std::string> & headers, std::string * name) {
++    const auto & c = client_classes();
++    if (!c.enabled) {
++        return 0;
++    }
++    std::string key;
++    for (const auto & [k, v] : headers) {
++        std::string lk = k;
++        std::transform(lk.begin(), lk.end(), lk.begin(), [](unsigned char ch) { return (char) std::tolower(ch); });
++        if (lk == "authorization") {
++            key = v;
++            const std::string prefix = "Bearer ";
++            if (key.compare(0, prefix.size(), prefix) == 0) {
++                key = key.substr(prefix.size());
++            }
++            break;
++        }
++        if (lk == "x-api-key") {
++            key = v;
++        }
++    }
++    const auto it = c.by_key.find(key);
++    if (it == c.by_key.end()) {
++        return 0;
++    }
++    if (name) {
++        *name = it->second.name;
++    }
++    return it->second.priority;
++}
++
+ struct server_slot {
+     int id;
+ 
+@@ -277,6 +374,10 @@ struct server_slot {
+     // used to determine the slot that has been used the longest
+     int64_t t_last_used = -1;
+ 
++    // patch 0055: priority of the last task this slot served (its KV belongs to that client), decode steps it got
++    int32_t last_priority = 0;
++    int64_t n_steps_served = 0;
++
+     // generation props
+     int32_t n_ctx   = 0;  // context size per slot
+     int32_t n_keep  = 0;
+@@ -1018,6 +1119,7 @@ private:
+     // slots / clients
+     std::vector<server_slot> slots;
+     std::vector<server_slot *> generating_scratch, drafting_scratch;
++    std::vector<const server_slot *> batch_allowed_scratch; // patch 0055
+ 
+     int trace = 0;        // env: LLAMA_TRACE
+     int slots_debug = 0;  // env: LLAMA_SERVER_SLOTS_DEBUG
+@@ -1771,7 +1873,14 @@ private:
+ 
+         // find an empty slot, or the one that has been least recently used
+         if (ret == nullptr) {
+-            const auto free_slots = get_free_slots(1, -1);
++            auto free_slots = get_free_slots(slots.size(), -1);
++
++            // patch 0055: a lower class takes a slot that holds a top-class conversation only when no other is free
++            const auto & cls = client_classes();
++            if (cls.enabled && task.params.client_priority < cls.top) {
++                std::stable_partition(free_slots.begin(), free_slots.end(),
++                    [&](const server_slot * s) { return s->last_priority < cls.top || s->prompt.n_tokens() == 0; });
++            }
+ 
+             if (!free_slots.empty()) {
+                 ret = free_slots[0];
+@@ -1967,6 +2076,8 @@ private:
+         slot.n_predict_max = task.params.n_predict != -1 ? task.params.n_predict : params_base.n_predict;
+ 
+         slot.task = std::make_unique<const server_task>(std::move(task));
++        slot.last_priority  = slot.task->params.client_priority;
++        slot.n_steps_served = 0;
+ 
+         slot.state = slot.task->is_child()
+             ? SLOT_STATE_WAIT_OTHER // wait for the parent to process prompt
+@@ -2848,6 +2959,24 @@ private:
+ 
+                     const int id_task = task.id;
+ 
++                    // patch 0055: LLAMA_SLOT_RESERVE=<n> keeps the last n free slots for the top client class, so its
++                    // request joins the running batch at the next step instead of waiting for a slot
++                    {
++                        static const int reserve = env_int("LLAMA_SLOT_RESERVE", 0);
++                        const auto & cls = client_classes();
++                        if (reserve > 0 && cls.enabled && task.params.client_priority < cls.top && task.id_slot == -1) {
++                            int n_free = 0;
++                            for (const auto & s : slots) {
++                                n_free += s.is_processing() ? 0 : 1;
++                            }
++                            if (n_free <= reserve) {
++                                SRV_DBG("slot reserved for the top client class, defer task, id_task = %d\n", id_task);
++                                queue_tasks.defer(std::move(task));
++                                break;
++                            }
++                        }
++                    }
++
+                     server_slot * slot = get_available_slot(task);
+ 
+                     //
+@@ -3471,7 +3600,36 @@ private:
+             return value && std::strcmp(value, "1") == 0;
+         }();
+         server_slot * slot_prefill = nullptr;
+-        if (prefill_isolate) {
++        if (prefill_isolate && client_classes().enabled) {
++            // patch 0055: the highest client class's prompt first, even between the ubatches of another prompt (each
++            // ubatch is computed the same way whenever it runs); ties: an in-flight prompt, then the oldest task.
++            // LLAMA_PRIORITY_HOLD_PROMPTS=1: a prompt also waits while a higher class is generating, so that class's
++            // decode is never paused by a lower class's prefill (the lower class's new requests wait for it instead).
++            static const bool hold_prompts = env_int("LLAMA_PRIORITY_HOLD_PROMPTS", 0) == 1;
++            int top_generating = INT_MIN;
++            for (const auto & slot : slots) {
++                if (hold_prompts && slot.task && slot.state == SLOT_STATE_GENERATING) {
++                    top_generating = std::max(top_generating, (int) slot.task->params.client_priority);
++                }
++            }
++            for (auto & slot : slots) {
++                if (!slot.task || (slot.state != SLOT_STATE_PROCESSING_PROMPT && slot.state != SLOT_STATE_STARTED)) {
++                    continue;
++                }
++                if (slot.task->params.client_priority < top_generating) {
++                    continue; // held until the higher class has finished generating
++                }
++                if (slot_prefill == nullptr) {
++                    slot_prefill = &slot;
++                    continue;
++                }
++                const int pa = slot.task->params.client_priority, pb = slot_prefill->task->params.client_priority;
++                const bool fa = slot.state == SLOT_STATE_PROCESSING_PROMPT, fb = slot_prefill->state == SLOT_STATE_PROCESSING_PROMPT;
++                if (pa > pb || (pa == pb && (fa > fb || (fa == fb && slot.task->id < slot_prefill->task->id)))) {
++                    slot_prefill = &slot;
++                }
++            }
++        } else if (prefill_isolate) {
+             for (auto state : { SLOT_STATE_PROCESSING_PROMPT, SLOT_STATE_STARTED }) {
+                 for (auto & slot : slots) {
+                     if (slot.state == state) {
+@@ -3510,6 +3668,30 @@ private:
+         generating.clear();
+         drafting.clear();
+ 
++        // patch 0055: LLAMA_SLOT_BATCH_MAX=<k> decodes at most k sequences per step: the highest client class first,
++        // then the slots that got the fewest steps (fair share of the remaining capacity). With batch-invariant
++        // kernels (patch 0054) who shares a step does not change any client's bytes.
++        static const int slot_batch_max = env_int("LLAMA_SLOT_BATCH_MAX", 0);
++        std::vector<const server_slot *> & batch_allowed = batch_allowed_scratch;
++        batch_allowed.clear();
++        if (slot_batch_max > 0 && !slot_prefill) {
++            for (auto & slot : slots) {
++                if (slot.state == SLOT_STATE_GENERATING && (!slot_only || slot_only == &slot)) {
++                    batch_allowed.push_back(&slot);
++                }
++            }
++            std::stable_sort(batch_allowed.begin(), batch_allowed.end(), [](const server_slot * a, const server_slot * b) {
++                const int pa = a->task->params.client_priority, pb = b->task->params.client_priority;
++                if (pa != pb) {
++                    return pa > pb;
++                }
++                return a->n_steps_served < b->n_steps_served;
++            });
++            if ((int) batch_allowed.size() > slot_batch_max) {
++                batch_allowed.resize(slot_batch_max);
++            }
++        }
++
+         // determine which slots are generating and drafting
+         iterate(slots, [&](server_slot & slot) {
+             if (slot_prefill || slot.state != SLOT_STATE_GENERATING) {
+@@ -3518,6 +3700,9 @@ private:
+             if (slot_only && slot_only != &slot) {
+                 return; // patch 0052: LLAMA_SLOT_SERIAL
+             }
++            if (slot_batch_max > 0 && std::find(batch_allowed.begin(), batch_allowed.end(), &slot) == batch_allowed.end()) {
++                return; // patch 0055: not this step
++            }
+ 
+             // check if we can batch this slot with the previous one
+             if (!slot_batched) {
+@@ -3527,6 +3712,7 @@ private:
+             }
+ 
+             generating.push_back(&slot);
++            slot.n_steps_served++;
+ 
+             if (spec) {
+                 common_speculative_get_draft_params(spec.get(), slot.id).drafting = false;
+@@ -3658,6 +3844,9 @@ private:
+                 if (slot_prefill && slot_prefill != &slot) {
+                     return;
+                 }
++                if (prefill_isolate && !slot_prefill && (slot.state == SLOT_STATE_STARTED || slot.state == SLOT_STATE_PROCESSING_PROMPT)) {
++                    return; // patch 0055: a held prompt never joins a decode batch
++                }
+                 if (slot_only && slot_only != &slot) {
+                     return; // patch 0052: LLAMA_SLOT_SERIAL
+                 }
+@@ -5035,6 +5224,9 @@ std::unique_ptr<server_res_generator> server_routes::handle_completions_impl(
+             task.id_slot = json_value(data, "id_slot", -1);
+             sse_ping_interval = task.params.sse_ping_interval;
+ 
++            // patch 0055: client class of the request's API key
++            task.params.client_priority = server_client_priority(req.headers, &task.params.client_name);
++
+             // OAI-compat
+             task.params.res_type          = res_type;
+             task.params.oaicompat_cmpl_id = completion_id;
+diff --git a/tools/server/server-context.h b/tools/server/server-context.h
+index ed23f7d..cca4b59 100644
+--- a/tools/server/server-context.h
++++ b/tools/server/server-context.h
+@@ -10,9 +10,16 @@
+ #include <memory>
+ #include <mutex>
+ #include <set>
++#include <map>
++#include <string>
+ 
+ struct server_context_impl; // private implementation
+ 
++// kimi-k3-spark patch 0055: per-client priority. LLAMA_CLIENT_CLASSES=<file>, one "<api-key> <priority> <name>" per
++// line ('#' comments). The keys are accepted like --api-key values; a request's key gives its task the priority.
++void server_client_classes_load(common_params & params);
++int  server_client_priority(const std::map<std::string, std::string> & headers, std::string * name);
++
+ struct server_context_meta {
+     std::string build_info;
+     std::string model_name;
+diff --git a/tools/server/server-queue.cpp b/tools/server/server-queue.cpp
+index 3352c3c..b01f00b 100644
+--- a/tools/server/server-queue.cpp
++++ b/tools/server/server-queue.cpp
+@@ -101,11 +101,18 @@ void server_queue::pop_deferred_task(int id_slot) {
+                 break;
+             }
+         }
+-        // if not tasks found using the slot, just pop the first deferred task (default behavior)
++        // if not tasks found using the slot, pop the first deferred task of the highest client class (patch 0055;
++        // without client classes every priority is 0 and this is the first deferred task, the default behavior)
+         if (!found) {
+-            QUE_DBG("pop deferred task, id_task = %d\n", queue_tasks_deferred.front().id);
+-            queue_tasks.emplace_front(std::move(queue_tasks_deferred.front()));
+-            queue_tasks_deferred.pop_front();
++            auto best = queue_tasks_deferred.begin();
++            for (auto it = queue_tasks_deferred.begin(); it != queue_tasks_deferred.end(); ++it) {
++                if (it->params.client_priority > best->params.client_priority) {
++                    best = it;
++                }
++            }
++            QUE_DBG("pop deferred task, id_task = %d\n", best->id);
++            queue_tasks.emplace_front(std::move(*best));
++            queue_tasks_deferred.erase(best);
+         }
+     }
+     time_last_task = ggml_time_ms();
+diff --git a/tools/server/server-task.h b/tools/server/server-task.h
+index e7bb043..def8706 100644
+--- a/tools/server/server-task.h
++++ b/tools/server/server-task.h
+@@ -49,6 +49,10 @@ enum stop_type {
+ };
+ 
+ struct task_params {
++    // kimi-k3-spark patch 0055: client class of the request's API key (LLAMA_CLIENT_CLASSES), higher runs first
++    int32_t     client_priority = 0;
++    std::string client_name;
++
+     bool stream          = false;
+     bool include_usage   = false;
+     bool cache_prompt    = true; // remember the prompt to avoid reprocessing all prompt
+diff --git a/tools/server/server.cpp b/tools/server/server.cpp
+index 871e827..c610b7a 100644
+--- a/tools/server/server.cpp
++++ b/tools/server/server.cpp
+@@ -207,6 +207,14 @@ int llama_server(common_params & params, int argc, char ** argv, server_child &
+ 
+     std::optional<server_models_routes> models_routes{};
+ 
++    // kimi-k3-spark patch 0055: client classes add their keys to the accepted API keys before the HTTP server copies them
++    try {
++        server_client_classes_load(params);
++    } catch (const std::exception & e) {
++        SRV_ERR("%s\n", e.what());
++        return 1;
++    }
++
+     server_http_context ctx_http;
+     if (!ctx_http.init(params)) {
+         SRV_ERR("%s", "failed to initialize HTTP server\n");

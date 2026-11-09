@@ -215,3 +215,11 @@ Options, cheapest first:
 Owner said 2026-11-09 that crashing Juno mid-run is the thing to avoid, and that the workbench already contends with
 her. Next: owner's choice between the options.
 
+**Outcome 2026-11-09 (owner chose option 2 plus priority; Spark windows bi1-bi5):** done on the Spark. Patch 0054
+(`GGML_CUDA_BATCH_INVARIANT=1`) makes batched decode byte-identical per client at N=1..4 (with a 16k conversation in
+the batch, two rounds, two processes) at 23.8 tok/s aggregate for four clients against 14.8 one at a time, and costs
+~0.5 % single-stream, not the "large" cost feared above: only kernel choices and work splits that followed the batch
+had to be pinned. Patch 0055 maps API keys to classes: Juno's first token in 0.4-0.6 s while three others generate or a
+fourth waits (95 s without), 2-3 s while another client's 16k prompt is read (27.5 s without). Numbers in
+`docs/experiments.md`; next is a GH200 window and the client keys.
+

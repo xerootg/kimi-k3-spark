@@ -331,8 +331,19 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
 - **Past 1M (0053, opt-in):** a 1,086,899-token prompt retrieved facts from its first line and its middle; prefill
   2 h 40 min on the Spark, decode 7-9 tok/s at that depth. Next check: a long real transcript. Before 2.09M:
   64-bit strides in `binbcast.cu`.
-- **Next:** parking idle slots' KV on NVMe when the pool is full (instead of refusing); root-cause the GDN fusion
-  crash; exact batching for N>2 if batched throughput is wanted again.
+- **Done 2026-11-09 (windows bi1-bi5): batch-invariant batched decode (0054) and per-client priority (0055).**
+  `GGML_CUDA_BATCH_INVARIANT=1`: every client of a `--parallel 4` server gets its solo bytes at N=1..4, also next to
+  a 16k conversation, in two rounds and two processes; N=4 aggregate 23.8 tok/s vs 14.8 one-at-a-time (stock
+  non-reproducible batching 24.1), single stream -0.5 %. Root causes: MMVQ's width-1 K partition and MoE kernel,
+  the F32 router/indexer matmuls switching to TF32 MMF at 4 columns (the N=3/4 failure of the exact-batching knobs),
+  dense vs sparse attention chosen by the batch's longest stream plus stream-K seams, batch-dependent top-k ties,
+  row-count-dependent reduction geometry. 0055: API keys map to client classes (`LLAMA_CLIENT_CLASSES`), a reserved
+  slot and priority prefill give the top class (Juno) its first token in 0.4-0.6 s while others generate or wait
+  (95 s without), 2-3 s while another 16k prompt is read (27.5 s without), bytes unchanged.
+- **Next:** a GH200 window for 0054+0055 (sm_90 paths: the Hopper Q6_K streaming kernel is off in BI mode, MMVQ
+  uses the generic table there; expect a few % single-stream); a production PR for the Spark (`--parallel 4`, 0054 +
+  isolate + classes) once Haley picks the client keys and the hold policy; parking idle slots' KV on NVMe when the
+  pool is full (instead of refusing); root-cause the GDN fusion crash.
 
 ## Cluster layout for this work
 

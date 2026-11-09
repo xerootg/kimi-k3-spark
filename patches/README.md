@@ -1176,10 +1176,45 @@ expert-store split GEMV, whose rows come from the same kernel). Prefill is uncha
 
 | Setup | N=1 (tok/s) | N=2 aggregate | N=3 aggregate | N=4 aggregate | bytes per client vs alone |
 |---|---|---|---|---|---|
-| `--parallel 4`, 0054 on | 15.1 (first request after start) | 20.3-20.9 | 23.2-23.3 | 23.8 | **equal**, every client, with and without the 16k request, two server processes |
+| `--parallel 4`, 0054 on | 16.2-16.6 warm (stock 16.3-16.7 in the same window) | 20.3-20.9 | 23.2-23.3 | 23.8 | **equal**, every client, with and without the 16k request, two server processes |
 | `--parallel 4`, `LLAMA_SLOT_SERIAL=1` (0054 off) | 15.4 | 15.2 | - | 14.8 | equal (production gold) |
 | `--parallel 1`, 0054 on | 16.8 (warm) | - | - | - | same bytes as the 4-slot 0054 server |
 | `--parallel 4`, stock batched (window ek) | 16.2-16.5 | 20.8-21.3 | - | 24.1 | differ |
 
 New gold with the switch: p0 `3a7986622d`, p1 `bb5110ee45`, p2 `2866d894b9`, p3 `1aab74269d`, 16k request
 `145c14aa8b` (the same as production for that request). Production (switch unset) is unchanged.
+
+## 0055-client-priority
+
+Per-client priority in llama-server, for several clients on one batch-invariant server (0054); all off unless set.
+
+- `LLAMA_CLIENT_CLASSES=<file>`: one `<api-key> <priority> <name>` per line (`#` comments). The keys are accepted like
+  `--api-key` values (added to the list before the HTTP server starts; the log prints only the count), and a
+  request's key (`Authorization: Bearer` or `X-Api-Key`) gives its task that priority; unknown keys get 0.
+- Deferred requests (no free slot) leave the queue highest priority first (ties: oldest).
+- `LLAMA_SLOT_RESERVE=<n>`: the last n free slots are kept for the top priority, so its request gets a slot (and,
+  with `LLAMA_PREFILL_ISOLATE=1`, its prompt runs at the next step) instead of waiting behind the others. Lower
+  classes also avoid taking a free slot that still holds a top-class conversation while another free slot exists.
+- With classes and `LLAMA_PREFILL_ISOLATE=1`, the highest class's pending prompt is processed first, also between
+  the ubatches of another prompt that is being read (each ubatch is computed the same way whenever it runs, so bytes
+  do not change).
+- `LLAMA_PRIORITY_HOLD_PROMPTS=1`: lower classes' prompts also wait while a higher class is generating, so its decode
+  is never paused by their prefill; their new requests wait for it instead (measured: they can wait for its whole
+  answer).
+- `LLAMA_SLOT_BATCH_MAX=<k>`: at most k sequences decode per step, highest class first, then the slots that got the
+  fewest steps (fair share of the remaining capacity).
+
+**Spark, windows bi4-bi5 (2026-11-09):** 0054 on, `LLAMA_PREFILL_ISOLATE=1`, `--parallel 4`, five test keys generated
+on the Spark and deleted after the windows (Juno priority 10; workbench x2, Claude Code, hef-posters 1),
+`LLAMA_SLOT_RESERVE=1`; `prio_bench.py` in `docs/evidence/glm-windows-2026-10-30/bi/`.
+
+| Scenario | Juno's time to first token, with classes | without classes | bytes |
+|---|---|---|---|
+| three others generating, Juno arrives | 0.40-0.44 s (alone: 0.38-0.45 s) | 0.48 s | every client equal to alone |
+| three others generating and a fourth waiting for a slot | 0.53-0.56 s | 95.1 s (waited for a slot, then behind the fourth's 16k prompt) | equal |
+| another client's 16k prompt being read | 2.2-2.7 s (the current ubatch finishes first) | 27.5 s | equal (16k request `145c14aa8b`) |
+
+While the 16k prompt resumes, Juno's decode pauses for its remaining ubatches (4.8 tok/s over her answer); with
+`LLAMA_PRIORITY_HOLD_PROMPTS=1` she decodes at 14.1-14.4 tok/s and the 16k client's first token moves from 47 s to
+65 s. `LLAMA_SLOT_BATCH_MAX=2` with Juno and three others: Juno 7.1 tok/s, the three share the second position at
+3.6 tok/s each. A request without a key gets 401.

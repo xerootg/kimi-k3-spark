@@ -1,0 +1,46 @@
+=== LEG Q2 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_CLIENT_CLASSES=/srv/glm-5.3-flash/legs-bi/classes.txt LLAMA_SLOT_RESERVE=1] 11:04:11
+READY Q2 after 42s
+0.13.302.153 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (679.5 ms)
+0.13.302.205 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.307.722 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.4 ms)
+0.13.312.865 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.1 ms)
+0.13.318.382 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.5 ms)
+0.13.323.482 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.1 ms)
+0.13.901.095 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (501.9 ms)
+0.13.901.128 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 184.801, "wall_s": 223.64, "decode_tps": 6.56, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "ttft3", "run": "Q2"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 184.124, "wall_s": 223.64, "decode_tps": 6.45, "prompt_n": 21, "md5": "1aab74269d", "scenario": "ttft3", "run": "Q2"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 185.503, "wall_s": 223.64, "decode_tps": 6.69, "prompt_n": 18, "md5": "2866d894b9", "scenario": "ttft3", "run": "Q2"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 68.813, "wall_s": 179.91, "decode_tps": 2.3, "prompt_n": 10, "md5": "3a7986622d", "scenario": "ttft3", "run": "Q2"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.639, "wall_s": 48.7, "decode_tps": 5.31, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "queue4", "run": "Q2"}
+{"tag": "low", "spec": "p2", "t_send": 0.3, "ttft_s": 0.909, "wall_s": 48.39, "decode_tps": 5.37, "prompt_n": 18, "md5": "2866d894b9", "scenario": "queue4", "run": "Q2"}
+{"tag": "low", "spec": "p3", "t_send": 0.6, "ttft_s": 1.3, "wall_s": 48.09, "decode_tps": 5.45, "prompt_n": 21, "md5": "1aab74269d", "scenario": "queue4", "run": "Q2"}
+{"tag": "low", "spec": "L16384", "t_send": 0.9, "ttft_s": 167.738, "wall_s": 177.0, "decode_tps": 13.71, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "queue4", "run": "Q2"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.558, "wall_s": 46.01, "decode_tps": 5.61, "prompt_n": 10, "md5": "3a7986622d", "scenario": "queue4", "run": "Q2"}
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 65.392, "wall_s": 74.5, "decode_tps": 13.94, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "prefill", "run": "Q2"}
+{"tag": "juno", "spec": "p0", "t_send": 20.01, "ttft_s": 2.373, "wall_s": 20.48, "decode_tps": 14.08, "prompt_n": 10, "md5": "3a7986622d", "scenario": "prefill", "run": "Q2"}
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 64.839, "wall_s": 73.75, "decode_tps": 14.25, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "prefill", "run": "Q2"}
+{"tag": "juno", "spec": "p0", "t_send": 20.0, "ttft_s": 2.704, "wall_s": 20.47, "decode_tps": 14.35, "prompt_n": 10, "md5": "3a7986622d", "scenario": "prefill", "run": "Q2"}
+elastic lines: 18; refused: 0
+lowest MemAvailable 5907 MiB; now 121073 MiB; END Q2 11:14:13
+BI-LEG-DONE Q2 11:14:13
+=== LEG Q3 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_CLIENT_CLASSES=/srv/glm-5.3-flash/legs-bi/classes.txt LLAMA_SLOT_RESERVE=1 LLAMA_SLOT_BATCH_MAX=2] 11:14:13
+READY Q3 after 28s
+0.13.391.419 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (734.5 ms)
+0.13.391.475 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.397.821 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (6.3 ms)
+0.13.403.559 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.7 ms)
+0.13.409.326 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.8 ms)
+0.13.415.039 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.7 ms)
+0.14.043.584 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (543.0 ms)
+0.14.043.618 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.139, "wall_s": 72.51, "decode_tps": 3.57, "prompt_n": 21, "md5": "1aab74269d", "scenario": "ttft3", "run": "Q3"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 1.857, "wall_s": 72.63, "decode_tps": 3.6, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "ttft3", "run": "Q3"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 2.495, "wall_s": 72.63, "decode_tps": 3.64, "prompt_n": 18, "md5": "2866d894b9", "scenario": "ttft3", "run": "Q3"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.416, "wall_s": 36.46, "decode_tps": 7.08, "prompt_n": 10, "md5": "3a7986622d", "scenario": "ttft3", "run": "Q3"}
+elastic lines: 10; refused: 0
+lowest MemAvailable 5588 MiB; now 121021 MiB; END Q3 11:15:59
+BI-LEG-DONE Q3 11:15:59
+legs-bi/server-Q2.log no key in log
+legs-bi/server-Q3.log no key in log
+BI-WIN6-DONE 11:15:59

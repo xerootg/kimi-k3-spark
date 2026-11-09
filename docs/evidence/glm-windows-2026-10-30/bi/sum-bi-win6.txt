@@ -1,0 +1,26 @@
+=== LEG Q2 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_CLIENT_CLASSES=/srv/glm-5.3-flash/legs-bi/classes.txt LLAMA_SLOT_RESERVE=1] 11:04:11
+Q2 ttft3 low p1 send+0.0 ttft 184.801 s wall 223.64 6.56 bb5110ee45
+Q2 ttft3 low p3 send+0.0 ttft 184.124 s wall 223.64 6.45 1aab74269d
+Q2 ttft3 low p2 send+0.0 ttft 185.503 s wall 223.64 6.69 2866d894b9
+Q2 ttft3 juno p0 send+4.0 ttft 68.813 s wall 179.91 2.3 3a7986622d
+Q2 queue4 low p1 send+0.0 ttft 0.639 s wall 48.7 5.31 bb5110ee45
+Q2 queue4 low p2 send+0.3 ttft 0.909 s wall 48.39 5.37 2866d894b9
+Q2 queue4 low p3 send+0.6 ttft 1.3 s wall 48.09 5.45 1aab74269d
+Q2 queue4 low L16384 send+0.9 ttft 167.738 s wall 177.0 13.71 145c14aa8b
+Q2 queue4 juno p0 send+4.0 ttft 0.558 s wall 46.01 5.61 3a7986622d
+Q2 prefill low L16384 send+0.0 ttft 65.392 s wall 74.5 13.94 145c14aa8b
+Q2 prefill juno p0 send+20.01 ttft 2.373 s wall 20.48 14.08 3a7986622d
+Q2 prefill low L16384 send+0.0 ttft 64.839 s wall 73.75 14.25 145c14aa8b
+Q2 prefill juno p0 send+20.0 ttft 2.704 s wall 20.47 14.35 3a7986622d
+lowest MemAvailable 5907 MiB; now 121073 MiB; END Q2 11:14:13
+BI-LEG-DONE Q2 11:14:13
+=== LEG Q3 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_CLIENT_CLASSES=/srv/glm-5.3-flash/legs-bi/classes.txt LLAMA_SLOT_RESERVE=1 LLAMA_SLOT_BATCH_MAX=2] 11:14:13
+Q3 ttft3 low p3 send+0.0 ttft 1.139 s wall 72.51 3.57 1aab74269d
+Q3 ttft3 low p1 send+0.0 ttft 1.857 s wall 72.63 3.6 bb5110ee45
+Q3 ttft3 low p2 send+0.0 ttft 2.495 s wall 72.63 3.64 2866d894b9
+Q3 ttft3 juno p0 send+4.0 ttft 0.416 s wall 36.46 7.08 3a7986622d
+lowest MemAvailable 5588 MiB; now 121021 MiB; END Q3 11:15:59
+BI-LEG-DONE Q3 11:15:59
+legs-bi/server-Q2.log no key in log
+legs-bi/server-Q3.log no key in log
+BI-WIN6-DONE 11:15:59

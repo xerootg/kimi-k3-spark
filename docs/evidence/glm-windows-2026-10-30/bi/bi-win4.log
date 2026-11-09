@@ -1,0 +1,66 @@
+=== LEG Q0 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_CLIENT_CLASSES=/srv/glm-5.3-flash/legs-bi/classes.txt LLAMA_SLOT_RESERVE=1] 10:35:23
+READY Q0 after 34s
+0.13.347.531 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (724.9 ms)
+0.13.347.584 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.353.612 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (6.0 ms)
+0.13.359.301 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.7 ms)
+0.13.364.952 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.6 ms)
+0.13.370.595 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.6 ms)
+0.13.965.667 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (512.4 ms)
+0.13.965.698 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"tag": "nokey", "spec": "p0", "error": 401, "scenario": "nokey", "run": "Q0"}
+{"tag": "solo", "spec": "p0", "t_send": 0.0, "ttft_s": 9.159, "wall_s": 47.93, "decode_tps": 6.58, "prompt_n": 10, "md5": "3a7986622d", "scenario": "solo", "run": "Q0"}
+{"tag": "solo", "spec": "p1", "t_send": 47.93, "ttft_s": 0.715, "wall_s": 18.31, "decode_tps": 14.49, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "solo", "run": "Q0"}
+{"tag": "solo", "spec": "p2", "t_send": 66.24, "ttft_s": 0.752, "wall_s": 18.95, "decode_tps": 14.01, "prompt_n": 18, "md5": "2866d894b9", "scenario": "solo", "run": "Q0"}
+{"tag": "solo", "spec": "p3", "t_send": 85.2, "ttft_s": 0.862, "wall_s": 20.75, "decode_tps": 12.82, "prompt_n": 21, "md5": "1aab74269d", "scenario": "solo", "run": "Q0"}
+{"tag": "solo", "spec": "L16384", "t_send": 105.95, "ttft_s": 85.05, "wall_s": 94.1, "decode_tps": 14.03, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "solo", "run": "Q0"}
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.446, "wall_s": 18.8, "decode_tps": 13.89, "prompt_n": 10, "md5": "3a7986622d", "scenario": "warm", "run": "Q0"}
+{"tag": "warm", "spec": "p0", "t_send": 18.8, "ttft_s": 0.398, "wall_s": 17.86, "decode_tps": 14.6, "prompt_n": 10, "md5": "3a7986622d", "scenario": "warm", "run": "Q0"}
+{"tag": "warm", "spec": "p0", "t_send": 36.66, "ttft_s": 0.383, "wall_s": 17.55, "decode_tps": 14.85, "prompt_n": 10, "md5": "3a7986622d", "scenario": "warm", "run": "Q0"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 1.135, "wall_s": 43.89, "decode_tps": 5.96, "prompt_n": 18, "md5": "2866d894b9", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.615, "wall_s": 43.89, "decode_tps": 5.89, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.727, "wall_s": 43.89, "decode_tps": 6.05, "prompt_n": 21, "md5": "1aab74269d", "scenario": "ttft3", "run": "Q0"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.398, "wall_s": 41.12, "decode_tps": 6.26, "prompt_n": 10, "md5": "3a7986622d", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 1.745, "wall_s": 43.0, "decode_tps": 6.18, "prompt_n": 18, "md5": "2866d894b9", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.627, "wall_s": 43.0, "decode_tps": 6.02, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.23, "wall_s": 43.0, "decode_tps": 6.11, "prompt_n": 21, "md5": "1aab74269d", "scenario": "ttft3", "run": "Q0"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.436, "wall_s": 40.31, "decode_tps": 6.39, "prompt_n": 10, "md5": "3a7986622d", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.59, "wall_s": 42.83, "decode_tps": 6.04, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "queue4", "run": "Q0"}
+{"tag": "low", "spec": "p2", "t_send": 0.3, "ttft_s": 0.806, "wall_s": 42.53, "decode_tps": 6.11, "prompt_n": 18, "md5": "2866d894b9", "scenario": "queue4", "run": "Q0"}
+{"tag": "low", "spec": "p3", "t_send": 0.6, "ttft_s": 1.102, "wall_s": 42.23, "decode_tps": 6.2, "prompt_n": 21, "md5": "1aab74269d", "scenario": "queue4", "run": "Q0"}
+{"tag": "low", "spec": "L16384", "t_send": 0.91, "ttft_s": 89.7, "wall_s": 101.3, "decode_tps": 10.95, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "queue4", "run": "Q0"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.529, "wall_s": 89.84, "decode_tps": 2.86, "prompt_n": 10, "md5": "3a7986622d", "scenario": "queue4", "run": "Q0"}
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 46.931, "wall_s": 66.46, "decode_tps": 6.5, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "prefill", "run": "Q0"}
+{"tag": "juno", "spec": "p0", "t_send": 20.0, "ttft_s": 2.19, "wall_s": 55.55, "decode_tps": 4.78, "prompt_n": 10, "md5": "3a7986622d", "scenario": "prefill", "run": "Q0"}
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 46.687, "wall_s": 65.93, "decode_tps": 6.6, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "prefill", "run": "Q0"}
+{"tag": "juno", "spec": "p0", "t_send": 20.01, "ttft_s": 2.47, "wall_s": 54.85, "decode_tps": 4.87, "prompt_n": 10, "md5": "3a7986622d", "scenario": "prefill", "run": "Q0"}
+elastic lines: 24; refused: 0
+lowest MemAvailable 5415 MiB; now 121020 MiB; END Q0 10:46:00
+BI-LEG-DONE Q0 10:46:00
+=== LEG Q1 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1] 10:46:00
+READY Q1 after 28s
+0.13.169.544 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (690.8 ms)
+0.13.169.601 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.175.712 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (6.1 ms)
+0.13.181.302 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.6 ms)
+0.13.186.956 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.6 ms)
+0.13.192.485 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.5 ms)
+0.13.789.666 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (511.0 ms)
+0.13.789.700 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 1.853, "wall_s": 50.24, "decode_tps": 5.27, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "ttft3", "run": "Q1"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.136, "wall_s": 50.24, "decode_tps": 5.19, "prompt_n": 21, "md5": "1aab74269d", "scenario": "ttft3", "run": "Q1"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 2.485, "wall_s": 50.24, "decode_tps": 5.34, "prompt_n": 18, "md5": "2866d894b9", "scenario": "ttft3", "run": "Q1"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.483, "wall_s": 47.12, "decode_tps": 5.47, "prompt_n": 10, "md5": "3a7986622d", "scenario": "ttft3", "run": "Q1"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.641, "wall_s": 120.56, "decode_tps": 2.13, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "queue4", "run": "Q1"}
+{"tag": "low", "spec": "p2", "t_send": 0.3, "ttft_s": 1.587, "wall_s": 120.26, "decode_tps": 2.15, "prompt_n": 18, "md5": "2866d894b9", "scenario": "queue4", "run": "Q1"}
+{"tag": "low", "spec": "p3", "t_send": 0.6, "ttft_s": 0.731, "wall_s": 119.96, "decode_tps": 2.14, "prompt_n": 21, "md5": "1aab74269d", "scenario": "queue4", "run": "Q1"}
+{"tag": "low", "spec": "L16384", "t_send": 0.91, "ttft_s": 77.163, "wall_s": 97.72, "decode_tps": 6.18, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "queue4", "run": "Q1"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 95.073, "wall_s": 125.26, "decode_tps": 8.45, "prompt_n": 10, "md5": "3a7986622d", "scenario": "queue4", "run": "Q1"}
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 47.103, "wall_s": 66.41, "decode_tps": 6.58, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "prefill", "run": "Q1"}
+{"tag": "juno", "spec": "p0", "t_send": 20.0, "ttft_s": 27.538, "wall_s": 55.2, "decode_tps": 9.22, "prompt_n": 10, "md5": "3a7986622d", "scenario": "prefill", "run": "Q1"}
+elastic lines: 23; refused: 0
+lowest MemAvailable 5530 MiB; now 121058 MiB; END Q1 10:50:48
+BI-LEG-DONE Q1 10:50:48
+legs-bi/server-Q0.log no key in log
+legs-bi/server-Q1.log no key in log
+BI-WIN4-DONE 10:50:48

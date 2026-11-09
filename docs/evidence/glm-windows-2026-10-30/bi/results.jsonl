@@ -103,3 +103,73 @@
 {"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.54, "decode_n": 256, "decode_tps": 14.97, "md5": "3a7986622d", "t0": 1794219936.457643, "t1": 1794219953.9268897, "kind": "solo", "tag": "S2"}
 {"kind": "multi", "tag": "S2", "n": 4, "round": "warm", "agg_tps": 13.78, "wall_s": 74.34, "gen": 1024, "per_stream_tps": [15.05, 14.06, 13.22, 14.89], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.75, 27.0, 22.48, 24.18], "t0": 1794219953.9570389, "t1": 1794220028.2937396}
 {"kind": "multi", "tag": "S2", "n": 4, "round": 1, "agg_tps": 14.16, "wall_s": 72.33, "gen": 1024, "per_stream_tps": [14.65, 15.01, 14.53, 14.04], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [23.23, 33.92, 31.88, 31.61], "t0": 1794220028.2942033, "t1": 1794220100.6262088}
+{"tag": "nokey", "spec": "p0", "error": 401, "scenario": "nokey", "run": "Q0"}
+{"tag": "solo", "spec": "p0", "t_send": 0.0, "ttft_s": 9.159, "wall_s": 47.93, "decode_tps": 6.58, "prompt_n": 10, "md5": "3a7986622d", "scenario": "solo", "run": "Q0"}
+{"tag": "solo", "spec": "p1", "t_send": 47.93, "ttft_s": 0.715, "wall_s": 18.31, "decode_tps": 14.49, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "solo", "run": "Q0"}
+{"tag": "solo", "spec": "p2", "t_send": 66.24, "ttft_s": 0.752, "wall_s": 18.95, "decode_tps": 14.01, "prompt_n": 18, "md5": "2866d894b9", "scenario": "solo", "run": "Q0"}
+{"tag": "solo", "spec": "p3", "t_send": 85.2, "ttft_s": 0.862, "wall_s": 20.75, "decode_tps": 12.82, "prompt_n": 21, "md5": "1aab74269d", "scenario": "solo", "run": "Q0"}
+{"tag": "solo", "spec": "L16384", "t_send": 105.95, "ttft_s": 85.05, "wall_s": 94.1, "decode_tps": 14.03, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "solo", "run": "Q0"}
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.446, "wall_s": 18.8, "decode_tps": 13.89, "prompt_n": 10, "md5": "3a7986622d", "scenario": "warm", "run": "Q0"}
+{"tag": "warm", "spec": "p0", "t_send": 18.8, "ttft_s": 0.398, "wall_s": 17.86, "decode_tps": 14.6, "prompt_n": 10, "md5": "3a7986622d", "scenario": "warm", "run": "Q0"}
+{"tag": "warm", "spec": "p0", "t_send": 36.66, "ttft_s": 0.383, "wall_s": 17.55, "decode_tps": 14.85, "prompt_n": 10, "md5": "3a7986622d", "scenario": "warm", "run": "Q0"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 1.135, "wall_s": 43.89, "decode_tps": 5.96, "prompt_n": 18, "md5": "2866d894b9", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.615, "wall_s": 43.89, "decode_tps": 5.89, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.727, "wall_s": 43.89, "decode_tps": 6.05, "prompt_n": 21, "md5": "1aab74269d", "scenario": "ttft3", "run": "Q0"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.398, "wall_s": 41.12, "decode_tps": 6.26, "prompt_n": 10, "md5": "3a7986622d", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 1.745, "wall_s": 43.0, "decode_tps": 6.18, "prompt_n": 18, "md5": "2866d894b9", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.627, "wall_s": 43.0, "decode_tps": 6.02, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.23, "wall_s": 43.0, "decode_tps": 6.11, "prompt_n": 21, "md5": "1aab74269d", "scenario": "ttft3", "run": "Q0"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.436, "wall_s": 40.31, "decode_tps": 6.39, "prompt_n": 10, "md5": "3a7986622d", "scenario": "ttft3", "run": "Q0"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.59, "wall_s": 42.83, "decode_tps": 6.04, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "queue4", "run": "Q0"}
+{"tag": "low", "spec": "p2", "t_send": 0.3, "ttft_s": 0.806, "wall_s": 42.53, "decode_tps": 6.11, "prompt_n": 18, "md5": "2866d894b9", "scenario": "queue4", "run": "Q0"}
+{"tag": "low", "spec": "p3", "t_send": 0.6, "ttft_s": 1.102, "wall_s": 42.23, "decode_tps": 6.2, "prompt_n": 21, "md5": "1aab74269d", "scenario": "queue4", "run": "Q0"}
+{"tag": "low", "spec": "L16384", "t_send": 0.91, "ttft_s": 89.7, "wall_s": 101.3, "decode_tps": 10.95, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "queue4", "run": "Q0"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.529, "wall_s": 89.84, "decode_tps": 2.86, "prompt_n": 10, "md5": "3a7986622d", "scenario": "queue4", "run": "Q0"}
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 46.931, "wall_s": 66.46, "decode_tps": 6.5, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "prefill", "run": "Q0"}
+{"tag": "juno", "spec": "p0", "t_send": 20.0, "ttft_s": 2.19, "wall_s": 55.55, "decode_tps": 4.78, "prompt_n": 10, "md5": "3a7986622d", "scenario": "prefill", "run": "Q0"}
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 46.687, "wall_s": 65.93, "decode_tps": 6.6, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "prefill", "run": "Q0"}
+{"tag": "juno", "spec": "p0", "t_send": 20.01, "ttft_s": 2.47, "wall_s": 54.85, "decode_tps": 4.87, "prompt_n": 10, "md5": "3a7986622d", "scenario": "prefill", "run": "Q0"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 1.853, "wall_s": 50.24, "decode_tps": 5.27, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "ttft3", "run": "Q1"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.136, "wall_s": 50.24, "decode_tps": 5.19, "prompt_n": 21, "md5": "1aab74269d", "scenario": "ttft3", "run": "Q1"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 2.485, "wall_s": 50.24, "decode_tps": 5.34, "prompt_n": 18, "md5": "2866d894b9", "scenario": "ttft3", "run": "Q1"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.483, "wall_s": 47.12, "decode_tps": 5.47, "prompt_n": 10, "md5": "3a7986622d", "scenario": "ttft3", "run": "Q1"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.641, "wall_s": 120.56, "decode_tps": 2.13, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "queue4", "run": "Q1"}
+{"tag": "low", "spec": "p2", "t_send": 0.3, "ttft_s": 1.587, "wall_s": 120.26, "decode_tps": 2.15, "prompt_n": 18, "md5": "2866d894b9", "scenario": "queue4", "run": "Q1"}
+{"tag": "low", "spec": "p3", "t_send": 0.6, "ttft_s": 0.731, "wall_s": 119.96, "decode_tps": 2.14, "prompt_n": 21, "md5": "1aab74269d", "scenario": "queue4", "run": "Q1"}
+{"tag": "low", "spec": "L16384", "t_send": 0.91, "ttft_s": 77.163, "wall_s": 97.72, "decode_tps": 6.18, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "queue4", "run": "Q1"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 95.073, "wall_s": 125.26, "decode_tps": 8.45, "prompt_n": 10, "md5": "3a7986622d", "scenario": "queue4", "run": "Q1"}
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 47.103, "wall_s": 66.41, "decode_tps": 6.58, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "prefill", "run": "Q1"}
+{"tag": "juno", "spec": "p0", "t_send": 20.0, "ttft_s": 27.538, "wall_s": 55.2, "decode_tps": 9.22, "prompt_n": 10, "md5": "3a7986622d", "scenario": "prefill", "run": "Q1"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.4, "prefill_tps": 24.95, "decode_n": 256, "decode_tps": 15.4, "md5": "53816a69bc", "t0": 1794221482.4542665, "t1": 1794221499.4251049, "kind": "solo", "tag": "W0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.36, "prefill_tps": 28.13, "decode_n": 256, "decode_tps": 16.25, "md5": "53816a69bc", "t0": 1794221499.4251719, "t1": 1794221515.4694908, "kind": "solo", "tag": "W0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.36, "prefill_tps": 28.13, "decode_n": 256, "decode_tps": 16.51, "md5": "53816a69bc", "t0": 1794221515.4695442, "t1": 1794221531.2710547, "kind": "solo", "tag": "W0"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.36, "prefill_tps": 28.17, "decode_n": 256, "decode_tps": 16.72, "md5": "53816a69bc", "t0": 1794221531.2711127, "t1": 1794221546.876714, "kind": "solo", "tag": "W0"}
+{"kind": "multi", "tag": "W0", "n": 4, "round": "warm", "agg_tps": 20.14, "wall_s": 50.85, "gen": 1024, "per_stream_tps": [5.14, 5.21, 5.1, 5.3], "md5": ["f2c99a7d44", "e8a73da35b", "35cad6174a", "dea2df6599"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [27.99, 26.68, 22.82, 25.69], "t0": 1794221546.9065285, "t1": 1794221597.75468}
+{"kind": "multi", "tag": "W0", "n": 4, "round": 1, "agg_tps": 21.7, "wall_s": 47.19, "gen": 1024, "per_stream_tps": [5.52, 5.59, 5.47, 5.66], "md5": ["f2c99a7d44", "e8a73da35b", "35cad6174a", "dea2df6599"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [23.08, 33.97, 32.49, 34.22], "t0": 1794221597.7551064, "t1": 1794221644.944104}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.41, "prefill_tps": 24.19, "decode_n": 256, "decode_tps": 15.1, "md5": "3a7986622d", "t0": 1794221678.694249, "t1": 1794221696.0122979, "kind": "solo", "tag": "W1"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.37, "prefill_tps": 27.38, "decode_n": 256, "decode_tps": 16.15, "md5": "3a7986622d", "t0": 1794221696.0123672, "t1": 1794221712.1665528, "kind": "solo", "tag": "W1"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.36, "prefill_tps": 28.15, "decode_n": 256, "decode_tps": 16.64, "md5": "3a7986622d", "t0": 1794221712.1666157, "t1": 1794221727.8472078, "kind": "solo", "tag": "W1"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.35, "prefill_tps": 28.32, "decode_n": 256, "decode_tps": 16.55, "md5": "3a7986622d", "t0": 1794221727.8472607, "t1": 1794221743.6132123, "kind": "solo", "tag": "W1"}
+{"kind": "multi", "tag": "W1", "n": 4, "round": "warm", "agg_tps": 20.07, "wall_s": 51.03, "gen": 1024, "per_stream_tps": [5.04, 5.11, 5.19, 5.27], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [27.46, 26.81, 24.83, 26.27], "t0": 1794221743.6432347, "t1": 1794221794.6756403}
+{"kind": "multi", "tag": "W1", "n": 4, "round": 1, "agg_tps": 21.23, "wall_s": 48.23, "gen": 1024, "per_stream_tps": [5.34, 5.41, 5.47, 5.56], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [21.58, 31.19, 31.81, 30.7], "t0": 1794221794.6760843, "t1": 1794221842.9029083}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.41, "prefill_tps": 24.61, "decode_n": 256, "decode_tps": 15.83, "md5": "53816a69bc", "t0": 1794221874.2717767, "t1": 1794221890.7973838, "kind": "solo", "tag": "W2"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.33, "prefill_tps": 30.57, "decode_n": 256, "decode_tps": 16.93, "md5": "53816a69bc", "t0": 1794221890.797452, "t1": 1794221906.1912835, "kind": "solo", "tag": "W2"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.33, "prefill_tps": 30.75, "decode_n": 256, "decode_tps": 17.0, "md5": "53816a69bc", "t0": 1794221906.1913342, "t1": 1794221921.5150487, "kind": "solo", "tag": "W2"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.33, "prefill_tps": 30.46, "decode_n": 256, "decode_tps": 16.94, "md5": "53816a69bc", "t0": 1794221921.5150971, "t1": 1794221936.8955066, "kind": "solo", "tag": "W2"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 184.801, "wall_s": 223.64, "decode_tps": 6.56, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "ttft3", "run": "Q2"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 184.124, "wall_s": 223.64, "decode_tps": 6.45, "prompt_n": 21, "md5": "1aab74269d", "scenario": "ttft3", "run": "Q2"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 185.503, "wall_s": 223.64, "decode_tps": 6.69, "prompt_n": 18, "md5": "2866d894b9", "scenario": "ttft3", "run": "Q2"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 68.813, "wall_s": 179.91, "decode_tps": 2.3, "prompt_n": 10, "md5": "3a7986622d", "scenario": "ttft3", "run": "Q2"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.639, "wall_s": 48.7, "decode_tps": 5.31, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "queue4", "run": "Q2"}
+{"tag": "low", "spec": "p2", "t_send": 0.3, "ttft_s": 0.909, "wall_s": 48.39, "decode_tps": 5.37, "prompt_n": 18, "md5": "2866d894b9", "scenario": "queue4", "run": "Q2"}
+{"tag": "low", "spec": "p3", "t_send": 0.6, "ttft_s": 1.3, "wall_s": 48.09, "decode_tps": 5.45, "prompt_n": 21, "md5": "1aab74269d", "scenario": "queue4", "run": "Q2"}
+{"tag": "low", "spec": "L16384", "t_send": 0.9, "ttft_s": 167.738, "wall_s": 177.0, "decode_tps": 13.71, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "queue4", "run": "Q2"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.558, "wall_s": 46.01, "decode_tps": 5.61, "prompt_n": 10, "md5": "3a7986622d", "scenario": "queue4", "run": "Q2"}
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 65.392, "wall_s": 74.5, "decode_tps": 13.94, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "prefill", "run": "Q2"}
+{"tag": "juno", "spec": "p0", "t_send": 20.01, "ttft_s": 2.373, "wall_s": 20.48, "decode_tps": 14.08, "prompt_n": 10, "md5": "3a7986622d", "scenario": "prefill", "run": "Q2"}
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 64.839, "wall_s": 73.75, "decode_tps": 14.25, "prompt_n": 16414, "md5": "145c14aa8b", "scenario": "prefill", "run": "Q2"}
+{"tag": "juno", "spec": "p0", "t_send": 20.0, "ttft_s": 2.704, "wall_s": 20.47, "decode_tps": 14.35, "prompt_n": 10, "md5": "3a7986622d", "scenario": "prefill", "run": "Q2"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.139, "wall_s": 72.51, "decode_tps": 3.57, "prompt_n": 21, "md5": "1aab74269d", "scenario": "ttft3", "run": "Q3"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 1.857, "wall_s": 72.63, "decode_tps": 3.6, "prompt_n": 19, "md5": "bb5110ee45", "scenario": "ttft3", "run": "Q3"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 2.495, "wall_s": 72.63, "decode_tps": 3.64, "prompt_n": 18, "md5": "2866d894b9", "scenario": "ttft3", "run": "Q3"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.416, "wall_s": 36.46, "decode_tps": 7.08, "prompt_n": 10, "md5": "3a7986622d", "scenario": "ttft3", "run": "Q3"}
