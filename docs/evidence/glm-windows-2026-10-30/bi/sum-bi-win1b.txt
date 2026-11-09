@@ -1,0 +1,38 @@
+=== LEG L1 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 LLAMA_BI_DUMP_N=1234 LLAMA_BI_DUMP_STEPS=3 LLAMA_BI_DUMP_FILTER=l_out,result_output,hc_attn_post LLAMA_BI_DUMP=/srv/glm-5.3-flash/legs-bi/dump-L1.txt] 09:1
+L1 solo p0 236cb03157 13.25 23.31
+L1 N=2 warm ['fa288d4fe4', '4084863d7f'] 8.1 [4.25, 8.87]
+L1 N=3 warm ['fa288d4fe4', '4084863d7f', '789953a88f'] 10.31 [7.47, 5.74, 4.42]
+L1 N=4 warm ['fa288d4fe4', '110cdd0443', '4b96bfa2b9', 'd52da6cb57'] 10.32 [5.72, 4.63, 3.73, 3.14]
+lowest MemAvailable 5335 MiB; now 120904 MiB; END L1 09:18:02
+BI-LEG-DONE L1 09:18:02
+=== LEG F0 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1] 09:18:02
+F0 solo p0 de2fe3e1ab 15.68 25.01
+F0 solo p1 2c707f395c 15.48 25.94
+F0 solo p2 a374c39915 15.26 29.05
+F0 solo p3 1b621d0aef 15.03 27.02
+F0 N=2 warm ['728f89951e', '2c707f395c'] 18.86 [10.49, 9.95]
+F0 N=3 warm ['728f89951e', '2c707f395c', 'a374c39915'] 16.53 [5.6, 5.83, 6.06]
+F0 N=4 warm ['728f89951e', '136078c0ff', '8389721e69', 'fd10b5b0b3'] 20.98 [5.35, 5.56, 6.08, 5.86]
+lowest MemAvailable 5233 MiB; now 120977 MiB; END F0 09:19:25
+BI-LEG-DONE F0 09:19:25
+=== LEG N1 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_DISABLE_FUSION=1] 09:19:25
+N1 solo p0 3442b5cef8 14.11 23.39
+N1 solo p1 2c707f395c 14.85 27.32
+N1 solo p2 8389721e69 14.59 29.74
+N1 solo p3 45ce9aeea5 13.74 27.26
+N1 N=2 warm ['d20ccbb415', 'afe724ca45'] 18.47 [9.58, 10.3]
+N1 N=3 warm ['d20ccbb415', 'afe724ca45', '8389721e69'] 16.51 [5.59, 5.82, 6.06]
+N1 N=4 warm ['728f89951e', 'afe724ca45', '1a9ef70502', 'a153f081e3'] 21.67 [5.53, 5.76, 6.32, 6.07]
+lowest MemAvailable 5113 MiB; now 121034 MiB; END N1 09:20:51
+BI-LEG-DONE N1 09:20:51
+=== LEG N0 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_Q8_REUSE=0 GGML_CUDA_FUSE_HC=0 GGML_CUDA_FUSE_GDN_STATE=0 GGML_CUDA_FUSE_KDA=0 GGML_CUDA_FUSE_CONV_STATE=0] 09:20:52
+N0 solo p0 de2fe3e1ab 15.23 24.9
+N0 solo p1 2c707f395c 15.04 26.0
+N0 solo p2 a374c39915 14.85 28.92
+N0 solo p3 1b621d0aef 14.62 27.11
+N0 N=2 warm ['728f89951e', '2c707f395c'] 18.82 [9.77, 10.49]
+N0 N=3 warm ['728f89951e', '2c707f395c', 'a374c39915'] 16.58 [5.61, 5.84, 6.08]
+N0 N=4 warm ['728f89951e', '136078c0ff', '8389721e69', 'fd10b5b0b3'] 21.27 [5.7, 5.94, 6.18, 5.54]
+lowest MemAvailable 5199 MiB; now 121034 MiB; END N0 09:22:16
+BI-LEG-DONE N0 09:22:16
+BI-WIN1B-DONE 09:22:16

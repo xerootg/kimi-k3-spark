@@ -1,0 +1,124 @@
+=== LEG T1 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1] 09:37:20
+READY T1 after 28s
+0.13.243.586 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (693.1 ms)
+0.13.243.638 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.249.538 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.9 ms)
+0.13.255.161 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.6 ms)
+0.13.260.736 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.6 ms)
+0.13.266.294 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.6 ms)
+0.13.865.637 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (511.9 ms)
+0.13.865.670 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 24.05, "decode_n": 256, "decode_tps": 15.09, "md5": "3a7986622d", "t0": 1794217069.018523, "t1": 1794217086.3501177, "kind": "solo", "tag": "T1"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.72, "prefill_tps": 26.46, "decode_n": 256, "decode_tps": 15.13, "md5": "bb5110ee45", "t0": 1794217086.350183, "t1": 1794217103.9263968, "kind": "solo", "tag": "T1"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.75, "prefill_tps": 23.85, "decode_n": 256, "decode_tps": 14.59, "md5": "2866d894b9", "t0": 1794217103.9264407, "t1": 1794217122.1647322, "kind": "solo", "tag": "T1"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.85, "prefill_tps": 24.56, "decode_n": 256, "decode_tps": 13.27, "md5": "1aab74269d", "t0": 1794217122.1647978, "t1": 1794217142.2411528, "kind": "solo", "tag": "T1"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 79.53, "prefill_tps": 206.39, "decode_n": 128, "decode_tps": 14.51, "md5": "145c14aa8b", "t0": 1794217142.2412083, "t1": 1794217230.5445173, "kind": "solo", "tag": "T1"}
+{"kind": "multi", "tag": "T1", "n": 2, "round": "warm", "agg_tps": 18.83, "wall_s": 27.2, "gen": 512, "per_stream_tps": [9.54, 9.72], "md5": ["3a7986622d", "bb5110ee45"], "specs": ["p0", "p1"], "prefill_tps": [23.49, 36.7], "t0": 1794217230.5741575, "t1": 1794217257.7716134}
+{"kind": "multi", "tag": "T1", "n": 2, "round": 1, "agg_tps": 20.3, "wall_s": 25.22, "gen": 512, "per_stream_tps": [10.28, 10.49], "md5": ["3a7986622d", "bb5110ee45"], "specs": ["p0", "p1"], "prefill_tps": [24.4, 38.39], "t0": 1794217257.771944, "t1": 1794217282.99206}
+{"kind": "multi", "tag": "T1", "n": 2, "round": 2, "agg_tps": 20.81, "wall_s": 24.6, "gen": 512, "per_stream_tps": [10.54, 10.75], "md5": ["3a7986622d", "bb5110ee45"], "specs": ["p0", "p1"], "prefill_tps": [24.76, 39.15], "t0": 1794217282.9924154, "t1": 1794217307.5946138}
+{"kind": "multi", "tag": "T1", "n": 3, "round": "warm", "agg_tps": 22.63, "wall_s": 33.94, "gen": 768, "per_stream_tps": [7.87, 7.78, 7.66], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9"], "specs": ["p0", "p1", "p2"], "prefill_tps": [25.84, 38.96, 29.18], "t0": 1794217307.6258848, "t1": 1794217341.566146}
+{"kind": "multi", "tag": "T1", "n": 3, "round": 1, "agg_tps": 23.21, "wall_s": 33.09, "gen": 768, "per_stream_tps": [8.05, 7.95, 7.83], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9"], "specs": ["p0", "p1", "p2"], "prefill_tps": [24.86, 37.73, 35.85], "t0": 1794217341.5665696, "t1": 1794217374.65614}
+{"kind": "multi", "tag": "T1", "n": 3, "round": 2, "agg_tps": 23.3, "wall_s": 32.97, "gen": 768, "per_stream_tps": [7.84, 8.08, 7.95], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9"], "specs": ["p0", "p1", "p2"], "prefill_tps": [23.54, 37.14, 37.32], "t0": 1794217374.6565857, "t1": 1794217407.624385}
+{"kind": "multi", "tag": "T1", "n": 4, "round": "warm", "agg_tps": 23.26, "wall_s": 44.02, "gen": 1024, "per_stream_tps": [6.0, 5.94, 5.87, 6.09], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.94, 36.21, 36.11, 31.5], "t0": 1794217407.6553643, "t1": 1794217451.6704338}
+{"kind": "multi", "tag": "T1", "n": 4, "round": 1, "agg_tps": 23.77, "wall_s": 43.09, "gen": 1024, "per_stream_tps": [6.13, 6.06, 5.99, 6.22], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [23.82, 35.26, 35.88, 34.97], "t0": 1794217451.670854, "t1": 1794217494.7578347}
+{"kind": "multi", "tag": "T1", "n": 4, "round": 2, "agg_tps": 23.72, "wall_s": 43.17, "gen": 1024, "per_stream_tps": [6.12, 6.06, 5.98, 6.21], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [23.54, 34.86, 35.38, 35.07], "t0": 1794217494.7583177, "t1": 1794217537.9268188}
+{"kind": "multi", "tag": "T1", "n": 2, "round": "warm", "agg_tps": 5.03, "wall_s": 76.4, "gen": 384, "per_stream_tps": [3.36, 6.4], "md5": ["3a7986622d", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [22.72, 346.26], "t0": 1794217537.9592652, "t1": 1794217614.358126}
+{"kind": "multi", "tag": "T1", "n": 2, "round": 1, "agg_tps": 5.15, "wall_s": 74.58, "gen": 384, "per_stream_tps": [3.44, 6.8], "md5": ["3a7986622d", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [23.37, 349.96], "t0": 1794217614.3584716, "t1": 1794217688.9369442}
+{"kind": "multi", "tag": "T1", "n": 2, "round": 2, "agg_tps": 5.2, "wall_s": 73.83, "gen": 384, "per_stream_tps": [3.47, 6.92], "md5": ["3a7986622d", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [24.0, 352.4], "t0": 1794217688.937343, "t1": 1794217762.7702773}
+{"kind": "multi", "tag": "T1", "n": 3, "round": "warm", "agg_tps": 8.25, "wall_s": 77.6, "gen": 640, "per_stream_tps": [3.31, 8.51, 7.27], "md5": ["bb5110ee45", "2866d894b9", "145c14aa8b"], "specs": ["p1", "p2", "L16384"], "prefill_tps": [33.73, 33.59, 352.97], "t0": 1794217762.8009756, "t1": 1794217840.4034054}
+{"kind": "multi", "tag": "T1", "n": 3, "round": 1, "agg_tps": 8.44, "wall_s": 75.87, "gen": 640, "per_stream_tps": [9.01, 3.38, 7.71], "md5": ["bb5110ee45", "2866d894b9", "145c14aa8b"], "specs": ["p1", "p2", "L16384"], "prefill_tps": [36.28, 37.17, 352.51], "t0": 1794217840.4038534, "t1": 1794217916.2713943}
+{"kind": "multi", "tag": "T1", "n": 4, "round": "warm", "agg_tps": 10.48, "wall_s": 85.52, "gen": 896, "per_stream_tps": [6.74, 3.0, 6.86, 5.94], "md5": ["bb5110ee45", "2866d894b9", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p2", "p3", "L16384"], "prefill_tps": [35.96, 35.74, 32.04, 352.2], "t0": 1794217916.3261797, "t1": 1794218001.8500798}
+{"kind": "multi", "tag": "T1", "n": 4, "round": 1, "agg_tps": 10.57, "wall_s": 84.75, "gen": 896, "per_stream_tps": [3.03, 6.87, 6.98, 6.06], "md5": ["bb5110ee45", "2866d894b9", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p2", "p3", "L16384"], "prefill_tps": [34.34, 35.3, 34.31, 352.7], "t0": 1794218001.8506432, "t1": 1794218086.5982492}
+{"kind": "multi", "tag": "T1", "n": 4, "round": 2, "agg_tps": 10.6, "wall_s": 84.53, "gen": 896, "per_stream_tps": [6.87, 3.04, 6.98, 6.04], "md5": ["bb5110ee45", "2866d894b9", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p2", "p3", "L16384"], "prefill_tps": [34.56, 34.08, 34.4, 354.31], "t0": 1794218086.5988905, "t1": 1794218171.1312623}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.5, "prefill_tps": 20.12, "decode_n": 256, "decode_tps": 13.0, "md5": "3a7986622d", "t0": 1794218171.181295, "t1": 1794218191.3116033, "kind": "solo", "tag": "T1"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 46.6, "prefill_tps": 352.26, "decode_n": 128, "decode_tps": 14.55, "md5": "145c14aa8b", "t0": 1794218191.311671, "t1": 1794218246.6578438, "kind": "solo", "tag": "T1"}
+elastic lines: 24; refused: 0
+lowest MemAvailable 5279 MiB; now 121052 MiB; END T1 09:57:30
+BI-LEG-DONE T1 09:57:30
+=== LEG S1 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 LLAMA_SLOT_SERIAL=1] 09:57:31
+READY S1 after 28s
+0.13.202.092 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (683.1 ms)
+0.13.202.147 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.207.693 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.5 ms)
+0.13.212.766 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.1 ms)
+0.13.217.791 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.0 ms)
+0.13.222.820 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.0 ms)
+0.13.810.128 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (505.9 ms)
+0.13.810.165 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.4, "prefill_tps": 24.92, "decode_n": 256, "decode_tps": 15.41, "md5": "53816a69bc", "t0": 1794218280.0792673, "t1": 1794218297.0400512, "kind": "solo", "tag": "S1"}
+{"kind": "multi", "tag": "S1", "n": 4, "round": "warm", "agg_tps": 14.29, "wall_s": 71.66, "gen": 1024, "per_stream_tps": [14.44, 14.99, 14.37, 15.4], "md5": ["53816a69bc", "28c834e37b", "e3288e25c0", "34401d3b29"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [25.02, 29.41, 25.4, 24.9], "t0": 1794218297.0700147, "t1": 1794218368.7265644}
+{"kind": "multi", "tag": "S1", "n": 4, "round": 1, "agg_tps": 14.83, "wall_s": 69.03, "gen": 1024, "per_stream_tps": [14.93, 15.06, 15.47, 15.51], "md5": ["53816a69bc", "28c834e37b", "e3288e25c0", "34401d3b29"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [25.37, 33.65, 36.07, 33.52], "t0": 1794218368.7270129, "t1": 1794218437.755956}
+{"kind": "multi", "tag": "S1", "n": 4, "round": 2, "agg_tps": 14.84, "wall_s": 68.98, "gen": 1024, "per_stream_tps": [14.13, 15.77, 15.34, 15.84], "md5": ["53816a69bc", "28c834e37b", "e3288e25c0", "34401d3b29"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.24, 37.04, 35.34, 34.22], "t0": 1794218437.7565253, "t1": 1794218506.738883}
+{"kind": "multi", "tag": "S1", "n": 2, "round": "warm", "agg_tps": 14.93, "wall_s": 34.3, "gen": 512, "per_stream_tps": [14.96, 15.64], "md5": ["53816a69bc", "28c834e37b"], "specs": ["p0", "p1"], "prefill_tps": [25.38, 36.39], "t0": 1794218506.7710547, "t1": 1794218541.0706177}
+{"kind": "multi", "tag": "S1", "n": 2, "round": 1, "agg_tps": 15.18, "wall_s": 33.72, "gen": 512, "per_stream_tps": [15.15, 15.95], "md5": ["53816a69bc", "28c834e37b"], "specs": ["p0", "p1"], "prefill_tps": [25.52, 37.18], "t0": 1794218541.0709832, "t1": 1794218574.7958605}
+elastic lines: 10; refused: 0
+lowest MemAvailable 5594 MiB; now 121073 MiB; END S1 10:02:59
+BI-LEG-DONE S1 10:02:59
+=== LEG P1 parallel=1 ctx=1048576 extra=[GGML_CUDA_BATCH_INVARIANT=1] 10:02:59
+READY P1 after 26s
+0.12.489.966 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.494.117 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (4.1 ms)
+0.12.516.319 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.519.106 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (2.8 ms)
+0.25.324.305 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.41, "prefill_tps": 24.42, "decode_n": 256, "decode_tps": 15.59, "md5": "3a7986622d", "t0": 1794218606.22354, "t1": 1794218623.003036, "kind": "solo", "tag": "P1"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.35, "prefill_tps": 28.61, "decode_n": 256, "decode_tps": 16.78, "md5": "3a7986622d", "t0": 1794218623.0031028, "t1": 1794218638.5490248, "kind": "solo", "tag": "P1"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.35, "prefill_tps": 28.62, "decode_n": 256, "decode_tps": 16.79, "md5": "3a7986622d", "t0": 1794218638.5490768, "t1": 1794218654.0877333, "kind": "solo", "tag": "P1"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 48.19, "prefill_tps": 340.64, "decode_n": 128, "decode_tps": 13.84, "md5": "145c14aa8b", "t0": 1794218654.0877872, "t1": 1794218711.4614325, "kind": "solo", "tag": "P1"}
+elastic lines: 10; refused: 0
+lowest MemAvailable 9667 MiB; now 121063 MiB; END P1 10:05:14
+BI-LEG-DONE P1 10:05:14
+=== LEG T2 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1] 10:05:14
+READY T2 after 28s
+0.13.197.590 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (680.9 ms)
+0.13.197.643 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.203.015 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.4 ms)
+0.13.208.104 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.1 ms)
+0.13.213.151 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.0 ms)
+0.13.218.177 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.0 ms)
+0.13.810.290 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (510.2 ms)
+0.13.810.323 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.56, "decode_n": 256, "decode_tps": 15.06, "md5": "3a7986622d", "t0": 1794218743.2092605, "t1": 1794218760.5787287, "kind": "solo", "tag": "T2"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.72, "prefill_tps": 26.57, "decode_n": 256, "decode_tps": 15.06, "md5": "bb5110ee45", "t0": 1794218760.5788004, "t1": 1794218778.2310586, "kind": "solo", "tag": "T2"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.76, "prefill_tps": 23.76, "decode_n": 256, "decode_tps": 14.49, "md5": "2866d894b9", "t0": 1794218778.2311099, "t1": 1794218796.5942752, "kind": "solo", "tag": "T2"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.86, "prefill_tps": 24.54, "decode_n": 256, "decode_tps": 13.21, "md5": "1aab74269d", "t0": 1794218796.5943246, "t1": 1794218816.754892, "kind": "solo", "tag": "T2"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 77.47, "prefill_tps": 211.87, "decode_n": 128, "decode_tps": 14.46, "md5": "145c14aa8b", "t0": 1794218816.7549388, "t1": 1794218903.0305088, "kind": "solo", "tag": "T2"}
+{"kind": "multi", "tag": "T2", "n": 2, "round": "warm", "agg_tps": 18.89, "wall_s": 27.1, "gen": 512, "per_stream_tps": [9.57, 9.76], "md5": ["3a7986622d", "bb5110ee45"], "specs": ["p0", "p1"], "prefill_tps": [23.46, 36.77], "t0": 1794218903.0607805, "t1": 1794218930.161883}
+{"kind": "multi", "tag": "T2", "n": 2, "round": 1, "agg_tps": 20.32, "wall_s": 25.2, "gen": 512, "per_stream_tps": [10.29, 10.5], "md5": ["3a7986622d", "bb5110ee45"], "specs": ["p0", "p1"], "prefill_tps": [23.96, 38.08], "t0": 1794218930.1622043, "t1": 1794218955.3583949}
+{"kind": "multi", "tag": "T2", "n": 2, "round": 2, "agg_tps": 20.86, "wall_s": 24.54, "gen": 512, "per_stream_tps": [10.56, 10.78], "md5": ["3a7986622d", "bb5110ee45"], "specs": ["p0", "p1"], "prefill_tps": [24.74, 38.95], "t0": 1794218955.358753, "t1": 1794218979.9032364}
+{"kind": "multi", "tag": "T2", "n": 3, "round": "warm", "agg_tps": 22.68, "wall_s": 33.86, "gen": 768, "per_stream_tps": [7.63, 7.75, 7.9], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9"], "specs": ["p0", "p1", "p2"], "prefill_tps": [24.34, 38.53, 29.28], "t0": 1794218979.9570143, "t1": 1794219013.8167546}
+{"kind": "multi", "tag": "T2", "n": 3, "round": 1, "agg_tps": 23.25, "wall_s": 33.03, "gen": 768, "per_stream_tps": [7.82, 7.94, 8.07], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9"], "specs": ["p0", "p1", "p2"], "prefill_tps": [23.85, 37.56, 36.81], "t0": 1794219013.8171625, "t1": 1794219046.8477538}
+{"kind": "multi", "tag": "T2", "n": 3, "round": 2, "agg_tps": 23.27, "wall_s": 33.0, "gen": 768, "per_stream_tps": [7.83, 7.95, 8.08], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9"], "specs": ["p0", "p1", "p2"], "prefill_tps": [23.61, 36.81, 37.56], "t0": 1794219046.8481894, "t1": 1794219079.846469}
+{"kind": "multi", "tag": "T2", "n": 4, "round": "warm", "agg_tps": 23.31, "wall_s": 43.93, "gen": 1024, "per_stream_tps": [5.87, 5.94, 6.01, 6.1], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [22.94, 36.87, 38.12, 32.09], "t0": 1794219079.8986447, "t1": 1794219123.8305702}
+{"kind": "multi", "tag": "T2", "n": 4, "round": 1, "agg_tps": 23.77, "wall_s": 43.08, "gen": 1024, "per_stream_tps": [5.98, 6.06, 6.13, 6.22], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [22.9, 35.41, 36.34, 34.75], "t0": 1794219123.8309474, "t1": 1794219166.9127688}
+{"kind": "multi", "tag": "T2", "n": 4, "round": 2, "agg_tps": 23.8, "wall_s": 43.02, "gen": 1024, "per_stream_tps": [5.99, 6.07, 6.14, 6.23], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [22.66, 34.83, 36.0, 35.04], "t0": 1794219166.913144, "t1": 1794219209.9313834}
+{"kind": "multi", "tag": "T2", "n": 2, "round": "warm", "agg_tps": 5.46, "wall_s": 70.38, "gen": 384, "per_stream_tps": [3.65, 8.94], "md5": ["3a7986622d", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [22.89, 349.09], "t0": 1794219209.9812338, "t1": 1794219280.364515}
+{"kind": "multi", "tag": "T2", "n": 2, "round": 1, "agg_tps": 5.64, "wall_s": 68.12, "gen": 384, "per_stream_tps": [3.77, 9.95], "md5": ["3a7986622d", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [23.24, 354.5], "t0": 1794219280.364866, "t1": 1794219348.4815125}
+{"kind": "multi", "tag": "T2", "n": 2, "round": 2, "agg_tps": 5.66, "wall_s": 67.8, "gen": 384, "per_stream_tps": [3.78, 10.38], "md5": ["3a7986622d", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [23.82, 352.43], "t0": 1794219348.481905, "t1": 1794219416.2821136}
+{"kind": "multi", "tag": "T2", "n": 3, "round": "warm", "agg_tps": 8.23, "wall_s": 77.79, "gen": 640, "per_stream_tps": [8.46, 3.3, 7.24], "md5": ["bb5110ee45", "2866d894b9", "145c14aa8b"], "specs": ["p1", "p2", "L16384"], "prefill_tps": [32.79, 31.61, 353.38], "t0": 1794219416.329342, "t1": 1794219494.1195147}
+{"kind": "multi", "tag": "T2", "n": 3, "round": 1, "agg_tps": 8.44, "wall_s": 75.87, "gen": 640, "per_stream_tps": [8.94, 3.38, 7.71], "md5": ["bb5110ee45", "2866d894b9", "145c14aa8b"], "specs": ["p1", "p2", "L16384"], "prefill_tps": [35.98, 36.95, 354.31], "t0": 1794219494.120039, "t1": 1794219569.9866168}
+{"kind": "multi", "tag": "T2", "n": 4, "round": "warm", "agg_tps": 10.08, "wall_s": 88.9, "gen": 896, "per_stream_tps": [6.86, 2.89, 6.77, 5.93], "md5": ["bb5110ee45", "2866d894b9", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p2", "p3", "L16384"], "prefill_tps": [36.41, 34.9, 30.64, 328.47], "t0": 1794219570.0332494, "t1": 1794219658.9334333}
+{"kind": "multi", "tag": "T2", "n": 4, "round": 1, "agg_tps": 10.56, "wall_s": 84.82, "gen": 896, "per_stream_tps": [7.0, 6.89, 3.03, 6.08], "md5": ["bb5110ee45", "2866d894b9", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p2", "p3", "L16384"], "prefill_tps": [35.3, 35.01, 33.93, 351.5], "t0": 1794219658.9340358, "t1": 1794219743.7531817}
+{"kind": "multi", "tag": "T2", "n": 4, "round": 2, "agg_tps": 10.6, "wall_s": 84.5, "gen": 896, "per_stream_tps": [7.02, 3.04, 6.92, 6.06], "md5": ["bb5110ee45", "2866d894b9", "1aab74269d", "145c14aa8b"], "specs": ["p1", "p2", "p3", "L16384"], "prefill_tps": [34.46, 34.24, 33.99, 353.09], "t0": 1794219743.75376, "t1": 1794219828.2562163}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.49, "prefill_tps": 20.23, "decode_n": 256, "decode_tps": 13.0, "md5": "3a7986622d", "t0": 1794219828.287518, "t1": 1794219848.4177835, "kind": "solo", "tag": "T2"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 46.56, "prefill_tps": 352.57, "decode_n": 128, "decode_tps": 14.53, "md5": "145c14aa8b", "t0": 1794219848.4178493, "t1": 1794219903.7306294, "kind": "solo", "tag": "T2"}
+elastic lines: 30; refused: 0
+lowest MemAvailable 5239 MiB; now 121048 MiB; END T2 10:25:07
+BI-LEG-DONE T2 10:25:07
+=== LEG S2 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_SLOT_SERIAL=1] 10:25:07
+READY S2 after 28s
+0.13.157.482 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (681.1 ms)
+0.13.157.535 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.163.096 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.5 ms)
+0.13.168.135 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.0 ms)
+0.13.173.173 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.0 ms)
+0.13.178.217 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.0 ms)
+0.13.763.711 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (504.1 ms)
+0.13.763.743 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.54, "decode_n": 256, "decode_tps": 14.97, "md5": "3a7986622d", "t0": 1794219936.457643, "t1": 1794219953.9268897, "kind": "solo", "tag": "S2"}
+{"kind": "multi", "tag": "S2", "n": 4, "round": "warm", "agg_tps": 13.78, "wall_s": 74.34, "gen": 1024, "per_stream_tps": [15.05, 14.06, 13.22, 14.89], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.75, 27.0, 22.48, 24.18], "t0": 1794219953.9570389, "t1": 1794220028.2937396}
+{"kind": "multi", "tag": "S2", "n": 4, "round": 1, "agg_tps": 14.16, "wall_s": 72.33, "gen": 1024, "per_stream_tps": [14.65, 15.01, 14.53, 14.04], "md5": ["3a7986622d", "bb5110ee45", "2866d894b9", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [23.23, 33.92, 31.88, 31.61], "t0": 1794220028.2942033, "t1": 1794220100.6262088}
+elastic lines: 10; refused: 0
+lowest MemAvailable 6028 MiB; now 121045 MiB; END S2 10:28:25
+BI-LEG-DONE S2 10:28:25
+BI-WIN3-DONE 10:28:25

@@ -1,0 +1,159 @@
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 6fe894d..8c4d8f4 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -226,6 +226,10 @@ llama_context::llama_context(
+ 
+     cparams.cb_eval           = params.cb_eval;
+     cparams.cb_eval_user_data = params.cb_eval_user_data;
++    if (cparams.cb_eval == nullptr && getenv("LLAMA_BI_DUMP") && *getenv("LLAMA_BI_DUMP")) {
++        extern bool llama_bi_dump_cb_ext(ggml_tensor * t, bool ask, void * ud);
++        cparams.cb_eval = llama_bi_dump_cb_ext;
++    }
+ 
+     cparams.ctx_other = nullptr;
+ 
+@@ -1527,6 +1531,133 @@ bool llama_context::set_adapter_cvec(
+     return res;
+ }
+ 
++
++// ---- BI debug observer (LLAMA_BI_DUMP=<file>): per-column FNV of every computed node of decode ubatches ----
++#include "ggml-backend.h"
++#include <mutex>
++#include <vector>
++namespace {
++struct bi_dump_state {
++    FILE * f = nullptr;
++    int    budget_n[9] = {0}; // decode ubatches left to dump, per number of one-token sequences (1..8)
++    bool   active = false;
++    long   step = 0;
++    std::vector<std::string> filters;
++    int    layer = -2;           // LLAMA_BI_DUMP_LAYER: every node (views too) while the last named node is of this layer
++    int    cur_layer = -1;       // layer suffix of the last named node seen in the ask pass
++    std::vector<int> seq, pos, tok;
++    std::unordered_map<std::string, int> occ;
++    std::vector<uint8_t> buf;
++};
++static bi_dump_state * bi_dump_get() {
++    static bi_dump_state * st = [] () -> bi_dump_state * {
++        const char * path = getenv("LLAMA_BI_DUMP");
++        if (!path || !*path) return nullptr;
++        auto * s = new bi_dump_state();
++        s->f = fopen(path, "a");
++        if (!s->f) { delete s; return nullptr; }
++        const char * n = getenv("LLAMA_BI_DUMP_N");      // list of N, e.g. "1,2,3,4"
++        const char * b = getenv("LLAMA_BI_DUMP_STEPS");  // ubatches per N
++        const int steps = b ? atoi(b) : 2;
++        for (const char * q = n ? n : "1"; *q; ++q) { if (*q >= '1' && *q <= '8') s->budget_n[*q - '0'] = steps; }
++        const char * ly = getenv("LLAMA_BI_DUMP_LAYER"); if (ly && *ly) s->layer = atoi(ly);
++        const char * fl = getenv("LLAMA_BI_DUMP_FILTER");
++        if (fl && *fl) {
++            std::string all(fl); size_t a = 0;
++            while (a <= all.size()) { size_t c = all.find(',', a); if (c == std::string::npos) c = all.size();
++                if (c > a) s->filters.push_back(all.substr(a, c - a)); a = c + 1; }
++        }
++        return s;
++    }();
++    return st;
++}
++static bool bi_is_view(const ggml_tensor * t) {
++    switch (t->op) {
++        case GGML_OP_NONE: case GGML_OP_VIEW: case GGML_OP_RESHAPE: case GGML_OP_PERMUTE: case GGML_OP_TRANSPOSE: return true;
++        default: return false;
++    }
++}
++static bool bi_dump_cb(ggml_tensor * t, bool ask, void * /*ud*/) {
++    auto * s = bi_dump_get();
++    if (!s || !s->active) return false;
++    if (ask) {
++        {   // track the layer of the last named node: "<name>-<il>"
++            const char * dash = strrchr(t->name, '-');
++            if (dash && dash[1] && strncmp(t->name, "node_", 5) != 0) {
++                char * end = nullptr; long v = strtol(dash + 1, &end, 10);
++                if (end && *end == 0) s->cur_layer = (int) v;
++            }
++        }
++        if (t->op == GGML_OP_SET_ROWS || t->op == GGML_OP_NONE) return false;
++        if (ggml_nbytes(t) > (size_t) 512*1024*1024) return false;
++        if (s->layer >= -1 && s->cur_layer == s->layer) return true;
++        if (bi_is_view(t)) return false;
++        if (!s->filters.empty()) {
++            bool ok = false;
++            for (auto & x : s->filters) if (strstr(t->name, x.c_str())) { ok = true; break; }
++            if (!ok) return false;
++        }
++        return true;
++    }
++    const int N = (int) s->seq.size();
++    int ax = -1;
++    if (N > 1) { for (int d = 3; d >= 0; --d) if (t->ne[d] == N) { ax = d; break; } }
++    const size_t span = ggml_nbytes(t);
++    s->buf.resize(span);
++    ggml_backend_tensor_get(t, s->buf.data(), 0, span);
++    const size_t es = ggml_type_size(t->type);
++    const bool blocky = ggml_blck_size(t->type) != 1;
++    std::string key = std::string(ggml_op_desc(t)) + "|" + t->name + "|" + (t->src[0] ? t->src[0]->name : "") + "|" + (t->src[1] ? t->src[1]->name : "");
++    int o = s->occ[key]++;
++    const int ncol = ax < 0 ? 1 : N;
++    for (int c = 0; c < ncol; ++c) {
++        int64_t ne[4] = {t->ne[0], t->ne[1], t->ne[2], t->ne[3]};
++        int64_t lo[4] = {0,0,0,0};
++        if (ax >= 0) { ne[ax] = 1; lo[ax] = c; }
++        uint64_t h = 1469598103934665603ULL;
++        if (blocky) {
++            for (size_t i = 0; i < span; ++i) { h ^= s->buf[i]; h *= 1099511628211ULL; }
++        } else {
++            for (int64_t i3 = 0; i3 < ne[3]; ++i3) for (int64_t i2 = 0; i2 < ne[2]; ++i2)
++            for (int64_t i1 = 0; i1 < ne[1]; ++i1) for (int64_t i0 = 0; i0 < ne[0]; ++i0) {
++                const size_t off = (i0+lo[0])*t->nb[0] + (i1+lo[1])*t->nb[1] + (i2+lo[2])*t->nb[2] + (i3+lo[3])*t->nb[3];
++                if (off + es > span) continue;
++                const uint8_t * p = s->buf.data() + off;
++                for (size_t k = 0; k < es; ++k) { h ^= p[k]; h *= 1099511628211ULL; }
++            }
++        }
++        const int cc = ax < 0 ? 0 : c;
++        fprintf(s->f, "S %ld seq=%d pos=%d tok=%d N=%d o=%d %s %s src0=%s src1=%s ne=%lld,%lld,%lld,%lld %016llx\n",
++            s->step, s->seq[cc], s->pos[cc], s->tok[cc], N, o, ggml_op_desc(t), t->name,
++            t->src[0] ? t->src[0]->name : "-", t->src[1] ? t->src[1]->name : "-",
++            (long long) ne[0], (long long) ne[1], (long long) ne[2], (long long) ne[3], (unsigned long long) h);
++    }
++    return true;
++}
++static void bi_dump_begin(const llama_ubatch & ub, bool decoder) {
++    auto * s = bi_dump_get();
++    if (!s) return;
++    s->active = false;
++    if (!decoder || ub.n_seq_tokens != 1 || ub.n_tokens != ub.n_seqs || ub.n_tokens > 8 || s->budget_n[ub.n_tokens] <= 0) return;
++    s->seq.assign(ub.n_tokens, -1); s->pos.assign(ub.n_tokens, -1); s->tok.assign(ub.n_tokens, -1);
++    for (uint32_t i = 0; i < ub.n_tokens; ++i) {
++        s->seq[i] = ub.seq_id[i][0]; s->pos[i] = ub.pos[i]; s->tok[i] = ub.token ? ub.token[i] : -1;
++    }
++    s->occ.clear();
++    s->cur_layer = -1;
++    s->active = true;
++    s->budget_n[ub.n_tokens]--;
++}
++static void bi_dump_end() {
++    auto * s = bi_dump_get();
++    if (!s || !s->active) return;
++    s->active = false; s->step++;
++    fflush(s->f);
++}
++} // namespace
++
++bool llama_bi_dump_cb_ext(ggml_tensor * t, bool ask, void * ud) { return bi_dump_cb(t, ask, ud); }
++
+ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, llm_graph_type gtype, llama_memory_context_i * mctx, ggml_status & ret) {
+     if (mctx && !mctx->apply()) {
+         LLAMA_LOG_ERROR("%s: failed to apply memory context\n", __func__);
+@@ -1590,7 +1721,9 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
+         //LLAMA_LOG_INFO("graph set inputs time: %.3f ms\n", (ggml_time_us() - t_start_us)/1000.0);
+     }
+ 
++    bi_dump_begin(ubatch, gtype != LLM_GRAPH_TYPE_ENCODER && gtype != LLM_GRAPH_TYPE_DECODER_MTP);
+     const auto status = graph_compute(res->get_gf(), ubatch.n_tokens > 1);
++    bi_dump_end();
+     if (status != GGML_STATUS_SUCCESS) {
+         LLAMA_LOG_ERROR("%s: failed to compute graph, compute status: %d\n", __func__, status);
+         ret = status;

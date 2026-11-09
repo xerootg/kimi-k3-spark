@@ -1136,3 +1136,50 @@ the 16k request; aggregate = generated tokens / wall time; details in `docs/expe
 model's training length. Upstream caps every slot at `n_ctx_train` (1,048,576 for GLM-5.3-Flash) and rejects
 longer prompts; the startup warning still prints. For measuring retrieval and coherence past 1M (`docs/ideas.md`,
 "Past the 1M-token ceiling"); results in `docs/experiments.md`.
+
+## 0054-batch-invariant-decode
+
+`GGML_CUDA_BATCH_INVARIANT=1` (exact value, read once, inert when unset): every op on the decode path computes a
+token's bytes the same way whatever else shares the batch, so with `--parallel N` each client gets exactly the bytes it
+gets alone, at any batch composition, and still shares the weight reads of batched decode. The kernels keep a fixed
+reduction order; only kernel choices and work splits that followed the batch are pinned:
+
+- **Quantized matmuls (MMVQ).** Dense widths 1..4 use the 4-warp K partition (width 1 drops the GB10's small-K and
+  halve-iters variants, which partition K differently); wider batches run in chunks of at most four columns. Every
+  MUL_MAT_ID width, 1 included, runs the one-warp-per-token MoE kernel (width 1 used the 4-warp kernel before). The
+  dense matvec fusions (gate/up/GLU, bias) exist only for one column and are off; MUL_MAT_ID+GLU fusions stay (the
+  MoE kernel fuses at every width); the routed+shared expert fusion is off. The Hopper Q6_K streaming kernel is off.
+- **Float matmuls (F32 router `ffn_gate_inp`, `indexer.proj`).** The float vector kernel (its reduction depends on K
+  only) for every width up to 8; stock switches to MMF (TF32 tensor cores) at 4 columns, which is what made N=4
+  differ from N=2/3 in window ek.
+- **Attention.** Decode (one query per stream) always takes the sparse gather path, which visits only the stream's
+  selected cells in cell order (stock used it only when the batch's longest stream had >= 4096 cells, so a short
+  stream next to a long one changed kernels), and each output tile gets one block over its whole KV range (no
+  stream-K, whose seams move with the number of streams and the KV length).
+- **Top-k / argsort.** A total order: value, then lower index, +0 equal to -0, padding last. Rows that fit in shared
+  memory use the bitonic network with that tie-break, longer rows a stable segmented radix sort of canonical keys
+  (same permutation, capture-safe). Stock picked CUB DeviceTopK, bitonic or an atomic radix select by the number of
+  rows, with batch-dependent tie handling at the k-th score.
+- **Row reductions.** `SUM_ROWS` and `MEAN` take their block size from the row width only (stock used 512 threads
+  when there were fewer than two rows per SM, i.e. depending on the batch), and `MEAN` never takes the one-row CUB
+  path.
+
+Everything else on the GLM-5.3-Flash decode path was already batch-invariant (row-local norms, softmax, the
+lightning indexer, the gated delta net per stream, the routing top-k, the MoE weighted sum, the 0050 fusions, the
+expert-store split GEMV, whose rows come from the same kernel). Prefill is unchanged (prompts run alone with
+`LLAMA_PREFILL_ISOLATE=1`, 0035). Found by per-op dumps of one client alone and in batches (debug observer
+`docs/evidence/glm-windows-2026-10-30/bi/bi-dump.patch`, comparator `bicmp.py`).
+
+**Spark, GLM-5.3-Flash Q2, windows bi1-bi3 (2026-11-09):** production env and args plus `LLAMA_PREFILL_ISOLATE=1`,
+`--parallel 4 --ctx-size 4194304`; prompts p0-p3 (256 tokens) and the 16k request (128 tokens); details in
+`docs/experiments.md`.
+
+| Setup | N=1 (tok/s) | N=2 aggregate | N=3 aggregate | N=4 aggregate | bytes per client vs alone |
+|---|---|---|---|---|---|
+| `--parallel 4`, 0054 on | 15.1 (first request after start) | 20.3-20.9 | 23.2-23.3 | 23.8 | **equal**, every client, with and without the 16k request, two server processes |
+| `--parallel 4`, `LLAMA_SLOT_SERIAL=1` (0054 off) | 15.4 | 15.2 | - | 14.8 | equal (production gold) |
+| `--parallel 1`, 0054 on | 16.8 (warm) | - | - | - | same bytes as the 4-slot 0054 server |
+| `--parallel 4`, stock batched (window ek) | 16.2-16.5 | 20.8-21.3 | - | 24.1 | differ |
+
+New gold with the switch: p0 `3a7986622d`, p1 `bb5110ee45`, p2 `2866d894b9`, p3 `1aab74269d`, 16k request
+`145c14aa8b` (the same as production for that request). Production (switch unset) is unchanged.

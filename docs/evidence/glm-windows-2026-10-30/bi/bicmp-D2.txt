@@ -1,0 +1,80 @@
+N=1 reference columns: [(10, 2503), (11, 760), (12, 1527), (13, 263)]
+
+== step 4 seq 0 N=2 pos=10 tok=2503: aligned 2582/2624 ref, 2624 batch; same 2419 diff 43 shape 118; culprits 27
+   CULPRIT SUM_ROWS node_457 (node_456:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-4 (ffn_moe_gate-4:nd, ffn_moe_up-4:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-5 (ffn_moe_gate-5:nd, ffn_moe_up-5:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_1234 (node_1233:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-10 (ffn_moe_gate-10:nd, ffn_moe_up-10:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_2010 (node_2009:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-12 (ffn_moe_gate-12:nd, ffn_moe_up-12:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_2786 (node_2785:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-15 (ffn_moe_gate-15:nd, ffn_moe_up-15:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-17 (ffn_moe_gate-17:nd, ffn_moe_up-17:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_3562 (node_3561:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-19 (ffn_moe_gate-19:nd, ffn_moe_up-19:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-21 (ffn_moe_gate-21:nd, ffn_moe_up-21:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_4338 (node_4337:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-23 (ffn_moe_gate-23:nd, ffn_moe_up-23:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-25 (ffn_moe_gate-25:nd, ffn_moe_up-25:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-26 (ffn_moe_gate-26:nd, ffn_moe_up-26:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_5114 (node_5113:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-30 (ffn_moe_gate-30:nd, ffn_moe_up-30:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_5890 (node_5889:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-34 (ffn_moe_gate-34:nd, ffn_moe_up-34:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_6666 (node_6665:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-36 (ffn_moe_gate-36:nd, ffn_moe_up-36:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_7442 (node_7441:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-39 (ffn_moe_gate-39:nd, ffn_moe_up-39:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-40 (ffn_moe_gate-40:nd, ffn_moe_up-40:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_8218 (node_8217:nd, -:nd) ne=1,128,1,1
+   unaligned ref nodes (first 6): CONCAT node_569; CONCAT node_761; CONCAT node_953; CONCAT node_1145; CONCAT node_1345; CONCAT node_1537
+
+== step 8 seq 0 N=3 pos=10 tok=2503: aligned 2582/2624 ref, 2624 batch; same 2419 diff 43 shape 118; culprits 27
+   CULPRIT SUM_ROWS node_457 (node_456:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-4 (ffn_moe_gate-4:nd, ffn_moe_up-4:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-5 (ffn_moe_gate-5:nd, ffn_moe_up-5:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_1234 (node_1233:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-10 (ffn_moe_gate-10:nd, ffn_moe_up-10:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_2010 (node_2009:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-12 (ffn_moe_gate-12:nd, ffn_moe_up-12:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_2786 (node_2785:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-15 (ffn_moe_gate-15:nd, ffn_moe_up-15:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-17 (ffn_moe_gate-17:nd, ffn_moe_up-17:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_3562 (node_3561:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-19 (ffn_moe_gate-19:nd, ffn_moe_up-19:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-21 (ffn_moe_gate-21:nd, ffn_moe_up-21:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_4338 (node_4337:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-23 (ffn_moe_gate-23:nd, ffn_moe_up-23:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-25 (ffn_moe_gate-25:nd, ffn_moe_up-25:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-26 (ffn_moe_gate-26:nd, ffn_moe_up-26:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_5114 (node_5113:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-30 (ffn_moe_gate-30:nd, ffn_moe_up-30:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_5890 (node_5889:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-34 (ffn_moe_gate-34:nd, ffn_moe_up-34:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_6666 (node_6665:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-36 (ffn_moe_gate-36:nd, ffn_moe_up-36:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_7442 (node_7441:nd, -:nd) ne=1,128,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-39 (ffn_moe_gate-39:nd, ffn_moe_up-39:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-40 (ffn_moe_gate-40:nd, ffn_moe_up-40:nd) ne=2048,9,1,1
+   CULPRIT SUM_ROWS node_8218 (node_8217:nd, -:nd) ne=1,128,1,1
+   unaligned ref nodes (first 6): CONCAT node_569; CONCAT node_761; CONCAT node_953; CONCAT node_1145; CONCAT node_1345; CONCAT node_1537
+
+== step 12 seq 0 N=4 pos=10 tok=2503: aligned 2582/2624 ref, 2624 batch; same 2419 diff 32 shape 129; culprits 16
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-4 (ffn_moe_gate-4:nd, ffn_moe_up-4:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-5 (ffn_moe_gate-5:nd, ffn_moe_up-5:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-10 (ffn_moe_gate-10:nd, ffn_moe_up-10:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-12 (ffn_moe_gate-12:nd, ffn_moe_up-12:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-15 (ffn_moe_gate-15:nd, ffn_moe_up-15:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-17 (ffn_moe_gate-17:nd, ffn_moe_up-17:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-19 (ffn_moe_gate-19:nd, ffn_moe_up-19:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-21 (ffn_moe_gate-21:nd, ffn_moe_up-21:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-23 (ffn_moe_gate-23:nd, ffn_moe_up-23:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-25 (ffn_moe_gate-25:nd, ffn_moe_up-25:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-26 (ffn_moe_gate-26:nd, ffn_moe_up-26:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-30 (ffn_moe_gate-30:nd, ffn_moe_up-30:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-34 (ffn_moe_gate-34:nd, ffn_moe_up-34:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-36 (ffn_moe_gate-36:nd, ffn_moe_up-36:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-39 (ffn_moe_gate-39:nd, ffn_moe_up-39:nd) ne=2048,9,1,1
+   CULPRIT SWIGLU_CLAMP ffn_moe_swiglu_limited-40 (ffn_moe_gate-40:nd, ffn_moe_up-40:nd) ne=2048,9,1,1
+   unaligned ref nodes (first 6): CONCAT node_569; CONCAT node_761; CONCAT node_953; CONCAT node_1145; CONCAT node_1345; CONCAT node_1537

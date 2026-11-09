@@ -1,0 +1,38 @@
+=== LEG B1 parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1] 09:34:27
+READY B1 after 28s
+0.13.249.365 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (697.1 ms)
+0.13.249.420 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.255.258 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.8 ms)
+0.13.260.816 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.5 ms)
+0.13.266.331 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.5 ms)
+0.13.271.825 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.5 ms)
+0.13.875.521 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (513.2 ms)
+0.13.875.557 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.43, "prefill_tps": 23.32, "decode_n": 64, "decode_tps": 14.88, "md5": "0c114ee37c", "t0": 1794216896.3856194, "t1": 1794216901.0632448, "kind": "solo", "tag": "B1"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.7, "prefill_tps": 27.3, "decode_n": 64, "decode_tps": 15.26, "md5": "2c707f395c", "t0": 1794216901.063307, "t1": 1794216905.8875163, "kind": "solo", "tag": "B1"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.61, "prefill_tps": 29.52, "decode_n": 64, "decode_tps": 15.05, "md5": "0695479d24", "t0": 1794216905.8875725, "t1": 1794216910.6856935, "kind": "solo", "tag": "B1"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.78, "prefill_tps": 26.83, "decode_n": 64, "decode_tps": 14.35, "md5": "a1e2929898", "t0": 1794216910.685746, "t1": 1794216915.8596544, "kind": "solo", "tag": "B1"}
+{"kind": "multi", "tag": "B1", "n": 2, "round": "warm", "agg_tps": 18.87, "wall_s": 6.78, "gen": 128, "per_stream_tps": [9.85, 10.63], "md5": ["0c114ee37c", "2c707f395c"], "specs": ["p0", "p1"], "prefill_tps": [28.46, 40.76], "t0": 1794216915.8899257, "t1": 1794216922.6714396}
+{"kind": "multi", "tag": "B1", "n": 3, "round": "warm", "agg_tps": 16.41, "wall_s": 11.7, "gen": 192, "per_stream_tps": [5.57, 5.79, 6.02], "md5": ["0c114ee37c", "2c707f395c", "0695479d24"], "specs": ["p0", "p1", "p2"], "prefill_tps": [29.21, 43.4, 43.26], "t0": 1794216922.7041185, "t1": 1794216934.4048035}
+{"kind": "multi", "tag": "B1", "n": 4, "round": "warm", "agg_tps": 22.64, "wall_s": 11.31, "gen": 256, "per_stream_tps": [6.1, 6.38, 6.66, 5.91], "md5": ["0c114ee37c", "2c707f395c", "0695479d24", "a1e2929898"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [29.13, 42.67, 43.75, 35.77], "t0": 1794216934.436514, "t1": 1794216945.7415352}
+elastic lines: 10; refused: 0
+lowest MemAvailable 5253 MiB; now 121045 MiB; END B1 09:35:50
+BI-LEG-DONE B1 09:35:50
+=== LEG B1D parallel=4 ctx=4194304 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_BI_DUMP_N=1234 LLAMA_BI_DUMP_STEPS=3 LLAMA_BI_DUMP=/srv/glm-5.3-flash/legs-bi/dump-B1D.txt] 09:35:50
+READY B1D after 28s
+0.13.231.765 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 44.00 GiB of address space on one 2048 KiB zero chunk (720.5 ms)
+0.13.231.819 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 4 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.13.237.490 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.7 ms)
+0.13.242.653 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.2 ms)
+0.13.247.761 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.1 ms)
+0.13.252.813 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.0 ms)
+0.13.843.991 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 33.00 GiB of address space on one 2048 KiB zero chunk (509.9 ms)
+0.13.844.029 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 4 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.45, "prefill_tps": 22.24, "decode_n": 8, "decode_tps": 3.12, "md5": "fa288d4fe4", "t0": 1794216979.4914527, "t1": 1794216982.2026458, "kind": "solo", "tag": "B1D"}
+{"kind": "multi", "tag": "B1D", "n": 2, "round": "warm", "agg_tps": 3.17, "wall_s": 5.05, "gen": 16, "per_stream_tps": [1.49, 1.82], "md5": ["fa288d4fe4", "4084863d7f"], "specs": ["p0", "p1"], "prefill_tps": [31.17, 22.33], "t0": 1794216982.232065, "t1": 1794216987.2832432}
+{"kind": "multi", "tag": "B1D", "n": 3, "round": "warm", "agg_tps": 3.58, "wall_s": 6.7, "gen": 24, "per_stream_tps": [1.1, 1.17, 1.32], "md5": ["fa288d4fe4", "4084863d7f", "4b96bfa2b9"], "specs": ["p0", "p1", "p2"], "prefill_tps": [32.69, 52.54, 26.57], "t0": 1794216987.3142426, "t1": 1794216994.0125973}
+{"kind": "multi", "tag": "B1D", "n": 4, "round": "warm", "agg_tps": 3.63, "wall_s": 8.82, "gen": 32, "per_stream_tps": [0.83, 0.87, 0.91, 1.02], "md5": ["fa288d4fe4", "4084863d7f", "4b96bfa2b9", "d52da6cb57"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [32.58, 50.56, 51.48, 25.14], "t0": 1794216994.0441194, "t1": 1794217002.8673098}
+elastic lines: 10; refused: 0
+lowest MemAvailable 4983 MiB; now 120908 MiB; END B1D 09:36:47
+BI-LEG-DONE B1D 09:36:47
+BI-WIN2-DONE 09:36:47

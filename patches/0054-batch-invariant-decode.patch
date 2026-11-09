@@ -1,0 +1,406 @@
+diff --git a/ggml/src/ggml-cuda/argsort.cu b/ggml/src/ggml-cuda/argsort.cu
+index 101afeb..e6d93da 100644
+--- a/ggml/src/ggml-cuda/argsort.cu
++++ b/ggml/src/ggml-cuda/argsort.cu
+@@ -167,13 +167,41 @@ static inline __device__ void ggml_cuda_swap(T & a, T & b) {
+     b = tmp;
+ }
+ 
+-// One compare-exchange of the bitonic network at (k, j) for column col.
++// patch 0054: a total order for batch invariance. a goes before b when its value comes first in the sort order, or
++// when the values are equal (+0 and -0 included) and a has the lower index; padding columns go last. The sorted row is
++// then unique: it does not depend on the padded width, the algorithm or the number of rows sorted together.
+ template<ggml_sort_order order>
++static inline __device__ bool bitonic_before(const float * x_row, const int ncols, const int a, const int b) {
++    if (a >= ncols) {
++        return false;
++    }
++    if (b >= ncols) {
++        return true;
++    }
++    const float xa = x_row[a];
++    const float xb = x_row[b];
++    if (xa != xb) {
++        return order == GGML_SORT_ORDER_ASC ? xa < xb : xa > xb;
++    }
++    return a < b;
++}
++
++// One compare-exchange of the bitonic network at (k, j) for column col.
++template<ggml_sort_order order, bool tiebreak = false>
+ static inline __device__ void bitonic_step(const float * x_row, int * dst_row, const int ncols, const int col, const int k, const int j) {
+     const int ixj = col ^ j;
+     if (ixj <= col) {
+         return;
+     }
++    if constexpr (tiebreak) {
++        const bool swap = (col & k) == 0 ?
++            bitonic_before<order>(x_row, ncols, dst_row[ixj], dst_row[col]) :
++            bitonic_before<order>(x_row, ncols, dst_row[col], dst_row[ixj]);
++        if (swap) {
++            ggml_cuda_swap(dst_row[col], dst_row[ixj]);
++        }
++        return;
++    }
+     if ((col & k) == 0) {
+         if (dst_row[col] >= ncols ||
+             (dst_row[ixj] < ncols && (order == GGML_SORT_ORDER_ASC ?
+@@ -198,7 +226,7 @@ static inline __device__ void bitonic_step(const float * x_row, int * dst_row, c
+ // shared memory limit) sort with several columns per thread. Every
+ // (k, j) stage runs all owned columns before the barrier; a pair
+ // (col, col ^ j) is exchanged by the owner of its lower index only.
+-template<ggml_sort_order order>
++template<ggml_sort_order order, bool tiebreak = false>
+ static __global__ void k_argsort_f32_i32(const float * x, int * dst, const int ncols, int ncols_pad) {
+     const int row = blockIdx.x;
+ 
+@@ -215,7 +243,7 @@ static __global__ void k_argsort_f32_i32(const float * x, int * dst, const int n
+     for (int k = 2; k <= ncols_pad; k *= 2) {
+         for (int j = k / 2; j > 0; j /= 2) {
+             for (int col = threadIdx.x; col < ncols_pad; col += blockDim.x) {
+-                bitonic_step<order>(x_row, dst_row, ncols, col, k, j);
++                bitonic_step<order, tiebreak>(x_row, dst_row, ncols, col, k, j);
+             }
+             __syncthreads();
+         }
+@@ -264,6 +292,74 @@ void argsort_f32_i32_cuda_bitonic(const float *   x,
+     }
+ }
+ 
++#ifdef GGML_CUDA_USE_CUB
++static __global__ void k_argsort_canonical_keys(const float * x, float * keys, const int64_t n) {
++    const int64_t i = int64_t(blockIdx.x) * blockDim.x + threadIdx.x;
++    if (i < n) {
++        const float v = x[i];
++        keys[i] = v == 0.0f ? 0.0f : v; // -0 sorts with +0, as in bitonic_before
++    }
++}
++
++static __global__ void k_argsort_row_offsets(int * offsets, const int ncols, const int nrows) {
++    const int i = blockIdx.x * blockDim.x + threadIdx.x;
++    if (i <= nrows) {
++        offsets[i] = i * ncols;
++    }
++}
++#endif // GGML_CUDA_USE_CUB
++
++// patch 0054: argsort in the total order of bitonic_before. Rows that fit in shared memory use the bitonic network
++// with the index tie-break; longer rows a stable segmented radix sort of the keys with -0 folded into +0 (stable: equal
++// keys keep ascending index order). Both give the same permutation.
++void argsort_f32_i32_cuda_bi(ggml_cuda_pool & pool, const float * x, int * dst, const int ncols, const int nrows,
++                             ggml_sort_order order, cudaStream_t stream) {
++    const int    ncols_pad  = next_power_of_2(ncols);
++    const size_t shared_mem = ncols_pad * sizeof(int);
++    if (shared_mem <= ggml_cuda_info().devices[ggml_cuda_get_device()].smpb) {
++        const dim3 block_dims(ncols_pad < CUDA_ARGSORT_BLOCK_SIZE ? ncols_pad : CUDA_ARGSORT_BLOCK_SIZE, 1, 1);
++        const dim3 block_nums(nrows, 1, 1);
++        if (order == GGML_SORT_ORDER_ASC) {
++            k_argsort_f32_i32<GGML_SORT_ORDER_ASC, true><<<block_nums, block_dims, shared_mem, stream>>>(x, dst, ncols, ncols_pad);
++        } else {
++            k_argsort_f32_i32<GGML_SORT_ORDER_DESC, true><<<block_nums, block_dims, shared_mem, stream>>>(x, dst, ncols, ncols_pad);
++        }
++        return;
++    }
++#ifdef GGML_CUDA_USE_CUB
++    const int64_t n = int64_t(ncols) * nrows;
++    ggml_cuda_pool_alloc<int>   idx_alloc(pool, n);
++    ggml_cuda_pool_alloc<float> keys_alloc(pool, n);
++    ggml_cuda_pool_alloc<float> keys_out_alloc(pool, n);
++    ggml_cuda_pool_alloc<int>   offsets_alloc(pool, nrows + 1);
++    static const int block_size = 256;
++    init_indices<<<dim3((ncols + block_size - 1) / block_size, nrows), block_size, 0, stream>>>(idx_alloc.get(), ncols, nrows);
++    k_argsort_canonical_keys<<<(n + block_size - 1) / block_size, block_size, 0, stream>>>(x, keys_alloc.get(), n);
++    // offsets on the device: no host copy or synchronization, so the sort can be captured into a CUDA graph
++    k_argsort_row_offsets<<<(nrows + 1 + block_size - 1) / block_size, block_size, 0, stream>>>(offsets_alloc.get(), ncols, nrows);
++    const int * off = offsets_alloc.get();
++    size_t temp_bytes = 0;
++    if (order == GGML_SORT_ORDER_ASC) {
++        CUDA_CHECK(DeviceSegmentedRadixSort::SortPairs(nullptr, temp_bytes, keys_alloc.get(), keys_out_alloc.get(),
++            idx_alloc.get(), dst, n, nrows, off, off + 1, 0, sizeof(float) * 8, stream));
++    } else {
++        CUDA_CHECK(DeviceSegmentedRadixSort::SortPairsDescending(nullptr, temp_bytes, keys_alloc.get(), keys_out_alloc.get(),
++            idx_alloc.get(), dst, n, nrows, off, off + 1, 0, sizeof(float) * 8, stream));
++    }
++    ggml_cuda_pool_alloc<uint8_t> temp_alloc(pool, temp_bytes);
++    if (order == GGML_SORT_ORDER_ASC) {
++        CUDA_CHECK(DeviceSegmentedRadixSort::SortPairs(temp_alloc.get(), temp_bytes, keys_alloc.get(), keys_out_alloc.get(),
++            idx_alloc.get(), dst, n, nrows, off, off + 1, 0, sizeof(float) * 8, stream));
++    } else {
++        CUDA_CHECK(DeviceSegmentedRadixSort::SortPairsDescending(temp_alloc.get(), temp_bytes, keys_alloc.get(), keys_out_alloc.get(),
++            idx_alloc.get(), dst, n, nrows, off, off + 1, 0, sizeof(float) * 8, stream));
++    }
++#else
++    GGML_UNUSED(pool);
++    GGML_ABORT("batch-invariant argsort of rows wider than shared memory needs CUB");
++#endif // GGML_CUDA_USE_CUB
++}
++
+ void ggml_cuda_op_argsort(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+     const ggml_tensor * src0 = dst->src[0];
+     const float * src0_d = (const float *)src0->data;
+@@ -279,6 +375,17 @@ void ggml_cuda_op_argsort(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+ 
+     enum ggml_sort_order order = (enum ggml_sort_order) dst->op_params[0];
+ 
++    if (ggml_cuda_batch_invariant()) {
++        const int chunk_nrows = ggml_cuda_chunk_nrows(src0->nb[1], nrows);
++        for (int64_t i = 0; i < nrows; i += chunk_nrows) {
++            const int iter_nrows = std::min((int64_t) chunk_nrows, nrows - i);
++            argsort_f32_i32_cuda_bi(ctx.pool(), src0_d, (int *) dst_d, ncols, iter_nrows, order, stream);
++            src0_d += ncols * iter_nrows;
++            dst_d  += ncols * iter_nrows;
++        }
++        return;
++    }
++
+ #ifdef GGML_CUDA_USE_CUB
+     const int    ncols_pad      = next_power_of_2(ncols);
+     const size_t shared_mem     = ncols_pad * sizeof(int);
+diff --git a/ggml/src/ggml-cuda/argsort.cuh b/ggml/src/ggml-cuda/argsort.cuh
+index 86df5fd..d03b8e4 100644
+--- a/ggml/src/ggml-cuda/argsort.cuh
++++ b/ggml/src/ggml-cuda/argsort.cuh
+@@ -15,6 +15,8 @@ void argsort_f32_i32_cuda_cub(ggml_cuda_pool & pool,
+                               ggml_sort_order  order,
+                               cudaStream_t     stream);
+ #endif  // GGML_CUDA_USE_CUB
++void argsort_f32_i32_cuda_bi(ggml_cuda_pool & pool, const float * x, int * dst, const int ncols, const int nrows,
++                             ggml_sort_order order, cudaStream_t stream);
+ void argsort_f32_i32_cuda_bitonic(const float *   x,
+                                   int *           dst,
+                                   const int       ncols,
+diff --git a/ggml/src/ggml-cuda/common.cuh b/ggml/src/ggml-cuda/common.cuh
+index e5443b2..72f59d2 100644
+--- a/ggml/src/ggml-cuda/common.cuh
++++ b/ggml/src/ggml-cuda/common.cuh
+@@ -31,6 +31,18 @@
+ #include <unordered_map>
+ #include <utility>
+ #include <vector>
++#include <cstring>
++
++// kimi-k3-spark patch 0054: GGML_CUDA_BATCH_INVARIANT=1 (exact value, read once, inert when unset) makes every op on
++// the decode path compute each token's bytes the same way whatever else shares the batch: kernel choice and reduction
++// order no longer depend on the number of tokens/sequences in the ubatch or on the batch's longest KV stream.
++static inline bool ggml_cuda_batch_invariant() {
++    static const bool on = [] {
++        const char * e = getenv("GGML_CUDA_BATCH_INVARIANT");
++        return e != nullptr && strcmp(e, "1") == 0;
++    }();
++    return on;
++}
+ 
+ #if defined(GGML_USE_HIP)
+ #include "vendors/hip.h"
+diff --git a/ggml/src/ggml-cuda/fattn-common.cuh b/ggml/src/ggml-cuda/fattn-common.cuh
+index 41d9483..7e759da 100644
+--- a/ggml/src/ggml-cuda/fattn-common.cuh
++++ b/ggml/src/ggml-cuda/fattn-common.cuh
+@@ -1163,7 +1163,10 @@ void launch_fattn(
+         };
+ 
+         const int  max_blocks   = max_blocks_per_sm*nsm;
+-        const bool use_stream_k = should_use_stream_k(cc, ntiles_dst, max_blocks, Q->ne[0]);
++        // patch 0054: batch invariance. Decode (one query per stream) gives every output tile one block that walks the
++        // tile's whole KV range in order: stream-K seams move with the number of streams and the KV length.
++        const bool bi_decode    = ggml_cuda_batch_invariant() && Q->ne[1] == 1;
++        const bool use_stream_k = !bi_decode && should_use_stream_k(cc, ntiles_dst, max_blocks, Q->ne[0]);
+ 
+         blocks_num.x = ntiles_dst;
+         blocks_num.y = 1;
+diff --git a/ggml/src/ggml-cuda/fattn.cu b/ggml/src/ggml-cuda/fattn.cu
+index 1515572..3905bdf 100644
+--- a/ggml/src/ggml-cuda/fattn.cu
++++ b/ggml/src/ggml-cuda/fattn.cu
+@@ -144,10 +144,14 @@ bool ggml_cuda_flash_attn_ext_mma_f16_shall_use_sparse(const int cc, const ggml_
+     // the dense kernel handles up to 64/ncols2 queries per K/V pass, the single-query gather has to beat that
+     const int64_t n_gather = (ncols1 == 1 ? std::min<int64_t>(Q->ne[1], 64/ncols2) : ncols1) * (int64_t) n_kv_max;
+ 
++    // patch 0054: batch invariance. One query per stream (decode) always gathers: the dense kernel's choice and its
++    // KV tiling follow the batch's longest stream, the gather visits only this stream's selected cells in cell order.
++    const bool bi_decode = ggml_cuda_batch_invariant() && ncols1 == 1 && Q->ne[1] == 1;
++
+     return GGML_CUDA_CC_IS_NVIDIA(cc) && turing_mma_available(cc) &&
+         mask != nullptr && n_kv_max > 0 && max_bias == 0.0f && logit_softcap == 0.0f &&
+         mask->ne[0] == K->ne[1] && mask->ne[1] >= Q->ne[1] && mask->ne[2] == 1 &&
+-        K->ne[1] >= std::max<int64_t>(4096, 2*n_gather);
++        (bi_decode || K->ne[1] >= std::max<int64_t>(4096, 2*n_gather));
+ #endif // !defined(GGML_USE_HIP) && !defined(GGML_USE_MUSA)
+ }
+ 
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index d937b8a..988d361 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -3016,6 +3016,11 @@ static bool ggml_cuda_should_fuse_mul_mat_vec_f(const ggml_tensor * tensor) {
+         return ggml_cuda_should_fuse_mul_mat_vec_f(&one);
+     }
+ 
++    // patch 0054: the vector-kernel fusions only exist for one column, a batch computes the unfused ops
++    if (ggml_cuda_batch_invariant()) {
++        return false;
++    }
++
+     ggml_tensor *       src0 = tensor->src[0];
+     ggml_tensor *       src1 = tensor->src[1];
+     const ggml_tensor * dst  = tensor;
+@@ -3062,6 +3067,12 @@ static bool ggml_cuda_should_fuse_mul_mat_vec_q(const ggml_tensor * tensor) {
+         return ggml_cuda_should_fuse_mul_mat_vec_q(&one);
+     }
+ 
++    // patch 0054: dense (MUL_MAT) fusions only exist for one column; MUL_MAT_ID fusions run the per-token MoE kernel
++    // at every width and stay
++    if (ggml_cuda_batch_invariant() && tensor->op == GGML_OP_MUL_MAT) {
++        return false;
++    }
++
+     ggml_tensor *       src0 = tensor->src[0];
+     ggml_tensor *       src1 = tensor->src[1];
+     const ggml_tensor * dst  = tensor;
+@@ -3092,6 +3103,8 @@ static bool ggml_cuda_should_fuse_mul_mat_vec_q(const ggml_tensor * tensor) {
+ 
+ static bool ggml_cuda_match_shared_expert(const ggml_cgraph * graph, int routed_idx, int shared_idx) {
+     if (ggml_cuda_fusion_class_disabled(ggml_cuda_fusion_class::shared_expert)) { return false; }
++    // patch 0054: the shared expert computes as a plain dense matvec at every width
++    if (ggml_cuda_batch_invariant()) { return false; }
+     if (routed_idx + 2 >= graph->n_nodes || shared_idx + 2 >= graph->n_nodes || shared_idx < routed_idx + 3) {
+         return false;
+     }
+@@ -3255,6 +3268,14 @@ static void ggml_cuda_mul_mat(ggml_backend_cuda_context & ctx, const ggml_tensor
+     const int cc        = ggml_cuda_info().devices[ctx.device].cc;
+     const int warp_size = ggml_cuda_info().devices[ctx.device].warp_size;
+ 
++    // patch 0054: batch invariance. The float vector kernel's reduction depends on K only, keep every width up to
++    // MMVF_MAX_BATCH_SIZE on it instead of switching to MMF/cuBLAS (TF32 tensor cores) at 3-4 columns.
++    if (ggml_cuda_batch_invariant() && ne11 <= MMVF_MAX_BATCH_SIZE &&
++            ggml_cuda_should_use_mmvf(src0->type, cc, warp_size, src0->ne, src0->nb, 1)) {
++        ggml_cuda_mul_mat_vec_f(ctx, src0, src1, nullptr, dst);
++        return;
++    }
++
+     if (ggml_cuda_should_use_mmvf(src0->type, cc, warp_size, src0->ne, src0->nb, ne11)) {
+         // The custom F16 vector kernel can be used over batched cuBLAS GEMM.
+         // But this is only faster for GPUs without tensor cores or with a thin src0 matrix (particularly KQV in attention)
+diff --git a/ggml/src/ggml-cuda/mean.cu b/ggml/src/ggml-cuda/mean.cu
+index 64ad7e1..5a0b83a 100644
+--- a/ggml/src/ggml-cuda/mean.cu
++++ b/ggml/src/ggml-cuda/mean.cu
+@@ -29,7 +29,7 @@ void ggml_cuda_op_mean(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+     cudaStreamCaptureStatus iscapturing;
+     CUDA_CHECK(cudaStreamIsCapturing(stream, &iscapturing));
+ #endif // USE_CUDA_GRAPH
+-    if ((nrows == 1) &&
++    if ((nrows == 1) && !ggml_cuda_batch_invariant() &&
+ #ifdef USE_CUDA_GRAPH
+             // Determine if CUDA graphs are effectively disabled for this context
+             // (no graph instance exists and we're not capturing, OR graphs are explicitly enabled)
+@@ -66,7 +66,7 @@ void ggml_cuda_op_mean(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+     // Heuristic for block size selection to optimize occupancy.
+     // See discussion in: https://github.com/ggml-org/llama.cpp/pull/15132
+     dim3 block_dims;
+-    if ((nrows / nsm) < 2) {
++    if (!ggml_cuda_batch_invariant() && (nrows / nsm) < 2) { // patch 0054: block size from the row width only
+         block_dims = dim3(512, 1, 1);
+     } else {
+         block_dims = dim3(ncols < 1024 ? 32 : 128, 1, 1);
+diff --git a/ggml/src/ggml-cuda/mmvq.cu b/ggml/src/ggml-cuda/mmvq.cu
+index d0f1121..a478554 100644
+--- a/ggml/src/ggml-cuda/mmvq.cu
++++ b/ggml/src/ggml-cuda/mmvq.cu
+@@ -1489,7 +1489,23 @@ static void mul_mat_vec_q_switch_ncols_dst(
+         return idle * 8 <= iters_wide * 2;
+     };
+ 
+-    if (has_ids && ncols_dst > 1) {
++    // patch 0054: batch invariance. Every MUL_MAT_ID width (1 included) runs the one-warp-per-token MoE kernel, so a
++    // token's expert rows do not depend on how many tokens share the launch. Dense widths keep the 4-warp K partition
++    // of widths 1..4: wider batches run in chunks of at most four columns, and width 1 drops small-K and halve-iters.
++    const bool batch_invariant = ggml_cuda_batch_invariant();
++    if (batch_invariant && !has_ids && ncols_dst > 4) {
++        for (int c0 = 0; c0 < ncols_dst; c0 += 4) {
++            const int nc = std::min(4, ncols_dst - c0);
++            mul_mat_vec_q_switch_ncols_dst<type>(
++                vx, (const block_q8_1 *) vy + int64_t(c0) * stride_col_y, ids, fusion, dst + int64_t(c0) * stride_col_dst,
++                ncols_x, nrows_x, nc, stride_row_x, stride_col_y, stride_col_dst,
++                nchannels_x, nchannels_y, nchannels_dst, stride_channel_x, stride_channel_y, stride_channel_dst,
++                nsamples_x, nsamples_dst, stride_sample_x, stride_sample_y, stride_sample_dst, ids_stride, stream);
++        }
++        return;
++    }
++
++    if (has_ids && (ncols_dst > 1 || batch_invariant)) {
+         // Multi-token MUL_MAT_ID path - dedicated MoE kernel
+         mul_mat_vec_q_moe_launch<type>(
+             vx, vy, ids, fusion, dst, ncols_x, nchannels_y_fd, nrows_x,
+@@ -1523,9 +1539,9 @@ static void mul_mat_vec_q_switch_ncols_dst(
+                     stream);
+             };
+ 
+-            if (should_use_small_k(c_ncols_dst)) {
++            if (!batch_invariant && should_use_small_k(c_ncols_dst)) {
+                 launch(std::true_type{},  std::false_type{});
+-            } else if (should_halve_iters()) {
++            } else if (!batch_invariant && should_halve_iters()) {
+                 launch(std::false_type{}, std::true_type{});
+             } else {
+                 launch(std::false_type{}, std::false_type{});
+@@ -1621,7 +1637,7 @@ static bool mul_mat_vec_q6_K_tma_try(
+         const char * env = getenv("GGML_CUDA_MMVQ_Q6K_TMA");
+         return env == nullptr ? 1 : atoi(env);
+     }();
+-    if (mode == 0) {
++    if (mode == 0 || ggml_cuda_batch_invariant()) {
+         return false;
+     }
+     const int device = ggml_cuda_get_device();
+diff --git a/ggml/src/ggml-cuda/sumrows.cu b/ggml/src/ggml-cuda/sumrows.cu
+index c7f5290..877c64b 100644
+--- a/ggml/src/ggml-cuda/sumrows.cu
++++ b/ggml/src/ggml-cuda/sumrows.cu
+@@ -15,7 +15,8 @@ void sum_rows_f32_cuda(const float * x, float * dst, const int ncols, const int
+     const int  nsm = ggml_cuda_info().devices[id].nsm;
+     const dim3 block_nums(nrows, 1, 1);
+     // Keep the singleton reduction tree, including for strided rows.
+-    if ((nrows > 1 && sum_rows_exact_cols()) || (nrows / nsm) < 2) {
++    // patch 0054: batch invariance, the block size (and with it the reduction tree) depends on the row width only
++    if (!ggml_cuda_batch_invariant() && ((nrows > 1 && sum_rows_exact_cols()) || (nrows / nsm) < 2)) {
+         const dim3 block_dims(512, 1, 1);
+         const ggml_cuda_kernel_launch_params launch_params = ggml_cuda_kernel_launch_params(block_nums, block_dims, 0, stream);
+         ggml_cuda_kernel_launch(reduce_rows_f32</*norm=*/false>, launch_params, x, dst, ncols);
+@@ -50,7 +51,8 @@ void ggml_cuda_op_sum_rows(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+     const int nsm = ggml_cuda_info().devices[id].nsm;
+     dim3 block_dims;
+     // Keep the singleton reduction tree, including for strided rows.
+-    if ((nrows > 1 && sum_rows_exact_cols()) || (nrows / nsm) < 2) {
++    // patch 0054: batch invariance, the block size (and with it the reduction tree) depends on the row width only
++    if (!ggml_cuda_batch_invariant() && ((nrows > 1 && sum_rows_exact_cols()) || (nrows / nsm) < 2)) {
+         // Increase num threads to 512 for small nrows to better hide the latency
+         block_dims = dim3(512, 1, 1);
+     } else {
+diff --git a/ggml/src/ggml-cuda/top-k.cu b/ggml/src/ggml-cuda/top-k.cu
+index b0f6099..6f4c1b5 100644
+--- a/ggml/src/ggml-cuda/top-k.cu
++++ b/ggml/src/ggml-cuda/top-k.cu
+@@ -296,6 +296,22 @@ void ggml_cuda_op_top_k(ggml_backend_cuda_context & ctx, ggml_tensor * dst) {
+ 
+     const int device = ggml_cuda_get_device();
+ 
++    // patch 0054: batch invariance. The k first entries of the total-order argsort: the selected set (and its order)
++    // does not depend on the number of rows, the row width beyond the live entries or tie handling of a kernel.
++    if (ggml_cuda_batch_invariant()) {
++        const int64_t chunk_nrows = ggml_cuda_chunk_nrows((size_t) ncols * sizeof(int), nrows);
++        ggml_cuda_pool_alloc<int> tmp_alloc(pool, (size_t) ncols * chunk_nrows);
++        for (int64_t i = 0; i < nrows; i += chunk_nrows) {
++            const int iter_nrows = std::min(chunk_nrows, nrows - i);
++            argsort_f32_i32_cuda_bi(pool, src0_d, tmp_alloc.get(), ncols, iter_nrows, GGML_SORT_ORDER_DESC, stream);
++            CUDA_CHECK(cudaMemcpy2DAsync(dst_d, k * sizeof(int), tmp_alloc.get(), ncols * sizeof(int), k * sizeof(int), iter_nrows,
++                                         cudaMemcpyDeviceToDevice, stream));
++            src0_d += (size_t) ncols * iter_nrows;
++            dst_d  += (size_t) k     * iter_nrows;
++        }
++        return;
++    }
++
+ #ifdef CUB_TOP_K_AVAILABLE
+     // a single row always uses DeviceTopK if available
+     const bool bitonic_short    = nrows > 1 && ncols <= GGML_CUDA_TOP_K_NCOLS_THRESHOLD_BITONIC;
