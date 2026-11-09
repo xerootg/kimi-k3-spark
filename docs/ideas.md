@@ -24,6 +24,7 @@ measurement), **partly** (right direction, smaller payoff than hoped), **no** (n
 | 2026-11-08 | The Spark as the general local failover for the GH200 | sane | Juno done in argo-things #159; public endpoint and workbench next |
 | 2026-11-08 | Crack the 1M-token context ceiling | promising, works at 1.087M (needles found) | long real transcript; binbcast fix before 2.09M |
 | 2026-11-09 | The GH200 should serve several customers at once, quickly, without losing quality | sane (measured: five slots, bytes identical, 64-66 tok/s for five vs 44) | argo-things #169; BI attention split next |
+| 2026-11-09 | RDMA over Thunderbolt between the NUCs and the Spark (Hellas thunderbolt-ibverbs) | premise partly wrong | the Spark has no Thunderbolt; its RDMA path is the ConnectX-7, not visible on PCI today |
 
 ## NUC round trips (2026-11-06)
 
@@ -258,4 +259,27 @@ invariance: when the busy slots are not contiguous (0, 1, 2 and 4) llama.cpp ran
 alike; 0058 runs them in one pass. Against production #169: four clients 50 -> 69 tok/s, one client after 16k ~35 ->
 ~43 (stock single slot 41.6), a 100k prompt 647 -> 1422 tok/s with the KV in Grace, every client still byte-identical
 alone or batched. Verdict now: sane, and close to free (~2 % short single-stream left).
+
+## RDMA over Thunderbolt between the NUCs and the Spark (2026-11-09)
+
+Idea: Hellas' `thunderbolt-ibverbs` (https://blog.hellas.ai/blog/thunderbolt-ibverbs/, May 2026) exposes USB4/Thunderbolt
+ports as ibverbs devices: between two AMD Strix Halo boxes, ~7 us one-way 64-byte latency and ~48 Gb/s per direction
+over four rails (IOMMU off), against ~65 us for soft-RoCE over thunderbolt-net. Do the same between the NUCs and the Spark.
+
+Verdict: premise partly wrong, checked 2026-11-09:
+- The Spark has no Thunderbolt or USB4: `/sys/bus/thunderbolt/devices` is empty and its USB-C ports are USB 3.2
+  (roadmap 2c). A Thunderbolt cable cannot reach it, so this exact approach links NUC to NUC only.
+- The NUCs do have Thunderbolt 4 (nuc3 shows two Thunderbolt domains and is already linked to `nas` over one). But the
+  remote tier's traffic is Spark-to-NUC; NUC-to-NUC traffic is not on the critical path.
+- The Spark's own RDMA path is its ConnectX-7 (RoCE, a few us), with a ConnectX NIC in a Thunderbolt enclosure on a NUC
+  (roadmap 2c, "proper" option). Today no Mellanox PCI device (vendor 0x15b3) is visible on spark-3acd at all, although
+  mlx5_ib is loaded: check firmware/BIOS settings or the hardware before buying anything.
+- Payoff, from the ledger: the NUC tier adds +1.3-4 % at four to eight streams, and ~0.3-0.4 ms of each ~2 ms round trip
+  is transport. A few-us link removes most of that slice, so more expert rows fit the window; worth a few percent of
+  aggregate, more for models whose experts do not fit the Spark.
+- The Hellas code is experimental (their words: largely AI-generated, sharp edges), tested on AMD USB4 hosts; the page
+  links no repository. Intel Thunderbolt 4 controllers may behave differently.
+
+Next: find out why the ConnectX-7 is not enumerated on the Spark; if it can be brought up, RoCE to a NUC is the same idea
+on hardware made for it.
 
