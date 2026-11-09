@@ -24,7 +24,7 @@ measurement), **partly** (right direction, smaller payoff than hoped), **no** (n
 | 2026-11-08 | The Spark as the general local failover for the GH200 | sane | Juno done in argo-things #159; public endpoint and workbench next |
 | 2026-11-08 | Crack the 1M-token context ceiling | promising, works at 1.087M (needles found) | long real transcript; binbcast fix before 2.09M |
 | 2026-11-09 | The GH200 should serve several customers at once, quickly, without losing quality | sane (measured: five slots, bytes identical, 64-66 tok/s for five vs 44) | argo-things #169; BI attention split next |
-| 2026-11-09 | RDMA over Thunderbolt between the NUCs and the Spark (Hellas thunderbolt-ibverbs) | premise partly wrong | the Spark has no Thunderbolt; its RDMA path is the ConnectX-7, not visible on PCI today |
+| 2026-11-09 | RDMA over Thunderbolt between the NUCs and the Spark (Hellas thunderbolt-ibverbs) | premise partly wrong | the Spark has no Thunderbolt or USB device mode; USB gives bandwidth (10GbE adapter), the ConnectX-7 gives latency |
 
 ## NUC round trips (2026-11-06)
 
@@ -272,14 +272,28 @@ Verdict: premise partly wrong, checked 2026-11-09:
 - The NUCs do have Thunderbolt 4 (nuc3 shows two Thunderbolt domains and is already linked to `nas` over one). But the
   remote tier's traffic is Spark-to-NUC; NUC-to-NUC traffic is not on the critical path.
 - The Spark's own RDMA path is its ConnectX-7 (RoCE, a few us), with a ConnectX NIC in a Thunderbolt enclosure on a NUC
-  (roadmap 2c, "proper" option). Today no Mellanox PCI device (vendor 0x15b3) is visible on spark-3acd at all, although
-  mlx5_ib is loaded: check firmware/BIOS settings or the hardware before buying anything.
+  (roadmap 2c, "proper" option). No Mellanox PCI device shows today because the Spark powers the ConnectX-7 off while
+  nothing is plugged into its cages (Haley, 2026-11-09).
 - Payoff, from the ledger: the NUC tier adds +1.3-4 % at four to eight streams, and ~0.3-0.4 ms of each ~2 ms round trip
   is transport. A few-us link removes most of that slice, so more expert rows fit the window; worth a few percent of
   aggregate, more for models whose experts do not fit the Spark.
 - The Hellas code is experimental (their words: largely AI-generated, sharp edges), tested on AMD USB4 hosts; the page
   links no repository. Intel Thunderbolt 4 controllers may behave differently.
 
-Next: find out why the ConnectX-7 is not enumerated on the Spark; if it can be brought up, RoCE to a NUC is the same idea
-on hardware made for it.
+Follow-up (Haley, 2026-11-09): use USB 3.2/4 directly between hosts. Checked the same day:
+- The Spark's twelve USB buses are all xHCI host controllers (six at 20 Gb/s, USB 3.2 Gen 2x2) and it has no USB
+  device controller (`/sys/class/udc` empty), so it cannot act as a USB gadget (e.g. an NCM network device) for a NUC.
+  Two USB hosts cannot talk over a plain cable; something in between has to be the device.
+- USB4/Thunderbolt host-to-host networking (`thunderbolt-net`, already running on nuc3: interfaces thunderbolt0/1)
+  needs a USB4/Thunderbolt controller on both ends; the Spark has none.
+- What works over the Spark's USB: (a) a host-to-host bridge cable (Prolific PL27A1 class, Linux `plusb`), 5 Gb/s
+  signalling, USB bulk latency: no better than today's 2.5 GbE; (b) a USB 10GbE adapter on the Spark (Realtek RTL8159,
+  USB 3.2 Gen 2x2, `r8152` driver) cabled directly to a 10GbE port on a NUC (Thunderbolt 10GbE adapter or a second
+  RTL8159): ~4x the bandwidth of 2.5 GbE, latency about the same or slightly worse than PCIe Ethernet because of USB.
+  Soft-RoCE on top gives the verbs API but not the latency (Hellas measured 28-65 us for RXE).
+- So USB buys bandwidth (good for bulk: a NUC RAM byte tier, KV parking, model copies), not round-trip time, which is
+  what the expert tier pays per layer. For round trips the ConnectX-7 with a ConnectX NIC on the NUC is the path.
+
+Next: owner's call on hardware (USB 10GbE adapters for bandwidth, or a QSFP cable plus a ConnectX NIC in a Thunderbolt
+enclosure for latency).
 
