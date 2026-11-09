@@ -1,0 +1,433 @@
+=== LEG P1 parallel=1 ctx=1048576 img=547208dca250-g64500e2 extra=[] xargs=[] cache_ram=98304 11:59:59
+READY P1 after 42s
+0.10.992.610 I llama_kv_cache:      CUDA0 KV buffer size = 11264.00 MiB
+0.10.992.644 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.10.994.684 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (2.0 ms)
+0.11.002.685 I llama_kv_cache:      CUDA0 KV buffer size =  8448.00 MiB
+0.11.002.709 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.11.004.197 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (1.5 ms)
+0.41.337.194 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79485 MiB
+--- gold.py 2 12:00:43
+{"kind": "gold", "tag": "P1", "md5": "2a73cda2a3", "decode_tps": 41.97, "wall_s": 3.25}
+{"kind": "gold", "tag": "P1", "md5": "2a73cda2a3", "decode_tps": 45.31, "wall_s": 3.0}
+--- ekbench.py solo p0 p0 p0 L16384 12:00:49
+solo p0 10 58.02 46.45 9c146a59b5 
+solo p0 10 68.28 47.81 9c146a59b5 
+solo p0 10 72.31 49.68 9c146a59b5 
+solo L16384 16414 1629.61 41.41 145c14aa8b 
+PEAK GPU 79991 MiB, LOWEST MemAvailable 248584 MiB; END P1 12:01:21
+GBI-LEG-DONE P1 12:01:21
+=== LEG T1 parallel=5 ctx=5242880 img=547208dca250-g64500e2 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1] xargs=[] cache_ram=98304 12:01:22
+READY T1 after 42s
+0.11.515.647 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.11.515.695 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.11.988.754 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.11.988.780 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.11.990.760 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (2.0 ms)
+0.11.992.542 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (1.8 ms)
+0.11.994.267 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (1.7 ms)
+0.11.995.970 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (1.7 ms)
+0.11.997.648 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 1048576 cells, 220.0 MiB mapped in all streams (1.7 ms)
+GPU after load: 87749 MiB
+--- ekbench.py solo p0 p1 p2 p3 p4 L16384 12:02:07
+solo p0 10 33.4 35.48 8e312d7bdd 
+solo p1 19 68.09 37.45 03a690574e 
+solo p2 18 70.46 37.37 3dc71366a4 
+solo p3 21 71.72 39.05 263b1c6f5a 
+solo p4 21 81.1 38.72 e7851c4b56 
+solo L16384 16414 1592.67 35.36 145c14aa8b 
+--- ekbench.py multi p0 p1 --rounds 2 12:02:57
+multi n=2 r=warm agg=48.87 per=[25.17, 25.78] md5=['8e312d7bdd', '03a690574e'] specs=['p0', 'p1']
+multi n=2 r=1 agg=54.3 per=[27.63, 28.3] md5=['8e312d7bdd', '03a690574e'] specs=['p0', 'p1']
+multi n=2 r=2 agg=57.3 per=[29.16, 29.86] md5=['8e312d7bdd', '03a690574e'] specs=['p0', 'p1']
+--- ekbench.py multi p0 p1 p2 --rounds 2 12:03:26
+multi n=3 r=warm agg=60.03 per=[20.44, 20.77, 21.18] md5=['8e312d7bdd', '03a690574e', '3dc71366a4'] specs=['p0', 'p1', 'p2']
+multi n=3 r=1 agg=63.02 per=[21.3, 21.66, 22.06] md5=['8e312d7bdd', '03a690574e', '3dc71366a4'] specs=['p0', 'p1', 'p2']
+multi n=3 r=2 agg=63.48 per=[21.45, 21.83, 22.22] md5=['8e312d7bdd', '03a690574e', '3dc71366a4'] specs=['p0', 'p1', 'p2']
+--- ekbench.py multi p0 p1 p2 p3 --rounds 2 12:04:03
+multi n=4 r=warm agg=48.93 per=[12.39, 12.52, 12.64, 12.8] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a'] specs=['p0', 'p1', 'p2', 'p3']
+multi n=4 r=1 agg=50.13 per=[12.62, 12.75, 12.87, 13.03] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a'] specs=['p0', 'p1', 'p2', 'p3']
+multi n=4 r=2 agg=50.52 per=[12.72, 12.85, 12.97, 13.12] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a'] specs=['p0', 'p1', 'p2', 'p3']
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 12:05:04
+multi n=5 r=warm agg=64.22 per=[13.03, 13.17, 13.3, 13.62, 13.47] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=1 agg=65.24 per=[13.15, 13.29, 13.42, 13.75, 13.59] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=2 agg=65.7 per=[13.24, 13.39, 13.52, 13.85, 13.69] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+--- ekbench.py multi p0 L16384 --rounds 1 12:06:03
+multi n=2 r=warm agg=20.27 per=[13.67, 24.47] md5=['8e312d7bdd', '145c14aa8b'] specs=['p0', 'L16384']
+multi n=2 r=1 agg=20.68 per=[13.92, 25.88] md5=['8e312d7bdd', '145c14aa8b'] specs=['p0', 'L16384']
+--- ekbench.py multi p1 p2 p3 p4 L16384 --rounds 2 12:06:41
+multi n=5 r=warm agg=31.12 per=[11.28, 11.09, 10.9, 11.45, 8.99] md5=['03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56', '145c14aa8b'] specs=['p1', 'p2', 'p3', 'p4', 'L16384']
+multi n=5 r=1 agg=34.54 per=[11.5, 11.37, 11.24, 11.65, 9.71] md5=['03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56', '145c14aa8b'] specs=['p1', 'p2', 'p3', 'p4', 'L16384']
+multi n=5 r=2 agg=34.79 per=[11.59, 11.46, 11.33, 11.74, 9.78] md5=['03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56', '145c14aa8b'] specs=['p1', 'p2', 'p3', 'p4', 'L16384']
+--- ekbench.py multi p0 p1 p2 p3 L65536 --rounds 1 12:08:25
+multi n=5 r=warm agg=15.86 per=[3.56, 3.57, 3.54, 3.55, 9.04] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', '8acec1b966'] specs=['p0', 'p1', 'p2', 'p3', 'L65536']
+multi n=5 r=1 agg=16.14 per=[3.62, 3.64, 3.6, 3.61, 9.2] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', '8acec1b966'] specs=['p0', 'p1', 'p2', 'p3', 'L65536']
+--- ekbench.py solo p0 L16384 L65536 12:10:49
+solo p0 10 48.69 32.11 8e312d7bdd 
+solo L16384 16414 1581.72 29.92 145c14aa8b 
+solo L65536 65243 1436.79 29.54 8acec1b966 
+PEAK GPU 91563 MiB, LOWEST MemAvailable 229418 MiB; END T1 12:12:04
+GBI-LEG-DONE T1 12:12:04
+=== LEG T2 parallel=5 ctx=5242880 img=547208dca250-g64500e2 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1] xargs=[] cache_ram=98304 12:12:05
+READY T2 after 42s
+0.11.487.553 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.11.487.600 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.016.733 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.12.016.764 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.018.830 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (2.1 ms)
+0.12.020.773 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (1.9 ms)
+0.12.022.605 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (1.8 ms)
+0.12.024.459 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (1.8 ms)
+0.12.026.418 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 1048576 cells, 220.0 MiB mapped in all streams (1.9 ms)
+GPU after load: 87749 MiB
+--- ekbench.py solo p0 p1 p2 p3 p4 L16384 12:12:50
+solo p0 10 34.46 35.53 8e312d7bdd 
+solo p1 19 68.08 37.49 03a690574e 
+solo p2 18 70.71 37.95 3dc71366a4 
+solo p3 21 71.74 39.09 263b1c6f5a 
+solo p4 21 81.13 38.73 e7851c4b56 
+solo L16384 16414 1594.03 35.39 145c14aa8b 
+--- ekbench.py multi p0 p1 --rounds 2 12:13:39
+multi n=2 r=warm agg=48.89 per=[25.19, 25.79] md5=['8e312d7bdd', '03a690574e'] specs=['p0', 'p1']
+multi n=2 r=1 agg=54.38 per=[27.67, 28.34] md5=['8e312d7bdd', '03a690574e'] specs=['p0', 'p1']
+multi n=2 r=2 agg=53.42 per=[27.14, 28.3] md5=['8e312d7bdd', '03a690574e'] specs=['p0', 'p1']
+--- ekbench.py multi p0 p1 p2 --rounds 2 12:14:08
+multi n=3 r=warm agg=58.48 per=[20.64, 20.42, 20.09] md5=['8e312d7bdd', '03a690574e', '3dc71366a4'] specs=['p0', 'p1', 'p2']
+multi n=3 r=1 agg=61.48 per=[21.52, 21.27, 20.91] md5=['8e312d7bdd', '03a690574e', '3dc71366a4'] specs=['p0', 'p1', 'p2']
+multi n=3 r=2 agg=61.87 per=[21.66, 21.41, 21.03] md5=['8e312d7bdd', '03a690574e', '3dc71366a4'] specs=['p0', 'p1', 'p2']
+--- ekbench.py multi p0 p1 p2 p3 --rounds 2 12:14:46
+multi n=4 r=warm agg=47.95 per=[12.39, 12.3, 12.17, 12.54] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a'] specs=['p0', 'p1', 'p2', 'p3']
+multi n=4 r=1 agg=48.78 per=[12.53, 12.44, 12.32, 12.68] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a'] specs=['p0', 'p1', 'p2', 'p3']
+multi n=4 r=2 agg=49.2 per=[12.64, 12.55, 12.42, 12.78] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a'] specs=['p0', 'p1', 'p2', 'p3']
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 12:15:50
+multi n=5 r=warm agg=62.63 per=[12.96, 12.87, 12.74, 13.28, 13.13] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=1 agg=63.86 per=[13.14, 13.05, 12.91, 13.46, 13.3] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=2 agg=63.96 per=[13.16, 13.07, 12.93, 13.48, 13.32] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+--- ekbench.py multi p0 L16384 --rounds 1 12:16:50
+multi n=2 r=warm agg=17.72 per=[22.66, 15.81] md5=['8e312d7bdd', '145c14aa8b'] specs=['p0', 'L16384']
+multi n=2 r=1 agg=18.02 per=[23.31, 16.34] md5=['8e312d7bdd', '145c14aa8b'] specs=['p0', 'L16384']
+--- ekbench.py multi p1 p2 p3 p4 L16384 --rounds 2 12:17:33
+multi n=5 r=warm agg=39.47 per=[13.68, 13.84, 14.2, 14.02, 11.95] md5=['03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56', '145c14aa8b'] specs=['p1', 'p2', 'p3', 'p4', 'L16384']
+multi n=5 r=1 agg=40.23 per=[13.97, 14.13, 14.51, 14.32, 12.2] md5=['03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56', '145c14aa8b'] specs=['p1', 'p2', 'p3', 'p4', 'L16384']
+multi n=5 r=2 agg=40.44 per=[14.08, 14.25, 14.64, 14.44, 12.3] md5=['03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56', '145c14aa8b'] specs=['p1', 'p2', 'p3', 'p4', 'L16384']
+--- ekbench.py multi p0 p1 p2 p3 L65536 --rounds 1 12:19:00
+multi n=5 r=warm agg=14.73 per=[3.31, 3.3, 3.29, 9.04, 8.7] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', '8acec1b966'] specs=['p0', 'p1', 'p2', 'p3', 'L65536']
+multi n=5 r=1 agg=15.46 per=[3.47, 3.46, 3.44, 9.14, 8.96] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', '8acec1b966'] specs=['p0', 'p1', 'p2', 'p3', 'L65536']
+--- ekbench.py solo p0 L16384 L65536 12:21:32
+solo p0 10 48.3 31.92 8e312d7bdd 
+solo L16384 16414 1580.92 30.03 145c14aa8b 
+solo L65536 65243 1437.44 29.79 8acec1b966 
+PEAK GPU 88716 MiB, LOWEST MemAvailable 229422 MiB; END T2 12:22:48
+GBI-LEG-DONE T2 12:22:48
+=== LEG S1 parallel=5 ctx=5242880 img=547208dca250-g64500e2 extra=[LLAMA_PREFILL_ISOLATE=1 LLAMA_SLOT_SERIAL=1] xargs=[] cache_ram=98304 12:22:49
+READY S1 after 45s
+0.11.758.975 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.11.759.023 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.293.871 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.12.293.896 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.296.026 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (2.1 ms)
+0.12.297.931 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (1.9 ms)
+0.12.299.848 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (1.9 ms)
+0.12.301.722 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (1.9 ms)
+0.12.303.589 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 1048576 cells, 220.0 MiB mapped in all streams (1.9 ms)
+GPU after load: 87751 MiB
+--- ekbench.py solo p0 p0 12:23:35
+solo p0 10 33.28 39.5 9c146a59b5 
+solo p0 10 54.8 44.91 9c146a59b5 
+--- ekbench.py multi p0 p1 --rounds 1 12:23:48
+multi n=2 r=warm agg=43.03 per=[46.49, 43.1] md5=['9c146a59b5', 'f3f0beae3b'] specs=['p0', 'p1']
+multi n=2 r=1 agg=46.0 per=[48.12, 47.08] md5=['9c146a59b5', 'f3f0beae3b'] specs=['p0', 'p1']
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 12:24:11
+multi n=5 r=warm agg=43.33 per=[46.59, 46.94, 43.81, 43.28, 45.46] md5=['9c146a59b5', 'f3f0beae3b', 'e766352264', '22c05700c7', '68b1b7c3b3'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=1 agg=44.14 per=[46.96, 45.71, 44.31, 45.2, 47.78] md5=['9c146a59b5', 'f3f0beae3b', 'e766352264', '22c05700c7', '68b1b7c3b3'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=2 agg=44.46 per=[45.4, 46.83, 46.27, 45.06, 47.34] md5=['9c146a59b5', 'f3f0beae3b', 'e766352264', '22c05700c7', '68b1b7c3b3'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+PEAK GPU 88903 MiB, LOWEST MemAvailable 228343 MiB; END S1 12:25:41
+GBI-LEG-DONE S1 12:25:41
+=== LEG B1 parallel=5 ctx=5242880 img=547208dca250-g64500e2 extra=[LLAMA_PREFILL_ISOLATE=1] xargs=[] cache_ram=98304 12:25:43
+READY B1 after 45s
+0.11.733.075 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.11.733.124 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.251.963 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.12.251.991 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.254.067 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (2.0 ms)
+0.12.255.960 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (1.9 ms)
+0.12.257.827 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (1.9 ms)
+0.12.259.702 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (1.9 ms)
+0.12.261.581 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 1048576 cells, 220.0 MiB mapped in all streams (1.9 ms)
+GPU after load: 87745 MiB
+--- ekbench.py solo p0 p0 12:26:28
+solo p0 10 33.51 39.61 9c146a59b5 
+solo p0 10 54.72 44.99 9c146a59b5 
+--- ekbench.py multi p0 p1 --rounds 2 12:26:41
+multi n=2 r=warm agg=51.23 per=[26.11, 26.87] md5=['cfa172cb78', 'bb6d595013'] specs=['p0', 'p1']
+multi n=2 r=1 agg=57.68 per=[29.46, 30.25] md5=['cfa172cb78', 'bb6d595013'] specs=['p0', 'p1']
+multi n=2 r=2 agg=60.41 per=[30.67, 31.49] md5=['cfa172cb78', 'bb6d595013'] specs=['p0', 'p1']
+--- ekbench.py multi p0 p1 p2 --rounds 1 12:27:08
+multi n=3 r=warm agg=61.56 per=[21.69, 21.44, 21.07] md5=['cfa172cb78', 'bb6d595013', 'b11311360e'] specs=['p0', 'p1', 'p2']
+multi n=3 r=1 agg=65.09 per=[22.83, 22.56, 22.16] md5=['cfa172cb78', 'bb6d595013', 'b11311360e'] specs=['p0', 'p1', 'p2']
+--- ekbench.py multi p0 p1 p2 p3 --rounds 1 12:27:33
+multi n=4 r=warm agg=61.24 per=[15.93, 15.8, 15.6, 16.21] md5=['0c905782a9', '04ec14396d', '397461b747', 'bfb210bba7'] specs=['p0', 'p1', 'p2', 'p3']
+multi n=4 r=1 agg=65.0 per=[16.96, 16.81, 16.58, 17.24] md5=['0c905782a9', '04ec14396d', '397461b747', 'bfb210bba7'] specs=['p0', 'p1', 'p2', 'p3']
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 12:28:05
+multi n=5 r=warm agg=64.51 per=[13.37, 13.27, 13.13, 13.54, 13.72] md5=['df16bbdebe', 'f83b86aba6', '134263626d', '0fae5984b7', '630eb8dbdd'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=1 agg=65.89 per=[13.67, 13.58, 13.43, 13.85, 14.03] md5=['df16bbdebe', 'f83b86aba6', '134263626d', '0fae5984b7', '630eb8dbdd'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=2 agg=67.39 per=[13.89, 13.79, 13.64, 14.07, 14.26] md5=['df16bbdebe', 'f83b86aba6', '134263626d', '0fae5984b7', '630eb8dbdd'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+PEAK GPU 87879 MiB, LOWEST MemAvailable 227008 MiB; END B1 12:29:07
+GBI-LEG-DONE B1 12:29:07
+=== LEG Q0 parallel=5 ctx=5242880 img=547208dca250-g64500e2 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_CLIENT_CLASSES=/keys/classes.txt LLAMA_SLOT_RESERVE=1 ] xargs=[] cache_ram=98304 12:29:08
+READY Q0 after 42s
+0.00.310.747 I srv  server_clien: client classes: 5 keys loaded, top priority 10 (keys not logged)
+0.11.533.657 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.11.533.703 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.052.906 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.12.052.932 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.054.987 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (2.0 ms)
+0.12.056.892 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (1.9 ms)
+0.12.058.819 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (1.9 ms)
+0.12.060.703 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (1.9 ms)
+GPU after load: 87750 MiB
+--- prio_gh.py warm --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 12:29:54
+prio warm      warm  p0     send=0.0 ttft=0.308 wall=7.45 dec=35.71 pn=10 md5=8e312d7bdd 
+prio warm      warm  p0     send=7.45 ttft=0.216 wall=6.38 dec=41.37 pn=10 md5=8e312d7bdd 
+prio warm      warm  p0     send=13.83 ttft=0.158 wall=6.05 dec=43.28 pn=10 md5=8e312d7bdd 
+--- prio_gh.py ttft4 --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 12:30:13
+prio ttft4     low   p2     send=0.0 ttft=0.965 wall=22.02 dec=12.11 pn=18 md5=3dc71366a4 
+prio ttft4     low   p4     send=0.0 ttft=0.451 wall=22.02 dec=11.82 pn=21 md5=e7851c4b56 
+prio ttft4     low   p3     send=0.0 ttft=0.712 wall=22.02 dec=11.97 pn=21 md5=263b1c6f5a 
+prio ttft4     low   p1     send=0.0 ttft=1.212 wall=22.02 dec=12.25 pn=19 md5=03a690574e 
+prio ttft4     juno  p0     send=4.0 ttft=0.186 wall=19.0 dec=13.55 pn=10 md5=8e312d7bdd 
+--- prio_gh.py ttft4 --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 12:30:36
+prio ttft4     low   p2     send=0.0 ttft=0.736 wall=19.71 dec=13.44 pn=18 md5=3dc71366a4 
+prio ttft4     low   p4     send=0.0 ttft=0.965 wall=19.71 dec=13.6 pn=21 md5=e7851c4b56 
+prio ttft4     low   p3     send=0.0 ttft=1.195 wall=19.71 dec=13.77 pn=21 md5=263b1c6f5a 
+prio ttft4     low   p1     send=0.0 ttft=0.523 wall=19.71 dec=13.29 pn=19 md5=03a690574e 
+prio ttft4     juno  p0     send=4.0 ttft=0.154 wall=16.92 dec=15.21 pn=10 md5=8e312d7bdd 
+--- prio_gh.py prefill --classes /srv/glm-5.3-flash/gbi/keys/classes.txt --delay 10 12:30:57
+prio prefill   low   L65536 send=0.01 ttft=48.619 wall=58.73 dec=12.57 pn=65243 md5=8acec1b966 
+prio prefill   juno  p0     send=10.01 ttft=0.242 wall=52.71 dec=4.86 pn=10 md5=8e312d7bdd 
+--- prio_gh.py mixed --classes /srv/glm-5.3-flash/gbi/keys/classes.txt --delay 10 12:32:00
+prio mixed     low   p3     send=0.0 ttft=0.936 wall=71.67 dec=3.6 pn=21 md5=263b1c6f5a 
+prio mixed     low   p1     send=0.0 ttft=1.241 wall=71.67 dec=3.62 pn=19 md5=03a690574e 
+prio mixed     low   p2     send=0.0 ttft=0.601 wall=71.67 dec=3.59 pn=18 md5=3dc71366a4 
+prio mixed     low   L65536 send=0.51 ttft=46.223 wall=60.11 dec=9.15 pn=65243 md5=8acec1b966 
+prio mixed     juno  p0     send=10.0 ttft=1.455 wall=61.67 dec=4.23 pn=10 md5=8e312d7bdd 
+--- prio_gh.py junofirst --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 12:33:12
+prio junofirst juno  p0     send=0.0 ttft=0.254 wall=25.88 dec=9.95 pn=10 md5=8e312d7bdd 
+prio junofirst low   p4     send=1.0 ttft=0.992 wall=27.84 dec=9.5 pn=21 md5=e7851c4b56 
+prio junofirst low   p3     send=1.0 ttft=0.672 wall=27.84 dec=9.38 pn=21 md5=263b1c6f5a 
+prio junofirst low   p2     send=1.0 ttft=0.356 wall=27.84 dec=9.28 pn=18 md5=3dc71366a4 
+prio junofirst low   p1     send=1.0 ttft=25.181 wall=34.6 dec=27.08 pn=19 md5=03a690574e 
+--- prio_gh.py nokey --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 12:33:48
+prio nokey     nokey p0     send=0.0 ttft=None wall=None dec=None pn=None md5=None 401
+PEAK GPU 89189 MiB, LOWEST MemAvailable 229304 MiB; END Q0 12:33:51
+GBI-LEG-DONE Q0 12:33:51
+=== LEG Q1 parallel=5 ctx=5242880 img=547208dca250-g64500e2 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_CLIENT_CLASSES=/keys/classes.txt LLAMA_SLOT_RESERVE=1 LLAMA_PRIORITY_HOLD_PROMPTS=1] xargs=[] cache_ram=98304 12:33
+READY Q1 after 45s
+0.00.296.790 I srv  server_clien: client classes: 5 keys loaded, top priority 10 (keys not logged)
+0.11.655.285 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.11.655.333 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.176.611 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.12.176.659 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.178.746 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (2.1 ms)
+0.12.180.644 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (1.9 ms)
+0.12.182.548 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (1.9 ms)
+0.12.184.381 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (1.8 ms)
+GPU after load: 87747 MiB
+--- prio_gh.py warm --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 12:34:38
+prio warm      warm  p0     send=0.0 ttft=0.301 wall=7.4 dec=35.92 pn=10 md5=8e312d7bdd 
+prio warm      warm  p0     send=7.4 ttft=0.215 wall=6.35 dec=41.53 pn=10 md5=8e312d7bdd 
+prio warm      warm  p0     send=13.76 ttft=0.157 wall=6.02 dec=43.46 pn=10 md5=8e312d7bdd 
+--- prio_gh.py ttft4 --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 12:34:58
+prio ttft4     low   p2     send=0.0 ttft=1.221 wall=21.97 dec=12.29 pn=18 md5=3dc71366a4 
+prio ttft4     low   p4     send=0.0 ttft=0.461 wall=21.97 dec=11.85 pn=21 md5=e7851c4b56 
+prio ttft4     low   p3     send=0.0 ttft=0.721 wall=21.97 dec=12.0 pn=21 md5=263b1c6f5a 
+prio ttft4     low   p1     send=0.0 ttft=0.968 wall=21.97 dec=12.14 pn=19 md5=03a690574e 
+prio ttft4     juno  p0     send=4.0 ttft=0.187 wall=18.95 dec=13.59 pn=10 md5=8e312d7bdd 
+--- prio_gh.py ttft4 --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 12:35:21
+prio ttft4     low   p2     send=0.0 ttft=0.518 wall=19.64 dec=13.34 pn=18 md5=3dc71366a4 
+prio ttft4     low   p4     send=0.0 ttft=0.958 wall=19.64 dec=13.65 pn=21 md5=e7851c4b56 
+prio ttft4     low   p3     send=0.0 ttft=1.188 wall=19.64 dec=13.82 pn=21 md5=263b1c6f5a 
+prio ttft4     low   p1     send=0.0 ttft=0.732 wall=19.64 dec=13.49 pn=19 md5=03a690574e 
+prio ttft4     juno  p0     send=4.0 ttft=0.135 wall=16.85 dec=15.26 pn=10 md5=8e312d7bdd 
+--- prio_gh.py prefill --classes /srv/glm-5.3-flash/gbi/keys/classes.txt --delay 10 12:35:42
+prio prefill   low   L65536 send=0.01 ttft=54.698 wall=59.23 dec=28.03 pn=65243 md5=8acec1b966 
+prio prefill   juno  p0     send=10.01 ttft=0.477 wall=6.84 dec=40.1 pn=10 md5=8e312d7bdd 
+--- prio_gh.py mixed --classes /srv/glm-5.3-flash/gbi/keys/classes.txt --delay 10 12:36:41
+prio mixed     low   p3     send=0.0 ttft=0.886 wall=33.29 dec=7.87 pn=21 md5=263b1c6f5a 
+prio mixed     low   p1     send=0.0 ttft=1.294 wall=33.29 dec=7.97 pn=19 md5=03a690574e 
+prio mixed     low   p2     send=0.0 ttft=1.633 wall=33.29 dec=8.05 pn=18 md5=3dc71366a4 
+prio mixed     low   L65536 send=0.51 ttft=68.233 wall=72.61 dec=29.02 pn=65243 md5=8acec1b966 
+prio mixed     juno  p0     send=10.0 ttft=1.919 wall=23.29 dec=11.93 pn=10 md5=8e312d7bdd 
+--- prio_gh.py junofirst --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 12:37:54
+prio junofirst juno  p0     send=0.0 ttft=0.252 wall=7.95 dec=33.11 pn=10 md5=8e312d7bdd 
+prio junofirst low   p4     send=1.0 ttft=8.183 wall=34.76 dec=9.6 pn=21 md5=e7851c4b56 
+prio junofirst low   p3     send=1.0 ttft=7.864 wall=34.76 dec=9.48 pn=21 md5=263b1c6f5a 
+prio junofirst low   p1     send=1.0 ttft=7.55 wall=34.76 dec=9.37 pn=19 md5=03a690574e 
+prio junofirst low   p2     send=1.0 ttft=7.253 wall=34.76 dec=9.27 pn=18 md5=3dc71366a4 
+--- prio_gh.py nokey --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 12:38:30
+prio nokey     nokey p0     send=0.0 ttft=None wall=None dec=None pn=None md5=None 401
+PEAK GPU 91560 MiB, LOWEST MemAvailable 229285 MiB; END Q1 12:38:33
+GBI-LEG-DONE Q1 12:38:33
+=== LEG H parallel=5 ctx=5242880 img=547208dca250-g64500e2 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1] xargs=[] cache_ram=32768 12:38:35
+READY H after 45s
+0.11.652.078 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.11.652.125 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.177.277 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.12.177.304 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.179.343 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (2.0 ms)
+0.12.181.266 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (1.9 ms)
+0.12.183.166 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (1.9 ms)
+0.12.185.000 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (1.8 ms)
+0.12.186.763 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 1048576 cells, 220.0 MiB mapped in all streams (1.7 ms)
+GPU after load: 87754 MiB
+--- bench.py depth --lens 16384,100000,500000 --n-predict 128 12:39:20
+{"kind": "depth", "tag": "H", "target": 16384, "prompt_n": 16414, "prefill_tps": 1522.23, "prefill_s": 10.78, "decode_n": 128, "decode_tps": 32.6, "md5": "145c14aa8b"}
+{"kind": "depth", "tag": "H", "target": 100000, "prompt_n": 99676, "prefill_tps": 1325.42, "prefill_s": 75.2, "decode_n": 128, "decode_tps": 28.06, "md5": "145c14aa8b"}
+{"kind": "depth", "tag": "H", "target": 500000, "prompt_n": 499595, "prefill_tps": 805.93, "prefill_s": 619.9, "decode_n": 128, "decode_tps": 21.67, "md5": "145c14aa8b"}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 1 12:51:21
+multi n=5 r=warm agg=39.38 per=[8.58, 8.41, 8.32, 8.23, 8.51] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=1 agg=42.9 per=[9.06, 8.89, 8.79, 8.71, 8.99] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+PEAK GPU 93569 MiB, LOWEST MemAvailable 231517 MiB; END H 12:52:27
+GBI-LEG-DONE H 12:52:27
+=== LEG G parallel=5 ctx=5242880 img=547208dca250-g64500e2 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1] xargs=[] cache_ram=32768 12:52:27
+READY G after 42s
+0.10.967.752 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.101.751 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.101.790 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.101.792 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.296.907 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.152.250 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.152.279 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.152.281 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.43.953.607 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 87963 MiB
+--- bench.py depth --lens 16384,100000,500000 --n-predict 128 12:53:12
+{"kind": "depth", "tag": "G", "target": 16384, "prompt_n": 16414, "prefill_tps": 986.72, "prefill_s": 16.63, "decode_n": 128, "decode_tps": 32.38, "md5": "145c14aa8b"}
+{"kind": "depth", "tag": "G", "target": 100000, "prompt_n": 99676, "prefill_tps": 645.43, "prefill_s": 154.43, "decode_n": 128, "decode_tps": 33.76, "md5": "145c14aa8b"}
+{"kind": "depth", "tag": "G", "target": 500000, "prompt_n": 499595, "prefill_tps": 475.77, "prefill_s": 1050.07, "decode_n": 128, "decode_tps": 24.0, "md5": "145c14aa8b"}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 13:13:47
+multi n=5 r=warm agg=45.48 per=[9.87, 9.79, 10.12, 9.67, 10.0] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=1 agg=55.14 per=[11.44, 11.35, 11.7, 11.23, 11.58] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=2 agg=57.87 per=[11.93, 11.85, 12.2, 11.71, 12.07] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+PEAK GPU 91007 MiB, LOWEST MemAvailable 134130 MiB; END G 13:15:02
+GBI-LEG-DONE G 13:15:02
+=== LEG P0 parallel=1 ctx=1048576 img=547208dca250-g64500e2 extra=[GGML_CUDA_BATCH_INVARIANT=1] xargs=[] cache_ram=98304 13:15:03
+READY P0 after 39s
+0.10.849.620 I llama_kv_cache:      CUDA0 KV buffer size = 11264.00 MiB
+0.10.849.652 I llama_kv_cache: elastic KV: 1 buffer(s), 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.10.851.697 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 66.0 MiB mapped (2.0 ms)
+0.10.859.365 I llama_kv_cache:      CUDA0 KV buffer size =  8448.00 MiB
+0.10.859.390 I llama_kv_cache: elastic KV: 1 buffer(s), 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.10.860.850 I elastic_fit: elastic KV (init): 0 -> 4352 of 1048576 cells, 44.0 MiB mapped (1.5 ms)
+0.40.564.806 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79492 MiB
+--- gold.py 2 13:15:44
+{"kind": "gold", "tag": "P0", "md5": "bc32ecab82", "decode_tps": 38.74, "wall_s": 3.49}
+{"kind": "gold", "tag": "P0", "md5": "bc32ecab82", "decode_tps": 42.43, "wall_s": 3.18}
+--- ekbench.py solo p0 p0 p0 L16384 13:15:50
+solo p0 10 60.21 44.06 8e312d7bdd 
+solo p0 10 72.95 45.96 8e312d7bdd 
+solo p0 10 78.89 47.85 8e312d7bdd 
+solo L16384 16414 1625.96 34.6 145c14aa8b 
+PEAK GPU 79994 MiB, LOWEST MemAvailable 248771 MiB; END P0 13:16:23
+GBI-LEG-DONE P0 13:16:23
+legs/server-B1.log no key in log
+legs/server-G.log no key in log
+legs/server-H.log no key in log
+legs/server-P0.log no key in log
+legs/server-P1-fail1.log no key in log
+legs/server-P1.log no key in log
+legs/server-Q0.log no key in log
+legs/server-Q1.log no key in log
+legs/server-S1.log no key in log
+legs/server-T1.log no key in log
+legs/server-T2.log no key in log
+no test server left
+GBI-WIN-DONE 13:16:24
+=== LEG R0 parallel=5 ctx=5242880 img=547208dca250-g64500e2 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_OP_PROFILE=16] xargs=[] cache_ram=98304 13:17:06
+READY R0 after 42s
+0.11.534.897 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.11.534.946 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.061.544 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.12.061.572 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.12.063.637 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (2.1 ms)
+0.12.065.534 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (1.9 ms)
+0.12.067.466 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (1.9 ms)
+0.12.069.315 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (1.8 ms)
+0.12.071.148 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 1048576 cells, 220.0 MiB mapped in all streams (1.8 ms)
+GPU after load: 87749 MiB
+--- ekbench.py solo p0 p0 p0 13:17:51
+solo p0 10 32.68 23.59 9c146a59b5 
+solo p0 10 50.36 25.38 9c146a59b5 
+solo p0 10 53.54 26.01 9c146a59b5 
+--- ekbench.py multi p0 p1 p2 p3 --rounds 1 13:18:22
+multi n=4 r=warm agg=47.09 per=[12.06, 12.22, 11.96, 12.41] md5=['0c905782a9', '04ec14396d', '397461b747', 'bfb210bba7'] specs=['p0', 'p1', 'p2', 'p3']
+multi n=4 r=1 agg=51.27 per=[13.15, 13.32, 13.04, 13.5] md5=['0c905782a9', '04ec14396d', '397461b747', 'bfb210bba7'] specs=['p0', 'p1', 'p2', 'p3']
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 1 13:19:04
+multi n=5 r=warm agg=54.57 per=[11.16, 11.28, 11.08, 11.41, 11.56] md5=['c55e7001be', 'f83b86aba6', '134263626d', '0fae5984b7', '630eb8dbdd'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=1 agg=55.95 per=[11.46, 11.58, 11.37, 11.72, 11.86] md5=['c55e7001be', 'f83b86aba6', '134263626d', '0fae5984b7', '630eb8dbdd'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+PEAK GPU 87859 MiB, LOWEST MemAvailable 228003 MiB; END R0 13:19:53
+GBI-LEG-DONE R0 13:19:53
+=== LEG R1 parallel=5 ctx=5242880 img=547208dca250-g64500e2 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_OP_PROFILE=16] xargs=[] cache_ram=98304 13:19:55
+READY R1 after 42s
+0.11.460.509 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.11.460.558 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.11.976.713 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.11.976.738 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells)
+0.11.978.781 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (2.0 ms)
+0.11.980.688 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (1.9 ms)
+0.11.982.550 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (1.8 ms)
+0.11.984.358 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (1.8 ms)
+0.11.986.276 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 1048576 cells, 220.0 MiB mapped in all streams (1.9 ms)
+GPU after load: 87750 MiB
+--- ekbench.py solo p0 p0 p0 13:20:40
+solo p0 10 33.57 21.58 8e312d7bdd 
+solo p0 10 50.44 23.4 8e312d7bdd 
+solo p0 10 53.36 24.08 8e312d7bdd 
+--- ekbench.py multi p0 p1 p2 p3 --rounds 1 13:21:14
+multi n=4 r=warm agg=47.28 per=[11.94, 12.11, 12.27, 12.46] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a'] specs=['p0', 'p1', 'p2', 'p3']
+multi n=4 r=1 agg=51.37 per=[12.99, 13.16, 13.33, 13.51] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a'] specs=['p0', 'p1', 'p2', 'p3']
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 1 13:21:56
+multi n=5 r=warm agg=52.79 per=[10.68, 10.79, 10.89, 11.01, 11.14] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+multi n=5 r=1 agg=53.87 per=[10.86, 10.97, 11.08, 11.2, 11.33] md5=['8e312d7bdd', '03a690574e', '3dc71366a4', '263b1c6f5a', 'e7851c4b56'] specs=['p0', 'p1', 'p2', 'p3', 'p4']
+PEAK GPU 88371 MiB, LOWEST MemAvailable 229357 MiB; END R1 13:22:47
+GBI-LEG-DONE R1 13:22:47
+=== LEG C1 parallel=5 ctx=5242880 img=547208dca250-g64500e2 extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 LLAMA_CLIENT_CLASSES=/keys/classes.txt LLAMA_SLOT_RESERVE=1 LLAMA_PRIORITY_HOLD_PROMP
+READY C1 after 42s
+0.00.316.012 I srv  server_clien: client classes: 5 keys loaded, top priority 10 (keys not logged)
+0.10.871.894 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.955.768 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.955.827 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.11.955.832 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.152.042 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.989.856 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.989.884 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.12.989.886 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.43.751.890 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 87990 MiB
+--- prio_gh.py warm --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 13:23:34
+prio warm      warm  p0     send=0.0 ttft=0.285 wall=7.2 dec=36.9 pn=10 md5=8e312d7bdd 
+prio warm      warm  p0     send=7.2 ttft=0.21 wall=6.27 dec=42.05 pn=10 md5=8e312d7bdd 
+prio warm      warm  p0     send=13.47 ttft=0.153 wall=5.96 dec=43.94 pn=10 md5=8e312d7bdd 
+--- prio_gh.py ttft4 --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 13:23:53
+prio ttft4     low   p2     send=0.0 ttft=1.197 wall=21.32 dec=12.67 pn=18 md5=3dc71366a4 
+prio ttft4     low   p1     send=0.0 ttft=0.678 wall=21.32 dec=12.36 pn=19 md5=03a690574e 
+prio ttft4     low   p3     send=0.0 ttft=0.434 wall=21.32 dec=12.21 pn=21 md5=263b1c6f5a 
+prio ttft4     low   p4     send=0.0 ttft=0.948 wall=21.32 dec=12.52 pn=21 md5=e7851c4b56 
+prio ttft4     juno  p0     send=4.0 ttft=0.182 wall=18.32 dec=14.06 pn=10 md5=8e312d7bdd 
+--- prio_gh.py junofirst --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 13:24:16
+prio junofirst juno  p0     send=0.0 ttft=0.288 wall=5.94 dec=45.14 pn=10 md5=8e312d7bdd 
+prio junofirst low   p2     send=1.0 ttft=5.594 wall=20.84 dec=16.73 pn=18 md5=3dc71366a4 
+prio junofirst low   p1     send=1.0 ttft=5.159 wall=20.84 dec=16.26 pn=19 md5=03a690574e 
+prio junofirst low   p3     send=1.0 ttft=5.821 wall=20.84 dec=16.98 pn=21 md5=263b1c6f5a 
+prio junofirst low   p4     send=1.0 ttft=5.384 wall=20.84 dec=16.5 pn=21 md5=e7851c4b56 
+--- prio_gh.py prefill --classes /srv/glm-5.3-flash/gbi/keys/classes.txt --delay 10 13:24:37
+prio prefill   low   L65536 send=0.01 ttft=103.935 wall=107.83 dec=32.61 pn=65243 md5=8acec1b966 
+prio prefill   juno  p0     send=10.01 ttft=0.806 wall=6.68 dec=43.4 pn=10 md5=8e312d7bdd 
+--- prio_gh.py nokey --classes /srv/glm-5.3-flash/gbi/keys/classes.txt 13:26:25
+prio nokey     nokey p0     send=0.0 ttft=None wall=None dec=None pn=None md5=None 401
+PEAK GPU 91010 MiB, LOWEST MemAvailable 131545 MiB; END C1 13:26:27
+GBI-LEG-DONE C1 13:26:27
+server-C1.log no key in log
+GBI-PROF-DONE 13:26:27

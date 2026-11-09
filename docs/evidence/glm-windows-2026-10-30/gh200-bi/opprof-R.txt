@@ -1,0 +1,428 @@
+== server-R0.log
+  request 0: 15 decode blocks, 35.72 ms of node time per graph
+      6.229 ms/graph  MUL_MAT [dev] q8_0
+      3.459 ms/graph  GET_ROWS [host] i32
+      1.344 ms/graph  fused:MUL_MAT [dev] q8_0
+      1.329 ms/graph  UNARY
+      1.049 ms/graph  fused:RMS_NORM
+      0.989 ms/graph  MUL
+      0.960 ms/graph  SCALE
+      0.909 ms/graph  ADD
+      0.900 ms/graph  CPY kv=cache_r
+      0.600 ms/graph  CONCAT
+      0.520 ms/graph  RMS_NORM
+      0.500 ms/graph  DSV4_HC_COMB
+      0.470 ms/graph  DSV4_HC_POST
+      0.440 ms/graph  SSM_CONV
+      0.430 ms/graph  fused:UNARY
+      0.424 ms/graph  CONT
+      0.390 ms/graph  DSV4_HC_PRE
+      0.350 ms/graph  MUL_MAT [dev] f32
+      0.240 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.230 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.223 ms/graph  GLU
+      0.210 ms/graph  fused:GATED_DELTA_NET
+      0.210 ms/graph  fused:MUL
+      0.180 ms/graph  GET_ROWS [dev] f32 kv=cache_r
+  request 1: 15 decode blocks, 32.88 ms of node time per graph
+      6.235 ms/graph  MUL_MAT [dev] q8_0
+      1.995 ms/graph  GET_ROWS [host] i32
+      1.349 ms/graph  fused:MUL_MAT [dev] q8_0
+      1.336 ms/graph  UNARY
+      1.050 ms/graph  fused:RMS_NORM
+      0.990 ms/graph  MUL
+      0.964 ms/graph  SCALE
+      0.910 ms/graph  ADD
+      0.900 ms/graph  CPY kv=cache_r
+      0.600 ms/graph  CONCAT
+      0.521 ms/graph  RMS_NORM
+      0.500 ms/graph  DSV4_HC_COMB
+      0.470 ms/graph  DSV4_HC_POST
+      0.440 ms/graph  SSM_CONV
+      0.430 ms/graph  CONT
+      0.430 ms/graph  fused:UNARY
+      0.390 ms/graph  DSV4_HC_PRE
+      0.350 ms/graph  MUL_MAT [dev] f32
+      0.240 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.231 ms/graph  GLU
+      0.230 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.210 ms/graph  fused:GATED_DELTA_NET
+      0.210 ms/graph  fused:MUL
+      0.180 ms/graph  GET_ROWS [dev] f32 kv=cache_r
+  request 2: 15 decode blocks, 31.93 ms of node time per graph
+      6.230 ms/graph  MUL_MAT [dev] q8_0
+      1.860 ms/graph  GET_ROWS [host] i32
+      1.353 ms/graph  fused:MUL_MAT [dev] q8_0
+      1.332 ms/graph  UNARY
+      1.050 ms/graph  fused:RMS_NORM
+      0.991 ms/graph  MUL
+      0.961 ms/graph  SCALE
+      0.910 ms/graph  ADD
+      0.900 ms/graph  CPY kv=cache_r
+      0.600 ms/graph  CONCAT
+      0.520 ms/graph  RMS_NORM
+      0.500 ms/graph  DSV4_HC_COMB
+      0.471 ms/graph  DSV4_HC_POST
+      0.440 ms/graph  SSM_CONV
+      0.430 ms/graph  fused:UNARY
+      0.429 ms/graph  CONT
+      0.390 ms/graph  DSV4_HC_PRE
+      0.350 ms/graph  MUL_MAT [dev] f32
+      0.240 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.231 ms/graph  GLU
+      0.230 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.215 ms/graph  fused:MUL
+      0.211 ms/graph  fused:GATED_DELTA_NET
+      0.180 ms/graph  GET_ROWS [dev] f32 kv=cache_r
+  request 6: 15 decode blocks, 72.79 ms of node time per graph
+      9.290 ms/graph  MUL_MAT [dev] q8_0
+      3.447 ms/graph  GET_ROWS [host] i32
+      2.611 ms/graph  CONCAT
+      1.420 ms/graph  MUL_MAT [dev] f32
+      1.334 ms/graph  UNARY
+      1.249 ms/graph  ADD
+      1.050 ms/graph  fused:RMS_NORM
+      0.991 ms/graph  MUL
+      0.950 ms/graph  SCALE
+      0.609 ms/graph  CONT
+      0.579 ms/graph  CPY kv=cache_r
+      0.520 ms/graph  RMS_NORM
+      0.510 ms/graph  DSV4_HC_COMB
+      0.510 ms/graph  DSV4_HC_POST
+      0.437 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-4 n_tok=4
+      0.437 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-4 n_tok=4
+      0.405 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-5 n_tok=4
+      0.405 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-5 n_tok=4
+      0.401 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-4 n_tok=4
+      0.399 ms/graph  SSM_CONV
+      0.355 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-12 n_tok=4
+      0.339 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-5 n_tok=4
+      0.237 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-3 n_tok=4
+      0.224 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-11 n_tok=4
+      0.208 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-3 n_tok=4
+      0.186 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-6 n_tok=4
+      0.125 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-6 n_tok=4
+      0.117 ms/graph  fused:UNARY
+      0.094 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-6 n_tok=4
+      0.089 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-3 n_tok=4
+      0.031 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_gate-11 n_tok=4
+      0.031 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_up-11 n_tok=4
+      0.031 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-10 n_tok=4
+      0.030 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-10 n_tok=4
+      0.030 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-10 n_tok=4
+      0.029 ms/graph  fused:GATED_DELTA_NET
+  request 10: 16 decode blocks, 66.75 ms of node time per graph
+      9.310 ms/graph  MUL_MAT [dev] q8_0
+      2.643 ms/graph  GET_ROWS [host] i32
+      2.594 ms/graph  CONCAT
+      1.411 ms/graph  MUL_MAT [dev] f32
+      1.335 ms/graph  UNARY
+      1.249 ms/graph  ADD
+      1.051 ms/graph  fused:RMS_NORM
+      0.996 ms/graph  MUL
+      0.952 ms/graph  SCALE
+      0.611 ms/graph  CONT
+      0.584 ms/graph  CPY kv=cache_r
+      0.521 ms/graph  RMS_NORM
+      0.511 ms/graph  DSV4_HC_COMB
+      0.511 ms/graph  DSV4_HC_POST
+      0.469 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-4 n_tok=4
+      0.467 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-4 n_tok=4
+      0.460 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-4 n_tok=4
+      0.458 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-5 n_tok=4
+      0.458 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-5 n_tok=4
+      0.432 ms/graph  SSM_CONV
+      0.427 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-5 n_tok=4
+      0.365 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-6 n_tok=4
+      0.336 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-6 n_tok=4
+      0.331 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-7 n_tok=4
+      0.193 ms/graph  fused:UNARY
+      0.171 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-6 n_tok=4
+      0.107 ms/graph  fused:GATED_DELTA_NET
+      0.057 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-11 n_tok=4
+      0.029 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-3 n_tok=4
+      0.029 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-3 n_tok=4
+      0.029 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-3 n_tok=4
+      0.029 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-12 n_tok=4
+      0.025 ms/graph  DSV4_HC_PRE
+  request 15: 15 decode blocks, 78.45 ms of node time per graph
+     11.281 ms/graph  MUL_MAT [dev] q8_0
+      3.119 ms/graph  CONCAT
+      2.513 ms/graph  GET_ROWS [host] i32
+      1.420 ms/graph  MUL_MAT [dev] f32
+      1.343 ms/graph  UNARY
+      1.252 ms/graph  ADD
+      1.059 ms/graph  fused:RMS_NORM
+      1.003 ms/graph  MUL
+      0.969 ms/graph  SCALE
+      0.619 ms/graph  CONT
+      0.607 ms/graph  CPY kv=cache_r
+      0.588 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-4 n_tok=5
+      0.588 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-4 n_tok=5
+      0.586 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-5 n_tok=5
+      0.586 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-5 n_tok=5
+      0.582 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-4 n_tok=5
+      0.582 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-5 n_tok=5
+      0.563 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-6 n_tok=5
+      0.563 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-6 n_tok=5
+      0.523 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-6 n_tok=5
+      0.473 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-3 n_tok=5
+      0.472 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-3 n_tok=5
+      0.435 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-3 n_tok=5
+      0.289 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-12 n_tok=5
+      0.243 ms/graph  fused:GATED_DELTA_NET
+      0.139 ms/graph  RMS_NORM
+      0.069 ms/graph  DSV4_HC_POST
+      0.036 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-11 n_tok=5
+      0.034 ms/graph  DSV4_HC_COMB
+  request 20: 16 decode blocks, 76.81 ms of node time per graph
+     11.322 ms/graph  MUL_MAT [dev] q8_0
+      3.081 ms/graph  CONCAT
+      2.462 ms/graph  GET_ROWS [host] i32
+      1.414 ms/graph  MUL_MAT [dev] f32
+      1.347 ms/graph  UNARY
+      1.258 ms/graph  ADD
+      1.061 ms/graph  fused:RMS_NORM
+      1.009 ms/graph  MUL
+      0.971 ms/graph  SCALE
+      0.621 ms/graph  CONT
+      0.616 ms/graph  CPY kv=cache_r
+      0.567 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-5 n_tok=5
+      0.564 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-5 n_tok=5
+      0.563 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-4 n_tok=5
+      0.562 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-4 n_tok=5
+      0.557 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-4 n_tok=5
+      0.544 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-5 n_tok=5
+      0.519 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-6 n_tok=5
+      0.518 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-6 n_tok=5
+      0.481 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-6 n_tok=5
+      0.443 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-3 n_tok=5
+      0.411 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-3 n_tok=5
+      0.409 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-3 n_tok=5
+      0.360 ms/graph  fused:GATED_DELTA_NET
+      0.169 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-12 n_tok=5
+      0.163 ms/graph  RMS_NORM
+      0.131 ms/graph  DSV4_HC_POST
+      0.064 ms/graph  DSV4_HC_COMB
+      0.033 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-11 n_tok=5
+      0.031 ms/graph  SSM_CONV
+      0.028 ms/graph  fused:UNARY
+      0.026 ms/graph  DSV4_HC_PRE
+      0.025 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+== server-R1.log
+  request 0: 15 decode blocks, 39.10 ms of node time per graph
+      8.543 ms/graph  MUL_MAT [dev] q8_0
+      3.731 ms/graph  GET_ROWS [host] i32
+      1.370 ms/graph  UNARY
+      1.280 ms/graph  ADD
+      1.081 ms/graph  fused:RMS_NORM
+      1.007 ms/graph  MUL
+      0.980 ms/graph  SCALE
+      0.910 ms/graph  CPY kv=cache_r
+      0.620 ms/graph  CONCAT
+      0.530 ms/graph  RMS_NORM
+      0.510 ms/graph  DSV4_HC_COMB
+      0.489 ms/graph  DSV4_HC_POST
+      0.470 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.451 ms/graph  SSM_CONV
+      0.450 ms/graph  fused:UNARY
+      0.440 ms/graph  CONT
+      0.407 ms/graph  DSV4_HC_PRE
+      0.360 ms/graph  MUL_MAT [dev] f32
+      0.351 ms/graph  GLU
+      0.230 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.220 ms/graph  fused:GATED_DELTA_NET
+      0.220 ms/graph  fused:MUL
+      0.180 ms/graph  GET_ROWS [dev] f32 kv=cache_r
+      0.170 ms/graph  CPY
+  request 1: 15 decode blocks, 35.67 ms of node time per graph
+      8.554 ms/graph  MUL_MAT [dev] q8_0
+      2.229 ms/graph  GET_ROWS [host] i32
+      1.370 ms/graph  UNARY
+      1.285 ms/graph  ADD
+      1.089 ms/graph  fused:RMS_NORM
+      1.009 ms/graph  MUL
+      0.983 ms/graph  SCALE
+      0.919 ms/graph  CPY kv=cache_r
+      0.620 ms/graph  CONCAT
+      0.530 ms/graph  RMS_NORM
+      0.510 ms/graph  DSV4_HC_COMB
+      0.490 ms/graph  DSV4_HC_POST
+      0.469 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.452 ms/graph  SSM_CONV
+      0.450 ms/graph  fused:UNARY
+      0.444 ms/graph  CONT
+      0.410 ms/graph  DSV4_HC_PRE
+      0.360 ms/graph  MUL_MAT [dev] f32
+      0.359 ms/graph  GLU
+      0.234 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.220 ms/graph  fused:GATED_DELTA_NET
+      0.220 ms/graph  fused:MUL
+      0.180 ms/graph  GET_ROWS [dev] f32 kv=cache_r
+      0.170 ms/graph  CPY
+  request 2: 15 decode blocks, 34.43 ms of node time per graph
+      8.553 ms/graph  MUL_MAT [dev] q8_0
+      2.145 ms/graph  GET_ROWS [host] i32
+      1.370 ms/graph  UNARY
+      1.282 ms/graph  ADD
+      1.085 ms/graph  fused:RMS_NORM
+      1.008 ms/graph  MUL
+      0.980 ms/graph  SCALE
+      0.911 ms/graph  CPY kv=cache_r
+      0.620 ms/graph  CONCAT
+      0.530 ms/graph  RMS_NORM
+      0.510 ms/graph  DSV4_HC_COMB
+      0.490 ms/graph  DSV4_HC_POST
+      0.467 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.455 ms/graph  SSM_CONV
+      0.450 ms/graph  fused:UNARY
+      0.441 ms/graph  CONT
+      0.409 ms/graph  DSV4_HC_PRE
+      0.360 ms/graph  GLU
+      0.360 ms/graph  MUL_MAT [dev] f32
+      0.230 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.220 ms/graph  fused:GATED_DELTA_NET
+      0.220 ms/graph  fused:MUL
+      0.180 ms/graph  GET_ROWS [dev] f32 kv=cache_r
+      0.170 ms/graph  CPY
+  request 6: 15 decode blocks, 72.31 ms of node time per graph
+      9.845 ms/graph  MUL_MAT [dev] q8_0
+      3.249 ms/graph  GET_ROWS [host] i32
+      2.630 ms/graph  CONCAT
+      1.389 ms/graph  UNARY
+      1.289 ms/graph  ADD
+      1.090 ms/graph  fused:RMS_NORM
+      1.023 ms/graph  MUL
+      0.990 ms/graph  SCALE
+      0.630 ms/graph  CONT
+      0.589 ms/graph  CPY kv=cache_r
+      0.531 ms/graph  RMS_NORM
+      0.530 ms/graph  DSV4_HC_POST
+      0.523 ms/graph  DSV4_HC_COMB
+      0.485 ms/graph  SSM_CONV
+      0.480 ms/graph  MUL_MAT [dev] f32
+      0.471 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-4 n_tok=4
+      0.471 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-4 n_tok=4
+      0.434 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-4 n_tok=4
+      0.432 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-5 n_tok=4
+      0.370 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-5 n_tok=4
+      0.283 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-12 n_tok=4
+      0.249 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-3 n_tok=4
+      0.231 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.221 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-3 n_tok=4
+      0.215 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-5 n_tok=4
+      0.180 ms/graph  fused:UNARY
+      0.155 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-11 n_tok=4
+      0.127 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-3 n_tok=4
+      0.091 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-6 n_tok=4
+      0.061 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-6 n_tok=4
+      0.057 ms/graph  fused:GATED_DELTA_NET
+      0.031 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-8 n_tok=4
+      0.031 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-8 n_tok=4
+      0.031 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-6 n_tok=4
+      0.031 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-8 n_tok=4
+      0.029 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-10 n_tok=4
+  request 10: 16 decode blocks, 66.49 ms of node time per graph
+      9.857 ms/graph  MUL_MAT [dev] q8_0
+      2.640 ms/graph  GET_ROWS [host] i32
+      2.612 ms/graph  CONCAT
+      1.390 ms/graph  UNARY
+      1.293 ms/graph  ADD
+      1.093 ms/graph  fused:RMS_NORM
+      1.024 ms/graph  MUL
+      0.991 ms/graph  SCALE
+      0.631 ms/graph  CONT
+      0.594 ms/graph  CPY kv=cache_r
+      0.532 ms/graph  RMS_NORM
+      0.531 ms/graph  DSV4_HC_POST
+      0.526 ms/graph  DSV4_HC_COMB
+      0.489 ms/graph  SSM_CONV
+      0.481 ms/graph  MUL_MAT [dev] f32
+      0.461 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-4 n_tok=4
+      0.434 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-4 n_tok=4
+      0.426 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-5 n_tok=4
+      0.401 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-4 n_tok=4
+      0.370 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-5 n_tok=4
+      0.367 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-5 n_tok=4
+      0.366 ms/graph  fused:UNARY
+      0.306 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-23 n_tok=4
+      0.249 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.199 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-3 n_tok=4
+      0.172 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-3 n_tok=4
+      0.163 ms/graph  fused:GATED_DELTA_NET
+      0.139 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-6 n_tok=4
+      0.114 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-3 n_tok=4
+      0.086 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-6 n_tok=4
+      0.059 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-12 n_tok=4
+      0.029 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-6 n_tok=4
+      0.026 ms/graph  DSV4_HC_PRE
+      0.026 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+  request 15: 15 decode blocks, 81.48 ms of node time per graph
+     14.963 ms/graph  MUL_MAT [dev] q8_0
+      3.117 ms/graph  CONCAT
+      2.493 ms/graph  GET_ROWS [host] i32
+      1.365 ms/graph  UNARY
+      1.306 ms/graph  ADD
+      1.072 ms/graph  fused:RMS_NORM
+      1.019 ms/graph  MUL
+      1.002 ms/graph  SCALE
+      0.640 ms/graph  CONT
+      0.610 ms/graph  CPY kv=cache_r
+      0.583 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-5 n_tok=5
+      0.581 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-5 n_tok=5
+      0.579 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-5 n_tok=5
+      0.561 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-6 n_tok=5
+      0.559 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-4 n_tok=5
+      0.559 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-4 n_tok=5
+      0.555 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-4 n_tok=5
+      0.549 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-3 n_tok=5
+      0.525 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-6 n_tok=5
+      0.524 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-6 n_tok=5
+      0.515 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-3 n_tok=5
+      0.477 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-3 n_tok=5
+      0.396 ms/graph  RMS_NORM
+      0.359 ms/graph  DSV4_HC_POST
+      0.191 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-12 n_tok=5
+      0.111 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-11 n_tok=5
+      0.106 ms/graph  DSV4_HC_COMB
+      0.071 ms/graph  fused:GATED_DELTA_NET
+      0.036 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-8 n_tok=5
+  request 20: 16 decode blocks, 80.54 ms of node time per graph
+     14.931 ms/graph  MUL_MAT [dev] q8_0
+      3.078 ms/graph  CONCAT
+      2.428 ms/graph  GET_ROWS [host] i32
+      1.369 ms/graph  UNARY
+      1.309 ms/graph  ADD
+      1.075 ms/graph  fused:RMS_NORM
+      1.021 ms/graph  MUL
+      1.004 ms/graph  SCALE
+      0.641 ms/graph  CONT
+      0.616 ms/graph  CPY kv=cache_r
+      0.550 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-5 n_tok=5
+      0.550 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-5 n_tok=5
+      0.547 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-5 n_tok=5
+      0.529 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-6 n_tok=5
+      0.528 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-6 n_tok=5
+      0.526 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-6 n_tok=5
+      0.513 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-3 n_tok=5
+      0.505 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-4 n_tok=5
+      0.482 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-4 n_tok=5
+      0.473 ms/graph  RMS_NORM
+      0.411 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-4 n_tok=5
+      0.406 ms/graph  DSV4_HC_POST
+      0.382 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-3 n_tok=5
+      0.379 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-3 n_tok=5
+      0.179 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-12 n_tok=5
+      0.166 ms/graph  DSV4_HC_COMB
+      0.164 ms/graph  fused:GATED_DELTA_NET
+      0.068 ms/graph  MUL_MAT_ID [host] q5_K node=ffn_moe_down-10 n_tok=5
+      0.035 ms/graph  MUL_MAT_ID [host] q6_K node=ffn_moe_down-11 n_tok=5
+      0.034 ms/graph  FLASH_ATTN_EXT kv=cache_k
+      0.034 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_gate-10 n_tok=5
+      0.034 ms/graph  MUL_MAT_ID [host] q4_K node=ffn_moe_up-10 n_tok=5
+      0.033 ms/graph  MUL_MAT [dev] f32
+      0.032 ms/graph  SSM_CONV
+      0.029 ms/graph  fused:UNARY
+      0.026 ms/graph  DSV4_HC_PRE
+      0.026 ms/graph  GET_ROWS [dev] f32 kv=cache_s
+      0.024 ms/graph  GLU

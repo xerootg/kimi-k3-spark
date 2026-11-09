@@ -340,10 +340,18 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   row-count-dependent reduction geometry. 0055: API keys map to client classes (`LLAMA_CLIENT_CLASSES`), a reserved
   slot and priority prefill give the top class (Juno) its first token in 0.4-0.6 s while others generate or wait
   (95 s without), 2-3 s while another 16k prompt is read (27.5 s without), bytes unchanged.
-- **Next:** a GH200 window for 0054+0055 (sm_90 paths: the Hopper Q6_K streaming kernel is off in BI mode, MMVQ
-  uses the generic table there; expect a few % single-stream); a production PR for the Spark (`--parallel 4`, 0054 +
-  isolate + classes) once Haley picks the client keys and the hold policy; parking idle slots' KV on NVMe when the
-  pool is full (instead of refusing); root-cause the GDN fusion crash.
+- **Done 2026-11-09 (GH200 window gh200-bi): five slots on the GH200.** 0054 holds on sm_90 without a bisect: every
+  client its solo bytes at N=1..5 with 16k/64k prompts, two processes. N=5 aggregate 64-66 tok/s vs 44 one at a time
+  (stock batching 66-67, not reproducible). Costs: ~4 % single-stream short, ~16 % at 16k depth (BI attention has no
+  stream-K), a dip to 49-50 at exactly N=4 (graph-related, open). Priority with the hold rule: Juno's first token
+  0.15-0.3 s under load and near-solo decode (40-45 tok/s) while others' prompts are read or arrive. KV in Grace
+  memory (0051, needs `LLAMA_KV_HOST_THP=1` on the 64 KiB kernel): every slot 1M, no HBM, no refusals, decode at
+  depth +11-20 %, prefill at depth 35-55 % slower. Production PR argo-things #169 (image g64500e2,
+  `--parallel 5`, Grace KV, Juno's key in Secret `glm53-client-classes`).
+- **Next:** BI-mode decode attention with a fixed KV split (invariant and parallel: wins back the depth cost on
+  Hopper); the N=4 graph dip; a prefill path that does not stream the KV over C2C; a production PR for the Spark
+  (`--parallel 4`, 0054 + isolate + classes); parking idle slots' KV on NVMe when the pool is full (instead of
+  refusing); root-cause the GDN fusion crash.
 
 ## Cluster layout for this work
 

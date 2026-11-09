@@ -20,10 +20,10 @@ measurement), **partly** (right direction, smaller payoff than hoped), **no** (n
 | 2026-11-08 | Compress the KV (8-bit) | rejected | none |
 | 2026-11-08 | Park idle conversations' KV on NVMe, reload on demand | sane | next step after 0052: resident slots now refuse when memory is full instead of parking |
 | 2026-11-08 | Several 1M conversations on the GH200; leave KV in HBM and serve as many as fit | sane | follows the per-conversation build |
-| 2026-11-08 | Keep the KV in Grace memory and let the GPU read it over the fast link | promising (built, correct on the Spark) | GH200 window, script ready (~1 h) |
+| 2026-11-08 | Keep the KV in Grace memory and let the GPU read it over the fast link | partly (measured on the GH200: decode at depth faster, prefill at depth 35-55 % slower) | in the GH200 production PR (1M per slot, no refusals); prefill path next |
 | 2026-11-08 | The Spark as the general local failover for the GH200 | sane | Juno done in argo-things #159; public endpoint and workbench next |
 | 2026-11-08 | Crack the 1M-token context ceiling | promising, works at 1.087M (needles found) | long real transcript; binbcast fix before 2.09M |
-| 2026-11-09 | The GH200 should serve several customers at once, quickly, without losing quality | partly | serial slots with priority first; batch-invariant kernels later |
+| 2026-11-09 | The GH200 should serve several customers at once, quickly, without losing quality | sane (measured: five slots, bytes identical, 64-66 tok/s for five vs 44) | argo-things #169; BI attention split next |
 
 ## NUC round trips (2026-11-06)
 
@@ -143,9 +143,23 @@ GH200 estimate: at 500k the indexer reads ~350 MB per token. That is about 1.2 m
 plus whatever latency the scattered reads add. So expect a few percent slower decode at 500k-1M, for 9.6-19 GB of
 HBM freed per conversation.
 
-Next: the GH200 window (`docs/evidence/glm-windows-2026-10-30/kv-placement/gh200-kvhost.sh`). Build before the
-downtime, then about an hour down: microbenchmark, HBM vs Grace decode at 16k / 100k / 500k with md5s, and per-op
-profiles at 100k / 500k.
+Measured on the GH200 2026-11-09 (window gh200-bi, `docs/experiments.md`), five slots with 0054:
+
+- The link is fast but not free. With 512 MiB huge pages the GPU's scattered KV gathers pay ~55 us of latency per
+  token and the indexer scan streams at ~365 GB/s against ~3 TB/s from HBM (+0.8 ms per token at 500k). With the
+  kernel's 64 KiB pages (0051's default here) the GPU's TLB thrashes at depth (1M scan 23 ms), so the GH200 needs
+  `LLAMA_KV_HOST_THP=1`.
+- Decode at depth is faster in Grace memory (100k: 33.8 vs 28.1 tok/s; 500k: 24.0 vs 21.7), because a long
+  conversation in HBM makes the valve take slots from the HBM expert tier (after a 500k request the tier served
+  8 % of lookups instead of 26 %, and five short streams decoded at 43 instead of 58 tok/s).
+- Prefill at depth is 35-55 % slower (100k: 645 vs 1325 tok/s), because prefill attention reads the whole KV over
+  the link.
+- Memory: five 1M slots = 96.25 GiB of pinned Grace memory, no HBM, nothing ever refused; in HBM all slots together
+  get about 2M cells, at the tier's expense.
+
+Verdict now: partly. It is the only placement that gives every slot 1M without refusals or tier loss, and it goes
+into the production PR; the price is prefill speed at depth. Next: a prefill path that stages the active stream's KV
+in HBM (or reads it once per ubatch) so prefill stops streaming over the link.
 
 ## The Spark as the GH200's failover (2026-11-08)
 
@@ -222,4 +236,12 @@ the batch, two rounds, two processes) at 23.8 tok/s aggregate for four clients a
 had to be pinned. Patch 0055 maps API keys to classes: Juno's first token in 0.4-0.6 s while three others generate or a
 fourth waits (95 s without), 2-3 s while another client's 16k prompt is read (27.5 s without). Numbers in
 `docs/experiments.md`; next is a GH200 window and the client keys.
+
+**GH200, 2026-11-09 (window gh200-bi):** the same holds on Hopper with five slots (Juno, workbench x2, Claude Code,
+hef-posters): every client its solo bytes at N=1..5 with 16k/64k prompts in two processes; 64-66 tok/s for five
+clients against 44 one at a time; Juno's first token 0.15-0.3 s under load, and with the hold rule her decode stays at
+40-45 tok/s when others' prompts are read or arrive (4.9-10 tok/s without it), at the cost of the others' new prompts
+waiting for her current answer. The price on Hopper is larger than on the Spark: ~4 % single-stream short, ~16 % at
+16k depth (the invariant attention gives up stream-K, which a 132-SM GPU misses more), and a dip at exactly four
+streams. Next: argo-things #169 for the GH200, then an invariant attention with a fixed KV split.
 
