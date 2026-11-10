@@ -1,0 +1,157 @@
+0.00.279.905 I cmn  common_param: common_params_print_info: build 2 (a309f00) with GNU 13.3.0 for Linux aarch64
+0.00.279.905 I cmn  common_param: device_info:
+0.00.279.965 I cmn  common_param:   - CUDA0   : NVIDIA GB10 (124607 MiB, 120490 MiB free)
+0.00.354.445 I llama_prepare_model_devices: using device CUDA0 (NVIDIA GB10) (000f:01:00.0) - 120459 MiB free
+0.02.820.044 I load_tensors: expert store: 126 host expert tensors (99.0 GB) excluded from the mapping prefetch
+0.03.064.429 I load_tensors:        CUDA0 model buffer size =  6153.73 MiB
+0.12.580.702 I load_tensors: expert store: the mapping's page cache was released after the load
+0.12.768.495 I llama_kv_cache:      CUDA0 KV buffer size = 11000.00 MiB
+0.12.825.470 I llama_memory_recurrent:      CUDA0 RS buffer size =   727.81 MiB
+0.12.968.317 I llama_kv_cache:      CUDA0 KV buffer size =  8250.00 MiB
+0.12.987.287 I impl: expert store /srv/glm-5.3-flash/store/glm53flash-q2.k3xs: 43 layers x 288 experts, records up to 10878976 bytes, reads of 1024 KiB through io_uring
+0.12.987.323 I impl: expert store: layers [3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43], iq2_xs/iq2_xs/iq3_xxs: stride 8388608 B (bytes), aligned CUDA loads
+0.12.987.325 I impl: expert store: layers [11], iq3_xxs/iq3_xxs/iq4_xs: stride 12582912 B (bytes), aligned CUDA loads
+0.12.987.326 I impl: expert store: layers [12,44], iq2_xs/iq2_xs/iq4_xs: stride 10485760 B (bytes), aligned CUDA loads
+0.12.988.348 I impl: expert store: LFU eviction, half-life 262144 planned ids; volatile frequency state
+0.14.245.076 I expert store: THP bank huge backing=74767663104/74767663104 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=74767663104 bytes (before cudaHostRegister)
+0.17.210.070 I expert store: THP bank huge backing=2579496960/2579496960 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=2579496960 bytes (before cudaHostRegister)
+0.17.804.296 I expert store: THP bank huge backing=4424990720/4424990720 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=4424990720 bytes (before cudaHostRegister)
+0.18.212.037 I impl: split columns enabled, N <= 8, union reads, one-column MMVQ launches
+0.18.213.417 I impl: expert store: remote box 0: 4056 experts at 192.168.4.249:19700, deadline 3000 us, network thread spins 5000 us then blocks, early post
+0.18.213.708 I expert store: remote box 0: connected to 192.168.4.249:19700
+0.18.214.427 I impl: expert store: remote box 1: 1794 experts at 192.168.4.250:19700, deadline 3000 us, network thread spins 5000 us then blocks, early post
+0.18.214.440 W impl: expert store: remote experts: cannot hold /dev/cpu_dma_latency (Permission denied): the round trips pay the CPUs' idle exit latency (needs root or a udev rule giving the server's user write access; in a container, the device mapped in)
+0.18.214.443 I impl: expert store: remote experts: rows in the one-warp MoE kernel order (GGML_CUDA_BATCH_INVARIANT=1)
+0.18.214.452 I impl: expert store: remote experts BATCHED (window nd): one request per box per MoE layer of an N-token decode step, 8,6 pairs per box per layer, resident experts offloaded too; N=1 stays local
+0.18.214.453 I impl: expert store: remote experts: 2 boxes, up to 14 rows per layer
+0.18.214.701 I expert store: remote box 1: connected to 192.168.4.250:19700
+0.18.216.279 I impl: expert store: self-prefetch on (a layer's misses are read while its shared expert computes)
+0.18.216.315 I impl: expert store: split expert GEMV on (the resident experts' matmuls run while a layer's misses are read; the late matmul has 1 rows; the zero record is slot 8912 of each group)
+0.18.216.317 I impl: expert store: slot maps registered with the GPU, the lookups run there and the fills in its host hook (LLAMA_EXPERT_STORE_GPU_SLOTS=0 for the CPU split)
+0.22.801.751 I snapshot_restore: expert store: cache snapshot restored: 7090 experts, 58.0 GB read in 4.6 s (12.6 GB/s)
+0.22.801.945 I valve_start: expert store: memory valve on: host reserve 6144 MiB, floor 50% of the slots, sampled every 500 ms (no PSI trigger: /proc/pressure/memory not writable), released slots re-armed after 10 s of calm
+0.22.801.954 I impl: expert store: host cache below is filled from the store, expert matmuls run on the GPU from the registered cache, batches up to 32 tokens from the cache (larger ones through a 2988.00 MiB staging, allocated when one comes)
+0.23.374.641 I sched_reserve:      CUDA0 compute buffer size =  3281.89 MiB
+0.24.032.451 I lock_memory_once: expert store: locked 97119 MiB of process memory (174 mappings, 556 ms), the model file mappings (180017 MiB) stay pageable
+0.24.067.781 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+0.32.008.428 I fill_late: expert store: 34402 lookups, hit rate 95.3%, 13.4 GB read for decode, 0.0 GB for prefill
+0.32.008.434 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.00 ms (0.4 records, 0.00 GB/s), between fills 0.00 ms
+0.32.008.438 I fill_late: expert store: memory valve: host MemAvailable 24.93 GB (lowest 24.87, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.32.008.441 I fill_late: split columns: N2=42 N3=0 N4=42 N5=0 N6=42 N7=0 N8=0 ubatch layers, union=2843 experts, reads=148 distinct missing records; MMVQ one-column dispatch
+0.32.008.444 I fill_late: expert store: split GEMV: 4096 early lookups, 8.1 of 8 experts complete at the early lookup, 0.32 read under the early matmul (1 rows), 238 lookups with more misses (0.07 records read at the early lookup), plan 0.060 ms, wait at the real lookup 0.17 ms, 0 early lookups without a real one
+0.32.008.447 I fill_late: expert store: remote BATCHED: 126 N-token layer steps, 112 with a post (one request per box), 4032 routed pairs, 211 posted (5.2%), 26 computed late after a miss, 0 fallback reads; resolve 0.020 ms per posted layer
+0.32.008.448 I fill_late: expert store: remote BATCHED: replies complete when the real lookup came 90, waited for 27 (27 of them with the short wait of resident pairs)
+0.32.008.450 I fill_late: expert store: remote BATCHED box 0: 0 rows placed = 0.00% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,1
+0.32.008.451 I fill_late: expert store: remote BATCHED box 1: 185 rows placed = 4.59% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,1
+0.32.008.452 I fill_late: expert store: remote experts: 112 layers with candidates, 13 of them read some locally; wait at the real lookup 0.020 ms per layer with candidates
+0.32.008.454 I fill_late: expert store: remote box 0 (192.168.4.249:19700, up): 8 posts, 1.00 rows per post, 0 rows placed, 8 requests short (8 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 1 breaker trips; RTT p50 0.00 p90 0.00 p99 0.00 ms (0 replies); 1 connects, 0 drops (0 stale)
+0.32.008.458 I fill_late: expert store: remote box 1 (192.168.4.250:19700, up): 109 posts, 1.86 rows per post, 185 rows placed, 8 requests short (18 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 0 breaker trips; RTT p50 1.01 p90 1.62 p99 2.17 ms (101 replies); 1 connects, 0 drops (0 stale)
+0.38.299.405 I fill_late: expert store: 67170 lookups, hit rate 95.7%, 24.0 GB read for decode, 0.0 GB for prefill
+0.38.299.408 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.00 ms (0.4 records, 0.00 GB/s), between fills 0.00 ms
+0.38.299.412 I fill_late: expert store: memory valve: host MemAvailable 24.94 GB (lowest 24.87, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.38.299.413 I fill_late: split columns: N2=42 N3=0 N4=42 N5=0 N6=42 N7=0 N8=0 ubatch layers, union=2843 experts, reads=148 distinct missing records; MMVQ one-column dispatch
+0.38.299.417 I fill_late: expert store: split GEMV: 8192 early lookups, 7.9 of 8 experts complete at the early lookup, 0.29 read under the early matmul (1 rows), 433 lookups with more misses (0.06 records read at the early lookup), plan 0.056 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+0.38.299.418 I fill_late: expert store: remote BATCHED: 126 N-token layer steps, 112 with a post (one request per box), 4032 routed pairs, 211 posted (5.2%), 26 computed late after a miss, 0 fallback reads; resolve 0.020 ms per posted layer
+0.38.299.419 I fill_late: expert store: remote BATCHED: replies complete when the real lookup came 90, waited for 27 (27 of them with the short wait of resident pairs)
+0.38.299.421 I fill_late: expert store: remote BATCHED box 0: 0 rows placed = 0.00% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,1
+0.38.299.422 I fill_late: expert store: remote BATCHED box 1: 185 rows placed = 4.59% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,1
+0.38.299.422 I fill_late: expert store: remote experts: 112 layers with candidates, 13 of them read some locally; wait at the real lookup 0.020 ms per layer with candidates
+0.38.299.425 I fill_late: expert store: remote box 0 (192.168.4.249:19700, up): 8 posts, 1.00 rows per post, 0 rows placed, 8 requests short (8 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 1 breaker trips; RTT p50 0.00 p90 0.00 p99 0.00 ms (0 replies); 1 connects, 0 drops (0 stale)
+0.38.299.429 I fill_late: expert store: remote box 1 (192.168.4.250:19700, up): 109 posts, 1.86 rows per post, 185 rows placed, 8 requests short (18 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 0 breaker trips; RTT p50 1.01 p90 1.62 p99 2.17 ms (101 replies); 1 connects, 0 drops (0 stale)
+0.48.543.776 I fill_late: expert store: 129514 lookups, hit rate 95.5%, 49.2 GB read for decode, 0.0 GB for prefill
+0.48.543.780 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.05 ms (0.5 records, 82.42 GB/s), between fills 6.25 ms
+0.48.543.784 I fill_late: expert store: memory valve: host MemAvailable 24.19 GB (lowest 24.19, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.48.543.785 I fill_late: split columns: N2=42 N3=0 N4=1326 N5=0 N6=84 N7=0 N8=0 ubatch layers, union=40758 experts, reads=1643 distinct missing records; MMVQ one-column dispatch
+0.48.543.788 I fill_late: expert store: split GEMV: 12162 early lookups, 10.0 of 8 experts complete at the early lookup, 0.36 read under the early matmul (1 rows), 536 lookups with more misses (0.05 records read at the early lookup), plan 0.051 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+0.48.543.791 I fill_late: expert store: remote BATCHED: 1452 N-token layer steps, 1343 with a post (one request per box), 47136 routed pairs, 4634 posted (9.8%), 572 computed late after a miss, 1 fallback reads; resolve 0.031 ms per posted layer
+0.48.543.792 I fill_late: expert store: remote BATCHED: replies complete when the real lookup came 2207, waited for 357 (330 of them with the short wait of resident pairs)
+0.48.543.794 I fill_late: expert store: remote BATCHED box 0: 1705 rows placed = 3.62% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,1
+0.48.543.795 I fill_late: expert store: remote BATCHED box 1: 2357 rows placed = 5.00% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,1
+0.48.543.795 I fill_late: expert store: remote experts: 1343 layers with candidates, 223 of them read some locally; wait at the real lookup 0.031 ms per layer with candidates
+0.48.543.821 I fill_late: expert store: remote box 0 (192.168.4.249:19700, up): 1239 posts, 1.61 rows per post, 1705 rows placed, 132 requests short (293 rows read locally, 1 partial replies, 0 NaN rows), 0 unsent, 1 breaker trips; RTT p50 1.13 p90 1.35 p99 1.92 ms (1107 replies); 1 connects, 0 drops (0 stale)
+0.48.543.847 I fill_late: expert store: remote box 1 (192.168.4.250:19700, up): 1325 posts, 1.99 rows per post, 2357 rows placed, 112 requests short (279 rows read locally, 28 partial replies, 0 NaN rows), 0 unsent, 0 breaker trips; RTT p50 1.12 p90 1.48 p99 1.85 ms (1213 replies); 1 connects, 0 drops (0 stale)
+1.02.756.789 I fill_late: expert store: 239393 lookups, hit rate 95.5%, 89.9 GB read for decode, 0.0 GB for prefill
+1.02.756.794 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.04 ms (0.7 records, 150.64 GB/s), between fills 6.25 ms
+1.02.756.798 I fill_late: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.16, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.02.756.801 I fill_late: split columns: N2=42 N3=0 N4=5422 N5=0 N6=84 N7=0 N8=0 ubatch layers, union=164739 experts, reads=6502 distinct missing records; MMVQ one-column dispatch
+1.02.756.807 I fill_late: expert store: split GEMV: 16258 early lookups, 14.8 of 8 experts complete at the early lookup, 0.57 read under the early matmul (1 rows), 536 lookups with more misses (0.04 records read at the early lookup), plan 0.047 ms, wait at the real lookup 0.17 ms, 0 early lookups without a real one
+1.02.756.809 I fill_late: expert store: remote BATCHED: 5548 N-token layer steps, 5147 with a post (one request per box), 178208 routed pairs, 18756 posted (10.5%), 2380 computed late after a miss, 2 fallback reads; resolve 0.030 ms per posted layer
+1.02.756.810 I fill_late: expert store: remote BATCHED: replies complete when the real lookup came 8773, waited for 1385 (1277 of them with the short wait of resident pairs)
+1.02.756.812 I fill_late: expert store: remote BATCHED box 0: 7179 rows placed = 4.03% of the routed pairs, pairs per layer now (N=2,4,8) 1,3,1
+1.02.756.813 I fill_late: expert store: remote BATCHED box 1: 9198 rows placed = 5.16% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,1
+1.02.756.814 I fill_late: expert store: remote experts: 5147 layers with candidates, 920 of them read some locally; wait at the real lookup 0.030 ms per layer with candidates
+1.02.756.956 I fill_late: expert store: remote box 0 (192.168.4.249:19700, up): 5043 posts, 1.67 rows per post, 7179 rows placed, 530 requests short (1253 rows read locally, 3 partial replies, 0 NaN rows), 0 unsent, 1 breaker trips; RTT p50 1.14 p90 1.32 p99 1.79 ms (4513 replies); 1 connects, 0 drops (0 stale)
+1.02.757.110 I fill_late: expert store: remote box 1 (192.168.4.250:19700, up): 5115 posts, 2.02 rows per post, 9198 rows placed, 458 requests short (1126 rows read locally, 107 partial replies, 0 NaN rows), 0 unsent, 0 breaker trips; RTT p50 1.12 p90 1.43 p99 1.71 ms (4657 replies); 1 connects, 0 drops (0 stale)
+1.16.367.386 W expert store: remote box 1 (192.168.4.250:19700): 8 deadline misses in a row, skipped for 2000 ms
+1.17.143.846 I fill_late: expert store: 349920 lookups, hit rate 95.4%, 135.8 GB read for decode, 0.0 GB for prefill
+1.17.143.850 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.8 records, 227.56 GB/s), between fills 6.25 ms
+1.17.143.853 I fill_late: expert store: memory valve: host MemAvailable 24.22 GB (lowest 24.16, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.17.143.855 I fill_late: split columns: N2=42 N3=0 N4=9518 N5=0 N6=84 N7=0 N8=0 ubatch layers, union=289947 experts, reads=11986 distinct missing records; MMVQ one-column dispatch
+1.17.143.859 I fill_late: expert store: split GEMV: 20354 early lookups, 17.7 of 8 experts complete at the early lookup, 0.72 read under the early matmul (1 rows), 536 lookups with more misses (0.03 records read at the early lookup), plan 0.045 ms, wait at the real lookup 0.19 ms, 0 early lookups without a real one
+1.17.143.861 I fill_late: expert store: remote BATCHED: 9644 N-token layer steps, 8950 with a post (one request per box), 309280 routed pairs, 33453 posted (10.8%), 4035 computed late after a miss, 4 fallback reads; resolve 0.032 ms per posted layer
+1.17.143.861 I fill_late: expert store: remote BATCHED: replies complete when the real lookup came 15163, waited for 2381 (2126 of them with the short wait of resident pairs)
+1.17.143.863 I fill_late: expert store: remote BATCHED box 0: 13525 rows placed = 4.37% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,1
+1.17.143.865 I fill_late: expert store: remote BATCHED box 1: 15894 rows placed = 5.14% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,1
+1.17.143.866 I fill_late: expert store: remote experts: 8950 layers with candidates, 1500 of them read some locally; wait at the real lookup 0.032 ms per layer with candidates
+1.17.144.033 I fill_late: expert store: remote box 0 (192.168.4.249:19700, up): 8846 posts, 1.78 rows per post, 13525 rows placed, 885 requests short (2203 rows read locally, 7 partial replies, 0 NaN rows), 0 unsent, 1 breaker trips; RTT p50 1.15 p90 1.33 p99 1.78 ms (7961 replies); 1 connects, 0 drops (0 stale)
+1.17.144.210 I fill_late: expert store: remote box 1 (192.168.4.250:19700, up): 8698 posts, 2.04 rows per post, 15894 rows placed, 743 requests short (1831 rows read locally, 160 partial replies, 0 NaN rows), 0 unsent, 1 breaker trips; RTT p50 1.14 p90 1.43 p99 1.71 ms (7955 replies); 1 connects, 0 drops (0 stale)
+1.32.064.765 I fill_late: expert store: 462982 lookups, hit rate 95.5%, 175.4 GB read for decode, 0.0 GB for prefill
+1.32.064.769 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.04 ms (0.9 records, 175.23 GB/s), between fills 5.79 ms
+1.32.064.773 I fill_late: expert store: memory valve: host MemAvailable 24.24 GB (lowest 24.16, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.32.064.774 I fill_late: split columns: N2=42 N3=0 N4=13446 N5=0 N6=126 N7=0 N8=0 ubatch layers, union=408111 experts, reads=16133 distinct missing records; MMVQ one-column dispatch
+1.32.064.777 I fill_late: expert store: split GEMV: 24324 early lookups, 19.5 of 8 experts complete at the early lookup, 0.77 read under the early matmul (1 rows), 536 lookups with more misses (0.03 records read at the early lookup), plan 0.042 ms, wait at the real lookup 0.19 ms, 0 early lookups without a real one
+1.32.064.779 I fill_late: expert store: remote BATCHED: 13614 N-token layer steps, 12637 with a post (one request per box), 436992 routed pairs, 46259 posted (10.6%), 5571 computed late after a miss, 8 fallback reads; resolve 0.032 ms per posted layer
+1.32.064.779 I fill_late: expert store: remote BATCHED: replies complete when the real lookup came 21233, waited for 3353 (2972 of them with the short wait of resident pairs)
+1.32.064.781 I fill_late: expert store: remote BATCHED box 0: 19387 rows placed = 4.44% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,1
+1.32.064.782 I fill_late: expert store: remote BATCHED box 1: 21303 rows placed = 4.87% of the routed pairs, pairs per layer now (N=2,4,8) 1,3,1
+1.32.064.782 I fill_late: expert store: remote experts: 12637 layers with candidates, 2090 of them read some locally; wait at the real lookup 0.032 ms per layer with candidates
+1.32.065.011 I fill_late: expert store: remote box 0 (192.168.4.249:19700, up): 12533 posts, 1.80 rows per post, 19387 rows placed, 1240 requests short (3121 rows read locally, 9 partial replies, 0 NaN rows), 0 unsent, 1 breaker trips; RTT p50 1.15 p90 1.33 p99 1.78 ms (11293 replies); 1 connects, 0 drops (0 stale)
+1.32.065.256 I fill_late: expert store: remote box 1 (192.168.4.250:19700, up): 12053 posts, 1.97 rows per post, 21303 rows placed, 1010 requests short (2448 rows read locally, 193 partial replies, 0 NaN rows), 0 unsent, 1 breaker trips; RTT p50 1.12 p90 1.44 p99 1.73 ms (11043 replies); 1 connects, 0 drops (0 stale)
+1.33.542.672 W expert store: remote box 1 (192.168.4.250:19700): 8 deadline misses in a row, skipped for 2000 ms
+1.34.175.394 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+1.35.548.959 W expert store: remote box 1 (192.168.4.250:19700): 8 deadline misses in a row, skipped for 2000 ms
+1.36.181.832 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+1.38.745.996 W expert store: remote box 1 (192.168.4.250:19700): 8 deadline misses in a row, skipped for 2000 ms
+1.41.963.321 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+1.43.967.843 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+1.45.973.180 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+1.46.243.923 I fill_late: expert store: 580626 lookups, hit rate 95.6%, 211.7 GB read for decode, 0.0 GB for prefill
+1.46.243.928 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.9 records, 211.43 GB/s), between fills 5.79 ms
+1.46.243.933 I fill_late: expert store: memory valve: host MemAvailable 24.25 GB (lowest 24.16, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.46.243.935 I fill_late: split columns: N2=42 N3=0 N4=17542 N5=0 N6=126 N7=0 N8=0 ubatch layers, union=532831 experts, reads=20458 distinct missing records; MMVQ one-column dispatch
+1.46.243.940 I fill_late: expert store: split GEMV: 28420 early lookups, 20.9 of 8 experts complete at the early lookup, 0.82 read under the early matmul (1 rows), 536 lookups with more misses (0.02 records read at the early lookup), plan 0.040 ms, wait at the real lookup 0.19 ms, 0 early lookups without a real one
+1.46.243.942 I fill_late: expert store: remote BATCHED: 17710 N-token layer steps, 15532 with a post (one request per box), 568064 routed pairs, 53348 posted (9.4%), 6351 computed late after a miss, 10 fallback reads; resolve 0.030 ms per posted layer
+1.46.243.943 I fill_late: expert store: remote BATCHED: replies complete when the real lookup came 24430, waited for 3942 (3471 of them with the short wait of resident pairs)
+1.46.243.945 I fill_late: expert store: remote BATCHED box 0: 21410 rows placed = 3.77% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,1
+1.46.243.946 I fill_late: expert store: remote BATCHED box 1: 25589 rows placed = 4.50% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,1
+1.46.243.947 I fill_late: expert store: remote experts: 15532 layers with candidates, 2442 of them read some locally; wait at the real lookup 0.030 ms per layer with candidates
+1.46.244.347 I fill_late: expert store: remote box 0 (192.168.4.249:19700, up): 14123 posts, 1.76 rows per post, 21410 rows placed, 1415 requests short (3487 rows read locally, 9 partial replies, 0 NaN rows), 0 unsent, 6 breaker trips; RTT p50 1.15 p90 1.33 p99 1.78 ms (12708 replies); 1 connects, 0 drops (0 stale)
+1.46.244.789 I fill_late: expert store: remote box 1 (192.168.4.250:19700, up): 14249 posts, 2.00 rows per post, 25589 rows placed, 1196 requests short (2862 rows read locally, 244 partial replies, 0 NaN rows), 0 unsent, 4 breaker trips; RTT p50 1.12 p90 1.45 p99 1.72 ms (13053 replies); 1 connects, 0 drops (0 stale)
+1.47.977.279 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+1.51.520.497 W expert store: remote box 0 (192.168.4.249:19700): 8 deadline misses in a row, skipped for 2000 ms
+2.00.436.306 I fill_late: expert store: 693264 lookups, hit rate 95.7%, 250.4 GB read for decode, 0.0 GB for prefill
+2.00.436.311 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.9 records, 250.08 GB/s), between fills 5.79 ms
+2.00.436.315 I fill_late: expert store: memory valve: host MemAvailable 24.25 GB (lowest 24.16, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.00.436.317 I fill_late: split columns: N2=42 N3=0 N4=21638 N5=0 N6=126 N7=0 N8=0 ubatch layers, union=657922 experts, reads=25066 distinct missing records; MMVQ one-column dispatch
+2.00.436.321 I fill_late: expert store: split GEMV: 32516 early lookups, 22.0 of 8 experts complete at the early lookup, 0.85 read under the early matmul (1 rows), 536 lookups with more misses (0.02 records read at the early lookup), plan 0.039 ms, wait at the real lookup 0.19 ms, 0 early lookups without a real one
+2.00.436.322 I fill_late: expert store: remote BATCHED: 21806 N-token layer steps, 19330 with a post (one request per box), 699136 routed pairs, 65818 posted (9.4%), 7569 computed late after a miss, 14 fallback reads; resolve 0.030 ms per posted layer
+2.00.436.323 I fill_late: expert store: remote BATCHED: replies complete when the real lookup came 29573, waited for 4860 (4196 of them with the short wait of resident pairs)
+2.00.436.325 I fill_late: expert store: remote BATCHED box 0: 25139 rows placed = 3.60% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,1
+2.00.436.325 I fill_late: expert store: remote BATCHED box 1: 33114 rows placed = 4.74% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,1
+2.00.436.326 I fill_late: expert store: remote experts: 19330 layers with candidates, 2900 of them read some locally; wait at the real lookup 0.030 ms per layer with candidates
+2.00.436.639 I fill_late: expert store: remote box 0 (192.168.4.249:19700, up): 16392 posts, 1.78 rows per post, 25139 rows placed, 1634 requests short (4038 rows read locally, 13 partial replies, 0 NaN rows), 0 unsent, 8 breaker trips; RTT p50 1.15 p90 1.33 p99 1.78 ms (14758 replies); 1 connects, 0 drops (0 stale)
+2.00.437.024 I fill_late: expert store: remote box 1 (192.168.4.250:19700, up): 18041 posts, 2.03 rows per post, 33114 rows placed, 1455 requests short (3527 rows read locally, 295 partial replies, 0 NaN rows), 0 unsent, 4 breaker trips; RTT p50 1.12 p90 1.46 p99 1.71 ms (16384 replies); 1 connects, 0 drops (0 stale)
+2.01.003.644 I common_memory_breakdown_print: |   - CUDA0 (GB10)       | 124607 = 23280 + (29413 =  6153 +   19977 +    3281) +       71914 |
+2.01.234.354 I llama_moe_cache: expert store: 251.88 GB read for decode, 0.00 GB read for prefill
+2.01.234.355 I llama_moe_cache: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.9 records, 251.58 GB/s), between fills 5.79 ms
+2.01.234.359 I llama_moe_cache: expert store: memory valve: host MemAvailable 24.89 GB (lowest 24.16, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.01.234.361 I llama_moe_cache: split columns: N2=42 N3=0 N4=21798 N5=0 N6=126 N7=0 N8=0 ubatch layers, union=662845 experts, reads=25246 distinct missing records; MMVQ one-column dispatch
+2.01.234.364 I llama_moe_cache: expert store: split GEMV: 32676 early lookups, 22.1 of 8 experts complete at the early lookup, 0.86 read under the early matmul (1 rows), 536 lookups with more misses (0.02 records read at the early lookup), plan 0.039 ms, wait at the real lookup 0.19 ms, 0 early lookups without a real one
+2.01.234.365 I llama_moe_cache: expert store: remote BATCHED: 21966 N-token layer steps, 19478 with a post (one request per box), 704256 routed pairs, 66423 posted (9.4%), 7624 computed late after a miss, 14 fallback reads; resolve 0.031 ms per posted layer
+2.01.234.366 I llama_moe_cache: expert store: remote BATCHED: replies complete when the real lookup came 29825, waited for 4904 (4228 of them with the short wait of resident pairs)
+2.01.234.368 I llama_moe_cache: expert store: remote BATCHED box 0: 25409 rows placed = 3.61% of the routed pairs, pairs per layer now (N=2,4,8) 1,3,1
+2.01.234.369 I llama_moe_cache: expert store: remote BATCHED box 1: 33394 rows placed = 4.74% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,1
+2.01.234.370 I llama_moe_cache: expert store: remote experts: 19478 layers with candidates, 2920 of them read some locally; wait at the real lookup 0.031 ms per layer with candidates
+2.01.235.003 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 16540 posts, 1.78 rows per post, 25409 rows placed, 1645 requests short (4070 rows read locally, 13 partial replies, 0 NaN rows), 0 unsent, 8 breaker trips; RTT p50 1.15 p90 1.33 p99 1.78 ms (14895 replies); 1 connects, 0 drops (0 stale)
+2.01.235.376 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 18189 posts, 2.03 rows per post, 33394 rows placed, 1464 requests short (3550 rows read locally, 297 partial replies, 0 NaN rows), 0 unsent, 4 breaker trips; RTT p50 1.12 p90 1.46 p99 1.72 ms (16384 replies); 1 connects, 0 drops (0 stale)
+2.01.565.643 I snapshot_save: expert store: cache snapshot (exit): 9537 resident experts, 57.3 KB to /srv/glm-5.3-flash/snapshot/nuc5-W2.k3sn

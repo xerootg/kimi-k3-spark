@@ -1,0 +1,112 @@
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index eb02497..ede25b9 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -4785,9 +4785,12 @@ static bool ggml_cuda_match_moe_weighted_reduction(
+ 
+     // SPLIT_COLS retains a scratch expert row between tokens. Only the
+     // singleton replay path can consume this layout with the production kernel.
++    // patch 0067: batch-invariant mode takes it too. Without the fold an N-column split step computes MUL and seven ADDs
++    // where every other step computes the fused fold (its sum contracts to FMAs): other bits, so a client's bytes moved
++    // with LLAMA_EXPERT_STORE_SPLIT_COLS=1 and with the size of the batch.
+     auto exact_experts = [](const ggml_tensor * t) {
+         const int64_t n = t->ne[2] * t->ne[3];
+-        return ggml_cuda_exact_cols() && n >= 2 && n <= 8 &&
++        return (ggml_cuda_exact_cols() || ggml_cuda_batch_invariant()) && n >= 2 && n <= 8 &&
+             t->nb[0] == sizeof(float) && t->nb[1] == t->ne[0] * sizeof(float) &&
+             t->nb[2] >= t->ne[1] * t->nb[1] && t->nb[3] >= t->ne[2] * t->nb[2];
+     };
+@@ -5344,7 +5347,10 @@ static void ggml_cuda_exact_moe_weighted_reduction(
+         ggml_backend_cuda_context & ctx, const ggml_tensor * experts,
+         const ggml_tensor * expert_scale, const ggml_tensor * weights, ggml_tensor * dst) {
+     const int64_t n = experts->ne[2] * experts->ne[3];
+-    if (!ggml_cuda_exact_cols() || n < 2 || n > 8) {
++    // patch 0067: in batch-invariant mode only the strided split-column layout is folded token by token (the kernel
++    // is per token, so the bits are those of the one launch); contiguous experts keep the one launch
++    const bool strided = ggml_cuda_batch_invariant() && !ggml_is_contiguous(experts);
++    if ((!ggml_cuda_exact_cols() && !strided) || n < 2 || n > 8) {
+         ggml_cuda_op_moe_weighted_reduction(ctx, experts, expert_scale, weights, dst);
+         return;
+     }
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index 4e5803f..bc22fa4 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -960,10 +960,14 @@ struct remote_client {
+     static constexpr int KMAX  = 16;
+     // window nd (LLAMA_EXPERT_STORE_REMOTE_COLS=1): the batched protocol, one request per box per MoE layer of a decode
+     // step for every sequence of the batch: int32 hdr[4 + 2*KND] { 0x4E440000|k, ntok, seq, layer, (gid, tok) x k }
+-    // + ntok inputs of n_in f32; the reply is k rows of n_out f32 in request order
++    // + ntok inputs of n_in f32; the reply is k rows of n_out f32 in request order. The magic names the row order of
++    // this engine's own expert kernel, so a box can never answer in another one (patch 0067): ND_MAGIC = the four-warp
++    // ncols_dst=1 kernel (GGML_CUDA_MMVQ_EXACT_COLS=1), ND_MAGIC_MOE = the one-warp-per-token MoE kernel that
++    // GGML_CUDA_BATCH_INVARIANT=1 runs at every width. A box that does not know a magic drops the connection.
+     static constexpr int KND   = 32;
+     static constexpr int TND   = 8;
+     static constexpr uint32_t ND_MAGIC = 0x4E440000u;
++    static constexpr uint32_t ND_MAGIC_MOE = 0x4E450000u;
+     enum { FREE = 0, QUEUED = 1, SENT = 2, DONE = 3, ABANDONED = 4 };
+     struct slot {
+         std::atomic<int> state{FREE};
+@@ -2311,6 +2315,9 @@ struct llama_moe_cache::impl {
+     std::unordered_map<const ggml_tensor *, int32_t> map_kind; // early/late/merge map -> 1/2/3 (slot maps are absent)
+     int32_t  split_il  = -1;         // layer of the early lookup whose reads are in flight (-1: none)
+     bool split_cols = [] { const char * e = getenv("LLAMA_EXPERT_STORE_SPLIT_COLS"); return e && strcmp(e, "1") == 0; }();
++    // patch 0067: steps with fewer columns than this keep the single lookup (window nuc5: the column split costs
++    // ~3.5 % at two columns on the Spark and pays from three). Default 2 = every multi-column step, as before.
++    int64_t split_cols_min = [] { const char * e = getenv("LLAMA_EXPERT_STORE_SPLIT_COLS_MIN"); const int v = e ? atoi(e) : 2; return (int64_t) std::max(2, std::min(v, 8)); }();
+     uint64_t cols_calls[9] = {}, cols_union = 0, cols_reads = 0;
+     int32_t cols_ids[8*8] = {};
+     int32_t cols_predict[8*12] = {};
+@@ -2357,6 +2364,7 @@ struct llama_moe_cache::impl {
+     // read first if it is not resident), so the output never depends on the network. N=1 stays local.
+     const bool remote_cols = [] { const char * e = getenv("LLAMA_EXPERT_STORE_REMOTE_COLS"); return e && strcmp(e, "1") == 0; }();
+     bool     remote_cols_resident = true;     // LLAMA_EXPERT_STORE_REMOTE_OFFLOAD=0: only non-resident experts go remote
++    uint32_t remote_nd_magic = remote_client::ND_MAGIC; // patch 0067: ND_MAGIC_MOE under GGML_CUDA_BATCH_INVARIANT=1
+     std::vector<int> remote_box_rows;         // per box: pairs per layer at most
+     // LLAMA_EXPERT_STORE_REMOTE_ADAPT=1: each box's pairs per layer adapt between 1 and its maximum: one more after 8
+     // replies in a row that were complete when the real lookup came, one fewer after a reply it had to wait for longer
+@@ -4066,8 +4074,14 @@ struct llama_moe_cache::impl {
+                                 LLAMA_LOG_WARN("%s: expert store: LLAMA_EXPERT_STORE_REMOTE_COLS=1 needs LLAMA_EXPERT_STORE_SPLIT_COLS=1: the remote tier is the single-token one\n", __func__);
+                             } else {
+                                 const char * mm = getenv("GGML_CUDA_MMVQ_EXACT_COLS");
+-                                if (mm == nullptr || strcmp(mm, "1") != 0) {
+-                                    LLAMA_LOG_WARN("%s: expert store: LLAMA_EXPERT_STORE_REMOTE_COLS=1 without GGML_CUDA_MMVQ_EXACT_COLS=1: N-token expert rows are not the boxes' rows, output will depend on the network\n", __func__);
++                                const char * bi = getenv("GGML_CUDA_BATCH_INVARIANT");
++                                if (bi != nullptr && strcmp(bi, "1") == 0) {
++                                    // patch 0067: batch-invariant decode computes every expert row with the one-warp MoE
++                                    // kernel, at any width; ask the boxes for that order
++                                    remote_nd_magic = remote_client::ND_MAGIC_MOE;
++                                    LLAMA_LOG_INFO("%s: expert store: remote experts: rows in the one-warp MoE kernel order (GGML_CUDA_BATCH_INVARIANT=1)\n", __func__);
++                                } else if (mm == nullptr || strcmp(mm, "1") != 0) {
++                                    LLAMA_LOG_WARN("%s: expert store: LLAMA_EXPERT_STORE_REMOTE_COLS=1 without GGML_CUDA_BATCH_INVARIANT=1 or GGML_CUDA_MMVQ_EXACT_COLS=1: N-token expert rows are not the boxes' rows, output will depend on the network\n", __func__);
+                                 }
+                                 remote_cols_resident = !(getenv("LLAMA_EXPERT_STORE_REMOTE_OFFLOAD") != nullptr && strcmp(getenv("LLAMA_EXPERT_STORE_REMOTE_OFFLOAD"), "0") == 0);
+                                 rc_mark.assign((size_t) store.n_expert, 0);
+@@ -5239,7 +5253,7 @@ struct llama_moe_cache::impl {
+                     nt++;
+                 }
+             }
+-            s->hdr[0] = (int32_t) (remote_client::ND_MAGIC | (uint32_t) k);
++            s->hdr[0] = (int32_t) (remote_nd_magic | (uint32_t) k);
+             s->hdr[1] = nt;
+             s->hdr[2] = (int32_t) rc.n_posts;
+             s->hdr[3] = il;
+@@ -5775,7 +5789,7 @@ struct llama_moe_cache::impl {
+     void prefetch_decode(int32_t il, const int32_t * ids_data, size_t n_ids) {
+         la_finish();
+         const size_t n_predict = (size_t) n_expert_used;
+-        const bool columns = split_cols && n_ids > n_predict && n_ids <= 8*n_predict && n_ids % n_predict == 0;
++        const bool columns = split_cols && n_ids >= (size_t) split_cols_min*n_predict && n_ids <= 8*n_predict && n_ids % n_predict == 0;
+         if (n_ids != n_predict && !columns) {
+             prediction_discard();
+             return;
+@@ -6306,7 +6320,7 @@ struct llama_moe_cache::impl {
+     // zero-record slot), nullptr if the split does not apply
+     ggml_tensor * get_split_map(int32_t il, int64_t n_tokens, int kind) const {
+         const bool rcols = remote_on() && remote_cols && split_cols;
+-        if (!split || n_tokens < 1 || (n_tokens != 1 && (!split_cols || n_tokens > 8 || n_expert_used != 8 || (remote_on() && !rcols))) || il < 0 || il >= (int32_t) layers.size() || layers[il].ig < 0) {
++        if (!split || n_tokens < 1 || (n_tokens != 1 && (!split_cols || n_tokens < split_cols_min || n_tokens > 8 || n_expert_used != 8 || (remote_on() && !rcols))) || il < 0 || il >= (int32_t) layers.size() || layers[il].ig < 0) {
+             return nullptr;
+         }
+         const layer & l = layers[il];

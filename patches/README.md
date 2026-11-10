@@ -1459,3 +1459,31 @@ admission log lines print the number ("compute buffer owed to earlier bursts"). 
 differently, and with no floor configured (the GH200) nothing changes.
 
 Not in production until its acceptance windows are done (see docs/experiments.md).
+
+## 0067-split-cols-batch-invariant
+
+Makes `LLAMA_EXPERT_STORE_SPLIT_COLS=1` (0030: a decode step of N = 2..8 sequences looks its experts up per column
+and runs N one-column expert GEMVs from the cache instead of one lookup for the union) usable under
+`GGML_CUDA_BATCH_INVARIANT=1` (0054), and lets the batched NUC tier (0049) run there. Three parts:
+
+- **The fold.** In batch-invariant mode the flag's strided expert layout fell out of the fused weighted reduction:
+  the sum of the eight expert rows was computed as MUL plus seven ADDs, where production computes the fused fold,
+  whose sum contracts to FMAs. Other bits: with the flag a client's bytes were not production's (window nuc5, legs
+  C0/D1/D2: `e28b39f3cd` instead of gold `ce2fc95752`, with no boxes and with the boxes' rows discarded alike). The
+  strided split-column layout is now folded token by token with the production kernel in batch-invariant mode too.
+- **Row order on the wire.** The batched remote request's magic names the row order of the engine's own expert kernel
+  (`0x4E44` four-warp order of `GGML_CUDA_MMVQ_EXACT_COLS=1`, `0x4E45` the one-warp-per-token MoE kernel that
+  batch-invariant mode runs at every width), so a box can never answer in another order; `f53s` picks its kernel per
+  request and drops a connection whose magic it does not know.
+- **`LLAMA_EXPERT_STORE_SPLIT_COLS_MIN`** (default 2, 2..8): steps with fewer columns keep the single lookup. On the
+  Spark the column split costs about 3.5 % at two clients and pays from three.
+
+Measured on the Spark (window nuc5, five slots of 200k, production env, native sm_121 build of the stack through
+0059 + 0067): every client's bytes gold at one to five clients and in the 16k mix, with the flag off, on, and with
+the NUC tier, two processes each. Aggregate tok/s production / split columns / + NUC tier: two clients 21.1-21.3 /
+20.4-20.5 / 20.3-20.5; three 23.4-23.5 / 24.1 / 24.2-24.5; four 23.6 / 25.7-25.8 / 26.3-26.6; five 22.5-22.6 / 24.6 /
+25.4; the 16k mix 11.5-11.6 / 12.2 / 12.4-12.5; one client unchanged (15.4). With `SPLIT_COLS_MIN=3` (stack through
+0066) two clients stay at the production number. The split draws about 10 W more GPU power at three to five clients
+(35-37 W to 44-46 W by `nvidia-smi`).
+
+Not in production until its acceptance on the CI image is done (see docs/experiments.md). The NUC tier stays off.

@@ -1,0 +1,26 @@
+=== LEG PA parallel=5 ctx=1024000 extra=[LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_CLIENT_CLASSES=/srv/glm-5.3-flash/keys-nuc5/classes.txt LLAMA_SLOT_RESERVE=1 LLAMA_PRIORITY_HOLD_PROMPTS=1] 01:36:55
+READY PA after 28s
+0.27.344.263 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 204800, kv_unified = 'false'
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.426, "wall_s": 17.04, "decode_tps": 15.35, "prompt_n": 10, "prefill_tps": 24.3, "md5": "ce2fc95752", "scenario": "warm", "kind": "prio", "leg": "PA"}
+{"tag": "warm", "spec": "p0", "t_send": 17.04, "ttft_s": 0.352, "wall_s": 15.72, "decode_tps": 16.6, "prompt_n": 10, "prefill_tps": 28.5, "md5": "ce2fc95752", "scenario": "warm", "kind": "prio", "leg": "PA"}
+{"tag": "warm", "spec": "p0", "t_send": 32.76, "ttft_s": 0.354, "wall_s": 15.75, "decode_tps": 16.56, "prompt_n": 10, "prefill_tps": 28.3, "md5": "ce2fc95752", "scenario": "warm", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 2.729, "wall_s": 60.65, "decode_tps": 4.4, "prompt_n": 18, "prefill_tps": 29.5, "md5": "2d592efcb6", "scenario": "ttft4", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 0.884, "wall_s": 60.65, "decode_tps": 4.27, "prompt_n": 21, "prefill_tps": 26.4, "md5": "1aab74269d", "scenario": "ttft4", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 2.12, "wall_s": 60.65, "decode_tps": 4.36, "prompt_n": 19, "prefill_tps": 32.3, "md5": "bb64203d71", "scenario": "ttft4", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p4", "t_send": 0.0, "ttft_s": 1.531, "wall_s": 60.65, "decode_tps": 4.31, "prompt_n": 21, "prefill_tps": 32.4, "md5": "0c3f28294b", "scenario": "ttft4", "kind": "prio", "leg": "PA"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.343, "wall_s": 57.13, "decode_tps": 4.49, "prompt_n": 10, "prefill_tps": 31.6, "md5": "ce2fc95752", "scenario": "ttft4", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 1.664, "wall_s": 56.81, "decode_tps": 4.62, "prompt_n": 18, "prefill_tps": 36.3, "md5": "2d592efcb6", "scenario": "ttft4", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 2.253, "wall_s": 56.81, "decode_tps": 4.67, "prompt_n": 21, "prefill_tps": 35.7, "md5": "1aab74269d", "scenario": "ttft4", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.602, "wall_s": 56.82, "decode_tps": 4.54, "prompt_n": 19, "prefill_tps": 36.4, "md5": "bb64203d71", "scenario": "ttft4", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p4", "t_send": 0.0, "ttft_s": 1.167, "wall_s": 56.81, "decode_tps": 4.58, "prompt_n": 21, "prefill_tps": 37.1, "md5": "0c3f28294b", "scenario": "ttft4", "kind": "prio", "leg": "PA"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.488, "wall_s": 53.68, "decode_tps": 4.79, "prompt_n": 10, "prefill_tps": 26.5, "md5": "ce2fc95752", "scenario": "ttft4", "kind": "prio", "leg": "PA"}
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.423, "wall_s": 16.98, "decode_tps": 15.4, "prompt_n": 10, "prefill_tps": 24.5, "md5": "ce2fc95752", "scenario": "junofirst", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p2", "t_send": 1.0, "ttft_s": 17.044, "wall_s": 59.29, "decode_tps": 6.04, "prompt_n": 18, "prefill_tps": 36.3, "md5": "2d592efcb6", "scenario": "junofirst", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p4", "t_send": 1.0, "ttft_s": 16.547, "wall_s": 59.29, "decode_tps": 5.97, "prompt_n": 21, "prefill_tps": 37.0, "md5": "0c3f28294b", "scenario": "junofirst", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p3", "t_send": 1.0, "ttft_s": 17.651, "wall_s": 59.3, "decode_tps": 6.12, "prompt_n": 21, "prefill_tps": 34.6, "md5": "1aab74269d", "scenario": "junofirst", "kind": "prio", "leg": "PA"}
+{"tag": "low", "spec": "p1", "t_send": 1.0, "ttft_s": 18.161, "wall_s": 59.3, "decode_tps": 6.2, "prompt_n": 19, "prefill_tps": 37.3, "md5": "bb64203d71", "scenario": "junofirst", "kind": "prio", "leg": "PA"}
+{"tag": "nokey", "spec": "p0", "error": 401, "t_send": 0.0, "scenario": "nokey", "kind": "prio", "leg": "PA"}
+refused: 0; lowest MemAvailable 23018 MiB; now 120876 MiB; END PA 01:41:13
+NUC5-LEG-DONE PA 01:41:13
+server-PA.log no key in log
+SPARK-NUC5-DONE 01:41:13

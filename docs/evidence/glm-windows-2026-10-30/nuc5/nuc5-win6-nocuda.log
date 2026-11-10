@@ -1,0 +1,10 @@
+=== LEG Gw parallel=5 ctx=1024000 extra=[LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3] 02:48:51
+LEG-FAIL Gw died
+0.06.378.133 W load_tensors: madvise(MADV_PAGEOUT) failed for 4 of 4 mappings: Cannot allocate memory
+0.10.593.518 E llama_init_from_model: failed to initialize the context: expert store: cache budget too small for prefill bank group
+0.10.593.529 E cmn  common_init_: failed to create context with model 'q2/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf'
+0.10.593.534 E cmn  common_init_: failed to create context with model 'q2/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf'
+0.10.593.538 E srv    load_model: failed to create_context with model 'q2/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf'
+0.10.594.024 E srv  llama_server: exiting due to model loading error
+refused: 0; lowest MemAvailable 99400 MiB; now 120086 MiB; END Gw 02:49:03
+SPARK-NUC5G-DONE 02:49:03

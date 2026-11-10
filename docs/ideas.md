@@ -11,7 +11,7 @@ measurement), **partly** (right direction, smaller payoff than hoped), **no** (n
 
 | date | idea | verdict | next |
 |---|---|---|---|
-| 2026-11-06 | NUCs make too many network round trips; we are using them wrong | sane | built (0049), off in production until multi-slot serving |
+| 2026-11-06 | NUCs make too many network round trips; we are using them wrong | sane | built (0049 + 0067), measured on five slots 2026-11-10: +2-3.5 % at four and five clients for 50-60 W, stays off; the column split it needs pays alone (+9 %) |
 | 2026-11-06 | Distribute inference to the NUCs once the faster links exist | partly | re-check when the links land |
 | 2026-11-08 | KV cache that resizes per conversation | sane, built (0052) | decided 2026-11-09: fixed share per slot (Spark), three slots |
 | 2026-11-08 | Keep each conversation's KV contiguous | sane | part of the per-conversation design |
@@ -34,6 +34,13 @@ Verdict: sane. Patch 0049 batches every stream's NUC rows into one request per l
 instead of 43 (about 11 at four streams, about 5 at eight). Output is byte-exact with the tier on or off. The gain is
 small (+2 % at four streams, +4 % at eight, nothing at one) because the Spark's own dense work, not the network,
 limits the step. It needs multi-slot serving to engage at all.
+
+Measured on multi-slot serving (window nuc5, 2026-11-10, five batch-invariant slots): bytes identical with the tier on
+and off at one to five clients (after patch 0067), and the boxes add +2.0-3.3 % at four clients, +3.3-3.5 % at five,
+nothing at one and two, for about 50-60 W of NUC package power. Not worth two more machines and the network in every
+decode step, so the tier stays off. The column split the tier is built on is what pays: without any box it gives
++9 % at four and five clients for about +10 W, and goes to production from three clients after acceptance on the CI
+image.
 
 ## NUCs over faster links (2026-11-06)
 

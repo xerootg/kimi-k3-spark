@@ -29,3 +29,9 @@ request path allocates nothing; the log reports page faults since start and comp
 Row kernel: `fast_row2` (default) reduces each block's eight VNNI dot products with one transposed `hadd` tree
 instead of sixteen horizontal sums (integer adds: the same bits); `F53_ROW=1` selects the original `fast_row`.
 On nuc2 (12 workers): one pair 0.30 ms (was 0.42), eight pairs 2.6 ms (was 3.1).
+
+State (window nuc5, 2026-11-10): on the production configuration (five batch-invariant slots) the tier is byte-exact
+with patch 0067 (the engine sends magic `0x4E450000` in batch-invariant mode and the server then sums each row in the
+one-warp MoE order) and adds +2.0-3.3 % at four clients and +3.3-3.5 % at five for about 50-60 W of NUC package power. It
+stays off in production; see docs/experiments.md "NUC expert tier on five batch-invariant slots". The evidence
+directory `docs/evidence/glm-windows-2026-10-30/nuc5/` has the server start script (`nucserve5.sh`) and the legs.

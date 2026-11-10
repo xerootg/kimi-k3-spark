@@ -1,0 +1,295 @@
+0.00.274.318 I cmn  common_param: common_params_print_info: build 2 (a309f00) with GNU 13.3.0 for Linux aarch64
+0.00.274.319 I cmn  common_param: device_info:
+0.00.274.379 I cmn  common_param:   - CUDA0   : NVIDIA GB10 (124607 MiB, 120537 MiB free)
+0.00.357.078 I llama_prepare_model_devices: using device CUDA0 (NVIDIA GB10) (000f:01:00.0) - 120506 MiB free
+0.02.785.512 I load_tensors: expert store: 126 host expert tensors (99.0 GB) excluded from the mapping prefetch
+0.03.015.732 I load_tensors:        CUDA0 model buffer size =  6153.73 MiB
+0.12.474.601 I load_tensors: expert store: the mapping's page cache was released after the load
+0.12.674.597 I llama_kv_cache:      CUDA0 KV buffer size = 11000.00 MiB
+0.12.732.961 I llama_memory_recurrent:      CUDA0 RS buffer size =   727.81 MiB
+0.12.881.318 I llama_kv_cache:      CUDA0 KV buffer size =  8250.00 MiB
+0.12.900.796 I impl: expert store /srv/glm-5.3-flash/store/glm53flash-q2.k3xs: 43 layers x 288 experts, records up to 10878976 bytes, reads of 1024 KiB through io_uring
+0.12.900.830 I impl: expert store: layers [3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43], iq2_xs/iq2_xs/iq3_xxs: stride 8388608 B (bytes), aligned CUDA loads
+0.12.900.832 I impl: expert store: layers [11], iq3_xxs/iq3_xxs/iq4_xs: stride 12582912 B (bytes), aligned CUDA loads
+0.12.900.833 I impl: expert store: layers [12,44], iq2_xs/iq2_xs/iq4_xs: stride 10485760 B (bytes), aligned CUDA loads
+0.12.900.960 I impl: expert store: LFU eviction, half-life 262144 planned ids; volatile frequency state
+0.14.157.973 I expert store: THP bank huge backing=74767663104/74767663104 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=74767663104 bytes (before cudaHostRegister)
+0.17.147.424 I expert store: THP bank huge backing=2579496960/2579496960 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=2579496960 bytes (before cudaHostRegister)
+0.17.786.060 I expert store: THP bank huge backing=4424990720/4424990720 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=4424990720 bytes (before cudaHostRegister)
+0.18.219.430 I impl: expert store: self-prefetch on (a layer's misses are read while its shared expert computes)
+0.18.219.467 I impl: expert store: split expert GEMV on (the resident experts' matmuls run while a layer's misses are read; the late matmul has 1 rows; the zero record is slot 8912 of each group)
+0.18.219.469 I impl: expert store: slot maps registered with the GPU, the lookups run there and the fills in its host hook (LLAMA_EXPERT_STORE_GPU_SLOTS=0 for the CPU split)
+0.22.723.757 I snapshot_restore: expert store: cache snapshot restored: 7090 experts, 58.0 GB read in 4.5 s (12.9 GB/s)
+0.22.723.874 I valve_start: expert store: memory valve on: host reserve 6144 MiB, floor 50% of the slots, sampled every 500 ms (no PSI trigger: /proc/pressure/memory not writable), released slots re-armed after 10 s of calm
+0.22.723.877 I impl: expert store: host cache below is filled from the store, expert matmuls run on the GPU from the registered cache, batches up to 32 tokens from the cache (larger ones through a 2988.00 MiB staging, allocated when one comes)
+0.23.273.272 I sched_reserve:      CUDA0 compute buffer size =  3281.89 MiB
+0.24.010.583 I lock_memory_once: expert store: locked 97087 MiB of process memory (174 mappings, 633 ms), the model file mappings (180017 MiB) stay pageable
+0.31.883.321 I fill_late: expert store: 34603 lookups, hit rate 95.3%, 13.5 GB read for decode, 0.0 GB for prefill
+0.31.883.327 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.4 records, 99.40 GB/s), between fills 2.64 ms
+0.31.883.332 I fill_late: expert store: memory valve: host MemAvailable 25.05 GB (lowest 25.01, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.31.883.336 I fill_late: expert store: split GEMV: 3970 early lookups, 7.7 of 8 experts complete at the early lookup, 0.29 read under the early matmul (1 rows), 237 lookups with more misses (0.07 records read at the early lookup), plan 0.062 ms, wait at the real lookup 0.16 ms, 0 early lookups without a real one
+0.31.883.338 I fill_late: expert store: self-prefetch: 84 posts, 0.0 records and 0.00 ms of reads per post
+0.38.190.866 I fill_late: expert store: 67371 lookups, hit rate 95.7%, 24.2 GB read for decode, 0.0 GB for prefill
+0.38.190.870 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.4 records, 178.60 GB/s), between fills 2.64 ms
+0.38.190.874 I fill_late: expert store: memory valve: host MemAvailable 25.08 GB (lowest 25.01, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.38.190.878 I fill_late: expert store: split GEMV: 8066 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 436 lookups with more misses (0.07 records read at the early lookup), plan 0.058 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+0.38.190.879 I fill_late: expert store: self-prefetch: 84 posts, 0.0 records and 0.00 ms of reads per post
+0.44.892.727 I fill_late: expert store: 103059 lookups, hit rate 95.9%, 35.6 GB read for decode, 0.0 GB for prefill
+0.44.892.732 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.3 records, 91.47 GB/s), between fills 3.33 ms
+0.44.892.736 I fill_late: expert store: memory valve: host MemAvailable 24.90 GB (lowest 24.90, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.44.892.740 I fill_late: expert store: split GEMV: 12078 early lookups, 7.8 of 8 experts complete at the early lookup, 0.25 read under the early matmul (1 rows), 573 lookups with more misses (0.06 records read at the early lookup), plan 0.053 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+0.44.892.742 I fill_late: expert store: self-prefetch: 126 posts, 0.0 records and 0.03 ms of reads per post
+0.51.092.036 I fill_late: expert store: 135827 lookups, hit rate 96.1%, 44.7 GB read for decode, 0.0 GB for prefill
+0.51.092.039 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 114.66 GB/s), between fills 3.33 ms
+0.51.092.043 I fill_late: expert store: memory valve: host MemAvailable 24.90 GB (lowest 24.89, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.51.092.047 I fill_late: expert store: split GEMV: 16174 early lookups, 7.8 of 8 experts complete at the early lookup, 0.24 read under the early matmul (1 rows), 729 lookups with more misses (0.05 records read at the early lookup), plan 0.051 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+0.51.092.049 I fill_late: expert store: self-prefetch: 126 posts, 0.0 records and 0.03 ms of reads per post
+0.57.149.059 I fill_late: expert store: 168595 lookups, hit rate 96.3%, 52.0 GB read for decode, 0.0 GB for prefill
+0.57.149.063 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 133.58 GB/s), between fills 3.33 ms
+0.57.149.066 I fill_late: expert store: memory valve: host MemAvailable 24.90 GB (lowest 24.89, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.57.149.071 I fill_late: expert store: split GEMV: 20270 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 837 lookups with more misses (0.05 records read at the early lookup), plan 0.047 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+0.57.149.072 I fill_late: expert store: self-prefetch: 126 posts, 0.0 records and 0.03 ms of reads per post
+1.04.147.668 I fill_late: expert store: 204006 lookups, hit rate 96.1%, 67.6 GB read for decode, 0.0 GB for prefill
+1.04.147.671 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.3 records, 98.92 GB/s), between fills 3.59 ms
+1.04.147.674 I fill_late: expert store: memory valve: host MemAvailable 24.89 GB (lowest 24.89, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.04.147.678 I fill_late: expert store: split GEMV: 24282 early lookups, 7.8 of 8 experts complete at the early lookup, 0.24 read under the early matmul (1 rows), 1080 lookups with more misses (0.05 records read at the early lookup), plan 0.051 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+1.04.147.681 I fill_late: expert store: self-prefetch: 168 posts, 0.2 records and 0.12 ms of reads per post
+1.10.393.572 I fill_late: expert store: 236774 lookups, hit rate 96.1%, 77.7 GB read for decode, 0.0 GB for prefill
+1.10.393.575 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.3 records, 113.69 GB/s), between fills 3.59 ms
+1.10.393.579 I fill_late: expert store: memory valve: host MemAvailable 24.89 GB (lowest 24.88, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.10.393.584 I fill_late: expert store: split GEMV: 28378 early lookups, 7.8 of 8 experts complete at the early lookup, 0.24 read under the early matmul (1 rows), 1241 lookups with more misses (0.05 records read at the early lookup), plan 0.050 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+1.10.393.586 I fill_late: expert store: self-prefetch: 168 posts, 0.2 records and 0.12 ms of reads per post
+1.17.372.295 I fill_late: expert store: 272619 lookups, hit rate 96.0%, 91.1 GB read for decode, 0.0 GB for prefill
+1.17.372.299 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.3 records, 95.41 GB/s), between fills 4.08 ms
+1.17.372.303 I fill_late: expert store: memory valve: host MemAvailable 24.52 GB (lowest 24.52, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.17.372.308 I fill_late: expert store: split GEMV: 32390 early lookups, 7.8 of 8 experts complete at the early lookup, 0.24 read under the early matmul (1 rows), 1424 lookups with more misses (0.05 records read at the early lookup), plan 0.051 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+1.17.372.310 I fill_late: expert store: self-prefetch: 210 posts, 0.2 records and 0.11 ms of reads per post
+1.24.151.477 I fill_late: expert store: 305387 lookups, hit rate 95.8%, 107.9 GB read for decode, 0.0 GB for prefill
+1.24.151.480 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.3 records, 112.94 GB/s), between fills 4.08 ms
+1.24.151.483 I fill_late: expert store: memory valve: host MemAvailable 24.52 GB (lowest 24.52, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.24.151.487 I fill_late: expert store: split GEMV: 36486 early lookups, 7.7 of 8 experts complete at the early lookup, 0.25 read under the early matmul (1 rows), 1848 lookups with more misses (0.06 records read at the early lookup), plan 0.059 ms, wait at the real lookup 0.14 ms, 0 early lookups without a real one
+1.24.151.488 I fill_late: expert store: self-prefetch: 210 posts, 0.2 records and 0.11 ms of reads per post
+1.30.799.371 I fill_late: expert store: 338155 lookups, hit rate 95.7%, 122.7 GB read for decode, 0.0 GB for prefill
+1.30.799.375 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.4 records, 128.45 GB/s), between fills 4.08 ms
+1.30.799.378 I fill_late: expert store: memory valve: host MemAvailable 24.54 GB (lowest 24.52, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.30.799.382 I fill_late: expert store: split GEMV: 40582 early lookups, 7.7 of 8 experts complete at the early lookup, 0.26 read under the early matmul (1 rows), 2203 lookups with more misses (0.07 records read at the early lookup), plan 0.063 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+1.30.799.383 I fill_late: expert store: self-prefetch: 210 posts, 0.2 records and 0.11 ms of reads per post
+1.37.997.324 I fill_late: expert store: 373968 lookups, hit rate 95.5%, 140.4 GB read for decode, 0.0 GB for prefill
+1.37.997.328 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.4 records, 115.14 GB/s), between fills 4.16 ms
+1.37.997.331 I fill_late: expert store: memory valve: host MemAvailable 24.39 GB (lowest 24.39, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.37.997.337 I fill_late: expert store: split GEMV: 44594 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 2542 lookups with more misses (0.07 records read at the early lookup), plan 0.066 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+1.37.997.339 I fill_late: expert store: self-prefetch: 252 posts, 0.2 records and 0.15 ms of reads per post
+1.44.262.714 I fill_late: expert store: 406736 lookups, hit rate 95.6%, 150.8 GB read for decode, 0.0 GB for prefill
+1.44.262.717 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.4 records, 123.67 GB/s), between fills 4.16 ms
+1.44.262.720 I fill_late: expert store: memory valve: host MemAvailable 24.39 GB (lowest 24.39, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.44.262.726 I fill_late: expert store: split GEMV: 48690 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 2702 lookups with more misses (0.07 records read at the early lookup), plan 0.064 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+1.44.262.726 I fill_late: expert store: self-prefetch: 252 posts, 0.2 records and 0.15 ms of reads per post
+1.50.581.753 I fill_late: expert store: 439504 lookups, hit rate 95.6%, 161.4 GB read for decode, 0.0 GB for prefill
+1.50.581.756 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.4 records, 132.36 GB/s), between fills 4.16 ms
+1.50.581.760 I fill_late: expert store: memory valve: host MemAvailable 24.38 GB (lowest 24.38, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.50.581.764 I fill_late: expert store: split GEMV: 52786 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 2876 lookups with more misses (0.07 records read at the early lookup), plan 0.063 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+1.50.581.765 I fill_late: expert store: self-prefetch: 252 posts, 0.2 records and 0.15 ms of reads per post
+1.57.153.713 I fill_late: expert store: 473830 lookups, hit rate 95.6%, 172.4 GB read for decode, 0.0 GB for prefill
+1.57.153.717 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.02 ms (0.4 records, 128.88 GB/s), between fills 4.12 ms
+1.57.153.720 I fill_late: expert store: memory valve: host MemAvailable 24.38 GB (lowest 24.38, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.57.153.724 I fill_late: expert store: split GEMV: 56798 early lookups, 7.7 of 8 experts complete at the early lookup, 0.26 read under the early matmul (1 rows), 3043 lookups with more misses (0.07 records read at the early lookup), plan 0.062 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+1.57.153.725 I fill_late: expert store: self-prefetch: 294 posts, 0.2 records and 0.14 ms of reads per post
+2.05.737.095 I fill_decode: expert store: 524212 lookups, hit rate 95.6%, 191.0 GB read for decode, 0.0 GB for prefill
+2.05.737.103 I fill_decode: expert store: per layer fill: plan 0.00 ms, reads 0.03 ms (0.4 records, 89.49 GB/s), between fills 2.51 ms
+2.05.737.108 I fill_decode: expert store: memory valve: host MemAvailable 24.33 GB (lowest 24.31, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.05.737.112 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+2.05.737.113 I fill_decode: expert store: self-prefetch: 2219 posts, 0.0 records and 0.03 ms of reads per post
+2.15.510.374 I fill_decode: expert store: 588261 lookups, hit rate 95.7%, 210.7 GB read for decode, 0.0 GB for prefill
+2.15.510.378 I fill_decode: expert store: per layer fill: plan 0.00 ms, reads 0.06 ms (0.4 records, 52.32 GB/s), between fills 2.14 ms
+2.15.510.382 I fill_decode: expert store: memory valve: host MemAvailable 24.30 GB (lowest 24.30, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.15.510.386 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+2.15.510.387 I fill_decode: expert store: self-prefetch: 6315 posts, 0.0 records and 0.02 ms of reads per post
+2.25.075.039 I fill_decode: expert store: 651874 lookups, hit rate 95.8%, 228.4 GB read for decode, 0.0 GB for prefill
+2.25.075.045 I fill_decode: expert store: per layer fill: plan 0.00 ms, reads 0.08 ms (0.4 records, 39.81 GB/s), between fills 2.05 ms
+2.25.075.048 I fill_decode: expert store: memory valve: host MemAvailable 24.32 GB (lowest 24.30, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.25.075.053 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+2.25.075.054 I fill_decode: expert store: self-prefetch: 10411 posts, 0.0 records and 0.02 ms of reads per post
+2.34.393.040 I fill_decode: expert store: 717881 lookups, hit rate 96.0%, 241.0 GB read for decode, 0.0 GB for prefill
+2.34.393.048 I fill_decode: expert store: per layer fill: plan 0.00 ms, reads 0.09 ms (0.4 records, 34.62 GB/s), between fills 2.02 ms
+2.34.393.052 I fill_decode: expert store: memory valve: host MemAvailable 24.31 GB (lowest 24.30, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.34.393.058 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+2.34.393.059 I fill_decode: expert store: self-prefetch: 14423 posts, 0.0 records and 0.02 ms of reads per post
+2.43.773.223 I fill_decode: expert store: 782303 lookups, hit rate 96.1%, 257.0 GB read for decode, 0.0 GB for prefill
+2.43.773.228 I fill_decode: expert store: per layer fill: plan 0.00 ms, reads 0.11 ms (0.4 records, 30.17 GB/s), between fills 1.99 ms
+2.43.773.232 I fill_decode: expert store: memory valve: host MemAvailable 24.31 GB (lowest 24.30, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.43.773.237 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+2.43.773.238 I fill_decode: expert store: self-prefetch: 18519 posts, 0.0 records and 0.02 ms of reads per post
+2.53.305.479 I fill_decode: expert store: 848718 lookups, hit rate 96.2%, 271.0 GB read for decode, 0.0 GB for prefill
+2.53.305.487 I fill_decode: expert store: per layer fill: plan 0.00 ms, reads 0.12 ms (0.4 records, 27.42 GB/s), between fills 1.99 ms
+2.53.305.491 I fill_decode: expert store: memory valve: host MemAvailable 24.32 GB (lowest 24.30, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.53.305.497 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+2.53.305.500 I fill_decode: expert store: self-prefetch: 22531 posts, 0.0 records and 0.02 ms of reads per post
+3.02.034.177 I fill_decode: expert store: 911927 lookups, hit rate 96.3%, 281.0 GB read for decode, 0.0 GB for prefill
+3.02.034.185 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.13 ms (0.4 records, 25.81 GB/s), between fills 1.97 ms
+3.02.034.190 I fill_decode: expert store: memory valve: host MemAvailable 24.32 GB (lowest 24.30, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+3.02.034.196 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+3.02.034.197 I fill_decode: expert store: self-prefetch: 26627 posts, 0.0 records and 0.01 ms of reads per post
+3.10.967.582 I fill_decode: expert store: 975836 lookups, hit rate 96.4%, 292.8 GB read for decode, 0.0 GB for prefill
+3.10.967.589 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.13 ms (0.4 records, 24.30 GB/s), between fills 1.96 ms
+3.10.967.594 I fill_decode: expert store: memory valve: host MemAvailable 24.32 GB (lowest 24.30, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+3.10.967.600 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+3.10.967.601 I fill_decode: expert store: self-prefetch: 30723 posts, 0.0 records and 0.01 ms of reads per post
+3.22.483.470 I fill_decode: expert store: 1058028 lookups, hit rate 96.5%, 314.4 GB read for decode, 0.0 GB for prefill
+3.22.483.478 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.15 ms (0.4 records, 22.31 GB/s), between fills 2.00 ms
+3.22.483.483 I fill_decode: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.16, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+3.22.483.488 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+3.22.483.489 I fill_decode: expert store: self-prefetch: 34693 posts, 0.0 records and 0.01 ms of reads per post
+3.34.777.949 I fill_decode: expert store: 1152951 lookups, hit rate 96.5%, 338.7 GB read for decode, 0.0 GB for prefill
+3.34.777.958 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.17 ms (0.4 records, 20.65 GB/s), between fills 2.04 ms
+3.34.777.962 I fill_decode: expert store: memory valve: host MemAvailable 24.14 GB (lowest 24.12, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+3.34.777.968 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+3.34.777.969 I fill_decode: expert store: self-prefetch: 38789 posts, 0.0 records and 0.02 ms of reads per post
+3.47.069.367 I fill_decode: expert store: 1247573 lookups, hit rate 96.5%, 362.7 GB read for decode, 0.0 GB for prefill
+3.47.069.374 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.18 ms (0.4 records, 19.40 GB/s), between fills 2.08 ms
+3.47.069.379 I fill_decode: expert store: memory valve: host MemAvailable 24.14 GB (lowest 24.12, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+3.47.069.382 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+3.47.069.383 I fill_decode: expert store: self-prefetch: 42885 posts, 0.0 records and 0.02 ms of reads per post
+3.59.456.791 I fill_decode: expert store: 1344336 lookups, hit rate 96.6%, 384.4 GB read for decode, 0.0 GB for prefill
+3.59.456.799 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.19 ms (0.4 records, 18.53 GB/s), between fills 2.11 ms
+3.59.456.803 I fill_decode: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.12, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+3.59.456.808 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+3.59.456.809 I fill_decode: expert store: self-prefetch: 46855 posts, 0.0 records and 0.02 ms of reads per post
+4.11.753.325 I fill_decode: expert store: 1439692 lookups, hit rate 96.6%, 408.5 GB read for decode, 0.0 GB for prefill
+4.11.753.332 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.21 ms (0.4 records, 17.72 GB/s), between fills 2.14 ms
+4.11.753.337 I fill_decode: expert store: memory valve: host MemAvailable 24.14 GB (lowest 24.12, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.11.753.342 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+4.11.753.344 I fill_decode: expert store: self-prefetch: 50951 posts, 0.0 records and 0.02 ms of reads per post
+4.24.499.786 I fill_decode: expert store: 1537110 lookups, hit rate 96.6%, 433.5 GB read for decode, 0.0 GB for prefill
+4.24.499.790 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.22 ms (0.4 records, 17.06 GB/s), between fills 2.17 ms
+4.24.499.794 I fill_decode: expert store: memory valve: host MemAvailable 24.13 GB (lowest 24.12, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.24.499.798 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+4.24.499.799 I fill_decode: expert store: self-prefetch: 54921 posts, 0.0 records and 0.02 ms of reads per post
+4.36.173.703 I fill_decode: expert store: 1630949 lookups, hit rate 96.7%, 452.0 GB read for decode, 0.0 GB for prefill
+4.36.173.712 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.23 ms (0.5 records, 16.61 GB/s), between fills 2.18 ms
+4.36.173.717 I fill_decode: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.36.173.722 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+4.36.173.723 I fill_decode: expert store: self-prefetch: 59018 posts, 0.0 records and 0.02 ms of reads per post
+4.48.374.752 I fill_decode: expert store: 1725936 lookups, hit rate 96.7%, 474.6 GB read for decode, 0.0 GB for prefill
+4.48.374.759 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.24 ms (0.5 records, 16.15 GB/s), between fills 2.20 ms
+4.48.374.763 I fill_decode: expert store: memory valve: host MemAvailable 24.15 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+4.48.374.768 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+4.48.374.769 I fill_decode: expert store: self-prefetch: 63114 posts, 0.0 records and 0.02 ms of reads per post
+5.03.113.629 I fill_decode: expert store: 1836435 lookups, hit rate 96.7%, 507.7 GB read for decode, 0.0 GB for prefill
+5.03.113.638 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.26 ms (0.5 records, 15.64 GB/s), between fills 2.23 ms
+5.03.113.642 I fill_decode: expert store: memory valve: host MemAvailable 24.17 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+5.03.113.648 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+5.03.113.649 I fill_decode: expert store: self-prefetch: 67041 posts, 0.0 records and 0.02 ms of reads per post
+5.19.259.286 I fill_decode: expert store: 1961005 lookups, hit rate 96.7%, 549.9 GB read for decode, 0.0 GB for prefill
+5.19.259.293 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.28 ms (0.5 records, 15.13 GB/s), between fills 2.27 ms
+5.19.259.298 I fill_decode: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+5.19.259.303 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+5.19.259.304 I fill_decode: expert store: self-prefetch: 71137 posts, 0.0 records and 0.02 ms of reads per post
+5.22.728.392 I snapshot_save: expert store: cache snapshot (periodic): 9537 resident experts, 57.3 KB to /srv/glm-5.3-flash/snapshot/nuc5-A.k3sn
+5.35.562.615 I fill_decode: expert store: 2086243 lookups, hit rate 96.6%, 593.9 GB read for decode, 0.0 GB for prefill
+5.35.562.625 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.30 ms (0.5 records, 14.71 GB/s), between fills 2.31 ms
+5.35.562.630 I fill_decode: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+5.35.562.635 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+5.35.562.636 I fill_decode: expert store: self-prefetch: 75233 posts, 0.0 records and 0.03 ms of reads per post
+5.51.774.948 I fill_decode: expert store: 2211609 lookups, hit rate 96.6%, 633.7 GB read for decode, 0.0 GB for prefill
+5.51.774.954 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.32 ms (0.5 records, 14.40 GB/s), between fills 2.35 ms
+5.51.774.957 I fill_decode: expert store: memory valve: host MemAvailable 24.13 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+5.51.774.962 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+5.51.774.963 I fill_decode: expert store: self-prefetch: 79161 posts, 0.0 records and 0.03 ms of reads per post
+6.07.837.761 I fill_decode: expert store: 2336727 lookups, hit rate 96.6%, 675.4 GB read for decode, 0.0 GB for prefill
+6.07.837.770 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.33 ms (0.6 records, 14.12 GB/s), between fills 2.38 ms
+6.07.837.775 I fill_decode: expert store: memory valve: host MemAvailable 24.14 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+6.07.837.779 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+6.07.837.780 I fill_decode: expert store: self-prefetch: 83257 posts, 0.0 records and 0.03 ms of reads per post
+6.24.692.888 I fill_decode: expert store: 2464111 lookups, hit rate 96.5%, 720.8 GB read for decode, 0.0 GB for prefill
+6.24.692.896 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.35 ms (0.6 records, 13.87 GB/s), between fills 2.41 ms
+6.24.692.901 I fill_decode: expert store: memory valve: host MemAvailable 24.13 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+6.24.692.907 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+6.24.692.908 I fill_decode: expert store: self-prefetch: 87185 posts, 0.0 records and 0.03 ms of reads per post
+6.39.934.116 I fill_decode: expert store: 2586921 lookups, hit rate 96.5%, 754.1 GB read for decode, 0.0 GB for prefill
+6.39.934.120 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.36 ms (0.6 records, 13.68 GB/s), between fills 2.43 ms
+6.39.934.123 I fill_decode: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+6.39.934.127 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+6.39.934.127 I fill_decode: expert store: self-prefetch: 91281 posts, 0.0 records and 0.03 ms of reads per post
+6.56.065.496 I fill_decode: expert store: 2712193 lookups, hit rate 96.5%, 796.0 GB read for decode, 0.0 GB for prefill
+6.56.065.505 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.38 ms (0.6 records, 13.50 GB/s), between fills 2.45 ms
+6.56.065.509 I fill_decode: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+6.56.065.515 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+6.56.065.516 I fill_decode: expert store: self-prefetch: 95377 posts, 0.0 records and 0.03 ms of reads per post
+7.15.078.262 I fill_decode: expert store: 2847855 lookups, hit rate 96.4%, 850.9 GB read for decode, 0.0 GB for prefill
+7.15.078.272 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.40 ms (0.6 records, 13.31 GB/s), between fills 2.49 ms
+7.15.078.277 I fill_decode: expert store: memory valve: host MemAvailable 24.17 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+7.15.078.282 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+7.15.078.283 I fill_decode: expert store: self-prefetch: 98028 posts, 0.0 records and 0.03 ms of reads per post
+7.35.854.486 I fill_decode: expert store: 2999243 lookups, hit rate 96.4%, 903.0 GB read for decode, 0.0 GB for prefill
+7.35.854.496 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.42 ms (0.7 records, 13.15 GB/s), between fills 2.54 ms
+7.35.854.501 I fill_decode: expert store: memory valve: host MemAvailable 24.17 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+7.35.854.507 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+7.35.854.508 I fill_decode: expert store: self-prefetch: 98028 posts, 0.0 records and 0.03 ms of reads per post
+7.56.948.539 I fill_decode: expert store: 3151887 lookups, hit rate 96.4%, 957.9 GB read for decode, 0.0 GB for prefill
+7.56.948.544 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.44 ms (0.7 records, 13.00 GB/s), between fills 2.59 ms
+7.56.948.547 I fill_decode: expert store: memory valve: host MemAvailable 24.14 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+7.56.948.551 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+7.56.948.551 I fill_decode: expert store: self-prefetch: 98028 posts, 0.0 records and 0.03 ms of reads per post
+8.18.242.507 I fill_decode: expert store: 3303519 lookups, hit rate 96.3%, 1013.6 GB read for decode, 0.0 GB for prefill
+8.18.242.511 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.46 ms (0.7 records, 12.87 GB/s), between fills 2.64 ms
+8.18.242.515 I fill_decode: expert store: memory valve: host MemAvailable 24.14 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+8.18.242.520 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+8.18.242.521 I fill_decode: expert store: self-prefetch: 98238 posts, 0.0 records and 0.03 ms of reads per post
+8.38.966.046 I fill_decode: expert store: 3455570 lookups, hit rate 96.3%, 1065.4 GB read for decode, 0.0 GB for prefill
+8.38.966.056 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.47 ms (0.7 records, 12.76 GB/s), between fills 2.68 ms
+8.38.966.060 I fill_decode: expert store: memory valve: host MemAvailable 24.15 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+8.38.966.066 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+8.38.966.067 I fill_decode: expert store: self-prefetch: 98238 posts, 0.0 records and 0.03 ms of reads per post
+9.00.082.132 I fill_decode: expert store: 3608262 lookups, hit rate 96.3%, 1120.9 GB read for decode, 0.0 GB for prefill
+9.00.082.140 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.49 ms (0.7 records, 12.67 GB/s), between fills 2.72 ms
+9.00.082.145 I fill_decode: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+9.00.082.149 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+9.00.082.150 I fill_decode: expert store: self-prefetch: 98238 posts, 0.0 records and 0.03 ms of reads per post
+9.20.574.115 I fill_decode: expert store: 3758822 lookups, hit rate 96.3%, 1169.0 GB read for decode, 0.0 GB for prefill
+9.20.574.125 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.50 ms (0.8 records, 12.59 GB/s), between fills 2.76 ms
+9.20.574.130 I fill_decode: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+9.20.574.135 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+9.20.574.137 I fill_decode: expert store: self-prefetch: 98448 posts, 0.0 records and 0.03 ms of reads per post
+9.41.722.135 I fill_decode: expert store: 3911778 lookups, hit rate 96.3%, 1224.8 GB read for decode, 0.0 GB for prefill
+9.41.722.144 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.52 ms (0.8 records, 12.51 GB/s), between fills 2.80 ms
+9.41.722.149 I fill_decode: expert store: memory valve: host MemAvailable 24.15 GB (lowest 24.11, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+9.41.722.154 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+9.41.722.158 I fill_decode: expert store: self-prefetch: 98448 posts, 0.0 records and 0.03 ms of reads per post
+10.39.877.869 I snapshot_save: expert store: cache snapshot (periodic): 9537 resident experts, 57.3 KB to /srv/glm-5.3-flash/snapshot/nuc5-A.k3sn
+10.52.833.562 I fill_decode: expert store: 4064818 lookups, hit rate 96.2%, 1289.9 GB read for decode, 84.8 GB for prefill
+10.52.833.567 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.54 ms (0.8 records, 12.43 GB/s), between fills 2.83 ms
+10.52.833.570 I fill_decode: expert store: memory valve: host MemAvailable 23.59 GB (lowest 23.58, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+10.52.833.574 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+10.52.833.574 I fill_decode: expert store: self-prefetch: 98658 posts, 0.0 records and 0.03 ms of reads per post
+11.14.880.525 I fill_decode: expert store: 4216368 lookups, hit rate 96.2%, 1350.8 GB read for decode, 84.8 GB for prefill
+11.14.880.530 I fill_decode: expert store: per layer fill: plan 0.03 ms, reads 0.56 ms (0.8 records, 12.37 GB/s), between fills 2.87 ms
+11.14.880.534 I fill_decode: expert store: memory valve: host MemAvailable 23.59 GB (lowest 23.57, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+11.14.880.538 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+11.14.880.539 I fill_decode: expert store: self-prefetch: 98658 posts, 0.0 records and 0.03 ms of reads per post
+11.32.092.805 I fill_decode: expert store: 4345830 lookups, hit rate 96.2%, 1396.7 GB read for decode, 84.8 GB for prefill
+11.32.092.813 I fill_decode: expert store: per layer fill: plan 0.03 ms, reads 0.57 ms (0.8 records, 12.32 GB/s), between fills 2.87 ms
+11.32.092.818 I fill_decode: expert store: memory valve: host MemAvailable 23.58 GB (lowest 23.57, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+11.32.092.824 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+11.32.092.825 I fill_decode: expert store: self-prefetch: 102130 posts, 0.0 records and 0.03 ms of reads per post
+12.38.253.733 I fill_decode: expert store: 4485093 lookups, hit rate 96.1%, 1452.8 GB read for decode, 166.1 GB for prefill
+12.38.253.740 I fill_decode: expert store: per layer fill: plan 0.03 ms, reads 0.58 ms (0.8 records, 12.27 GB/s), between fills 2.89 ms
+12.38.253.745 I fill_decode: expert store: memory valve: host MemAvailable 23.58 GB (lowest 23.57, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+12.38.253.750 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+12.38.253.751 I fill_decode: expert store: self-prefetch: 104244 posts, 0.0 records and 0.03 ms of reads per post
+12.59.504.292 I fill_decode: expert store: 4634397 lookups, hit rate 96.1%, 1510.5 GB read for decode, 166.1 GB for prefill
+12.59.504.297 I fill_decode: expert store: per layer fill: plan 0.03 ms, reads 0.59 ms (0.9 records, 12.22 GB/s), between fills 2.92 ms
+12.59.504.301 I fill_decode: expert store: memory valve: host MemAvailable 23.55 GB (lowest 23.55, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+12.59.504.307 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+12.59.504.307 I fill_decode: expert store: self-prefetch: 104779 posts, 0.0 records and 0.03 ms of reads per post
+13.15.476.303 I fill_decode: expert store: 4759586 lookups, hit rate 96.1%, 1550.2 GB read for decode, 166.1 GB for prefill
+13.15.476.308 I fill_decode: expert store: per layer fill: plan 0.03 ms, reads 0.60 ms (0.9 records, 12.18 GB/s), between fills 2.92 ms
+13.15.476.311 I fill_decode: expert store: memory valve: host MemAvailable 23.57 GB (lowest 23.55, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+13.15.476.315 I fill_decode: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+13.15.476.316 I fill_decode: expert store: self-prefetch: 108875 posts, 0.0 records and 0.03 ms of reads per post
+13.18.476.688 I common_memory_breakdown_print: |   - CUDA0 (GB10)       | 124607 = 22628 + (29413 =  6153 +   19977 +    3281) +       72565 |
+13.18.716.019 I llama_moe_cache: expert store: 1558.34 GB read for decode, 166.11 GB read for prefill
+13.18.716.021 I llama_moe_cache: expert store: per layer fill: plan 0.03 ms, reads 0.60 ms (0.9 records, 12.17 GB/s), between fills 2.92 ms
+13.18.716.025 I llama_moe_cache: expert store: memory valve: host MemAvailable 27.79 GB (lowest 23.55, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+13.18.716.028 I llama_moe_cache: expert store: split GEMV: 58884 early lookups, 7.7 of 8 experts complete at the early lookup, 0.27 read under the early matmul (1 rows), 3324 lookups with more misses (0.07 records read at the early lookup), plan 0.065 ms, wait at the real lookup 0.15 ms, 0 early lookups without a real one
+13.18.716.029 I llama_moe_cache: expert store: self-prefetch: 109620 posts, 0.0 records and 0.03 ms of reads per post
+13.19.107.343 I snapshot_save: expert store: cache snapshot (exit): 9537 resident experts, 57.3 KB to /srv/glm-5.3-flash/snapshot/nuc5-A.k3sn

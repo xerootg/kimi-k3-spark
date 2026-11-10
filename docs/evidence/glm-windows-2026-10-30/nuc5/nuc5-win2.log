@@ -1,0 +1,46 @@
+=== LEG D1 parallel=5 ctx=1024000 extra=[LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1] 01:28:42
+READY D1 after 26s
+0.24.149.234 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 204800, kv_unified = 'false'
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.53, "decode_n": 256, "decode_tps": 15.46, "md5": "e28b39f3cd", "t0": 1794274148.0672052, "t1": 1794274164.9985447, "kind": "solo", "tag": "D1"}
+{"kind": "multi", "tag": "D1", "n": 4, "round": "warm", "agg_tps": 24.77, "wall_s": 41.34, "gen": 1024, "per_stream_tps": [6.36, 6.54, 6.45, 6.3], "md5": ["6be84634a2", "8ef2703c17", "38623999e2", "ef43eaf2cc"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [26.3, 32.69, 32.54, 27.12], "t0": 1794274165.0436769, "t1": 1794274206.3854034}
+{"kind": "multi", "tag": "D1", "n": 4, "round": 1, "agg_tps": 25.65, "wall_s": 39.92, "gen": 1024, "per_stream_tps": [6.45, 6.71, 6.62, 6.54], "md5": ["6be84634a2", "8ef2703c17", "38623999e2", "ef43eaf2cc"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [25.37, 37.49, 38.55, 38.27], "t0": 1794274206.385874, "t1": 1794274246.3036535}
+refused: 0; lowest MemAvailable 23149 MiB; now 120907 MiB; END D1 01:30:49
+NUC5-LEG-DONE D1 01:30:49
+=== LEG D2 parallel=5 ctx=1024000 extra=[LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_REMOTE=192.168.4.249:19700,192.168.4.250:19700 LLAMA_EXPERT_STORE_REMOTE_SET=/home/xero/nd/nuc2.set,/home/xero/nd/nuc3.set LLAMA_EXPERT_STORE_REMOTE_COLS=1 LLAMA_EXPERT_STORE_REMOTE_SPIN_US=5000 LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS=8,6 LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US=3000 LLAMA_EXPERT_STORE_REMOTE_ADAPT=1 LLAMA_EXPERT_STORE_REMOTE_MAX_WAIT_US=100 LLAMA_EXPERT_STORE_REMOTE_DISCARD=1] 01:30:49
+READY D2 after 26s
+0.18.359.799 W impl: expert store: remote experts: cannot hold /dev/cpu_dma_latency (Permission denied): the round trips pay the CPUs' idle exit latency (needs root or a udev rule giving the server's user write access; in a container, the device mapped in)
+0.18.359.803 I impl: expert store: remote experts: rows in the one-warp MoE kernel order (GGML_CUDA_BATCH_INVARIANT=1)
+0.18.359.812 I impl: expert store: remote experts BATCHED (window nd): one request per box per MoE layer of an N-token decode step, 8,6 pairs per box per layer, resident experts offloaded too; N=1 stays local
+0.18.359.814 I impl: expert store: remote experts: 2 boxes, up to 14 rows per layer
+0.24.280.817 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 204800, kv_unified = 'false'
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.61, "decode_n": 256, "decode_tps": 15.45, "md5": "e28b39f3cd", "t0": 1794274274.736619, "t1": 1794274291.6748147, "kind": "solo", "tag": "D2"}
+{"kind": "multi", "tag": "D2", "n": 4, "round": "warm", "agg_tps": 24.7, "wall_s": 41.46, "gen": 1024, "per_stream_tps": [6.41, 6.25, 6.35, 6.52], "md5": ["6be84634a2", "8ef2703c17", "38623999e2", "ef43eaf2cc"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [27.4, 29.56, 30.13, 30.09], "t0": 1794274291.7192342, "t1": 1794274333.1827404}
+{"kind": "multi", "tag": "D2", "n": 4, "round": 1, "agg_tps": 25.55, "wall_s": 40.08, "gen": 1024, "per_stream_tps": [6.43, 6.59, 6.5, 6.68], "md5": ["6be84634a2", "8ef2703c17", "38623999e2", "ef43eaf2cc"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [25.39, 37.48, 38.29, 38.03], "t0": 1794274333.1831982, "t1": 1794274373.264128}
+2.04.161.671 I llama_moe_cache: expert store: remote BATCHED: replies complete when the real lookup came 44, waited for 54 (54 of them with the short wait of resident pairs)
+2.04.161.673 I llama_moe_cache: expert store: remote BATCHED box 0: 0 rows placed = 0.00% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,1
+2.04.161.674 I llama_moe_cache: expert store: remote BATCHED box 1: 0 rows placed = 0.00% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,1
+2.04.161.675 I llama_moe_cache: expert store: remote experts: 53 layers with candidates, 53 of them read some locally; wait at the real lookup 0.106 ms per layer with candidates
+2.04.161.678 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 49 posts, 1.00 rows per post, 0 rows placed, 49 requests short (49 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 42 breaker trips; RTT p50 1.57 p90 1.71 p99 1.75 ms (14 replies); 1 connects, 0 drops (0 stale)
+2.04.161.681 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 49 posts, 1.06 rows per post, 0 rows placed, 49 requests short (52 rows read locally, 0 partial replies, 0 NaN rows), 0 unsent, 42 breaker trips; RTT p50 1.37 p90 1.57 p99 1.63 ms (43 replies); 1 connects, 0 drops (0 stale)
+refused: 0; lowest MemAvailable 23040 MiB; now 120893 MiB; END D2 01:32:55
+NUC5-LEG-DONE D2 01:32:55
+=== LEG V parallel=5 ctx=1024000 extra=[LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_REMOTE=192.168.4.249:19700,192.168.4.250:19700 LLAMA_EXPERT_STORE_REMOTE_SET=/home/xero/nd/nuc2.set,/home/xero/nd/nuc3.set LLAMA_EXPERT_STORE_REMOTE_COLS=1 LLAMA_EXPERT_STORE_REMOTE_SPIN_US=5000 LLAMA_EXPERT_STORE_REMOTE_BOX_ROWS=8,6 LLAMA_EXPERT_STORE_REMOTE_DEADLINE_US=3000 LLAMA_EXPERT_STORE_REMOTE_ADAPT=1 LLAMA_EXPERT_STORE_REMOTE_MAX_WAIT_US=100 LLAMA_EXPERT_STORE_REMOTE_DUMP=/srv/glm-5.3-flash/legs-nuc5/dump.bin LLAMA_EXPERT_STORE_REMOTE_DUMP_N=8192] 01:32:55
+READY V after 26s
+0.18.432.887 W impl: expert store: remote experts: cannot hold /dev/cpu_dma_latency (Permission denied): the round trips pay the CPUs' idle exit latency (needs root or a udev rule giving the server's user write access; in a container, the device mapped in)
+0.18.432.890 I impl: expert store: remote experts: rows in the one-warp MoE kernel order (GGML_CUDA_BATCH_INVARIANT=1)
+0.18.482.179 I impl: expert store: remote experts BATCHED (window nd): one request per box per MoE layer of an N-token decode step, 8,6 pairs per box per layer, resident experts offloaded too; N=1 stays local
+0.18.482.183 I impl: expert store: remote experts: 2 boxes, up to 14 rows per layer
+0.24.509.038 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 204800, kv_unified = 'false'
+{"kind": "multi", "tag": "V", "n": 5, "round": "warm", "agg_tps": 24.45, "wall_s": 52.34, "gen": 1280, "per_stream_tps": [5.15, 4.96, 5.03, 5.11, 5.21], "md5": ["6be84634a2", "8ef2703c17", "38623999e2", "ef43eaf2cc", "cebdad74de"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [28.36, 21.01, 26.08, 26.98, 35.61], "t0": 1794274400.576169, "t1": 1794274452.9192796}
+{"kind": "multi", "tag": "V", "n": 5, "round": 1, "agg_tps": 25.28, "wall_s": 50.63, "gen": 1280, "per_stream_tps": [5.29, 5.14, 5.19, 5.25, 5.09], "md5": ["6be84634a2", "8ef2703c17", "38623999e2", "ef43eaf2cc", "cebdad74de"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [27.69, 36.98, 37.59, 38.08, 39.05], "t0": 1794274452.9198925, "t1": 1794274503.545533}
+2.08.493.096 I llama_moe_cache: expert store: remote BATCHED box 0: 41876 rows placed = 4.79% of the routed pairs, pairs per layer now (N=2,4,8) 1,1,1
+2.08.493.097 I llama_moe_cache: expert store: remote BATCHED box 1: 43385 rows placed = 4.96% of the routed pairs, pairs per layer now (N=2,4,8) 1,2,1
+2.08.493.098 I llama_moe_cache: expert store: remote experts: 20392 layers with candidates, 2630 of them read some locally; wait at the real lookup 0.041 ms per layer with candidates
+2.08.493.867 I llama_moe_cache: expert store: remote box 0 (192.168.4.249:19700, up): 19906 posts, 2.27 rows per post, 41876 rows placed, 1437 requests short (3345 rows read locally, 426 partial replies, 0 NaN rows), 0 unsent, 2 breaker trips; RTT p50 1.25 p90 1.75 p99 2.03 ms (16384 replies); 1 connects, 0 drops (0 stale)
+2.08.494.243 I llama_moe_cache: expert store: remote box 1 (192.168.4.250:19700, up): 19575 posts, 2.42 rows per post, 43385 rows placed, 1373 requests short (4019 rows read locally, 170 partial replies, 0 NaN rows), 0 unsent, 2 breaker trips; RTT p50 1.45 p90 1.72 p99 2.12 ms (16384 replies); 1 connects, 0 drops (0 stale)
+2.08.579.258 I expert store: remote BATCHED: 8192 placed rows with their inputs written to /srv/glm-5.3-flash/legs-nuc5/dump.bin
+refused: 0; lowest MemAvailable 22708 MiB; now 120912 MiB; END V 01:35:06
+NUC5-LEG-DONE V 01:35:06
+-rw-rw-r-- 1 xero xero 268501004 Nov  9 18:35 legs-nuc5/dump.bin
+replay legs-nuc5/dump.bin: 8192 remote rows, 0 differ from the GPU's rows
+SPARK-NUC5D-DONE 01:35:19
