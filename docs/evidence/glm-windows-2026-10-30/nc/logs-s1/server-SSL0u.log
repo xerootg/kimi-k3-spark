@@ -1,0 +1,1967 @@
+0.00.275.111 I srv  llama_server: initializing ...
+0.00.275.126 I cmn  common_param: common_params_print_info: build 0 (unknown) with GNU 13.3.0 for Linux aarch64
+0.00.275.127 I cmn  common_param: common_params_print_info: verbosity = 4 (adjust with the `-lv N` CLI arg)
+0.00.275.127 I cmn  common_param: device_info:
+0.00.275.183 I cmn  common_param:   - CUDA0   : NVIDIA GB10 (124607 MiB, 120559 MiB free)
+0.00.275.185 I cmn  common_param:   - CPU     : CPU (124607 MiB, 124607 MiB free)
+0.00.275.217 I cmn  common_param: system_info: n_threads = 8 (n_threads_batch = 20) / 20 | CUDA : ARCHS = 1210 | USE_GRAPHS = 1 | FA_QUANTS = q4_0-q4_0,q8_0-q8_0,f16-f16,bf16-bf16 | BLACKWELL_NATIVE_FP4 = 1 | CPU : NEON = 1 | ARM_FMA = 1 | FP16_VA = 1 | MATMUL_INT8 = 1 | SVE = 1 | DOTPROD = 1 | SVE_CNT = 16 | OPENMP = 1 | REPACK = 1 | 
+0.00.275.440 I srv          init: using 19 threads for HTTP server
+0.00.275.469 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.00.277.167 I srv    load_model: loading model 'q2/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf'
+0.00.277.169 I srv    load_model: local path 'q2/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf'
+0.00.329.596 I llama_model_loader: additional 3 GGUFs metadata loaded.
+0.00.329.630 I llama_model_loader: loaded meta data with 73 key-value pairs and 1412 tensors from q2/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf (version GGUF V3 (latest))
+0.00.329.665 I llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
+0.00.329.684 I llama_model_loader: - kv   0:                       general.architecture str              = glm5-next
+0.00.329.686 I llama_model_loader: - kv   1:                               general.type str              = model
+0.00.329.708 I llama_model_loader: - kv   2:                     general.sampling.top_p f32              = 0.950000
+0.00.329.710 I llama_model_loader: - kv   3:                      general.sampling.temp f32              = 1.000000
+0.00.329.710 I llama_model_loader: - kv   4:                               general.name str              = GLM 5.3 Flash
+0.00.329.712 I llama_model_loader: - kv   5:                         general.size_label str              = 288x10B
+0.00.329.713 I llama_model_loader: - kv   6:                            general.license str              = mit
+0.00.329.749 I llama_model_loader: - kv   7:                               general.tags arr[str,2]       = ["conversational", "unsloth"]
+0.00.329.751 I llama_model_loader: - kv   8:                          general.languages arr[str,2]       = ["en", "zh"]
+0.00.329.755 I llama_model_loader: - kv   9:                      glm5-next.block_count u32              = 46
+0.00.329.756 I llama_model_loader: - kv  10:                   glm5-next.context_length u32              = 1048576
+0.00.329.756 I llama_model_loader: - kv  11:                 glm5-next.embedding_length u32              = 4096
+0.00.329.757 I llama_model_loader: - kv  12:              glm5-next.feed_forward_length u32              = 12288
+0.00.329.758 I llama_model_loader: - kv  13:             glm5-next.attention.head_count u32              = 64
+0.00.329.759 I llama_model_loader: - kv  14: glm5-next.attention.layer_norm_rms_epsilon f32              = 0.000010
+0.00.329.760 I llama_model_loader: - kv  15:                     glm5-next.expert_count u32              = 288
+0.00.329.761 I llama_model_loader: - kv  16:                glm5-next.expert_used_count u32              = 8
+0.00.329.761 I llama_model_loader: - kv  17:               glm5-next.expert_group_count u32              = 1
+0.00.329.762 I llama_model_loader: - kv  18:          glm5-next.expert_group_used_count u32              = 1
+0.00.329.762 I llama_model_loader: - kv  19:               glm5-next.expert_gating_func u32              = 2
+0.00.329.763 I llama_model_loader: - kv  20:                       glm5-next.vocab_size u32              = 154880
+0.00.329.768 I llama_model_loader: - kv  21:          glm5-next.attention.head_count_kv arr[i32,46]      = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, ...
+0.00.329.768 I llama_model_loader: - kv  22:            glm5-next.attention.q_lora_rank u32              = 1536
+0.00.329.769 I llama_model_loader: - kv  23:           glm5-next.attention.kv_lora_rank u32              = 512
+0.00.329.770 I llama_model_loader: - kv  24:             glm5-next.rope.dimension_count u32              = 0
+0.00.329.770 I llama_model_loader: - kv  25:             glm5-next.attention.key_length u32              = 512
+0.00.329.771 I llama_model_loader: - kv  26:           glm5-next.attention.value_length u32              = 512
+0.00.329.771 I llama_model_loader: - kv  27:         glm5-next.attention.key_length_mla u32              = 256
+0.00.329.772 I llama_model_loader: - kv  28:       glm5-next.attention.value_length_mla u32              = 256
+0.00.329.773 I llama_model_loader: - kv  29:     glm5-next.attention.layer_norm_epsilon f32              = 0.000001
+0.00.329.773 I llama_model_loader: - kv  30:                  glm5-next.ssm.conv_kernel u32              = 4
+0.00.329.774 I llama_model_loader: - kv  31:                     glm5-next.kda.head_dim u32              = 128
+0.00.329.775 I llama_model_loader: - kv  32:             glm5-next.kda.gate_lower_bound f32              = -5.000000
+0.00.329.776 I llama_model_loader: - kv  33:     glm5-next.attention.indexer.head_count u32              = 32
+0.00.329.776 I llama_model_loader: - kv  34:     glm5-next.attention.indexer.key_length u32              = 128
+0.00.329.777 I llama_model_loader: - kv  35:          glm5-next.attention.indexer.top_k u32              = 2048
+0.00.329.778 I llama_model_loader: - kv  36:          glm5-next.attention.indexer.kpool u32              = 4
+0.00.329.778 I llama_model_loader: - kv  37:           glm5-next.hyper_connection.count u32              = 4
+0.00.329.779 I llama_model_loader: - kv  38: glm5-next.hyper_connection.sinkhorn_iterations u32              = 20
+0.00.329.780 I llama_model_loader: - kv  39:         glm5-next.hyper_connection.epsilon f32              = 0.000001
+0.00.329.780 I llama_model_loader: - kv  40:       glm5-next.expert_feed_forward_length u32              = 2048
+0.00.329.781 I llama_model_loader: - kv  41: glm5-next.expert_shared_feed_forward_length u32              = 2048
+0.00.329.781 I llama_model_loader: - kv  42:              glm5-next.expert_shared_count u32              = 1
+0.00.329.782 I llama_model_loader: - kv  43:        glm5-next.leading_dense_block_count u32              = 3
+0.00.329.783 I llama_model_loader: - kv  44:             glm5-next.expert_weights_scale f32              = 2.500000
+0.00.329.784 I llama_model_loader: - kv  45:              glm5-next.expert_weights_norm bool             = true
+0.00.329.793 I llama_model_loader: - kv  46:                 glm5-next.swiglu_clamp_exp arr[f32,46]      = [10.000000, 10.000000, 10.000000, 10....
+0.00.329.800 I llama_model_loader: - kv  47:               glm5-next.swiglu_clamp_shexp arr[f32,46]      = [10.000000, 10.000000, 10.000000, 10....
+0.00.329.801 I llama_model_loader: - kv  48:             glm5-next.nextn_predict_layers u32              = 1
+0.00.329.802 I llama_model_loader: - kv  49:                       tokenizer.ggml.model str              = gpt2
+0.00.329.803 I llama_model_loader: - kv  50:                         tokenizer.ggml.pre str              = glm4
+0.00.338.398 I llama_model_loader: - kv  51:                      tokenizer.ggml.tokens arr[str,154880]  = ["!", "\"", "#", "$", "%", "&", "'", ...
+0.00.340.946 I llama_model_loader: - kv  52:                  tokenizer.ggml.token_type arr[i32,154880]  = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+0.00.358.355 I llama_model_loader: - kv  53:                      tokenizer.ggml.merges arr[str,321649]  = ["Ġ Ġ", "Ġ ĠĠĠ", "ĠĠ ĠĠ", "...
+0.00.358.358 I llama_model_loader: - kv  54:                tokenizer.ggml.eos_token_id u32              = 154820
+0.00.358.359 I llama_model_loader: - kv  55:            tokenizer.ggml.padding_token_id u32              = 154820
+0.00.358.359 I llama_model_loader: - kv  56:                tokenizer.ggml.bos_token_id u32              = 154822
+0.00.358.359 I llama_model_loader: - kv  57:                tokenizer.ggml.eot_token_id u32              = 154827
+0.00.358.359 I llama_model_loader: - kv  58:            tokenizer.ggml.unknown_token_id u32              = 154820
+0.00.358.360 I llama_model_loader: - kv  59:                tokenizer.ggml.eom_token_id u32              = 154829
+0.00.358.360 I llama_model_loader: - kv  60:               general.quantization_version u32              = 2
+0.00.358.361 I llama_model_loader: - kv  61:                          general.file_type u32              = 10
+0.00.358.361 I llama_model_loader: - kv  62:                      quantize.imatrix.file str              = GLM-5.3-Flash-GGUF/imatrix_unsloth.gguf
+0.00.358.362 I llama_model_loader: - kv  63:                   quantize.imatrix.dataset str              = unsloth_calibration_GLM-5.3-Flash.txt
+0.00.358.362 I llama_model_loader: - kv  64:             quantize.imatrix.entries_count u32              = 809
+0.00.358.363 I llama_model_loader: - kv  65:              quantize.imatrix.chunks_count u32              = 88
+0.00.358.363 I llama_model_loader: - kv  66:                                   split.no u16              = 0
+0.00.358.364 I llama_model_loader: - kv  67:                        split.tensors.count i32              = 1412
+0.00.358.364 I llama_model_loader: - kv  68:                                split.count u16              = 4
+0.00.358.366 I llama_model_loader: - kv  69:                    tokenizer.chat_template str              = [gMASK]<sop>\n{%- set effective_reason...
+0.00.358.366 I llama_model_loader: - kv  70:                       general.quantized_by str              = Unsloth
+0.00.358.366 I llama_model_loader: - kv  71:                           general.repo_url str              = https://huggingface.co/unsloth
+0.00.358.367 I llama_model_loader: - kv  72: glm5-next.attention.indexer.index_share_mtp bool             = true
+0.00.358.370 I llama_model_loader: - type  f32:  638 tensors
+0.00.358.370 I llama_model_loader: - type q8_0:  346 tensors
+0.00.358.371 I llama_model_loader: - type q2_K:    2 tensors
+0.00.358.371 I llama_model_loader: - type q3_K:    1 tensors
+0.00.358.371 I llama_model_loader: - type q4_K:    1 tensors
+0.00.358.372 I llama_model_loader: - type q5_K:  181 tensors
+0.00.358.372 I llama_model_loader: - type q6_K:  117 tensors
+0.00.358.372 I llama_model_loader: - type iq2_xs:   82 tensors
+0.00.358.373 I llama_model_loader: - type iq3_xxs:   41 tensors
+0.00.358.373 I llama_model_loader: - type iq4_xs:    3 tensors
+0.00.358.375 I print_info: file format = GGUF V3 (latest)
+0.00.358.376 I print_info: file type   = Q2_K - Medium
+0.00.358.378 I print_info: file size   = 101.24 GiB (2.71 BPW) 
+0.00.358.493 I llama_prepare_model_devices: using device CUDA0 (NVIDIA GB10) (000f:01:00.0) - 120520 MiB free
+0.00.445.634 I load: 0 unused tokens
+0.00.458.119 W load: special_eot_id is not in special_eog_ids - the tokenizer config may be incorrect
+0.00.458.123 W load: special_eom_id is not in special_eog_ids - the tokenizer config may be incorrect
+0.00.458.123 I load: printing all EOG tokens:
+0.00.458.123 I load:   - 154820 ('<|endoftext|>')
+0.00.458.124 I load:   - 154827 ('<|user|>')
+0.00.458.124 I load:   - 154829 ('<|observation|>')
+0.00.458.233 I load: special tokens cache size = 36
+0.00.488.206 I load: token to piece cache size = 0.9811 MB
+0.00.488.248 I print_info: arch                  = glm5-next
+0.00.488.250 I print_info: vocab_only            = 0
+0.00.488.250 I print_info: no_alloc              = 0
+0.00.488.250 I print_info: n_ctx_train           = 1048576
+0.00.488.254 I print_info: n_embd_inp            = 4096
+0.00.488.254 I print_info: n_embd                = 4096
+0.00.488.257 I print_info: n_embd_out            = 4096
+0.00.488.258 I print_info: n_layer               = 45
+0.00.488.258 I print_info: n_layer_all           = 46
+0.00.488.283 I print_info: n_head                = 64
+0.00.488.291 I print_info: n_head_kv             = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1]
+0.00.488.292 I print_info: n_rot                 = 0
+0.00.488.293 I print_info: n_swa                 = 0
+0.00.488.296 I print_info: is_swa_any            = 0
+0.00.488.297 I print_info: non_causal_type       = 0
+0.00.488.297 I print_info: n_embd_head_k         = 512
+0.00.488.297 I print_info: n_embd_head_v         = 512
+0.00.488.302 I print_info: n_gqa                 = [0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 0, 0, 64, 0, 64]
+0.00.488.314 I print_info: n_embd_k_gqa          = [0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 512]
+0.00.488.321 I print_info: n_embd_v_gqa          = [0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 0, 0, 512, 0, 512]
+0.00.488.326 I print_info: f_norm_eps            = 1.0e-06
+0.00.488.326 I print_info: f_norm_rms_eps        = 1.0e-05
+0.00.488.327 I print_info: f_clamp_kqv           = 0.0e+00
+0.00.488.327 I print_info: f_max_alibi_bias      = 0.0e+00
+0.00.488.327 I print_info: f_logit_scale         = 0.0e+00
+0.00.488.327 I print_info: f_attn_scale          = 0.0e+00
+0.00.488.328 I print_info: f_attn_value_scale    = 0.0000
+0.00.488.332 I print_info: n_ff                  = 12288
+0.00.488.333 I print_info: n_expert              = 288
+0.00.488.334 I print_info: n_expert_used         = 8
+0.00.488.335 I print_info: n_expert_groups       = 1
+0.00.488.335 I print_info: n_group_used          = 1
+0.00.488.336 I print_info: causal attn           = 1
+0.00.488.337 I print_info: pooling type          = -1
+0.00.488.338 I print_info: rope type             = -1
+0.00.488.339 I print_info: rope scaling          = linear
+0.00.488.342 I print_info: freq_base_train       = 10000.0
+0.00.488.342 I print_info: freq_scale_train      = 1
+0.00.488.343 I print_info: n_ctx_orig_yarn       = 1048576
+0.00.488.344 I print_info: rope_yarn_log_mul     = 0.0000
+0.00.488.345 I print_info: rope_finetuned        = unknown
+0.00.488.347 I print_info: model type            = 320B.A18B
+0.00.488.349 I print_info: model params          = 320.76 B
+0.00.488.350 I print_info: general.name          = GLM 5.3 Flash
+0.00.488.359 I print_info: vocab type            = BPE
+0.00.488.362 I print_info: n_vocab               = 154880
+0.00.488.363 I print_info: n_merges              = 321649
+0.00.488.363 I print_info: BOS token             = 154822 '[gMASK]'
+0.00.488.363 I print_info: EOS token             = 154820 '<|endoftext|>'
+0.00.488.364 I print_info: EOT token             = 154827 '<|user|>'
+0.00.488.365 I print_info: EOM token             = 154829 '<|observation|>'
+0.00.488.365 I print_info: UNK token             = 154820 '<|endoftext|>'
+0.00.488.366 I print_info: PAD token             = 154820 '<|endoftext|>'
+0.00.488.367 I print_info: LF token              = 198 'Ċ'
+0.00.488.367 I print_info: FIM PRE token         = 154838 '<|code_prefix|>'
+0.00.488.368 I print_info: FIM SUF token         = 154840 '<|code_suffix|>'
+0.00.488.368 I print_info: FIM MID token         = 154839 '<|code_middle|>'
+0.00.488.369 I print_info: EOG token             = 154820 '<|endoftext|>'
+0.00.488.369 I print_info: EOG token             = 154827 '<|user|>'
+0.00.488.370 I print_info: EOG token             = 154829 '<|observation|>'
+0.00.488.370 I print_info: max token length      = 1024
+0.00.488.575 I load_tensors: loading model tensors, this can take a while... (load_mode = mmap)
+0.00.690.790 W llama_model_loader: tensor overrides to CPU are used with mmap enabled - consider using --load-mode none for better performance
+0.02.866.611 W model has unused tensor blk.45.attn_norm.weight (size = 16384 bytes) -- ignoring
+0.02.866.619 W model has unused tensor blk.45.ffn_norm.weight (size = 16384 bytes) -- ignoring
+0.02.866.623 W model has unused tensor blk.45.attn_q_a_norm.weight (size = 6144 bytes) -- ignoring
+0.02.866.625 W model has unused tensor blk.45.attn_kv_a_norm.weight (size = 2048 bytes) -- ignoring
+0.02.866.627 W model has unused tensor blk.45.attn_q_a.weight (size = 4325376 bytes) -- ignoring
+0.02.866.631 W model has unused tensor blk.45.attn_q_b.weight (size = 26738688 bytes) -- ignoring
+0.02.866.633 W model has unused tensor blk.45.attn_kv_a_mqa.weight (size = 2228224 bytes) -- ignoring
+0.02.866.636 W model has unused tensor blk.45.attn_k_b.weight (size = 8912896 bytes) -- ignoring
+0.02.866.638 W model has unused tensor blk.45.attn_v_b.weight (size = 8912896 bytes) -- ignoring
+0.02.866.641 W model has unused tensor blk.45.attn_output.weight (size = 46137344 bytes) -- ignoring
+0.02.866.645 W model has unused tensor blk.45.indexer.k_norm.weight (size = 512 bytes) -- ignoring
+0.02.866.647 W model has unused tensor blk.45.indexer.k_norm.bias (size = 512 bytes) -- ignoring
+0.02.866.650 W model has unused tensor blk.45.indexer.proj.weight (size = 524288 bytes) -- ignoring
+0.02.866.652 W model has unused tensor blk.45.indexer.attn_k.weight (size = 557056 bytes) -- ignoring
+0.02.866.655 W model has unused tensor blk.45.indexer.attn_q_b.weight (size = 6684672 bytes) -- ignoring
+0.02.866.657 W model has unused tensor blk.45.indexer_compressor_gate.weight (size = 557056 bytes) -- ignoring
+0.02.866.660 W model has unused tensor blk.45.indexer_compressor_ape.weight (size = 2048 bytes) -- ignoring
+0.02.866.662 W model has unused tensor blk.45.ffn_gate_inp.weight (size = 4718592 bytes) -- ignoring
+0.02.866.665 W model has unused tensor blk.45.exp_probs_b.bias (size = 1152 bytes) -- ignoring
+0.02.866.668 W model has unused tensor blk.45.ffn_gate_exps.weight (size = 792723456 bytes) -- ignoring
+0.02.866.670 W model has unused tensor blk.45.ffn_down_exps.weight (size = 1038090240 bytes) -- ignoring
+0.02.866.673 W model has unused tensor blk.45.ffn_up_exps.weight (size = 792723456 bytes) -- ignoring
+0.02.866.675 W model has unused tensor blk.45.ffn_gate_shexp.weight (size = 5767168 bytes) -- ignoring
+0.02.866.678 W model has unused tensor blk.45.ffn_down_shexp.weight (size = 6881280 bytes) -- ignoring
+0.02.866.680 W model has unused tensor blk.45.ffn_up_shexp.weight (size = 5767168 bytes) -- ignoring
+0.02.866.684 W model has unused tensor blk.45.nextn.eh_proj.weight (size = 35651584 bytes) -- ignoring
+0.02.866.689 W model has unused tensor blk.45.nextn.enorm.weight (size = 16384 bytes) -- ignoring
+0.02.866.691 W model has unused tensor blk.45.nextn.hnorm.weight (size = 16384 bytes) -- ignoring
+0.02.866.698 W model has unused tensor blk.45.nextn.shared_head_norm.weight (size = 16384 bytes) -- ignoring
+0.02.868.358 I load_tensors: expert store: 126 host expert tensors (99.0 GB) excluded from the mapping prefetch
+0.03.097.690 I load_tensors: offloading output layer to GPU
+0.03.097.695 I load_tensors: offloading 45 repeating layers to GPU
+0.03.097.695 I load_tensors: offloaded 47/47 layers to GPU
+0.03.097.701 I load_tensors:   CPU_Mapped model buffer size =   415.94 MiB
+0.03.097.702 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.702 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.702 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.703 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.703 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.703 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.704 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.704 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.705 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.705 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.705 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.706 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.706 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.707 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.707 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.707 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.708 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.708 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.708 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.709 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.709 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.709 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.710 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.710 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.710 I load_tensors:   CPU_Mapped model buffer size =  1224.00 MiB
+0.03.097.711 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.711 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.711 I load_tensors:   CPU_Mapped model buffer size =  1224.00 MiB
+0.03.097.712 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.712 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.712 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.713 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.713 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.714 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.714 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.714 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.715 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.715 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.715 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.716 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.716 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.716 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.717 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.717 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.717 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.718 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.718 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.718 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.719 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.719 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.719 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.719 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.720 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.720 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.721 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.721 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.721 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.722 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.722 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.722 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.724 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.724 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.724 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.725 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.725 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.725 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.726 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.726 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.726 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.727 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.727 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.727 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.728 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.728 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.728 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.729 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.729 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.729 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.730 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.730 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.730 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.731 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.731 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.731 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.732 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.732 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.732 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.733 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.733 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.733 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.733 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.734 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.734 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.734 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.735 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.735 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.735 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.736 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.736 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.736 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.737 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.737 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.737 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.738 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.738 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.738 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.739 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.739 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.739 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.739 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.740 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.740 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.741 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.741 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.741 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.742 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.742 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.742 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.742 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.743 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.743 I load_tensors:   CPU_Mapped model buffer size =   882.00 MiB
+0.03.097.744 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.744 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.744 I load_tensors:   CPU_Mapped model buffer size =  1224.00 MiB
+0.03.097.745 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.745 I load_tensors:   CPU_Mapped model buffer size =   666.00 MiB
+0.03.097.745 I load_tensors:        CUDA0 model buffer size =  6153.73 MiB
+0.12.568.600 W load_tensors: madvise(MADV_PAGEOUT) failed for 4 of 4 mappings: Cannot allocate memory
+0.12.568.606 I load_tensors: expert store: the mapping's page cache was released after the load
+0.12.571.525 I cmn  common_init_: added <|endoftext|> logit bias = -inf
+0.12.571.531 I cmn  common_init_: added <|user|> logit bias = -inf
+0.12.571.532 I cmn  common_init_: added <|observation|> logit bias = -inf
+0.12.571.830 I llama_context: constructing llama_context
+0.12.571.837 I llama_context: n_seq_max             = 5
+0.12.571.837 I llama_context: n_ctx                 = 1024000
+0.12.571.838 I llama_context: n_ctx_seq             = 204800
+0.12.571.838 I llama_context: n_batch               = 2048
+0.12.571.838 I llama_context: n_ubatch              = 2048
+0.12.571.839 I llama_context: causal_attn           = 1
+0.12.571.840 I llama_context: flash_attn            = enabled
+0.12.571.840 I llama_context: kv_unified            = false
+0.12.571.843 I llama_context: freq_base             = 10000.0
+0.12.571.843 I llama_context: freq_scale            = 1
+0.12.571.843 I llama_context: n_rs_seq              = 0
+0.12.571.844 I llama_context: n_outputs_max         = 5
+0.12.571.844 I llama_context: n_outputs_max_per_seq = 1
+0.12.571.844 I llama_context: n_ctx_seq (204800) < n_ctx_train (1048576) -- the full capacity of the model will not be utilized
+0.12.573.275 I llama_context:  CUDA_Host  output buffer size =     2.95 MiB
+0.12.763.440 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 10.74 GiB of address space on one 2048 KiB zero chunk (176.6 ms)
+0.12.763.461 I llama_kv_cache:      CUDA0 KV buffer size = 11000.00 MiB
+0.12.763.487 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 204800 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.12.769.226 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 204800 cells, 66.0 MiB mapped in all streams (5.7 ms)
+0.12.774.341 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (5.1 ms)
+0.12.779.443 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 204800 cells, 198.0 MiB mapped in all streams (5.1 ms)
+0.12.784.524 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 204800 cells, 264.0 MiB mapped in all streams (5.1 ms)
+0.12.789.607 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 204800 cells, 330.0 MiB mapped in all streams (5.1 ms)
+0.12.789.616 I llama_kv_cache: size = 11000.00 MiB (204800 cells,  11 layers,  5/5 seqs), K (f16): 11000.00 MiB, V (f16):    0.00 MiB
+0.12.789.618 I llama_kv_cache: n_rot_k = 0, n_embd_head_k_all = 512
+0.12.789.618 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+0.12.817.798 I llama_memory_recurrent:      CUDA0 RS buffer size =   727.81 MiB
+0.12.817.810 I llama_memory_recurrent: size =  727.81 MiB (     5 cells,  45 layers,  5 seqs  0 rs_seq), R (f32):   47.81 MiB, S (f32):  680.00 MiB, P (f32):    0.00 MiB
+0.12.817.814 I operator(): creating indexer KV cache, size = 204800 cells
+0.12.964.053 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 8.06 GiB of address space on one 2048 KiB zero chunk (132.3 ms)
+0.12.964.068 I llama_kv_cache:      CUDA0 KV buffer size =  8250.00 MiB
+0.12.964.080 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 204800 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.12.967.754 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 204800 cells, 44.0 MiB mapped in all streams (3.7 ms)
+0.12.971.213 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 204800 cells, 88.0 MiB mapped in all streams (3.5 ms)
+0.12.974.638 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (3.4 ms)
+0.12.978.076 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 204800 cells, 176.0 MiB mapped in all streams (3.4 ms)
+0.12.981.518 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 204800 cells, 220.0 MiB mapped in all streams (3.4 ms)
+0.12.981.523 I llama_kv_cache: size = 8250.00 MiB (204800 cells,  11 layers,  5/5 seqs), K (f16): 8250.00 MiB, V (f16):    0.00 MiB
+0.12.981.525 I llama_kv_cache: n_rot_k = 0, n_embd_head_k_all = 384
+0.12.981.525 I llama_kv_cache: n_rot_v = 0, n_embd_head_k_all = 0
+0.12.982.080 I impl: expert store /srv/glm-5.3-flash/store/glm53flash-q2.k3xs: 43 layers x 288 experts, records up to 10878976 bytes, reads of 1024 KiB through io_uring
+0.12.982.111 I impl: expert store: layers [3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43], iq2_xs/iq2_xs/iq3_xxs: stride 8388608 B (bytes), aligned CUDA loads
+0.12.982.113 I impl: expert store: layers [11], iq3_xxs/iq3_xxs/iq4_xs: stride 12582912 B (bytes), aligned CUDA loads
+0.12.982.114 I impl: expert store: layers [12,44], iq2_xs/iq2_xs/iq4_xs: stride 10485760 B (bytes), aligned CUDA loads
+0.12.982.193 I prefill bank: 3456.00 MiB shared landing replaces staging; decode cache budget unchanged
+0.12.982.210 I impl: expert store: LFU eviction, half-life 262144 planned ids; volatile frequency state
+0.14.173.594 I expert store: THP bank huge backing=74767663104/74767663104 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=74767663104 bytes (before cudaHostRegister)
+0.16.996.246 I prefill bank: memfd alias registered ok
+0.17.136.947 I expert store: THP bank huge backing=2579496960/2579496960 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=2579496960 bytes (before cudaHostRegister)
+0.17.494.315 I prefill bank: memfd alias registered ok
+0.17.726.074 I expert store: THP bank huge backing=4424990720/4424990720 bytes (100.00%), HUGEPAGE=0 errno=0 populate=0 errno=0 COLLAPSE=0 errno=0; AnonHugePages delta=4424990720 bytes (before cudaHostRegister)
+0.18.125.495 I prefill bank: memfd alias registered ok
+0.18.127.616 I ggml_backend_cuda_set_host_bank_hook: host bank hook: asynchronous (GPU-side wait on a mapped mailbox, CUDA graphs stay on)
+0.18.127.620 I impl: expert store: self-prefetch on (a layer's misses are read while its shared expert computes)
+0.18.127.655 I impl: expert store: split expert GEMV on (the resident experts' matmuls run while a layer's misses are read; the late matmul has 1 rows; the zero record is slot 8912 of each group)
+0.18.127.657 I impl: expert store: slot maps registered with the GPU, the lookups run there and the fills in its host hook (LLAMA_EXPERT_STORE_GPU_SLOTS=0 for the CPU split)
+0.18.127.661 I prefill bank enabled: batches over 32 tokens use resident records and shared landing slots; replaced staging 2988.00 MiB
+0.22.710.597 I snapshot_restore: expert store: cache snapshot restored: 7090 experts, 58.0 GB read in 4.6 s (12.6 GB/s)
+0.22.710.737 I valve_start: expert store: memory valve on: host reserve 6144 MiB, floor 50% of the slots, sampled every 500 ms (no PSI trigger: /proc/pressure/memory not writable), released slots re-armed after 10 s of calm
+0.22.710.742 I impl: expert store: host cache below is filled from the store, expert matmuls run on the GPU from the registered cache, batches up to 32 tokens from the cache (larger ones through a 2988.00 MiB staging, allocated when one comes)
+0.22.710.745 I impl:        CPU MoE cache size = 81440.00 MiB for 94446.00 MiB of host experts
+0.22.710.746 I impl: 39 layers, iq3_xxs:  8912 slots (79.3%), 0 of them on the HBM node, stride 8388608 B (bytes)
+0.22.710.747 I impl:  1 layers, iq4_xs:   204 slots (70.8%), 0 of them on the HBM node, stride 12582912 B (bytes)
+0.22.710.748 I impl:  2 layers, iq4_xs:   421 slots (73.1%), 0 of them on the HBM node, stride 10485760 B (bytes)
+0.22.710.752 I sched_reserve: reserving ...
+0.22.736.449 I resolve_fused_ops: resolving fused DeepSeek V4 HC support:
+0.22.739.630 I resolve_fused_ops: fused DeepSeek V4 HC pre enabled
+0.22.742.065 I resolve_fused_ops: fused DeepSeek V4 HC comb enabled
+0.22.744.404 I resolve_fused_ops: fused DeepSeek V4 HC post enabled
+0.22.744.421 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.23.267.013 I sched_reserve:      CUDA0 compute buffer size =  3281.89 MiB
+0.23.267.021 I sched_reserve:  CUDA_Host compute buffer size =  1146.51 MiB
+0.23.267.023 I sched_reserve: graph: nodes = 8039, splits = 2, input objects = 4, input tensors = 16
+0.23.267.025 I sched_reserve: reserve took 556.27 ms, sched copies = 1
+0.23.267.184 I cmn          init: llama threadpool init, n_threads = 8
+0.23.310.584 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 0, n_diff = 1
+0.23.959.694 I lock_memory_once: expert store: locked 97087 MiB of process memory (171 mappings, 595 ms), the model file mappings (180017 MiB) stay pageable
+LOGITS_FNV 0 ae2e4efebf0274c4 chain ae2e4efebf0274c4
+0.24.041.190 I cmn  common_conte: the context does not support partial sequence removal
+0.24.057.397 I srv    load_model: speculative decoding will use checkpoints
+0.24.057.405 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 204800, kv_unified = 'false'
+0.24.057.423 I spec common_specu: no implementations specified for speculative decoding
+0.24.057.426 I slot   load_model: id  0 | task -1 | new slot, n_ctx = 204800
+0.24.057.434 I slot   load_model: id  1 | task -1 | new slot, n_ctx = 204800
+0.24.057.434 I slot   load_model: id  2 | task -1 | new slot, n_ctx = 204800
+0.24.057.434 I slot   load_model: id  3 | task -1 | new slot, n_ctx = 204800
+0.24.057.434 I slot   load_model: id  4 | task -1 | new slot, n_ctx = 204800
+0.24.057.445 I srv    load_model: prompt cache is disabled - use `--cache-ram N` to enable it
+0.24.057.446 I srv    load_model: for more info see https://github.com/ggml-org/llama.cpp/pull/16391
+0.24.057.447 I srv    load_model: context checkpoints enabled, max = 32, min spacing = 8192
+0.24.057.459 W srv          init: --cache-idle-slots requires --cache-ram, disabling
+0.24.069.694 I srv          init: init: chat template, example_format: '[gMASK]<sop><|system|>Reasoning Effort: Max<|system|>You are a helpful assistant<|user|>Hello<|assistant|><think></think>Hi there<|user|>How are you?<|assistant|><think>'
+0.24.069.912 I srv          init: init: chat template, thinking = 1
+0.24.069.918 I srv          init: preserve_reasoning kwarg: true
+0.24.069.919 W srv          init: chat template supports preserving reasoning, it is enabled by default (may use more tokens, disable via --no-reasoning-preserve)
+0.24.069.947 I srv  llama_server: model loaded
+0.24.069.952 I srv  llama_server: listening on http://127.0.0.1:18080
+0.24.070.030 I srv  update_slots: all slots are idle
+0.25.245.859 I srv  server_strea: conv_id= (empty=1)
+0.25.246.288 I slot get_availabl: id  0 | task -1 |  - skipping, slot is empty
+0.25.246.290 I slot get_availabl: id  1 | task -1 |  - skipping, slot is empty
+0.25.246.290 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+0.25.246.291 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+0.25.246.291 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+0.25.246.295 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.25.246.333 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+0.25.246.341 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.25.246.343 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.25.260.887 I elastic_fit_stream: elastic KV (reserve) stream 0: 4352 -> 20992 of 204800 cells, 506.0 MiB mapped in all streams (14.5 ms)
+0.25.271.683 I elastic_fit_stream: elastic KV idx_ (reserve) stream 0: 4352 -> 20992 of 204800 cells, 352.0 MiB mapped in all streams (10.7 ms)
+0.25.271.702 I slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 204800, n_keep = 0, task.n_tokens = 16414
+0.25.271.707 I slot   operator(): id  0 | task 0 | cached n_tokens = 0, memory_seq_rm [0, end)
+0.25.299.982 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 1), splits = 2, n_same = 0, n_diff = 2
+0.30.818.354 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =   2048, progress = 0.12, t =   5.55 s / 369.25 tokens per second
+0.30.818.363 I slot   operator(): id  0 | task 0 | cached n_tokens = 2048, memory_seq_rm [2048, end)
+0.30.825.532 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 1, n_diff = 2
+0.37.355.454 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =   4096, progress = 0.25, t =  12.08 s / 338.97 tokens per second
+0.37.355.458 I slot   operator(): id  0 | task 0 | cached n_tokens = 4096, memory_seq_rm [4096, end)
+0.37.363.270 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 2, n_diff = 2
+0.43.851.103 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =   6144, progress = 0.37, t =  18.58 s / 330.69 tokens per second
+0.43.851.106 I slot   operator(): id  0 | task 0 | cached n_tokens = 6144, memory_seq_rm [6144, end)
+0.43.859.186 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 3, n_diff = 2
+0.50.494.023 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =   8192, progress = 0.50, t =  25.22 s / 324.79 tokens per second
+0.50.494.026 I slot   operator(): id  0 | task 0 | cached n_tokens = 8192, memory_seq_rm [8192, end)
+0.50.502.363 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 4, n_diff = 2
+0.57.247.300 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  10240, progress = 0.62, t =  31.98 s / 320.24 tokens per second
+0.57.247.303 I slot   operator(): id  0 | task 0 | cached n_tokens = 10240, memory_seq_rm [10240, end)
+0.57.255.696 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 5, n_diff = 2
+1.04.140.355 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  12288, progress = 0.75, t =  38.87 s / 316.14 tokens per second
+1.04.140.359 I slot   operator(): id  0 | task 0 | cached n_tokens = 12288, memory_seq_rm [12288, end)
+1.04.148.644 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 0), splits = 2, n_same = 6, n_diff = 2
+1.11.238.420 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  14336, progress = 0.87, t =  45.97 s / 311.88 tokens per second
+1.11.238.423 I slot   operator(): id  0 | task 0 | cached n_tokens = 14336, memory_seq_rm [14336, end)
+1.13.554.844 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  14366, progress = 0.88, t =  48.28 s / 297.54 tokens per second
+1.13.554.849 I slot   operator(): id  0 | task 0 | cached n_tokens = 14366, memory_seq_rm [14366, end)
+1.13.585.721 I slot create_check: id  0 | task 0 | created context checkpoint 1 of 32 (pos_min = 14365, pos_max = 14365, n_tokens = 14366, size = 145.563 MiB)
+1.18.962.501 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =  16410, progress = 1.00, t =  53.69 s / 305.64 tokens per second
+1.18.962.505 I slot   operator(): id  0 | task 0 | cached n_tokens = 16410, memory_seq_rm [16410, end)
+1.18.964.555 I slot init_sampler: id  0 | task 0 | init sampler, took 1.82 ms, tokens: text = 16414, total = 16414
+1.20.148.834 I slot create_check: id  0 | task 0 | created context checkpoint 2 of 32 (pos_min = 16409, pos_max = 16409, n_tokens = 16410, size = 145.563 MiB)
+1.20.152.128 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 6, n_diff = 3
+LOGITS_FNV 1 41a057da2516df98 chain cf7847b8a9387c6f
+LOGITS_FNV 2 7753518fae1b83e6 chain 9bc63cd10f38be8a
+LOGITS_FNV 3 544b170041a2b743 chain 94396da7263c452a
+LOGITS_FNV 4 849f70dc15a5b31e chain bae3d9603ee96993
+LOGITS_FNV 5 a533b29ae31d6af2 chain 70589eabd5d7cfe2
+LOGITS_FNV 6 6223a2b575fa3c39 chain dc71eefad0c41d18
+LOGITS_FNV 7 bf03b3ad52ab31e0 chain 4a6f91e20d35ad23
+LOGITS_FNV 8 97cbd0a894f6d936 chain 79939e8d5a933d56
+1.20.829.062 I slot print_timing: id  0 | task 0 | prompt eval time =   55047.35 ms / 16414 tokens (    3.35 ms per token,   298.18 tokens per second)
+1.20.829.065 I slot print_timing: id  0 | task 0 |        eval time =     510.00 ms /     8 tokens (   72.86 ms per token,    13.73 tokens per second)
+1.20.829.066 I slot print_timing: id  0 | task 0 |       total time =   55557.35 ms / 16422 tokens
+1.20.829.069 I slot print_timing: id  0 | task 0 |    graphs reused =          6
+1.20.829.070 I slot print_timing: id  0 | task 0 |   graph reallocs =          6    /     3        (same size) / (changed size)
+1.20.829.459 I slot      release: id  0 | task 0 | stop processing: n_tokens = 16421, truncated = 0
+1.20.829.466 I srv  update_slots: all slots are idle
+1.20.889.497 I srv  server_strea: conv_id= (empty=1)
+1.20.889.629 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/10) > 0.100
+1.20.889.631 I slot get_availabl: id  1 | task -1 |  - skipping, slot is empty
+1.20.889.631 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+1.20.889.632 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+1.20.889.632 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+1.20.889.634 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+1.20.889.653 I slot launch_slot_: id  1 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+1.20.889.659 I slot launch_slot_: id  1 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+1.20.889.661 I slot launch_slot_: id  1 | task 18 | processing task, is_child = 0
+1.20.889.666 I slot   operator(): id  1 | task 18 | new prompt, n_ctx_slot = 204800, n_keep = 0, task.n_tokens = 10
+1.20.889.669 I slot   operator(): id  1 | task 18 | cached n_tokens = 0, memory_seq_rm [0, end)
+1.21.075.529 I slot   operator(): id  1 | task 18 | cached n_tokens = 6, memory_seq_rm [6, end)
+1.21.075.725 I slot init_sampler: id  1 | task 18 | init sampler, took 0.00 ms, tokens: text = 10, total = 10
+1.21.141.229 I slot create_check: id  1 | task 18 | created context checkpoint 1 of 32 (pos_min = 5, pos_max = 5, n_tokens = 6, size = 145.563 MiB)
+1.21.143.868 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 6, n_diff = 4
+LOGITS_FNV 9 41832ec928cca3a8 chain d8f23de92ce2c3a1
+LOGITS_FNV 10 4c2c23d6f282e62c chain f94dff3962d6b12e
+LOGITS_FNV 11 49299d2d5ac0eb97 chain 1a09c27409fdeafe
+LOGITS_FNV 12 0838bbb3c3807f03 chain 00afb2556ed457b2
+LOGITS_FNV 13 de789e5c4432e88c chain 8d51ed5309e855d1
+LOGITS_FNV 14 79d63f0b8b11f2e3 chain 16b214d38aed0651
+LOGITS_FNV 15 9bd9f88490fc5b57 chain bd0039e4c27efc09
+LOGITS_FNV 16 bc7b93f478dc9c20 chain 7adaf951aa4c46fe
+LOGITS_FNV 17 27fabeb442df76ef chain d9b1eb579ffdee2e
+LOGITS_FNV 18 f3b570aa993b185e chain 8bb2322036a74b8f
+LOGITS_FNV 19 f51a90637cb80677 chain b7f519275f3bedfb
+LOGITS_FNV 20 313a40c513eeefd1 chain 93689112ee72cb79
+LOGITS_FNV 21 06e7f4bf26fe383a chain d7a7c72977afd318
+LOGITS_FNV 22 33f057f24509e2be chain dc9adb1fd0f93b81
+LOGITS_FNV 23 d9f7b5893d033c89 chain 18341573edaba507
+LOGITS_FNV 24 042f48c0b62354a2 chain 82156fa965793d3e
+LOGITS_FNV 25 4a3da9dc57a79269 chain 394b391ec2bed6e0
+LOGITS_FNV 26 2767e359f04c113a chain c8934e0f6ebea455
+LOGITS_FNV 27 74d2807eb2df657c chain 6bdb076b99e25dd2
+LOGITS_FNV 28 689171bbe4e2c637 chain 57158f85f2327952
+LOGITS_FNV 29 1b79b2bea05866f6 chain cffd24df7fe71383
+LOGITS_FNV 30 70763fe21cdc76b1 chain 09250fe4e62686b1
+LOGITS_FNV 31 f7022e63e38458a3 chain b09acab58366e1dd
+LOGITS_FNV 32 50824c6e5e2be250 chain 47e5fac49ef6e002
+LOGITS_FNV 33 1eea655d00585a14 chain e760605e18d5b661
+LOGITS_FNV 34 0c898cadecb2203e chain 4d2db09c756af150
+LOGITS_FNV 35 e16dcf9c03399c70 chain a4a76fdf73153d57
+LOGITS_FNV 36 b4a964da664604ee chain de8286f9e964c702
+LOGITS_FNV 37 580d0e90d385f2c4 chain 0782b0c0a6b7ce75
+LOGITS_FNV 38 5cfe70badde31daa chain cd195d4508c81570
+LOGITS_FNV 39 4b560b048f63ca70 chain 472d00c843057163
+LOGITS_FNV 40 65d0b82c39f32163 chain b60641e393560003
+LOGITS_FNV 41 518f89caf65669ad chain 5274e7d7d4e3032d
+LOGITS_FNV 42 bbfba1c60e84afea chain dbe008fe93339d14
+LOGITS_FNV 43 e9e5e87f3b41b481 chain 64426575abf24a7e
+LOGITS_FNV 44 6425832ab674fb29 chain 9024663819521368
+LOGITS_FNV 45 ccc2eac4ccf123cf chain dfd336909b2a9590
+LOGITS_FNV 46 2e7b49490e86a29a chain cffc9da329ea8a69
+LOGITS_FNV 47 17125c8b0cd107c3 chain 9382deb84e05623d
+LOGITS_FNV 48 1677b305ffeb7a7b chain 44634c0ccd2b5a71
+LOGITS_FNV 49 4a33fcc6cdf60ac8 chain c383fb5e021e1e1e
+LOGITS_FNV 50 572886208b679339 chain c9ac995c03e81c48
+LOGITS_FNV 51 3d2de07c69c48dd1 chain 46946ed6fc6f9162
+LOGITS_FNV 52 d84b98ea523095cc chain cfeb80322c7a9271
+LOGITS_FNV 53 8ca40ea6688d287d chain 7856f8fc2b75b183
+LOGITS_FNV 54 c836b43fe86374eb chain c0dcacc52b9c22eb
+LOGITS_FNV 55 e6b35abf2c0f6f8d chain cc00ce24e9231155
+LOGITS_FNV 56 036a7603476378f5 chain d4d24497cc53edf7
+LOGITS_FNV 57 9d6dddbbee0aa111 chain 1a3721f8a42548cd
+LOGITS_FNV 58 362d4dae70c3c7d1 chain 5108ee1e919313ff
+LOGITS_FNV 59 1f27b04de13c16b2 chain 7d111e2218aed9d6
+LOGITS_FNV 60 7929a802f52a7401 chain 1c7ae96f382e8794
+LOGITS_FNV 61 0429d9661e8910b4 chain 1febfc54f6668e1b
+LOGITS_FNV 62 e94d382bb6592bac chain e49918c2ac896dd4
+LOGITS_FNV 63 9397d24e4c229a19 chain aa75f3a500069c26
+LOGITS_FNV 64 f1a58604a8a2cffa chain 5ae31ce9bb7cffe7
+LOGITS_FNV 65 3d009ae1b988e1fb chain f1681b8a0e203cbf
+LOGITS_FNV 66 1fe8662ecc57687d chain a9ca2ca8c7174799
+LOGITS_FNV 67 253592d3289fbf13 chain f5f2a3b442dd5fb5
+LOGITS_FNV 68 ecb2950b77256ef3 chain 2d7cbb43afa16575
+LOGITS_FNV 69 3563a6a712d54e89 chain df0d7fb488343133
+LOGITS_FNV 70 6cb2819693c30a48 chain 5613075cdb4cd2d8
+LOGITS_FNV 71 313dcf574046ad7e chain 6ae76aa30bf17151
+LOGITS_FNV 72 c098be572edbdac8 chain 9ba9ba81226b12d6
+LOGITS_FNV 73 725475b44fca9b03 chain f6432de90aba7dda
+LOGITS_FNV 74 f676ae55220f3489 chain 63a0f93402e6e06c
+LOGITS_FNV 75 0518a258ed4482c6 chain 2d80807aa386adb9
+LOGITS_FNV 76 87cd0c8ad68564f3 chain 0b6586afe1e997e5
+LOGITS_FNV 77 21bc7425a7b74ab6 chain 1c00dd6fb73a8ffc
+LOGITS_FNV 78 2873856dd58fc6af chain 100dc2978126e388
+LOGITS_FNV 79 5364f01201673712 chain bb830123b66df599
+LOGITS_FNV 80 874fcdc421a839ec chain 20958aa1e1f1987e
+LOGITS_FNV 81 14643f6d8135c73c chain 0b1d0f5fe5cc357d
+LOGITS_FNV 82 ac623ed2753dfb0b chain 90106248581d7c81
+LOGITS_FNV 83 96846e666f93a2eb chain 36a9895535db7639
+LOGITS_FNV 84 5783b21b55ebc8cb chain ec9dbd824ff19e79
+LOGITS_FNV 85 b2ce98a7594e3641 chain 862ee73d4443ff5b
+LOGITS_FNV 86 5539dfc0e0c8f8f8 chain d385f809489bd080
+LOGITS_FNV 87 f01bbd834d7aa3bb chain 7985903da308a48c
+LOGITS_FNV 88 f873133b17ab2cda chain 3e01b3cfd3d4dea1
+LOGITS_FNV 89 e54b1f901dfa708e chain 3586d229d15c9d38
+LOGITS_FNV 90 d4635647107f24a0 chain 284d9fced1a6ab57
+LOGITS_FNV 91 e3bfa87aaa6580eb chain c188bca4f7ba9517
+LOGITS_FNV 92 12dede1fa88fef6c chain 6343e00b511b4eb0
+LOGITS_FNV 93 d0f6bb0730bdf72e chain a177c081a4374d4d
+LOGITS_FNV 94 050ce89e097eb799 chain b17e87a791b24c3f
+1.26.806.209 I fill_late: expert store: 37681 lookups, hit rate 93.7%, 19.8 GB read for decode, 185.0 GB for prefill
+1.26.806.215 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.21 ms (0.6 records, 23.47 GB/s), between fills 4.10 ms
+1.26.806.219 I fill_late: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.16, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.26.806.223 I fill_late: expert store: split GEMV: 3887 early lookups, 7.8 of 8 experts complete at the early lookup, 0.24 read under the early matmul (1 rows), 153 lookups with more misses (0.05 records read at the early lookup), plan 0.041 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+1.26.806.225 I fill_late: expert store: self-prefetch: 126 posts, 0.1 records and 0.05 ms of reads per post
+LOGITS_FNV 95 5445f1411d733edb chain 1ab63ab80ca41d0f
+LOGITS_FNV 96 5e42bcc6e7499ba6 chain 726b0bdee69d9a22
+LOGITS_FNV 97 de00af65c4a16f57 chain 023fc8cc084c027e
+LOGITS_FNV 98 030a7f953b883535 chain 137151cd99dcda0c
+LOGITS_FNV 99 f01e0fa87cb53f3f chain 0fb21c8b38c310ac
+LOGITS_FNV 100 50506f6b448d9699 chain e919ffc6db2efc62
+LOGITS_FNV 101 cb3aecc88972a993 chain 5ac66c3c8222e17e
+LOGITS_FNV 102 af35fbd6f66728bb chain 5b91c1c0c0d066e2
+LOGITS_FNV 103 89603ab9657cff08 chain e2a094dfe8a2b5e9
+LOGITS_FNV 104 85b804d9d9c350d2 chain 50c5db77d48da67c
+LOGITS_FNV 105 f9d76ec5334c1a72 chain 8e596851442989b1
+LOGITS_FNV 106 b8db6e2d50790c66 chain 1b048da448c91b80
+LOGITS_FNV 107 930db1459a148129 chain 21f914e3b2aa431e
+LOGITS_FNV 108 f726ba7138568e64 chain cfe95fa3cac94b21
+1.27.679.566 I slot print_timing: id  1 | task 18 | n_gen =    100, tg =  15.42 t/s, tg_3s =  15.58 t/s
+LOGITS_FNV 109 73b0a3509d33cf30 chain aaf5714549667122
+LOGITS_FNV 110 22d835821f02332d chain 9fe17629793ba0fc
+LOGITS_FNV 111 ed9e73f93dd701c1 chain 6a61b5392245f1a6
+LOGITS_FNV 112 ba165be2192931c4 chain 052f0adb569d3a69
+LOGITS_FNV 113 5ad63276c6aa4eee chain a87b132ce9d331a0
+LOGITS_FNV 114 6b6b22f217940fa6 chain c75f5b3e9da57429
+LOGITS_FNV 115 b2b6b63185e9365a chain 7be1d95a6ca43618
+LOGITS_FNV 116 ecdea7afc19ccab7 chain ac7a7fc7d5a4108c
+LOGITS_FNV 117 9b60f9ac2d26ea38 chain 2c9efabc5a69e687
+LOGITS_FNV 118 fc00ad21f140a2f6 chain 9f36bc9151ef28b2
+LOGITS_FNV 119 758ade51ee325ba9 chain 06f25a8f429ae2d4
+LOGITS_FNV 120 d6f988c3034b85b1 chain a3f6a0d94e28e6b6
+LOGITS_FNV 121 bd162c63fa9361c6 chain 6119d1d1529a3fef
+LOGITS_FNV 122 5ae6012fd85f6ef5 chain 9be70c7cc10e5e19
+LOGITS_FNV 123 5fb0736213b8a1fd chain 46a4ba0b38b054c7
+LOGITS_FNV 124 84e8660125f4a856 chain d116ff86b5c928d2
+LOGITS_FNV 125 5f7c21457029bbd3 chain 33e09e7e94a80536
+LOGITS_FNV 126 407cd8cb9d4a9c5d chain faf5b682b8c7e7e0
+LOGITS_FNV 127 0fc1b5cfc02359cd chain e2f06972f246e0c2
+LOGITS_FNV 128 1a4e5009b96ce7f0 chain 472a78f55d1bbacd
+LOGITS_FNV 129 7f030b9de4f0205b chain ac27ddcd708fe561
+LOGITS_FNV 130 4e48fe332198874f chain a85ca5c0475be7c5
+LOGITS_FNV 131 95bd5d4a1481227a chain 271399e077fec20c
+LOGITS_FNV 132 e8f08a032813b50a chain a30eb19da5d4c729
+LOGITS_FNV 133 540f53e64ad3489c chain b2a71870a67a0f16
+LOGITS_FNV 134 54dddd279cb091fc chain 88bcced7334c90a5
+LOGITS_FNV 135 71b882b244b5ad87 chain da3032b932bacde1
+LOGITS_FNV 136 d5c6d16b42386c73 chain 80724f0cfa677d29
+LOGITS_FNV 137 1322553af5f6dde7 chain 2a9c43c800f88279
+LOGITS_FNV 138 73f0d6f96ee6cd86 chain c345be404d710558
+LOGITS_FNV 139 534204ec99930996 chain 7491c7c44d78c0f9
+LOGITS_FNV 140 8d44690789852f34 chain 895a1cc2ea638e9e
+LOGITS_FNV 141 5c699b6e2bcc044b chain 9567ef2cadbd18e2
+LOGITS_FNV 142 544c880909fb8d9a chain 9db9252a9a4a44b7
+LOGITS_FNV 143 c91fd8e3ad662d00 chain 369e2cd8842ed664
+LOGITS_FNV 144 e8bec1ba787ae0ec chain c8aaa2c418b0ee3f
+LOGITS_FNV 145 faedac175cc6d31f chain 4efadd096ee140bb
+LOGITS_FNV 146 78b7aaa1f2b6f15c chain 51ad51d429036594
+LOGITS_FNV 147 8f0cfe75829462ea chain b2198cc9e66cc455
+LOGITS_FNV 148 d83c228619579826 chain dc37dbfd5cc6d3cc
+LOGITS_FNV 149 6fd6b333a24f71ed chain 70aab1133c6b33da
+LOGITS_FNV 150 776e6b3c92c5842c chain f1b6b5a93e23a951
+LOGITS_FNV 151 d6efcd9412d3e961 chain 930dd191dbb16403
+LOGITS_FNV 152 e55fbf6fdaf8727c chain 5956dd6967cc3afc
+LOGITS_FNV 153 a88d8a2ea93ff2d7 chain fe409b446f339200
+LOGITS_FNV 154 946609f6a745c49e chain 8c3a0df1b7d69ab1
+LOGITS_FNV 155 0c1b51cc625370d7 chain b7dc150d1c8748e1
+1.30.737.692 I slot print_timing: id  1 | task 18 | n_gen =    147, tg =  15.40 t/s, tg_3s =  15.37 t/s
+LOGITS_FNV 156 99a0280d4689ce3e chain 999677c4256e4720
+LOGITS_FNV 157 d8603258ff75fce0 chain 7aab07c2a10e3087
+LOGITS_FNV 158 fe8201363b9e0835 chain 0146ef766996de41
+LOGITS_FNV 159 d3b9e8d17a17c071 chain abd1e7e62f859e03
+LOGITS_FNV 160 9df31aa2db96f30b chain 850a1c133c459b8b
+LOGITS_FNV 161 640a70bfb2248bd9 chain 61203605978578a1
+LOGITS_FNV 162 6d5a0a9c4f88f76c chain 36269bcc22cbdb9a
+LOGITS_FNV 163 5b2556e56130298f chain 3d384493666845b6
+LOGITS_FNV 164 0de4aa6049ed671e chain 26cf5c88f16ca4ff
+LOGITS_FNV 165 3608d4c36d86f223 chain 939375388a97348f
+LOGITS_FNV 166 917aae91de4e4fcb chain e3522e6c7f23edcf
+LOGITS_FNV 167 c05a92f8dc80b642 chain a631633e69765d3e
+LOGITS_FNV 168 4d916b4c260688c1 chain bdd2f088448a5a1c
+LOGITS_FNV 169 19e8c1bcaf802272 chain aca50638fbc48b6d
+LOGITS_FNV 170 88185f598aaa6d4a chain 035bc31f35cb9008
+LOGITS_FNV 171 7226ded19b644a5d chain 5ebdaa91dec69806
+LOGITS_FNV 172 fce615f4ef0724ae chain 9c60f3d1061c60f7
+LOGITS_FNV 173 9fd0d458292972a9 chain 720a24f20810339d
+LOGITS_FNV 174 8f5e5abbff2aba5c chain 0a4307b8a10cb636
+LOGITS_FNV 175 770ef89d8c4e057c chain 6d5dfbebf144542d
+LOGITS_FNV 176 bc2481cc7cfd2c3c chain 471034aa1a0305aa
+LOGITS_FNV 177 df78f49966706f2c chain 380c5bd5e414aaa1
+LOGITS_FNV 178 45729e7d7f01c136 chain 6656ccfcddeda7d8
+LOGITS_FNV 179 fd8aaf83e8e0aee2 chain ab31a50c53cc49e5
+LOGITS_FNV 180 9106e5d58d3e027a chain b93f2dd4bac0ffc4
+LOGITS_FNV 181 a7d4de9bfc47b107 chain 426923a67e32aa34
+LOGITS_FNV 182 e7210aaa1574db55 chain 62165367a1ff24b2
+LOGITS_FNV 183 d671d6a01640d02a chain ec4501e319aa40af
+LOGITS_FNV 184 8f1a0bfa06da1c4a chain 34b7f75fa67058c6
+LOGITS_FNV 185 bec69b7c45c53a5b chain 8fe372f970881e72
+LOGITS_FNV 186 06d33c2df2a1bae5 chain 215828cfc94535cc
+LOGITS_FNV 187 8a42ff20a4d10edc chain 84940c9b7e3ad533
+LOGITS_FNV 188 e54e774d03bfe5e6 chain 61702e8b0b6aa796
+LOGITS_FNV 189 a38d9c77e35198a4 chain 94673e20d0f87605
+LOGITS_FNV 190 ead36cf4acf37d6c chain fccfa89d99b3487e
+LOGITS_FNV 191 8c873b94862f2cbf chain e3d0662571c2ffaa
+LOGITS_FNV 192 275f50ed57c7f1e5 chain ed618dff01250efc
+1.33.174.430 I fill_late: expert store: 70449 lookups, hit rate 94.9%, 29.7 GB read for decode, 185.0 GB for prefill
+1.33.174.433 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.10 ms (0.4 records, 35.26 GB/s), between fills 4.10 ms
+1.33.174.437 I fill_late: expert store: memory valve: host MemAvailable 24.16 GB (lowest 24.16, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.33.174.440 I fill_late: expert store: split GEMV: 7983 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 333 lookups with more misses (0.05 records read at the early lookup), plan 0.046 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+1.33.174.443 I fill_late: expert store: self-prefetch: 126 posts, 0.1 records and 0.05 ms of reads per post
+LOGITS_FNV 193 e2827dad0fa86eea chain 104206e8c9932221
+LOGITS_FNV 194 57df38543a9fdb90 chain e5a4641cd97a76c6
+LOGITS_FNV 195 ddc1859606f6b1d0 chain 800f11e5d2a1d5d5
+LOGITS_FNV 196 7ce31e20eea51d4b chain 45d2849101007955
+LOGITS_FNV 197 36e71e77cb4bc177 chain 1237299f8211fbc1
+LOGITS_FNV 198 38f0b37bf057cffe chain 0172945c095049a8
+LOGITS_FNV 199 96e692e0a0563f2b chain 66617191759e3f24
+LOGITS_FNV 200 aa4379b9ad730997 chain d6f5ceb82ceee99c
+LOGITS_FNV 201 063666746c394971 chain 142ae13cd53728e6
+1.33.771.097 I slot print_timing: id  1 | task 18 | n_gen =    193, tg =  15.35 t/s, tg_3s =  15.16 t/s
+LOGITS_FNV 202 3d383651d766069e chain 42fd2da11260aa9f
+LOGITS_FNV 203 d1e7fa650f4d7ed0 chain c025648583e03554
+LOGITS_FNV 204 9c137233afdd75f7 chain ec823198b188ed50
+LOGITS_FNV 205 1f4271f14ce239ae chain ec70b939c03bbd95
+LOGITS_FNV 206 5c80d90c320570a4 chain 0f7cd614c15e4c02
+LOGITS_FNV 207 3fb1a24bd983a059 chain 94bd9293d8c6624c
+LOGITS_FNV 208 b2044f967e823ea4 chain 0f42ee6f630a75b7
+LOGITS_FNV 209 a8aac09c15c4a94a chain 37ea796c52d1ea7e
+LOGITS_FNV 210 bab5e5088bd6431f chain 1d6cf8d8401c9e32
+LOGITS_FNV 211 1120734d06e6ae76 chain 9cdad9b0a891acdf
+LOGITS_FNV 212 f8c7f182931236b2 chain 96e4a5780c5c7c0e
+LOGITS_FNV 213 83d6897b82e3aecd chain f88fa4fa50901928
+LOGITS_FNV 214 36eddbca77d2be92 chain c24690e3ef9df161
+LOGITS_FNV 215 d9dfb7d0fef8f9f8 chain 0fcbbe936874a146
+LOGITS_FNV 216 18d1e11c8107ea19 chain 72c681625525d37c
+LOGITS_FNV 217 3f200f14411f5e45 chain a4b9b502209f3026
+LOGITS_FNV 218 2ae5819faafe9727 chain 7b1aa13f42dcbe86
+1.34.885.587 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 7, n_diff = 4
+LOGITS_FNV 219 307ad4af25110d0d chain f0fe7d610b3433a0
+LOGITS_FNV 220 2eaaab98cba6fb21 chain 7e4206f7bfed0d1e
+LOGITS_FNV 221 40f14808e3cb90c5 chain 03f4d5dec50adb24
+LOGITS_FNV 222 3e74ef8c12e0ec9f chain 043d156fe42c8f94
+LOGITS_FNV 223 bd51b284da077c7c chain a87a85ba91ac078f
+LOGITS_FNV 224 fcf013b4a601ed3a chain 2fa626290d87d07e
+LOGITS_FNV 225 7772b8055c08ee52 chain 0185feef4ce54cd7
+LOGITS_FNV 226 2c5556fa2d88c29b chain 2e8bda013512bca7
+LOGITS_FNV 227 2fde0964a5bc5f52 chain cf59381dd5e4a3de
+LOGITS_FNV 228 2e608b54fd4bce9f chain f2db04bac5851eae
+LOGITS_FNV 229 11e5b61ce7482da6 chain 8def89579f23d6a7
+LOGITS_FNV 230 0db5adb5da9f908c chain e88f0cf5ec0cfb60
+LOGITS_FNV 231 aec7cab80f933f54 chain e34871df1d6ad17b
+LOGITS_FNV 232 5ffa3ee53f07ce5f chain 078bbb3fb7878787
+LOGITS_FNV 233 24e550d35b65f613 chain 03929b5c24fc4527
+LOGITS_FNV 234 48cef3655c1d23bf chain ce7f0e6e35e7ca4b
+LOGITS_FNV 235 009a78bbed9a96ed chain dfea36d7acece585
+LOGITS_FNV 236 e603039c713973d0 chain 9a878a43267185e6
+LOGITS_FNV 237 f3de6946613fe91f chain 9cd65b8f8104bada
+LOGITS_FNV 238 ff4c39b2e276187e chain eb096c14a33ca813
+LOGITS_FNV 239 e3639fc03255eb41 chain 33d6410415b996d1
+LOGITS_FNV 240 0131d62f162164c7 chain 05e0f775c18f6ee1
+LOGITS_FNV 241 90c4f3cf168dd79d chain 7b89a9556f35c08b
+LOGITS_FNV 242 0afc1f3bc0d73ea5 chain b3bbec0f102c3e8d
+LOGITS_FNV 243 ea3a1cf4e0d70c94 chain f398db32748eee4a
+LOGITS_FNV 244 d4a77f8d32dfcacc chain 129ef2bf9621e4bd
+LOGITS_FNV 245 242d252b0e0740a9 chain 5fd6d36f1cc67e87
+LOGITS_FNV 246 0dfab269310dd61a chain 123cccf131b316ae
+LOGITS_FNV 247 75d67c2b58fe20b4 chain 36f2ac4e3fe921ad
+1.36.775.961 I slot print_timing: id  1 | task 18 | n_gen =    239, tg =  15.34 t/s, tg_3s =  15.31 t/s
+LOGITS_FNV 248 eee07152079ef633 chain 0d4aa6f5fe944481
+LOGITS_FNV 249 f913c36b5d0a406e chain 41b3c418c85b36ec
+LOGITS_FNV 250 9cbef489a1f156f6 chain 644447eec72a6571
+LOGITS_FNV 251 d7686cf00c5e4c5c chain 8f2cd58acbdbd19e
+LOGITS_FNV 252 e7db2338b8301003 chain eb047e589fa64afe
+LOGITS_FNV 253 3ee5893971096d4f chain 63a36300be782d26
+LOGITS_FNV 254 92b98c12e54a125c chain ae87d69f969b9ab5
+LOGITS_FNV 255 8f9c3ab45ce62cb9 chain 3b86d700842ebf1b
+1.37.306.748 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 8, n_diff = 4
+LOGITS_FNV 256 3f0de395b891a644 chain b6e9f02fcde738cc
+LOGITS_FNV 257 8e4b418624b1cd50 chain 53048f0fea7b56e7
+LOGITS_FNV 258 590ad096740f7fe7 chain c695895c8b88cd23
+LOGITS_FNV 259 aebd380d2d37c75e chain 60c17896730b7abe
+LOGITS_FNV 260 d93cbacfcfcd49af chain d27f35478a5f8376
+LOGITS_FNV 261 b6679856f37d7163 chain c204952921a15eae
+LOGITS_FNV 262 92b763c6014b2ae5 chain 923f2efcaa926a20
+LOGITS_FNV 263 3f91cebeea51e448 chain 06d9716cee46be43
+LOGITS_FNV 264 443af2d42c74a60b chain 5baab0ffc8fe89cb
+1.37.917.180 I slot print_timing: id  1 | task 18 | prompt eval time =     370.17 ms /    10 tokens (   37.02 ms per token,    27.01 tokens per second)
+1.37.917.183 I slot print_timing: id  1 | task 18 |        eval time =   16657.33 ms /   256 tokens (   65.32 ms per token,    15.31 tokens per second)
+1.37.917.184 I slot print_timing: id  1 | task 18 |       total time =   17027.51 ms /   266 tokens
+1.37.917.185 I slot print_timing: id  1 | task 18 |    graphs reused =        258
+1.37.917.186 I slot print_timing: id  1 | task 18 |   graph reallocs =          8    /     4        (same size) / (changed size)
+1.37.917.196 I slot      release: id  1 | task 18 | stop processing: n_tokens = 265, truncated = 0
+1.37.917.202 I srv  update_slots: all slots are idle
+1.37.918.271 I srv  server_strea: conv_id= (empty=1)
+1.37.918.423 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/19) > 0.100
+1.37.918.425 I slot get_availabl: id  1 | task -1 |  - checking sim = 0.000 (0/19) > 0.100
+1.37.918.425 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+1.37.918.426 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+1.37.918.426 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+1.37.918.428 I slot get_availabl: id  2 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+1.37.918.448 I slot launch_slot_: id  2 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+1.37.918.453 I slot launch_slot_: id  2 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+1.37.918.454 I slot launch_slot_: id  2 | task 276 | processing task, is_child = 0
+1.37.918.458 I slot   operator(): id  2 | task 276 | new prompt, n_ctx_slot = 204800, n_keep = 0, task.n_tokens = 19
+1.37.918.459 I slot   operator(): id  2 | task 276 | cached n_tokens = 0, memory_seq_rm [0, end)
+1.38.334.878 I slot   operator(): id  2 | task 276 | cached n_tokens = 15, memory_seq_rm [15, end)
+1.38.335.144 I slot init_sampler: id  2 | task 276 | init sampler, took 0.00 ms, tokens: text = 19, total = 19
+1.38.366.302 I slot create_check: id  2 | task 276 | created context checkpoint 1 of 32 (pos_min = 14, pos_max = 14, n_tokens = 15, size = 145.563 MiB)
+1.38.369.668 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 8, n_diff = 5
+LOGITS_FNV 265 eddba38333b08287 chain 92b8440a4d47408f
+LOGITS_FNV 266 50821e0f9126fec6 chain 4101b21f3d4cb332
+LOGITS_FNV 267 1a9adf6e02a91f4c chain 7b8bb0fdc5858ced
+LOGITS_FNV 268 b80c4678269864fb chain b62622a3c756ff05
+LOGITS_FNV 269 2eea6c21986ca662 chain 1a65b344acc144d4
+LOGITS_FNV 270 3b41840c2adcefa3 chain f968a97b9b96f3ac
+LOGITS_FNV 271 33f560ff0aef874c chain 38e1b6c251212c5f
+LOGITS_FNV 272 df65319ae78d0648 chain 4c140e0fd2369e2c
+LOGITS_FNV 273 1d25fc7432fe3b6f chain 53cf6ff3ed4009e8
+LOGITS_FNV 274 ad1dcf2cb3a191cb chain 9ae97817a7c2a488
+LOGITS_FNV 275 da7cb5b994ee7404 chain 37e446835f09594f
+LOGITS_FNV 276 a1e9848919cf00b1 chain 1296de79a0819815
+LOGITS_FNV 277 28c7172df6c35319 chain f517e023df1d02e7
+LOGITS_FNV 278 98069f2859b16771 chain 79df6cca9572c9ed
+LOGITS_FNV 279 683763b95ce5ed51 chain a6f4528b9d22a113
+LOGITS_FNV 280 d26d95be3870a7fa chain 7a1908e00546914a
+LOGITS_FNV 281 53163018364992fd chain 81bedc80b2a14fe0
+LOGITS_FNV 282 fbd8a1064d3033f9 chain 58581d53052df836
+LOGITS_FNV 283 1d17d3d92b0dc125 chain 0837ab1f0ca3045c
+LOGITS_FNV 284 3321879d1e3a311b chain 1b672d0c596c5850
+LOGITS_FNV 285 a95a44cc5a0285f2 chain ec481a0f4d234cdd
+LOGITS_FNV 286 5d8ebfb9350ed191 chain f12b3be3766de503
+LOGITS_FNV 287 e6e679dcd7a63f79 chain a6f39181eeb86cf9
+LOGITS_FNV 288 d7a86b3c0d331118 chain d5668d61b7cee6a6
+1.40.081.618 I fill_late: expert store: 106137 lookups, hit rate 95.3%, 42.1 GB read for decode, 185.0 GB for prefill
+1.40.081.621 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.09 ms (0.4 records, 39.00 GB/s), between fills 4.15 ms
+1.40.081.624 I fill_late: expert store: memory valve: host MemAvailable 24.00 GB (lowest 24.00, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.40.081.628 I fill_late: expert store: split GEMV: 11995 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 511 lookups with more misses (0.05 records read at the early lookup), plan 0.048 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+1.40.081.628 I fill_late: expert store: self-prefetch: 168 posts, 0.1 records and 0.11 ms of reads per post
+LOGITS_FNV 289 cb66c839e1e06d6f chain 94b0d2b488d88d8e
+LOGITS_FNV 290 395abb99c9e426ac chain 027efd8eeccfa6fd
+LOGITS_FNV 291 bb11ce6b5d832b48 chain 3a1ab65bcacc51c2
+LOGITS_FNV 292 fc8bfc618c2b5744 chain 87e8b66847aced4d
+LOGITS_FNV 293 0aff4536a55e38db chain 50ef5df155fe07d9
+LOGITS_FNV 294 f2f44350585f5cf1 chain c950cc9cd30cd1af
+LOGITS_FNV 295 7f0b35302e70d932 chain cd102d397d13acbe
+LOGITS_FNV 296 b90e4d6a59db100e chain c24a23093290e23b
+LOGITS_FNV 297 b8f5329e607b278c chain f75af53a44505c54
+LOGITS_FNV 298 21178796763a4153 chain ae00c9151db7ffe4
+LOGITS_FNV 299 da740f366ae00188 chain c0d5b7cf99a61e73
+LOGITS_FNV 300 4f48abf7f3abaf61 chain e31ef52b35b62f11
+LOGITS_FNV 301 93c2fd671f74edbf chain a2f793de347c23a1
+LOGITS_FNV 302 83506f82022b5ad4 chain f0a04881ff17703a
+LOGITS_FNV 303 44bc01499777e890 chain 77a2453b09f52899
+LOGITS_FNV 304 e78b3bcb29e3ab23 chain 8e55a34adc358e45
+LOGITS_FNV 305 b8bc0ec04dad70f3 chain c7eca74e505a311d
+LOGITS_FNV 306 bbcd57b80a3e2e0c chain f4cd524b5045c026
+LOGITS_FNV 307 06ea5e66bfb5d2ee chain d3347b1581537503
+LOGITS_FNV 308 4a9d1ac81ae1b622 chain 962e7f71568836a2
+LOGITS_FNV 309 4d31f8eeb729b693 chain 173cb7bee82d70ea
+LOGITS_FNV 310 68a0591a87bcbf00 chain 958cf0525f92f0d9
+LOGITS_FNV 311 c701b4d48bc827ca chain 8f335679db45ecf8
+LOGITS_FNV 312 52301b653e65d066 chain 55590bd262921c15
+LOGITS_FNV 313 a9a38315d4e6016d chain 3d19b32e6617d61f
+LOGITS_FNV 314 999f35b094638f18 chain 317e58ecaed460a4
+LOGITS_FNV 315 a459a47fa1ac130f chain bee08ac484952ee8
+LOGITS_FNV 316 c60f214aa036f9a4 chain 5b93d46d8a2a9443
+LOGITS_FNV 317 a170066cb366ac3f chain 61b880eea8bbab7f
+LOGITS_FNV 318 e02eeae2a19815ab chain 0d2e2ed2a999b737
+LOGITS_FNV 319 6602d481847c95b7 chain 314be5211e27e0fb
+LOGITS_FNV 320 52d4b617139549e8 chain 332be53b2d54aca0
+LOGITS_FNV 321 6a7c9cfaf32ee432 chain d7cc9d8ae1963a59
+LOGITS_FNV 322 5b010ab21d71bb96 chain 88a0e848d7f1d1a0
+LOGITS_FNV 323 2524ae6adfdf28f0 chain 5e5a9c79b872a9df
+LOGITS_FNV 324 0cb348e1f9099232 chain 0a63a4b64d98a31e
+LOGITS_FNV 325 ad2e7c7660af7300 chain 966e2cb6858d355d
+LOGITS_FNV 326 89ef268ef53ddf6c chain cf295eb7199dabe6
+LOGITS_FNV 327 ac3d81a4b0ff6991 chain 9ce8418cdc9a6ce8
+LOGITS_FNV 328 6290e6a99f6b162e chain 20eb84b7fa6bfef5
+LOGITS_FNV 329 3c76bc0fcb46862d chain 441ab40b17078217
+LOGITS_FNV 330 2f0e9fd075ac9e37 chain 06676aa49cd44fc3
+LOGITS_FNV 331 0a87e57920c13af4 chain 4a2ca1cb87bad5b4
+LOGITS_FNV 332 49103f2a889957c6 chain bd39f02106d101a5
+LOGITS_FNV 333 148451c604b4fed4 chain 7b81717c4b4ec036
+LOGITS_FNV 334 0b5946787ae966d2 chain 00d51738d5d4ecd3
+LOGITS_FNV 335 9e6dbe980164a7c2 chain 47ee474e4d863dd2
+LOGITS_FNV 336 64b034ddd502e8a3 chain c09831302fc648ba
+LOGITS_FNV 337 1988b7cd80b0c36b chain eec6f071677b47a6
+LOGITS_FNV 338 73b7921069e42f61 chain a06a14645adaa934
+LOGITS_FNV 339 c14306a80c2542b8 chain 39b6dfee9b659413
+LOGITS_FNV 340 38ea809c07772269 chain 2c0be3cfcda35819
+LOGITS_FNV 341 619398966ed0f82e chain 6539c848d9617018
+LOGITS_FNV 342 c441edca79712868 chain d4a66c835e9cbb53
+LOGITS_FNV 343 65365cb6d20bf632 chain 9789b8da8e0d18c2
+LOGITS_FNV 344 2f7aed49ef5b955e chain 151dfb8b9a3d7bcf
+LOGITS_FNV 345 bac6215da891a933 chain 2effa31f7e074c17
+LOGITS_FNV 346 2375d64bc48399ab chain 94cdacdfbaea19e7
+LOGITS_FNV 347 98ca8f2f63bcd1cd chain 762b8753f443db49
+LOGITS_FNV 348 979acdf55278428e chain 416d1fb07fe8c838
+LOGITS_FNV 349 524ba21f1cb3a14f chain 21249da0e500f474
+LOGITS_FNV 350 ca4aadd06f1a398d chain 2710a0562dbe29d6
+LOGITS_FNV 351 4ddef2e392292fe9 chain 4db8af9c64b3b4cc
+LOGITS_FNV 352 5fa61c4e8961b2b6 chain 33615a8405ffb3bd
+LOGITS_FNV 353 b589f5d830823896 chain 8c62e6bd70a8365c
+LOGITS_FNV 354 90f98285538aecc8 chain f58ed1b7c654272b
+LOGITS_FNV 355 30e25636176f848a chain 8108cae8e7942c52
+LOGITS_FNV 356 3146775994047536 chain 1b53286e611b1b93
+LOGITS_FNV 357 e1fe7583fe778db1 chain 6783f484bf159081
+LOGITS_FNV 358 78dfe3a2ee8ad9e5 chain ced36ca323cf848f
+LOGITS_FNV 359 f9caef9c456099f1 chain 71c0985ecbcc3bfd
+LOGITS_FNV 360 6fd08376c877394b chain 8699783803596d85
+LOGITS_FNV 361 972de0bec8d313a9 chain 0f7154dfb46457ff
+LOGITS_FNV 362 df2e93c5fdd5b6a8 chain 400b1bde6fa82f04
+LOGITS_FNV 363 3b8834d4962bfbdd chain 3aaea77ed96a426e
+LOGITS_FNV 364 943b0ca76f21b408 chain 1829ef6034874a09
+1.44.942.640 I slot print_timing: id  2 | task 276 | n_gen =    100, tg =  15.42 t/s, tg_3s =  15.58 t/s
+LOGITS_FNV 365 f053bea49b82d862 chain 7b97afdd0101dd48
+LOGITS_FNV 366 613f6da28db43a80 chain 7c883157ffa0ac6b
+LOGITS_FNV 367 af2a971249b0180d chain ae7c65ee63746545
+LOGITS_FNV 368 e8658939a01e37d3 chain 779651bb50b27525
+LOGITS_FNV 369 89db726ed6b2811b chain d38e9cd1b5e2225d
+LOGITS_FNV 370 4b8dcfc03d17436c chain 38f99e78901adfca
+LOGITS_FNV 371 a7fd448a2a674ce8 chain 2cbb9ee2e3f06aa5
+LOGITS_FNV 372 d903b9d74e00533d chain e9f8790e713304b3
+LOGITS_FNV 373 175c946aa4f61d88 chain 586ba8909c7c6bb8
+LOGITS_FNV 374 9a54112f9cc53d59 chain e06ddf5f75a58bd6
+LOGITS_FNV 375 d4002c5abeab2c7e chain fce05d525b4dbfef
+LOGITS_FNV 376 6ee508bff3541756 chain 2acb2ef9092efdea
+LOGITS_FNV 377 904368877cc5f0eb chain d433c980175cac7a
+LOGITS_FNV 378 a3ea6283d80a2aee chain 784266df16bc81f7
+LOGITS_FNV 379 ce56f1261db61d4f chain ef5f3c2e55ea7e33
+LOGITS_FNV 380 58ea6c9d46f5f954 chain 588b44c0bfd988c4
+LOGITS_FNV 381 65cbbc08fddad6a7 chain 04b72e453c8207b0
+LOGITS_FNV 382 71bb10117263df34 chain 7d69062d6be38e33
+LOGITS_FNV 383 4f798cac1531da68 chain c37c9bd2a9046078
+LOGITS_FNV 384 2d38a3842d8fe72c chain 1e1c7492dc31556b
+LOGITS_FNV 385 adfb8824a55ce19c chain 07617a1f94921ce4
+LOGITS_FNV 386 5446876b92d0a1fd chain 1b5e91465972cfe2
+1.46.415.229 I fill_late: expert store: 138905 lookups, hit rate 95.6%, 51.1 GB read for decode, 185.0 GB for prefill
+1.46.415.232 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.07 ms (0.4 records, 47.40 GB/s), between fills 4.15 ms
+1.46.415.235 I fill_late: expert store: memory valve: host MemAvailable 24.00 GB (lowest 24.00, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.46.415.240 I fill_late: expert store: split GEMV: 16091 early lookups, 7.8 of 8 experts complete at the early lookup, 0.23 read under the early matmul (1 rows), 677 lookups with more misses (0.05 records read at the early lookup), plan 0.048 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+1.46.415.241 I fill_late: expert store: self-prefetch: 168 posts, 0.1 records and 0.11 ms of reads per post
+LOGITS_FNV 387 255ca4563a2c730f chain e1c2b3ba5a2ee6a6
+LOGITS_FNV 388 130063f7fcc2c814 chain 0202bccb9f1811b1
+LOGITS_FNV 389 b4cf02b55c1a773e chain 403b2e5a24643d24
+LOGITS_FNV 390 32191320194c4b29 chain ff4e697459d288ce
+LOGITS_FNV 391 b812a206e9d85f0d chain 2ef3ed4d9889a634
+LOGITS_FNV 392 871ebdae457e8f81 chain 24e18c64c3d60cb6
+LOGITS_FNV 393 d160d31bf11fda28 chain 92fdded8b1f97395
+LOGITS_FNV 394 49a4e34db2277547 chain efe90858eccbb2a9
+LOGITS_FNV 395 66e12cab10fbcc79 chain 8df98b974bfcae63
+LOGITS_FNV 396 ace2e26b2857a276 chain 3ddd9bbefd181dd6
+LOGITS_FNV 397 e7151dde69676139 chain 69d60399555ca618
+LOGITS_FNV 398 dcd1a2b313f9d1e4 chain eee49898740e9ecb
+LOGITS_FNV 399 eae0e321c1ba1dd6 chain bf06da0bc6aa872e
+LOGITS_FNV 400 25e081371523d160 chain ec615bda2ff24775
+LOGITS_FNV 401 08dc2d0534257b25 chain 1ad3f8081003a087
+LOGITS_FNV 402 65f0a0bd1d655063 chain d2849eb131f45077
+LOGITS_FNV 403 206dd5520b8e8254 chain 642c8448b2742000
+LOGITS_FNV 404 c0c994b6728ede72 chain b36342c3ecb4be21
+LOGITS_FNV 405 7eb7536150056f94 chain a5076665e42ed99e
+LOGITS_FNV 406 233300dd32a5b4fa chain 09261a6f88bfed33
+LOGITS_FNV 407 36ddb1789f7cb168 chain f04e4647481a6dd8
+LOGITS_FNV 408 2b276b912cc35f39 chain 13f14fb1dcca10a2
+LOGITS_FNV 409 ea174f5db91b0fb6 chain 30b2c1d8e6f502af
+LOGITS_FNV 410 bf0b1be698a5501c chain 7c87e7c91aed59f8
+1.47.958.956 I slot print_timing: id  2 | task 276 | n_gen =    146, tg =  15.37 t/s, tg_3s =  15.25 t/s
+LOGITS_FNV 411 5a9130d3dec43981 chain a6926e79802a4b0e
+LOGITS_FNV 412 af53cecd52d08dbc chain 587d646054ffd361
+LOGITS_FNV 413 9d1dc43b27193fc6 chain 24ab081041900a38
+LOGITS_FNV 414 451f76e4059cc7b5 chain 6119e005b8fa4b4e
+LOGITS_FNV 415 5f63e0335b086b81 chain 366434caa8d306b0
+LOGITS_FNV 416 ecd7d0901c916e85 chain ae9a0028f61b2f5e
+LOGITS_FNV 417 7613ec7ab2c8e1b0 chain 10d197ccd2602a19
+LOGITS_FNV 418 00935f8e30c02b1d chain 29bb7ae1e1173817
+LOGITS_FNV 419 d931213a39d42c7d chain 12f236cded65b2b9
+LOGITS_FNV 420 9ce7a8415e41edb0 chain b715d35e6fc9d572
+LOGITS_FNV 421 d98a2565f828a86a chain cb4b5b0ebb268ddb
+LOGITS_FNV 422 f7cecc81a8fad504 chain 2f041ef77f89026c
+LOGITS_FNV 423 09a0ed0d4a5235b6 chain 40fb32402a785175
+LOGITS_FNV 424 3c2debcefe951856 chain 34c3ba615279afa4
+LOGITS_FNV 425 f9f1d5f75cb97928 chain 46f94d13d8090d2f
+LOGITS_FNV 426 5be8bdca23930d91 chain be1d0864ac4fb4e5
+LOGITS_FNV 427 2a694d89b1e5bc5b chain 977da472c03f6ec5
+LOGITS_FNV 428 8d927acdf44b32d7 chain fe087cbd5d1f1005
+LOGITS_FNV 429 ae63c5709f9c1843 chain d7b5542948244539
+LOGITS_FNV 430 2d71c79213e542a5 chain e2caea1d1cc8804f
+LOGITS_FNV 431 fb2dc101575297c9 chain 9cda17c4a6ab9385
+LOGITS_FNV 432 515a7275576c0d8f chain c1f98ca907fb9985
+LOGITS_FNV 433 95ce30622a505fe8 chain 3975dc577a68584e
+LOGITS_FNV 434 8527ca67144d2c27 chain 778ba6d90683ec42
+LOGITS_FNV 435 2000a768b23701be chain 14fb99cc2d7a18c3
+LOGITS_FNV 436 a0f12f8aaa8475e8 chain 61e8d9939c38b128
+LOGITS_FNV 437 3aaa803ecbfcc2b7 chain a44ef594dd4fe66c
+LOGITS_FNV 438 58475a7438b0e224 chain 0881d6a70ada430b
+LOGITS_FNV 439 0647306a8ddb9f62 chain bb70862c7e74c56a
+LOGITS_FNV 440 99fc78dea1b7b003 chain 71ad58b5a064e98e
+LOGITS_FNV 441 f57f5e8fdfa77944 chain 7c62c341e7c9ad29
+LOGITS_FNV 442 13ea8322260575c8 chain 0e772f4c4b62b686
+LOGITS_FNV 443 fb3ce7611961b58b chain 0300839335cdb8ce
+LOGITS_FNV 444 de9f32e91c477a27 chain 1256ab7ae5fd1366
+LOGITS_FNV 445 03ebc72f6522ddfb chain bf16ad0bd55ea9c6
+LOGITS_FNV 446 15a73735753dafdf chain a1f9dc81e66ffffe
+LOGITS_FNV 447 1150a8c768144a40 chain 98d90b9b55a3d1fd
+LOGITS_FNV 448 7da3fe8ce38a059e chain 0a7cd2bb8a45c4e0
+LOGITS_FNV 449 7b5f0c92f62d354f chain 5fcde78738a488f0
+LOGITS_FNV 450 786e5974f4899cfa chain 9ff29cae22bd90ed
+LOGITS_FNV 451 97f6bcb8ad04ee8f chain 8aa21c2ba513ba05
+LOGITS_FNV 452 a1a3843cff6d5a96 chain 7a9aa840d4085848
+LOGITS_FNV 453 8e23a23132f9a10d chain 38dc557d43e85cb2
+LOGITS_FNV 454 eb15db9298c9d9c9 chain 7ffc2f03ac5efbe0
+LOGITS_FNV 455 b77194bfbf6876f6 chain 5ab8937eefa0600d
+LOGITS_FNV 456 065b3f89ba984abb chain 4d6dffa7222300dd
+LOGITS_FNV 457 825addd3b946acbc chain 30cc1d16adebfcfa
+1.50.972.299 I slot print_timing: id  2 | task 276 | n_gen =    193, tg =  15.42 t/s, tg_3s =  15.60 t/s
+1.50.974.242 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 9, n_diff = 5
+LOGITS_FNV 458 238b84c5f5fb0550 chain 603663a96f70fd0d
+LOGITS_FNV 459 0df9f7ac5170fd29 chain d8b8702e5a3339e3
+LOGITS_FNV 460 134a0e9c844a9643 chain 9979b431eba3ace3
+LOGITS_FNV 461 86591856b279a5d8 chain 4ecb74e7e6009038
+LOGITS_FNV 462 668c13407b3503e2 chain d8b550f7d14d0799
+LOGITS_FNV 463 8f4a998c58b2d409 chain c4dbb82c4ee0b72b
+LOGITS_FNV 464 72b1625a83c29131 chain 5646a5aa2b583f99
+LOGITS_FNV 465 23a48c52a71db780 chain 17cbde619b6b648e
+LOGITS_FNV 466 4144fbe82fbddf2d chain 5a699dad82c4758c
+LOGITS_FNV 467 07366b3a429c024c chain a9466b67ea301edf
+LOGITS_FNV 468 d5e40a5a9f4e5b32 chain 87214d0e5c0df04e
+LOGITS_FNV 469 9d1bd8eac17cb4ee chain 826ed1519ce635ab
+LOGITS_FNV 470 afebba4294d4a5f4 chain 5472789ed1cd541c
+LOGITS_FNV 471 bfaef39ca13028b1 chain 2d7705a11ab508ce
+LOGITS_FNV 472 7f4e96b1a77f82d8 chain 9007d77c22570049
+LOGITS_FNV 473 3745e8de34b88aad chain 907cf81ecd2f20d7
+LOGITS_FNV 474 c8cbcde0d1107082 chain 251fed08bf53a0ce
+LOGITS_FNV 475 659194a3c5df8370 chain 7ac03775486bb011
+LOGITS_FNV 476 6703e7b4abcea472 chain 264a82131259c230
+LOGITS_FNV 477 7485414191c6c3e7 chain be642e132f401624
+LOGITS_FNV 478 e1b8ada766774f9f chain 931b8077cfe87638
+LOGITS_FNV 479 672320dff5e2fe7f chain c4dc0d5f4d55ce18
+LOGITS_FNV 480 f7c1ecf1b3df0725 chain 9625d7b89b35fb72
+LOGITS_FNV 481 622753cc26e0d772 chain 484974d20cd34abf
+LOGITS_FNV 482 8481b80230092780 chain 636e2b162f17feac
+LOGITS_FNV 483 cff2ecc813d31162 chain 96932dc58deab95d
+1.52.691.965 I fill_late: expert store: 171673 lookups, hit rate 95.9%, 59.4 GB read for decode, 185.0 GB for prefill
+1.52.691.968 I fill_late: expert store: per layer fill: plan 0.00 ms, reads 0.05 ms (0.3 records, 55.05 GB/s), between fills 4.15 ms
+1.52.691.972 I fill_late: expert store: memory valve: host MemAvailable 24.00 GB (lowest 24.00, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+1.52.691.976 I fill_late: expert store: split GEMV: 20187 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 799 lookups with more misses (0.05 records read at the early lookup), plan 0.046 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+1.52.691.977 I fill_late: expert store: self-prefetch: 168 posts, 0.1 records and 0.11 ms of reads per post
+LOGITS_FNV 484 5e9823786b7d738c chain 42b8e38ae1de95a6
+LOGITS_FNV 485 6635bf076c6754db chain 89005d6b62bade16
+LOGITS_FNV 486 593bfa6775b51823 chain 5610ca8df9ea11ba
+LOGITS_FNV 487 11bc052be96a19ce chain 06d4e1115a6f2bf7
+LOGITS_FNV 488 a3bd421249ecf2c7 chain 7c4f11b96ba1cf1b
+LOGITS_FNV 489 f17a4692f8818000 chain d679193c899d0d08
+LOGITS_FNV 490 c21914443f30aff3 chain 4a2caccaadaaaee4
+LOGITS_FNV 491 9ca36ff3566aeefa chain 664a36f50a5d081d
+LOGITS_FNV 492 e12ef66aa5b4a8cc chain 01b67b9521cd4c0a
+LOGITS_FNV 493 8b9ebb3d87544bc3 chain c5a4dfb564b02c82
+LOGITS_FNV 494 b09f64a4c6c43fbe chain 0b701a616b9bf5a7
+LOGITS_FNV 495 3b02425015535b83 chain 6d9fe4852c3241ff
+LOGITS_FNV 496 e68d951d48b96de0 chain 82a16e61618fd034
+LOGITS_FNV 497 d24699fae46ee055 chain 7118579e0c20e592
+LOGITS_FNV 498 cc935f0b36dbbf29 chain e88942c42a520c18
+LOGITS_FNV 499 d911f39269a50474 chain 6b5bcad4ab17c0e7
+LOGITS_FNV 500 ccd5814f5a3f3fdc chain 1140803d357ecb78
+LOGITS_FNV 501 df99ee91120e65c2 chain 6db6fc33c3992fed
+LOGITS_FNV 502 e5c5334e1ca08922 chain 592c03c83376c5a4
+1.53.884.617 I sched_graph_realloc: graph reallocation: nodes = 8743 (changed = 0), splits = 2, n_same = 10, n_diff = 5
+LOGITS_FNV 503 0f4fd333ed289a57 chain f711d0f6486b9328
+LOGITS_FNV 504 7e365d34462c1279 chain 8a624dae1991697e
+1.54.029.454 I slot print_timing: id  2 | task 276 | n_gen =    240, tg =  15.41 t/s, tg_3s =  15.37 t/s
+LOGITS_FNV 505 a300f8c4c0674fbb chain eed604ad41efe3d2
+LOGITS_FNV 506 9485fa9523bda750 chain f31d242fa4868675
+LOGITS_FNV 507 49242ee2bfff011e chain 448b6e86322672b4
+LOGITS_FNV 508 55115d631c9a6395 chain 4abc48069d00e08a
+LOGITS_FNV 509 1f000cd547d85d9a chain 5944393af8c1816f
+LOGITS_FNV 510 36bcd30ebfcc282d chain c8227e0931f07189
+LOGITS_FNV 511 e5914c06e3bf2d96 chain 90bb67cafa76a724
+LOGITS_FNV 512 ef7317424d855b06 chain 558426d2c5f405dd
+LOGITS_FNV 513 eeb2bd6610716caf chain eed770d3ec553f19
+LOGITS_FNV 514 3f37f4339b39e1f4 chain 7347c957d55c55ba
+LOGITS_FNV 515 4ab40f2818709e72 chain b81c78ba8ae26e7f
+LOGITS_FNV 516 45fd1fcc6025d4ce chain a640be6aec6e3f22
+LOGITS_FNV 517 be460be1b6a0df57 chain 74b5f894dbc6dea6
+LOGITS_FNV 518 8391e022322b4ee6 chain 77b9f58bea11f007
+LOGITS_FNV 519 40ee750f18dcc0bf chain e8a1c6910183a973
+LOGITS_FNV 520 ac43208eec332265 chain 83c9b8df976b2575
+1.55.053.329 I slot print_timing: id  2 | task 276 | prompt eval time =     605.21 ms /    19 tokens (   31.85 ms per token,    31.39 tokens per second)
+1.55.053.332 I slot print_timing: id  2 | task 276 |        eval time =   16529.66 ms /   256 tokens (   64.82 ms per token,    15.43 tokens per second)
+1.55.053.333 I slot print_timing: id  2 | task 276 |       total time =   17134.87 ms /   275 tokens
+1.55.053.334 I slot print_timing: id  2 | task 276 |    graphs reused =        510
+1.55.053.335 I slot print_timing: id  2 | task 276 |   graph reallocs =         10    /     5        (same size) / (changed size)
+1.55.053.346 I slot      release: id  2 | task 276 | stop processing: n_tokens = 274, truncated = 0
+1.55.053.353 I srv  update_slots: all slots are idle
+1.55.181.921 I srv  server_strea: conv_id= (empty=1)
+1.55.182.050 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/10) > 0.100
+1.55.182.053 I slot get_availabl: id  1 | task -1 |  - checking sim = 1.000 (10/10) > 0.100
+1.55.182.053 I slot get_availabl: id  2 | task -1 |  - checking sim = 0.000 (0/10) > 0.100
+1.55.182.054 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+1.55.182.054 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+1.55.182.055 I slot get_availabl: id  1 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.038
+1.55.182.088 I slot launch_slot_: id  1 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+1.55.182.094 I slot launch_slot_: id  1 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+1.55.182.095 I slot launch_slot_: id  1 | task 534 | processing task, is_child = 0
+1.55.182.102 I slot   operator(): id  1 | task 534 | new prompt, n_ctx_slot = 204800, n_keep = 0, task.n_tokens = 10
+1.55.182.105 I slot   operator(): id  1 | task 534 | erased invalidated context checkpoint (pos_min = 5, pos_max = 5, n_tokens = 6, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+1.55.188.555 I slot   operator(): id  1 | task 534 | cached n_tokens = 0, memory_seq_rm [0, end)
+1.55.188.666 I srv  server_strea: conv_id= (empty=1)
+1.55.188.705 I srv  server_strea: conv_id= (empty=1)
+1.55.188.710 I srv  server_strea: conv_id= (empty=1)
+1.55.367.178 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/19) > 0.100
+1.55.367.181 I slot get_availabl: id  1 | task 534 |  - skipping, is_processing = 1
+1.55.367.182 I slot get_availabl: id  2 | task -1 |  - checking sim = 1.000 (19/19) > 0.100
+1.55.367.183 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+1.55.367.183 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+1.55.367.184 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.069
+1.55.367.205 I slot launch_slot_: id  2 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+1.55.367.211 I slot launch_slot_: id  2 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+1.55.367.213 I slot launch_slot_: id  2 | task 536 | processing task, is_child = 0
+1.55.367.214 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/18) > 0.100
+1.55.367.215 I slot get_availabl: id  1 | task 534 |  - skipping, is_processing = 1
+1.55.367.215 I slot get_availabl: id  2 | task 536 |  - skipping, is_processing = 1
+1.55.367.216 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+1.55.367.217 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+1.55.367.219 I slot get_availabl: id  3 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+1.55.367.222 I slot launch_slot_: id  3 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+1.55.367.224 I slot launch_slot_: id  3 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+1.55.367.224 I slot launch_slot_: id  3 | task 537 | processing task, is_child = 0
+1.55.367.225 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.143 (3/21) > 0.100
+1.55.367.226 I slot get_availabl: id  1 | task 534 |  - skipping, is_processing = 1
+1.55.367.226 I slot get_availabl: id  2 | task 536 |  - skipping, is_processing = 1
+1.55.367.226 I slot get_availabl: id  3 | task 537 |  - skipping, is_processing = 1
+1.55.367.227 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+1.55.367.227 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 0.143 (> 0.100 thold), f_keep = 0.000
+1.55.367.234 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+1.55.367.236 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+1.55.367.237 I slot launch_slot_: id  0 | task 538 | processing task, is_child = 0
+1.55.367.243 I slot   operator(): id  1 | task 534 | cached n_tokens = 6, memory_seq_rm [6, end)
+1.55.367.441 I slot init_sampler: id  1 | task 534 | init sampler, took 0.00 ms, tokens: text = 10, total = 10
+1.55.430.186 I slot create_check: id  1 | task 534 | created context checkpoint 1 of 32 (pos_min = 5, pos_max = 5, n_tokens = 6, size = 145.563 MiB)
+1.55.432.841 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 10, n_diff = 6
+LOGITS_FNV 521 41832ec928cca3a8 chain 284afec939b3f5de
+1.55.551.375 I slot   operator(): id  0 | task 538 | new prompt, n_ctx_slot = 204800, n_keep = 0, task.n_tokens = 21
+1.55.551.380 I slot   operator(): id  0 | task 538 | erased invalidated context checkpoint (pos_min = 14365, pos_max = 14365, n_tokens = 14366, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+1.55.556.719 I slot   operator(): id  0 | task 538 | erased invalidated context checkpoint (pos_min = 16409, pos_max = 16409, n_tokens = 16410, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+1.55.562.994 I slot   operator(): id  0 | task 538 | cached n_tokens = 0, memory_seq_rm [0, end)
+1.55.568.308 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 1), splits = 2, n_same = 10, n_diff = 7
+1.55.983.337 I slot   operator(): id  0 | task 538 | cached n_tokens = 17, memory_seq_rm [17, end)
+1.55.983.610 I slot init_sampler: id  0 | task 538 | init sampler, took 0.01 ms, tokens: text = 21, total = 21
+1.56.014.117 I slot create_check: id  0 | task 538 | created context checkpoint 1 of 32 (pos_min = 16, pos_max = 16, n_tokens = 17, size = 145.563 MiB)
+1.56.016.796 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 10, n_diff = 8
+LOGITS_FNV 522 973591cf8153201e chain ae77791c931c1af7
+1.56.178.008 I slot   operator(): id  2 | task 536 | new prompt, n_ctx_slot = 204800, n_keep = 0, task.n_tokens = 19
+1.56.178.013 I slot   operator(): id  2 | task 536 | erased invalidated context checkpoint (pos_min = 14, pos_max = 14, n_tokens = 15, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+1.56.183.501 I slot   operator(): id  2 | task 536 | cached n_tokens = 0, memory_seq_rm [0, end)
+1.56.186.364 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 1), splits = 2, n_same = 10, n_diff = 9
+1.56.457.164 I slot   operator(): id  2 | task 536 | cached n_tokens = 15, memory_seq_rm [15, end)
+1.56.457.426 I slot init_sampler: id  2 | task 536 | init sampler, took 0.00 ms, tokens: text = 19, total = 19
+1.56.487.791 I slot create_check: id  2 | task 536 | created context checkpoint 1 of 32 (pos_min = 14, pos_max = 14, n_tokens = 15, size = 145.563 MiB)
+1.56.490.451 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 10, n_diff = 10
+LOGITS_FNV 523 eddba38333b08287 chain 10bf6dfc2a6770a3
+1.56.606.657 I slot   operator(): id  3 | task 537 | new prompt, n_ctx_slot = 204800, n_keep = 0, task.n_tokens = 18
+1.56.606.661 I slot   operator(): id  3 | task 537 | cached n_tokens = 0, memory_seq_rm [0, end)
+1.56.609.483 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 1), splits = 2, n_same = 10, n_diff = 11
+1.56.999.308 I slot   operator(): id  3 | task 537 | cached n_tokens = 14, memory_seq_rm [14, end)
+1.56.999.584 I slot init_sampler: id  3 | task 537 | init sampler, took 0.00 ms, tokens: text = 18, total = 18
+1.57.030.350 I slot create_check: id  3 | task 537 | created context checkpoint 1 of 32 (pos_min = 13, pos_max = 13, n_tokens = 14, size = 145.563 MiB)
+1.57.033.663 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 10, n_diff = 12
+LOGITS_FNV 524 c24674ad808a87d6 chain c1948ccf01c8e276
+1.57.253.904 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 11, n_diff = 12
+LOGITS_FNV 525 85b667402dbde99f chain 224e7d40170a49ea
+LOGITS_FNV 526 b88183b3ca0fb83c chain 661a315aad9a44ad
+LOGITS_FNV 527 7a9955e931bacb86 chain 898fc0f427e300fc
+LOGITS_FNV 528 5ea73d05235c4909 chain 6c700b66462cb73a
+LOGITS_FNV 529 fafe974e3e0bd3e2 chain c33bbc8fa309851b
+LOGITS_FNV 530 00975eab4d4023e8 chain eb955a4240f299d0
+LOGITS_FNV 531 366d6a0ed73b8c51 chain 129abc632a04be62
+LOGITS_FNV 532 c5fbd7d5a274e274 chain 2fcaae20ca36faad
+LOGITS_FNV 533 5fff92ebe9917201 chain 7695bfa69a4afd53
+LOGITS_FNV 534 057fe90e945fcf9f chain e3c6b6121aa31d2f
+LOGITS_FNV 535 85c28a4f2878554d chain ca4e93905cb92669
+LOGITS_FNV 536 fb6f77cb41fe3cf1 chain abdfdfc47d115c3b
+LOGITS_FNV 537 2ecd00336154e7e2 chain 845d00317ec2c51a
+LOGITS_FNV 538 d38dc3d725a99a37 chain 5705a0fbce74028a
+LOGITS_FNV 539 bb5982576663630b chain 9ac252e959e74ed2
+LOGITS_FNV 540 5c99c3cb3f07b188 chain 4f16673125a08999
+LOGITS_FNV 541 63784dc82509c1f5 chain 3de8f468abe340f7
+LOGITS_FNV 542 ffa69d88e80dda8e chain dd63fa0c9e9cb9d2
+LOGITS_FNV 543 0c1c6bc86e52cb81 chain f0f570f91a1af6cc
+LOGITS_FNV 544 6bd3ef1f7dd98430 chain 64a918f497ec39b3
+LOGITS_FNV 545 a657b48410c1f46f chain 943ae6d32f60a23f
+LOGITS_FNV 546 61366145188b98a5 chain 2896a865244c97a9
+LOGITS_FNV 547 223d106f30d22217 chain 930086f1263eeedd
+LOGITS_FNV 548 edf0f16b8ae9b35d chain 904dd4de2767370b
+LOGITS_FNV 549 2cd45f59ff61c341 chain 11214664e9e6afd9
+LOGITS_FNV 550 66235d8a7bacfd02 chain cae2408e7603b1b4
+LOGITS_FNV 551 cb0381065926160e chain 8aa60211b5208f01
+LOGITS_FNV 552 0eca33be8c086f40 chain 1f7db3458265b87e
+LOGITS_FNV 553 d0244cca0f3a81ba chain d9bb6d0a030e7993
+LOGITS_FNV 554 7a95b6822c94e351 chain 8955c9196291bc61
+LOGITS_FNV 555 7dc5017aa955e3ae chain caba118221ddeb34
+LOGITS_FNV 556 e414a12adfcc6f36 chain 71a4426fa4aed1d9
+LOGITS_FNV 557 ac6278380880a2ae chain 0bc59705c60edc6c
+LOGITS_FNV 558 a71e968e249835e9 chain 77efdbfc8b28918e
+LOGITS_FNV 559 0d2f60b226ebb387 chain 4350b1c90217e846
+LOGITS_FNV 560 6e675a220e3ea14a chain 84e39d6db6ef8a27
+LOGITS_FNV 561 aa81096b113306d4 chain 3076eeb9ffa61b90
+LOGITS_FNV 562 02a8c18a679bf80f chain 417ee0a93c362894
+LOGITS_FNV 563 18598328478ec742 chain 4557ac59ad45cc71
+LOGITS_FNV 564 6803f7c6770fd7d7 chain 977d81c7c69e2091
+LOGITS_FNV 565 6157a38acc98cc89 chain 7b334b12ffefdd27
+LOGITS_FNV 566 1c52147adb6b36dc chain 340754e0506bac30
+LOGITS_FNV 567 0101f39996b5d2a9 chain 820d7f36a0f602f2
+LOGITS_FNV 568 397d677a2b03eaab chain 2f74fb3095550c12
+LOGITS_FNV 569 e850a7c3ec928fd0 chain 4134b5f7fea51095
+LOGITS_FNV 570 190334eec716bdf1 chain 297f816ff6ee825b
+LOGITS_FNV 571 abdd617f92222420 chain 0a9101a9eb2e2278
+LOGITS_FNV 572 494b08173f0fabc2 chain 19db922fffb410fd
+2.04.712.981 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 12, n_diff = 12
+LOGITS_FNV 573 d2fdb9d9a015983b chain 9de2b7c6cab1eae5
+LOGITS_FNV 574 386373846d1903a7 chain 357f5a633ee25301
+LOGITS_FNV 575 c5325048424f9b95 chain 2c2bb7fcd00f22eb
+LOGITS_FNV 576 cb514d2e01e559d4 chain cf29f621d657321c
+LOGITS_FNV 577 f554491515db2f06 chain 1c773038371dff7d
+2.05.607.435 I fill_decode: expert store: 263048 lookups, hit rate 96.0%, 88.9 GB read for decode, 185.0 GB for prefill
+2.05.607.442 I fill_decode: expert store: per layer fill: plan 0.00 ms, reads 0.14 ms (0.4 records, 25.54 GB/s), between fills 3.24 ms
+2.05.607.447 I fill_decode: expert store: memory valve: host MemAvailable 23.99 GB (lowest 23.99, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.05.607.451 I fill_decode: expert store: split GEMV: 21714 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 842 lookups with more misses (0.05 records read at the early lookup), plan 0.045 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+2.05.607.452 I fill_decode: expert store: self-prefetch: 2568 posts, 0.1 records and 0.05 ms of reads per post
+LOGITS_FNV 578 9f76a090c39c286a chain 76e4d20896a004f4
+LOGITS_FNV 579 e1633f145709bcf0 chain 8de3667f40db406b
+LOGITS_FNV 580 63c4251caaef0f16 chain d68bb9f76392f40e
+LOGITS_FNV 581 79e969cd49849951 chain 8e4f26eb8c943fe4
+LOGITS_FNV 582 7490101eae16f4a0 chain 400a03e1a6375a1f
+LOGITS_FNV 583 7a1d319cab976462 chain 127ae34d82d37fb6
+LOGITS_FNV 584 3deb30ae28a4093f chain 11fea95d0e4a31ce
+LOGITS_FNV 585 e19d41559b1df491 chain 1516abde30e09fec
+LOGITS_FNV 586 4a39a85dcec61a9d chain 2215c60a8b3d1746
+LOGITS_FNV 587 aeaa6f1e373b0903 chain 650efc9614e2a722
+LOGITS_FNV 588 339753a7775b2995 chain 89aaf5f1ff4f099c
+LOGITS_FNV 589 36e277e253e3d9d3 chain e87c37ab9a265778
+LOGITS_FNV 590 a7a99bd1b8e7e4ab chain a2a3f020cbc1d5e8
+LOGITS_FNV 591 58a57a74464c9b52 chain dfb93f4d4092502d
+LOGITS_FNV 592 904e75d64f160432 chain 7da7de56f1accc94
+LOGITS_FNV 593 2a668c0e89f3a0dd chain 18377842a0c31e76
+LOGITS_FNV 594 658f07bfef163b78 chain 7eea2ac35bc539bd
+LOGITS_FNV 595 321e9921d3bef5d7 chain 6200b589bde5a44d
+LOGITS_FNV 596 4ba712248e50831a chain 81b04cd56978c3a4
+LOGITS_FNV 597 5763a24b1ba71e22 chain c9c92cffafce89a9
+LOGITS_FNV 598 9933f89158091b5a chain 8646da0cd90d6a6c
+LOGITS_FNV 599 582dcfe55267dd1e chain 3b3b5c6f95bbece5
+LOGITS_FNV 600 bd5417f704e9f0c0 chain 45c29925e4ce9d32
+LOGITS_FNV 601 53feea0a4ea157a5 chain 6ef2be98c4a3f6e4
+LOGITS_FNV 602 4963e0a630116527 chain 72cc51dc3ee73594
+LOGITS_FNV 603 48e54a551cc8b660 chain 38c35cc9b489522b
+LOGITS_FNV 604 e5bb2996276ccc92 chain ecf5c1b789a9501a
+LOGITS_FNV 605 0c1f38b36b978964 chain 1a9362925bf6db65
+LOGITS_FNV 606 86947d480e044045 chain 33df3a06d75cf677
+LOGITS_FNV 607 ba25f2d4677f9e52 chain 437dcd6cad48d3a6
+LOGITS_FNV 608 8c584daa4b02681c chain 771ef6be86cff5c9
+LOGITS_FNV 609 f04cf67e329d4330 chain 42e266dc9a8e601a
+LOGITS_FNV 610 0387d831f2585170 chain c7fa2fa4e4a68ba1
+LOGITS_FNV 611 22e9b905f4c28ad4 chain c7280e40cc93cae2
+LOGITS_FNV 612 db39d8aa629e7ad2 chain e44c96f3437455fb
+LOGITS_FNV 613 874f3d7ff7bfa9f5 chain c2fe425754928f9d
+LOGITS_FNV 614 2f880915880a7c5d chain eae28cc13e62996f
+LOGITS_FNV 615 06288bbe28e99866 chain de094039afe2713a
+LOGITS_FNV 616 a63cc99321c56039 chain bb3b90467a7cce44
+LOGITS_FNV 617 ebdba6bb4b50487d chain 89b7cd6b8c77e5a2
+LOGITS_FNV 618 ca4b793a6c6ac3d2 chain 567e2b19fac5444b
+LOGITS_FNV 619 1478be57b621b2e2 chain 6c5865b62ea909ea
+LOGITS_FNV 620 5a234e3f4ee0dbd1 chain 54f1c024a0cfe6f8
+LOGITS_FNV 621 8ced730a726ab740 chain 7e77c9f82b7abc23
+LOGITS_FNV 622 8af753a09c5226f3 chain 3f1268edea3f3393
+LOGITS_FNV 623 4a47dcb3fb0ced8f chain f876c2efaf7183df
+2.12.946.627 I slot print_timing: id  0 | task 538 | n_gen =    100, tg =   5.90 t/s, tg_3s =   5.96 t/s
+2.12.946.760 I slot print_timing: id  1 | task 534 | n_gen =    100, tg =   5.69 t/s, tg_3s =   5.75 t/s
+2.12.946.887 I slot print_timing: id  2 | task 536 | n_gen =    100, tg =   6.06 t/s, tg_3s =   6.12 t/s
+2.12.947.013 I slot print_timing: id  3 | task 537 | n_gen =    100, tg =   6.31 t/s, tg_3s =   6.37 t/s
+LOGITS_FNV 624 b16b2584cd7e658e chain 76d3b2467a8dab2a
+LOGITS_FNV 625 f1b0c07f9da553e8 chain 80fd6d17610a9749
+LOGITS_FNV 626 72939e05d896dab8 chain 9814c41d7de51df6
+LOGITS_FNV 627 0c9812447cc23cf6 chain 2dbc465e03222403
+LOGITS_FNV 628 ecb0eac9a3ce9d14 chain 039947f4977d8894
+LOGITS_FNV 629 f5d1c63ee937efa9 chain 48d98be6c799f45a
+LOGITS_FNV 630 4c660ffd079f5e6f chain ea73f138efb3e9fe
+LOGITS_FNV 631 2c44cf9e753da270 chain 8162b921f1bdd0d1
+LOGITS_FNV 632 3360d7bb75be4e41 chain bff27e8ecc6ae8cb
+LOGITS_FNV 633 1d84e0f6043fef36 chain 999404de3b08883e
+LOGITS_FNV 634 9738a196d8d0a6d5 chain 23e3daed6edafb84
+LOGITS_FNV 635 fdb5a29c2735edfe chain 44697d6e58bf9701
+LOGITS_FNV 636 4da3e2159046c80e chain 207637b6cca7a640
+2.15.210.541 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 13, n_diff = 12
+LOGITS_FNV 637 cfce0d539f22275a chain 288fba780891b789
+LOGITS_FNV 638 7f9d19cb250ead89 chain b475400a967c972b
+LOGITS_FNV 639 2e7e9300a2f3d19e chain 2b89299a6ae4eff6
+LOGITS_FNV 640 e439a37815c70798 chain ff7f6e126a3eddf5
+LOGITS_FNV 641 c6f1ed1cec1822f6 chain 840b5149b1b0e548
+2.16.101.159 I slot print_timing: id  0 | task 538 | n_gen =    118, tg =   5.87 t/s, tg_3s =   5.71 t/s
+2.16.101.302 I slot print_timing: id  1 | task 534 | n_gen =    118, tg =   5.69 t/s, tg_3s =   5.71 t/s
+2.16.101.445 I slot print_timing: id  2 | task 536 | n_gen =    118, tg =   6.00 t/s, tg_3s =   5.71 t/s
+2.16.101.583 I slot print_timing: id  3 | task 537 | n_gen =    118, tg =   6.21 t/s, tg_3s =   5.71 t/s
+LOGITS_FNV 642 867384389986c644 chain 5c04e9c50c16dacb
+LOGITS_FNV 643 aa6b4594a3a6340c chain 074c841de05d45c4
+LOGITS_FNV 644 123ac3566c1a7960 chain 861af807ec4f63d3
+LOGITS_FNV 645 0fa149d424ce2d8d chain 7c09710e594f3b1d
+LOGITS_FNV 646 a08f365d5a2f9a93 chain 69fbc9d6415f4095
+LOGITS_FNV 647 e5375102cb074e3b chain 6263d251fb1426a5
+LOGITS_FNV 648 aa5945bb44bd3e5d chain 13a4f3e5b5539a63
+LOGITS_FNV 649 e712d0e63c511553 chain 6c196698fb676433
+LOGITS_FNV 650 7d7fe22e9b495bf2 chain 80cfe97d0cc4fbe2
+LOGITS_FNV 651 419cb4b26215ea83 chain 8e6134738f765c0a
+LOGITS_FNV 652 30d51f7ebc7f072d chain d305b31ef5d2db0c
+LOGITS_FNV 653 be87511359a8d2df chain 489c62cee759f8c8
+LOGITS_FNV 654 fc5185d1e559bb93 chain 6904e135a6e4a4d8
+LOGITS_FNV 655 dfd51da389efe575 chain 79a7f5950d1a67de
+LOGITS_FNV 656 f6ed51578436e5e8 chain b59334debd35a5a1
+LOGITS_FNV 657 d871d6dd1c7923b7 chain 2fb16893fe376ee9
+LOGITS_FNV 658 36a0d3cd8156675c chain 32106b704006989e
+LOGITS_FNV 659 38bc783ff32f1e10 chain 6376ff63661bcfe5
+2.19.202.433 I slot print_timing: id  0 | task 538 | n_gen =    136, tg =   5.86 t/s, tg_3s =   5.80 t/s
+2.19.202.563 I slot print_timing: id  1 | task 534 | n_gen =    136, tg =   5.71 t/s, tg_3s =   5.80 t/s
+2.19.202.687 I slot print_timing: id  2 | task 536 | n_gen =    136, tg =   5.97 t/s, tg_3s =   5.80 t/s
+2.19.202.818 I slot print_timing: id  3 | task 537 | n_gen =    136, tg =   6.15 t/s, tg_3s =   5.80 t/s
+LOGITS_FNV 660 1d08def19314f2e5 chain fe4f52a741b33ad3
+LOGITS_FNV 661 664ee0ccb335f832 chain a1db1891003eb8c2
+LOGITS_FNV 662 43430ac7a3bea49a chain d325c91203fb9beb
+LOGITS_FNV 663 d264e898cc36dcfc chain a2016b4ee2e01a34
+LOGITS_FNV 664 6ea9286887a0fa40 chain 95d54417a54ac48b
+LOGITS_FNV 665 c36d55e4d0b1d0a5 chain ad16c8bfb69e1b1d
+LOGITS_FNV 666 a01ebd1da5ac207f chain c981661526a822dd
+LOGITS_FNV 667 badf24776c1a8012 chain ecb2ea9b5b11e230
+LOGITS_FNV 668 dd50766a29cd8a56 chain ea3fa6a4b11d8309
+LOGITS_FNV 669 b53b817fe9a5c326 chain 95bfb3ff3b9ba5d4
+LOGITS_FNV 670 6f6ce3039d2b31f3 chain 2e300f66957afd00
+LOGITS_FNV 671 a480302a7f092a45 chain 69905d1562a0142e
+LOGITS_FNV 672 02c6db7506f6a614 chain 46796144c3f023a5
+LOGITS_FNV 673 2252117902337d1e chain 62263dc86cc228b0
+LOGITS_FNV 674 70cc3a67c153f8eb chain 2f4a762b5d2c88fc
+2.21.824.813 I fill_decode: expert store: 387714 lookups, hit rate 95.9%, 132.1 GB read for decode, 185.0 GB for prefill
+2.21.824.822 I fill_decode: expert store: per layer fill: plan 0.01 ms, reads 0.26 ms (0.6 records, 17.69 GB/s), between fills 3.06 ms
+2.21.824.826 I fill_decode: expert store: memory valve: host MemAvailable 23.99 GB (lowest 23.99, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.21.824.831 I fill_decode: expert store: split GEMV: 21714 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 842 lookups with more misses (0.05 records read at the early lookup), plan 0.045 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+2.21.824.832 I fill_decode: expert store: self-prefetch: 6664 posts, 0.1 records and 0.05 ms of reads per post
+LOGITS_FNV 675 d37d37f448466e49 chain ee017bc84cea145a
+LOGITS_FNV 676 de1a38f118a64ea0 chain 64751df82812f36d
+LOGITS_FNV 677 5a3d00ea0505ae9f chain 6d83c7076f712ba1
+2.22.227.127 I slot print_timing: id  0 | task 538 | n_gen =    154, tg =   5.87 t/s, tg_3s =   5.95 t/s
+2.22.227.257 I slot print_timing: id  1 | task 534 | n_gen =    154, tg =   5.74 t/s, tg_3s =   5.95 t/s
+2.22.227.393 I slot print_timing: id  2 | task 536 | n_gen =    154, tg =   5.97 t/s, tg_3s =   5.95 t/s
+2.22.227.530 I slot print_timing: id  3 | task 537 | n_gen =    154, tg =   6.13 t/s, tg_3s =   5.95 t/s
+LOGITS_FNV 678 07bd29882362854f chain 64c9b11d66404791
+LOGITS_FNV 679 85fcf91180825606 chain 21cf72bbd675a4c0
+LOGITS_FNV 680 64233d099df7b794 chain 76fa387d0ea64a27
+LOGITS_FNV 681 01eafbd494e9a411 chain c6ec25d4cb61d0f5
+LOGITS_FNV 682 35def283be97b05e chain b971c2959872c6dc
+LOGITS_FNV 683 93e0ffc1bf76b77d chain 1623695ea12dc12e
+LOGITS_FNV 684 f3680cfebc17ecd5 chain 0f8eb3a98ba119ec
+LOGITS_FNV 685 9172cab967f71756 chain 17dde5378906b999
+LOGITS_FNV 686 5bcb83a87441b641 chain 6e063fdefd4dc0b3
+LOGITS_FNV 687 1f634a0816d361ef chain a2cdc98c8d9f8b5f
+LOGITS_FNV 688 2f73576cbc684e1e chain bf7663ada6a9cffa
+LOGITS_FNV 689 daf3811cb1dc94b4 chain 1606f0df0e751fa5
+LOGITS_FNV 690 037b0c1e6bc8d15d chain a467ea3dc11d1b37
+LOGITS_FNV 691 98f0bda2874408b2 chain 5e7e958b26f5b2c6
+LOGITS_FNV 692 7c47c0432c387323 chain 030c6984dd132a86
+LOGITS_FNV 693 abe2f046bd00f8e5 chain 260e66a5adf9b6d4
+LOGITS_FNV 694 2d8981fd78714ba6 chain 65006b5955ef58d1
+LOGITS_FNV 695 a2491abcaa917f19 chain 1e571e2309245b8f
+2.25.363.382 I slot print_timing: id  0 | task 538 | n_gen =    172, tg =   5.86 t/s, tg_3s =   5.74 t/s
+2.25.363.519 I slot print_timing: id  1 | task 534 | n_gen =    172, tg =   5.74 t/s, tg_3s =   5.74 t/s
+2.25.363.647 I slot print_timing: id  2 | task 536 | n_gen =    172, tg =   5.95 t/s, tg_3s =   5.74 t/s
+2.25.363.779 I slot print_timing: id  3 | task 537 | n_gen =    172, tg =   6.08 t/s, tg_3s =   5.74 t/s
+LOGITS_FNV 696 18df93b8e93e1aa4 chain dadffea793a601e8
+LOGITS_FNV 697 957031dd0efd72a2 chain cdfe829677d3cad9
+LOGITS_FNV 698 5bcb1050d30ad620 chain 32396851e1df08ee
+LOGITS_FNV 699 b8a676438179c464 chain 68847ed9ec0fff35
+LOGITS_FNV 700 372c13ad82f6f58d chain 3c265c837146fa87
+2.26.165.914 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 14, n_diff = 12
+LOGITS_FNV 701 82370925e6ef0bb9 chain 96306903a2bc2e95
+LOGITS_FNV 702 fbbe7657bafeb9fd chain 62ceb4e7efbc0c43
+LOGITS_FNV 703 5513ac728bca0b04 chain 3b60980a8230c744
+LOGITS_FNV 704 fee891c94344f186 chain c5080e683b273ac1
+LOGITS_FNV 705 facfdabfd7c86b46 chain 692344b37e1acaec
+LOGITS_FNV 706 47d202bc28e25ba6 chain 8e86af8add1f71a5
+LOGITS_FNV 707 cd45cc1acff8ded7 chain 77d573415878592d
+LOGITS_FNV 708 7df862621bf0e326 chain 8b8f6e2beaed9688
+LOGITS_FNV 709 b91e05e22bee5c63 chain 6514eaa8191ea0f8
+LOGITS_FNV 710 1e321f6b9ba0fc5a chain b41df58c17d09c59
+LOGITS_FNV 711 6c5e345be8a46f89 chain 3379eb774d0628b3
+LOGITS_FNV 712 437482eeca72778c chain 0414a801351c8fdc
+LOGITS_FNV 713 d4bbdcbea4496cfb chain 56074753c822fd90
+2.28.405.205 I slot print_timing: id  0 | task 538 | n_gen =    190, tg =   5.86 t/s, tg_3s =   5.92 t/s
+2.28.405.335 I slot print_timing: id  1 | task 534 | n_gen =    190, tg =   5.75 t/s, tg_3s =   5.92 t/s
+2.28.405.473 I slot print_timing: id  2 | task 536 | n_gen =    190, tg =   5.94 t/s, tg_3s =   5.92 t/s
+2.28.405.604 I slot print_timing: id  3 | task 537 | n_gen =    190, tg =   6.07 t/s, tg_3s =   5.92 t/s
+LOGITS_FNV 714 7ca111c5796f364a chain d7ce53c3faf98a2d
+LOGITS_FNV 715 4911f97b9778d01f chain cce2d256365f5281
+LOGITS_FNV 716 71acc0d52be48dc2 chain 16e85c6e0148cf3c
+LOGITS_FNV 717 eeb9cc7f23ffbf1e chain 7ae53a3455d4aff5
+LOGITS_FNV 718 85c83cd5bfee9aec chain cedc735776b13262
+LOGITS_FNV 719 0e33917a2c6f4d26 chain bfb7ae5b5c55da13
+LOGITS_FNV 720 e26fe0c255d499c2 chain b13bd52f8b3930d2
+LOGITS_FNV 721 b693ac0e57f6b8e6 chain d9361dc1138160d3
+LOGITS_FNV 722 213aed2fb0bf759c chain 4a2e7013b55bcbac
+LOGITS_FNV 723 7a26eb854351f6ac chain 2622561b610dca4b
+LOGITS_FNV 724 28e764d4c76b1d82 chain 938aefe5c9304cba
+LOGITS_FNV 725 e953a7d9bccc8883 chain 3f2b21b2c9807bca
+LOGITS_FNV 726 7d588537a8fe5ea2 chain afe73e5454a51ec3
+LOGITS_FNV 727 de8cd1cec7b85f69 chain 8ad80c09db68d629
+LOGITS_FNV 728 d7d499d16bfd31f2 chain 02072b972709359c
+LOGITS_FNV 729 de2580acea7a20e1 chain dda387548ff180de
+LOGITS_FNV 730 d24d1018ab854e37 chain ba15c39a15e3291a
+LOGITS_FNV 731 5311e7983baa6f60 chain 02dd546020567fed
+2.31.448.530 I slot print_timing: id  0 | task 538 | n_gen =    208, tg =   5.87 t/s, tg_3s =   5.91 t/s
+2.31.448.668 I slot print_timing: id  1 | task 534 | n_gen =    208, tg =   5.77 t/s, tg_3s =   5.91 t/s
+2.31.448.796 I slot print_timing: id  2 | task 536 | n_gen =    208, tg =   5.94 t/s, tg_3s =   5.91 t/s
+2.31.448.927 I slot print_timing: id  3 | task 537 | n_gen =    208, tg =   6.05 t/s, tg_3s =   5.91 t/s
+LOGITS_FNV 732 2f022b1a2b2371da chain 13610fa5b1d45c50
+LOGITS_FNV 733 29e8d0b6463d2bdb chain 3c1e84b217b8d090
+LOGITS_FNV 734 63ea4a884c511614 chain d23aace62d6355f7
+LOGITS_FNV 735 862030e8b48e6d89 chain 1596c299e6d1c22d
+LOGITS_FNV 736 a4045c123387b501 chain 62431db71cbb75ab
+LOGITS_FNV 737 b3286c3c412c9a40 chain 865a3de144fb9bd8
+LOGITS_FNV 738 78c65e7a2e0c73a6 chain 88f831d6566d23d5
+LOGITS_FNV 739 4471978b84dedfbf chain 99578cf2e9ff955d
+LOGITS_FNV 740 3f9d9a6ab6e78c19 chain c8f0e01fd7024cfb
+LOGITS_FNV 741 9e93577216409b87 chain 133db073c624fe7f
+LOGITS_FNV 742 beeff72d27dd02ec chain 7d41511a4c7de380
+LOGITS_FNV 743 9820405364291f5d chain 1616955b4c757656
+LOGITS_FNV 744 66d7dc8708828f31 chain 6a31d6291241ab8c
+LOGITS_FNV 745 7b40b176134a2e1e chain ee674f01c401cb89
+LOGITS_FNV 746 4629f6ac335a666b chain d7ee409825c99915
+LOGITS_FNV 747 33ba898b3f10163e chain 4e09ca2e1a376e00
+LOGITS_FNV 748 92acca23c34d85fc chain 12ae8fe76178da27
+LOGITS_FNV 749 ba174fd2e1b6d2fa chain 9a7e2bc79abc8c4e
+2.34.483.357 I slot print_timing: id  0 | task 538 | n_gen =    226, tg =   5.87 t/s, tg_3s =   5.93 t/s
+2.34.483.500 I slot print_timing: id  1 | task 534 | n_gen =    226, tg =   5.78 t/s, tg_3s =   5.93 t/s
+2.34.483.630 I slot print_timing: id  2 | task 536 | n_gen =    226, tg =   5.94 t/s, tg_3s =   5.93 t/s
+2.34.483.763 I slot print_timing: id  3 | task 537 | n_gen =    226, tg =   6.04 t/s, tg_3s =   5.93 t/s
+LOGITS_FNV 750 63edc435d3ac4506 chain 764462ef5e701563
+LOGITS_FNV 751 df085d957e7f505b chain aea6b4ced1f7e5fb
+LOGITS_FNV 752 c6b468bf84c954fe chain 91738740fe1c2726
+LOGITS_FNV 753 e22e74fe2893a9ed chain c07706eb92329c74
+LOGITS_FNV 754 116442d03b303e51 chain 4d619ed4a3dd521a
+LOGITS_FNV 755 63a6d3e129b7e9a3 chain d78175b1ef582f9e
+LOGITS_FNV 756 ca390f6779c7728e chain 681efc6f53ec61bb
+LOGITS_FNV 757 52e52a60a86456b0 chain ec52f4738c941548
+LOGITS_FNV 758 a0aa4ecd86bfa4a1 chain 66c468c5a416db6a
+LOGITS_FNV 759 175a16adbbbc5e0d chain 5b2a3ed9af5e61bc
+2.36.168.772 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 15, n_diff = 12
+LOGITS_FNV 760 a9a4c3ec1f28734a chain b02c8af28dca8e09
+LOGITS_FNV 761 033a21a63f354cb7 chain 9f71bbd09b36ac59
+LOGITS_FNV 762 31563746439d2314 chain ce8fb3db008864f6
+LOGITS_FNV 763 77843ef64838c699 chain 64c9b1d82f31d7f8
+LOGITS_FNV 764 0521ccf7603e3932 chain 568e00b94e5a60f1
+2.37.079.396 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 16, n_diff = 12
+LOGITS_FNV 765 221ddab058c0a7e3 chain 237e84003c27de99
+LOGITS_FNV 766 bb722a3a122eb424 chain da11165cb539adaa
+LOGITS_FNV 767 2de62b785fd3d731 chain dbaf258defdd05b4
+2.37.644.271 I slot print_timing: id  0 | task 538 | n_gen =    244, tg =   5.86 t/s, tg_3s =   5.69 t/s
+2.37.644.406 I slot print_timing: id  1 | task 534 | n_gen =    244, tg =   5.77 t/s, tg_3s =   5.69 t/s
+2.37.644.540 I slot print_timing: id  2 | task 536 | n_gen =    244, tg =   5.92 t/s, tg_3s =   5.69 t/s
+2.37.644.673 I slot print_timing: id  3 | task 537 | n_gen =    244, tg =   6.02 t/s, tg_3s =   5.69 t/s
+LOGITS_FNV 768 b97bd2fc99340e93 chain f7c3e5d897145cd8
+LOGITS_FNV 769 b94a2b034ee97cc4 chain 0ecde9875c64767f
+LOGITS_FNV 770 4c76dde745ed1a1c chain 624e416de840f788
+LOGITS_FNV 771 9816dd94a1d3f669 chain bcf97428082227ca
+LOGITS_FNV 772 2223ccdd2ca07b89 chain 44f22357a3727ec8
+2.38.559.149 I fill_decode: expert store: 512881 lookups, hit rate 95.8%, 180.3 GB read for decode, 185.0 GB for prefill
+2.38.559.157 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.36 ms (0.7 records, 15.19 GB/s), between fills 3.02 ms
+2.38.559.162 I fill_decode: expert store: memory valve: host MemAvailable 23.99 GB (lowest 23.99, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.38.559.166 I fill_decode: expert store: split GEMV: 21714 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 842 lookups with more misses (0.05 records read at the early lookup), plan 0.045 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+2.38.559.167 I fill_decode: expert store: self-prefetch: 10760 posts, 0.1 records and 0.05 ms of reads per post
+LOGITS_FNV 773 12612e20ca02508a chain e362184021a440d9
+LOGITS_FNV 774 4a604906ba91599d chain c859542ab826425f
+LOGITS_FNV 775 a872d0c9f6683b77 chain 9729245a80869813
+LOGITS_FNV 776 b71bde8f4328ad84 chain 325f5618432ca794
+LOGITS_FNV 777 ceda3fff844f3d0b chain ef3a880c2b67240c
+LOGITS_FNV 778 4279cc225ef7033b chain 8dfcf2556076117c
+LOGITS_FNV 779 74661fd966ea7039 chain 5f0cba17f5ffac66
+2.39.707.587 I slot print_timing: id  0 | task 538 | prompt eval time =     626.62 ms /    21 tokens (   29.84 ms per token,    33.51 tokens per second)
+2.39.707.590 I slot print_timing: id  0 | task 538 |        eval time =   43529.59 ms /   256 tokens (  170.70 ms per token,     5.86 tokens per second)
+2.39.707.591 I slot print_timing: id  0 | task 538 |       total time =   44156.21 ms /   277 tokens
+2.39.707.592 I slot print_timing: id  0 | task 538 |    graphs reused =        759
+2.39.707.592 I slot print_timing: id  0 | task 538 |   graph reallocs =         16    /    12        (same size) / (changed size)
+2.39.707.608 I slot      release: id  0 | task 538 | stop processing: n_tokens = 276, truncated = 0
+2.39.707.745 I slot print_timing: id  1 | task 534 | prompt eval time =     369.25 ms /    10 tokens (   36.93 ms per token,    27.08 tokens per second)
+2.39.707.747 I slot print_timing: id  1 | task 534 |        eval time =   44156.39 ms /   256 tokens (  173.16 ms per token,     5.77 tokens per second)
+2.39.707.748 I slot print_timing: id  1 | task 534 |       total time =   44525.64 ms /   266 tokens
+2.39.707.748 I slot print_timing: id  1 | task 534 |    graphs reused =        759
+2.39.707.748 I slot print_timing: id  1 | task 534 |   graph reallocs =         16    /    12        (same size) / (changed size)
+2.39.707.758 I slot      release: id  1 | task 534 | stop processing: n_tokens = 265, truncated = 0
+2.39.707.895 I slot print_timing: id  2 | task 536 | prompt eval time =     428.63 ms /    19 tokens (   22.56 ms per token,    44.33 tokens per second)
+2.39.707.898 I slot print_timing: id  2 | task 536 |        eval time =   43101.25 ms /   256 tokens (  169.02 ms per token,     5.92 tokens per second)
+2.39.707.898 I slot print_timing: id  2 | task 536 |       total time =   43529.89 ms /   275 tokens
+2.39.707.898 I slot print_timing: id  2 | task 536 |    graphs reused =        759
+2.39.707.898 I slot print_timing: id  2 | task 536 |   graph reallocs =         16    /    12        (same size) / (changed size)
+2.39.707.906 I slot      release: id  2 | task 536 | stop processing: n_tokens = 274, truncated = 0
+2.39.708.047 I slot print_timing: id  3 | task 537 | prompt eval time =     644.71 ms /    18 tokens (   35.82 ms per token,    27.92 tokens per second)
+2.39.708.049 I slot print_timing: id  3 | task 537 |        eval time =   42456.68 ms /   256 tokens (  166.50 ms per token,     6.01 tokens per second)
+2.39.708.050 I slot print_timing: id  3 | task 537 |       total time =   43101.39 ms /   274 tokens
+2.39.708.050 I slot print_timing: id  3 | task 537 |    graphs reused =        759
+2.39.708.050 I slot print_timing: id  3 | task 537 |   graph reallocs =         16    /    12        (same size) / (changed size)
+2.39.708.057 I slot      release: id  3 | task 537 | stop processing: n_tokens = 273, truncated = 0
+2.39.708.060 I srv  update_slots: all slots are idle
+2.39.709.984 I srv  server_strea: conv_id= (empty=1)
+2.39.709.987 I srv  server_strea: conv_id= (empty=1)
+2.39.709.991 I srv  server_strea: conv_id= (empty=1)
+2.39.710.088 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/18) > 0.100
+2.39.710.093 I slot get_availabl: id  1 | task -1 |  - checking sim = 0.111 (2/18) > 0.100
+2.39.710.094 I slot get_availabl: id  2 | task -1 |  - checking sim = 0.000 (0/18) > 0.100
+2.39.710.095 I slot get_availabl: id  3 | task -1 |  - checking sim = 1.000 (18/18) > 0.100
+2.39.710.096 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+2.39.710.097 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.066
+2.39.710.102 I srv  server_strea: conv_id= (empty=1)
+2.39.710.120 I slot launch_slot_: id  3 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+2.39.710.127 I slot launch_slot_: id  3 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+2.39.710.129 I slot launch_slot_: id  3 | task 801 | processing task, is_child = 0
+2.39.710.131 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/10) > 0.100
+2.39.710.132 I slot get_availabl: id  1 | task -1 |  - checking sim = 1.000 (10/10) > 0.100
+2.39.710.132 I slot get_availabl: id  2 | task -1 |  - checking sim = 0.000 (0/10) > 0.100
+2.39.710.133 I slot get_availabl: id  3 | task 801 |  - skipping, is_processing = 1
+2.39.710.133 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+2.39.710.134 I slot get_availabl: id  1 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.038
+2.39.710.142 I slot launch_slot_: id  1 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+2.39.710.144 I slot launch_slot_: id  1 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+2.39.710.146 I slot launch_slot_: id  1 | task 802 | processing task, is_child = 0
+2.39.710.148 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.000 (0/19) > 0.100
+2.39.710.148 I slot get_availabl: id  1 | task 802 |  - skipping, is_processing = 1
+2.39.710.150 I slot get_availabl: id  2 | task -1 |  - checking sim = 1.000 (19/19) > 0.100
+2.39.710.150 I slot get_availabl: id  3 | task 801 |  - skipping, is_processing = 1
+2.39.710.150 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+2.39.710.151 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.069
+2.39.710.158 I slot launch_slot_: id  2 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+2.39.710.160 I slot launch_slot_: id  2 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+2.39.710.161 I slot launch_slot_: id  2 | task 803 | processing task, is_child = 0
+2.39.710.166 I slot   operator(): id  1 | task 802 | new prompt, n_ctx_slot = 204800, n_keep = 0, task.n_tokens = 10
+2.39.710.168 I slot   operator(): id  1 | task 802 | erased invalidated context checkpoint (pos_min = 5, pos_max = 5, n_tokens = 6, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+2.39.716.860 I slot   operator(): id  1 | task 802 | cached n_tokens = 0, memory_seq_rm [0, end)
+2.39.719.934 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 1), splits = 2, n_same = 16, n_diff = 13
+2.39.924.222 I slot get_availabl: id  0 | task -1 |  - checking sim = 1.000 (21/21) > 0.100
+2.39.924.225 I slot get_availabl: id  1 | task 802 |  - skipping, is_processing = 1
+2.39.924.225 I slot get_availabl: id  2 | task 803 |  - skipping, is_processing = 1
+2.39.924.226 I slot get_availabl: id  3 | task 801 |  - skipping, is_processing = 1
+2.39.924.227 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+2.39.924.229 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.076
+2.39.924.280 I slot launch_slot_: id  0 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+2.39.924.290 I slot launch_slot_: id  0 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+2.39.924.294 I slot launch_slot_: id  0 | task 804 | processing task, is_child = 0
+2.39.924.308 I slot   operator(): id  1 | task 802 | cached n_tokens = 6, memory_seq_rm [6, end)
+2.39.924.530 I slot init_sampler: id  1 | task 802 | init sampler, took 0.00 ms, tokens: text = 10, total = 10
+2.40.002.200 I slot create_check: id  1 | task 802 | created context checkpoint 1 of 32 (pos_min = 5, pos_max = 5, n_tokens = 6, size = 145.563 MiB)
+2.40.004.894 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 16, n_diff = 14
+LOGITS_FNV 780 41832ec928cca3a8 chain 6ee8ac221b62d391
+2.40.140.447 I slot   operator(): id  0 | task 804 | new prompt, n_ctx_slot = 204800, n_keep = 0, task.n_tokens = 21
+2.40.140.453 I slot   operator(): id  0 | task 804 | erased invalidated context checkpoint (pos_min = 16, pos_max = 16, n_tokens = 17, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+2.40.145.875 I slot   operator(): id  0 | task 804 | cached n_tokens = 0, memory_seq_rm [0, end)
+2.40.148.772 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 1), splits = 2, n_same = 16, n_diff = 15
+2.40.570.608 I slot   operator(): id  0 | task 804 | cached n_tokens = 17, memory_seq_rm [17, end)
+2.40.570.832 I slot init_sampler: id  0 | task 804 | init sampler, took 0.00 ms, tokens: text = 21, total = 21
+2.40.601.054 I slot create_check: id  0 | task 804 | created context checkpoint 1 of 32 (pos_min = 16, pos_max = 16, n_tokens = 17, size = 145.563 MiB)
+2.40.603.724 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 16, n_diff = 16
+LOGITS_FNV 781 973591cf8153201e chain ad718d154f10e510
+2.40.748.719 I slot   operator(): id  2 | task 803 | new prompt, n_ctx_slot = 204800, n_keep = 0, task.n_tokens = 19
+2.40.748.725 I slot   operator(): id  2 | task 803 | erased invalidated context checkpoint (pos_min = 14, pos_max = 14, n_tokens = 15, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+2.40.754.273 I slot   operator(): id  2 | task 803 | cached n_tokens = 0, memory_seq_rm [0, end)
+2.40.757.180 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 1), splits = 2, n_same = 16, n_diff = 17
+2.41.093.104 I slot   operator(): id  2 | task 803 | cached n_tokens = 15, memory_seq_rm [15, end)
+2.41.093.355 I slot init_sampler: id  2 | task 803 | init sampler, took 0.00 ms, tokens: text = 19, total = 19
+2.41.124.558 I slot create_check: id  2 | task 803 | created context checkpoint 1 of 32 (pos_min = 14, pos_max = 14, n_tokens = 15, size = 145.563 MiB)
+2.41.127.216 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 16, n_diff = 18
+LOGITS_FNV 782 eddba38333b08287 chain 1252b82fc57cd170
+2.41.266.438 I slot   operator(): id  3 | task 801 | new prompt, n_ctx_slot = 204800, n_keep = 0, task.n_tokens = 18
+2.41.266.443 I slot   operator(): id  3 | task 801 | erased invalidated context checkpoint (pos_min = 13, pos_max = 13, n_tokens = 14, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+2.41.271.848 I slot   operator(): id  3 | task 801 | cached n_tokens = 0, memory_seq_rm [0, end)
+2.41.274.712 I sched_graph_realloc: graph reallocation: nodes = 8197 (changed = 1), splits = 2, n_same = 16, n_diff = 19
+2.41.594.364 I slot   operator(): id  3 | task 801 | cached n_tokens = 14, memory_seq_rm [14, end)
+2.41.594.644 I slot init_sampler: id  3 | task 801 | init sampler, took 0.00 ms, tokens: text = 18, total = 18
+2.41.625.096 I slot create_check: id  3 | task 801 | created context checkpoint 1 of 32 (pos_min = 13, pos_max = 13, n_tokens = 14, size = 145.563 MiB)
+2.41.627.763 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 1), splits = 2, n_same = 16, n_diff = 20
+LOGITS_FNV 783 c24674ad808a87d6 chain 8e1c6fd8fb952609
+2.41.762.784 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 17, n_diff = 20
+LOGITS_FNV 784 85b667402dbde99f chain b485258df6a4060d
+LOGITS_FNV 785 b88183b3ca0fb83c chain a74badf34f833d42
+LOGITS_FNV 786 7a9955e931bacb86 chain 7d5ca15c51097c47
+LOGITS_FNV 787 5ea73d05235c4909 chain 11b415ca0041ee8d
+LOGITS_FNV 788 fafe974e3e0bd3e2 chain 945fcfbedf713a50
+LOGITS_FNV 789 00975eab4d4023e8 chain e559ea60f835babf
+LOGITS_FNV 790 366d6a0ed73b8c51 chain 3af2440a79a006a5
+LOGITS_FNV 791 c5fbd7d5a274e274 chain f98bf28e1f8de27e
+LOGITS_FNV 792 5fff92ebe9917201 chain 85375cee51c49124
+LOGITS_FNV 793 057fe90e945fcf9f chain e641de987a707010
+LOGITS_FNV 794 85c28a4f2878554d chain 64e59d237ee53e26
+LOGITS_FNV 795 fb6f77cb41fe3cf1 chain 40f519f411e0164c
+LOGITS_FNV 796 2ecd00336154e7e2 chain 54a25298de542e91
+LOGITS_FNV 797 d38dc3d725a99a37 chain ccd860f0cfd6cd95
+LOGITS_FNV 798 bb5982576663630b chain 6808116d75d77679
+LOGITS_FNV 799 5c99c3cb3f07b188 chain 8a887c7a1f298a4e
+LOGITS_FNV 800 63784dc82509c1f5 chain 073bc70108feb07c
+LOGITS_FNV 801 ffa69d88e80dda8e chain d3f7a39e50ff053d
+LOGITS_FNV 802 0c1c6bc86e52cb81 chain 5ecb9c8b40b4914f
+LOGITS_FNV 803 6bd3ef1f7dd98430 chain c60990f8aaf9290c
+LOGITS_FNV 804 a657b48410c1f46f chain 6f3c464c8fa2d7e4
+LOGITS_FNV 805 61366145188b98a5 chain 0a420614ee64d9a6
+LOGITS_FNV 806 223d106f30d22217 chain 553e27ad858ff2ca
+LOGITS_FNV 807 edf0f16b8ae9b35d chain f24db255d7956708
+LOGITS_FNV 808 2cd45f59ff61c341 chain 5263ea0406964f96
+LOGITS_FNV 809 66235d8a7bacfd02 chain 200d6f1cfdb6221b
+LOGITS_FNV 810 cb0381065926160e chain f4aed876e2556e16
+LOGITS_FNV 811 0eca33be8c086f40 chain e1a363b0a329eb3d
+LOGITS_FNV 812 d0244cca0f3a81ba chain 6023afbb85d5d260
+LOGITS_FNV 813 7a95b6822c94e351 chain 66cbca17a60d063a
+LOGITS_FNV 814 7dc5017aa955e3ae chain 50e617cace42bc27
+LOGITS_FNV 815 e414a12adfcc6f36 chain c54f31424f35640a
+LOGITS_FNV 816 ac6278380880a2ae chain 7a5c2842d810bf6f
+LOGITS_FNV 817 a71e968e249835e9 chain 1d4c022b05285a75
+LOGITS_FNV 818 0d2f60b226ebb387 chain 380fd9010c620e8d
+LOGITS_FNV 819 6e675a220e3ea14a chain 93c6c11cb1fe42dc
+LOGITS_FNV 820 aa81096b113306d4 chain 5ae2d1e6cb8c297f
+LOGITS_FNV 821 02a8c18a679bf80f chain 7c0c06df4f26031b
+LOGITS_FNV 822 18598328478ec742 chain ea3a4a628141730a
+LOGITS_FNV 823 6803f7c6770fd7d7 chain d66af36b68743b4e
+LOGITS_FNV 824 6157a38acc98cc89 chain 702bc6bc8c872d70
+LOGITS_FNV 825 1c52147adb6b36dc chain 37ce2e6bd77368b7
+LOGITS_FNV 826 0101f39996b5d2a9 chain 822fa3783d4d4de5
+LOGITS_FNV 827 397d677a2b03eaab chain e624e2a03d9c9b61
+LOGITS_FNV 828 e850a7c3ec928fd0 chain e38b13f7a467ef6a
+LOGITS_FNV 829 190334eec716bdf1 chain b5f6fb301d71b080
+LOGITS_FNV 830 abdd617f92222420 chain cdb806f0e0cc0bd7
+LOGITS_FNV 831 494b08173f0fabc2 chain 17858400a50d3286
+2.49.124.269 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 18, n_diff = 20
+LOGITS_FNV 832 d2fdb9d9a015983b chain 685e7b1fd724e60e
+LOGITS_FNV 833 386373846d1903a7 chain 1224dd1c131c76f2
+LOGITS_FNV 834 c5325048424f9b95 chain e6a3b5cbdf6b69d8
+LOGITS_FNV 835 cb514d2e01e559d4 chain c5f9c687655e7573
+LOGITS_FNV 836 f554491515db2f06 chain 9504023efbda5336
+LOGITS_FNV 837 9f76a090c39c286a chain 67025c4f1e199983
+LOGITS_FNV 838 e1633f145709bcf0 chain fe685ee9616652f0
+LOGITS_FNV 839 63c4251caaef0f16 chain 275595ad8eb6d59d
+LOGITS_FNV 840 79e969cd49849951 chain 1ea6001e43c88777
+LOGITS_FNV 841 7490101eae16f4a0 chain 0f7d77069e96b2ec
+LOGITS_FNV 842 7a1d319cab976462 chain c61c3d487692b625
+LOGITS_FNV 843 3deb30ae28a4093f chain e03c6c978846ea21
+LOGITS_FNV 844 e19d41559b1df491 chain ae35ed6a1ae62b6f
+LOGITS_FNV 845 4a39a85dcec61a9d chain c4531643384e3ed9
+LOGITS_FNV 846 aeaa6f1e373b0903 chain 2e46936eb33b5c59
+LOGITS_FNV 847 339753a7775b2995 chain 7ad3765c7650ba07
+LOGITS_FNV 848 36e277e253e3d9d3 chain c523abd63a90f92f
+LOGITS_FNV 849 a7a99bd1b8e7e4ab chain abc721dd781aa64f
+LOGITS_FNV 850 58a57a74464c9b52 chain 45cc7d7d9a5feb6e
+LOGITS_FNV 851 904e75d64f160432 chain 57868e58519bfe27
+LOGITS_FNV 852 2a668c0e89f3a0dd chain aaf76c56b7bafa79
+LOGITS_FNV 853 658f07bfef163b78 chain 171b7c39a5dab2fe
+LOGITS_FNV 854 321e9921d3bef5d7 chain a6f5efa41e0bbaca
+LOGITS_FNV 855 4ba712248e50831a chain 9f6e762d491dfaff
+LOGITS_FNV 856 5763a24b1ba71e22 chain a17af596019da196
+LOGITS_FNV 857 9933f89158091b5a chain 53ffefa62152daf7
+LOGITS_FNV 858 582dcfe55267dd1e chain 9e88e3371b75dc2a
+LOGITS_FNV 859 bd5417f704e9f0c0 chain c0e041014d347095
+LOGITS_FNV 860 53feea0a4ea157a5 chain 3eda3e62e561bc2b
+LOGITS_FNV 861 4963e0a630116527 chain 047c20fc18677b0f
+LOGITS_FNV 862 48e54a551cc8b660 chain 2a8e26aba04d8564
+LOGITS_FNV 863 e5bb2996276ccc92 chain a6ec8b73cc8eee2d
+LOGITS_FNV 864 0c1f38b36b978964 chain 1e8dff440b8a178a
+LOGITS_FNV 865 86947d480e044045 chain db4ecbaa0fab472c
+2.54.414.158 I fill_decode: expert store: 638051 lookups, hit rate 95.9%, 216.6 GB read for decode, 185.0 GB for prefill
+2.54.414.166 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.41 ms (0.7 records, 14.23 GB/s), between fills 3.02 ms
+2.54.414.170 I fill_decode: expert store: memory valve: host MemAvailable 23.98 GB (lowest 23.98, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+2.54.414.176 I fill_decode: expert store: split GEMV: 21714 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 842 lookups with more misses (0.05 records read at the early lookup), plan 0.045 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+2.54.414.179 I fill_decode: expert store: self-prefetch: 14688 posts, 0.1 records and 0.05 ms of reads per post
+LOGITS_FNV 866 ba25f2d4677f9e52 chain 18247b9650827661
+LOGITS_FNV 867 8c584daa4b02681c chain 1bc88eee7bd75936
+LOGITS_FNV 868 f04cf67e329d4330 chain f1799ab56888f9b9
+LOGITS_FNV 869 0387d831f2585170 chain db225d9ee7315eaa
+LOGITS_FNV 870 22e9b905f4c28ad4 chain 884ebc1c92d2817d
+LOGITS_FNV 871 db39d8aa629e7ad2 chain 7b119f69a4bc8b60
+LOGITS_FNV 872 874f3d7ff7bfa9f5 chain db1eb5cdd9213c3e
+LOGITS_FNV 873 2f880915880a7c5d chain 90c12524fe8c29c4
+LOGITS_FNV 874 06288bbe28e99866 chain df6b36c1fb485185
+LOGITS_FNV 875 a63cc99321c56039 chain e87b4fd63818b233
+LOGITS_FNV 876 ebdba6bb4b50487d chain 928211d0a6394ccd
+LOGITS_FNV 877 ca4b793a6c6ac3d2 chain 477107b333e86b78
+LOGITS_FNV 878 1478be57b621b2e2 chain 01d935293d534255
+LOGITS_FNV 879 5a234e3f4ee0dbd1 chain 4fce95d04f112f63
+LOGITS_FNV 880 8ced730a726ab740 chain a15d56038ab42ee0
+LOGITS_FNV 881 8af753a09c5226f3 chain 1ede03bf0ea63724
+LOGITS_FNV 882 4a47dcb3fb0ced8f chain 6abb0aa8fefb3908
+2.57.095.234 I slot print_timing: id  0 | task 804 | n_gen =    100, tg =   6.06 t/s, tg_3s =   6.12 t/s
+2.57.095.368 I slot print_timing: id  1 | task 802 | n_gen =    100, tg =   5.84 t/s, tg_3s =   5.90 t/s
+2.57.095.505 I slot print_timing: id  2 | task 803 | n_gen =    100, tg =   6.25 t/s, tg_3s =   6.32 t/s
+2.57.095.636 I slot print_timing: id  3 | task 801 | n_gen =    100, tg =   6.46 t/s, tg_3s =   6.52 t/s
+LOGITS_FNV 883 b16b2584cd7e658e chain be6afafa257e5b0d
+LOGITS_FNV 884 f1b0c07f9da553e8 chain 116aa6c74144cd3e
+LOGITS_FNV 885 72939e05d896dab8 chain 63ebab311ee44679
+LOGITS_FNV 886 0c9812447cc23cf6 chain f82216d3a7c827d8
+LOGITS_FNV 887 ecb0eac9a3ce9d14 chain 8697d8035630a38f
+LOGITS_FNV 888 f5d1c63ee937efa9 chain 7cccbc5d7c13b73d
+LOGITS_FNV 889 4c660ffd079f5e6f chain 68da73afc5b5166d
+LOGITS_FNV 890 2c44cf9e753da270 chain 15bc5bd72c55b72a
+LOGITS_FNV 891 3360d7bb75be4e41 chain 59f66947b8c0fff8
+LOGITS_FNV 892 1d84e0f6043fef36 chain 8cecf8f6985d0815
+LOGITS_FNV 893 9738a196d8d0a6d5 chain 261ce86f507fc84f
+LOGITS_FNV 894 fdb5a29c2735edfe chain 9059124119ed6b22
+LOGITS_FNV 895 4da3e2159046c80e chain 4d6d226d2aa40ccb
+2.59.287.193 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 19, n_diff = 20
+LOGITS_FNV 896 cfce0d539f22275a chain 39895fbc9bdb3f32
+LOGITS_FNV 897 7f9d19cb250ead89 chain 8ee1abb0a4539ac4
+LOGITS_FNV 898 2e7e9300a2f3d19e chain 22c6da0a22f09675
+LOGITS_FNV 899 e439a37815c70798 chain 8808895f3c1de1ca
+LOGITS_FNV 900 c6f1ed1cec1822f6 chain 966ad41e39318c23
+3.00.127.138 I slot print_timing: id  0 | task 804 | n_gen =    118, tg =   6.04 t/s, tg_3s =   5.94 t/s
+3.00.127.267 I slot print_timing: id  1 | task 802 | n_gen =    118, tg =   5.85 t/s, tg_3s =   5.94 t/s
+3.00.127.395 I slot print_timing: id  2 | task 803 | n_gen =    118, tg =   6.20 t/s, tg_3s =   5.94 t/s
+3.00.127.529 I slot print_timing: id  3 | task 801 | n_gen =    118, tg =   6.37 t/s, tg_3s =   5.94 t/s
+LOGITS_FNV 901 867384389986c644 chain b9db13e9a443b524
+LOGITS_FNV 902 aa6b4594a3a6340c chain 1c8871d518c53f7b
+LOGITS_FNV 903 123ac3566c1a7960 chain ffec9d247b7d5418
+LOGITS_FNV 904 0fa149d424ce2d8d chain 8a3696c93b02c316
+LOGITS_FNV 905 a08f365d5a2f9a93 chain 399ae9480c1fbbd6
+LOGITS_FNV 906 e5375102cb074e3b chain 7ea9180ecfb997aa
+LOGITS_FNV 907 aa5945bb44bd3e5d chain 5e8e8e2f06a28408
+LOGITS_FNV 908 e712d0e63c511553 chain ee79a5c3e39d756c
+LOGITS_FNV 909 7d7fe22e9b495bf2 chain 77b7166038f645f5
+LOGITS_FNV 910 419cb4b26215ea83 chain 401727254ea9cd5d
+LOGITS_FNV 911 30d51f7ebc7f072d chain b83d3c1093ad00cb
+LOGITS_FNV 912 be87511359a8d2df chain 9f316a0bad880fe7
+LOGITS_FNV 913 fc5185d1e559bb93 chain ce72cf784479e90f
+LOGITS_FNV 914 dfd51da389efe575 chain 0edad7b3300c1d41
+LOGITS_FNV 915 f6ed51578436e5e8 chain 6053257360a6f29a
+LOGITS_FNV 916 d871d6dd1c7923b7 chain 26850a846f8d148a
+LOGITS_FNV 917 36a0d3cd8156675c chain f97a9877ad73a605
+LOGITS_FNV 918 38bc783ff32f1e10 chain 7e0b9a2464eb30d6
+LOGITS_FNV 919 1d08def19314f2e5 chain fcfb8867066b5854
+3.03.285.523 I slot print_timing: id  0 | task 804 | n_gen =    137, tg =   6.03 t/s, tg_3s =   6.02 t/s
+3.03.285.651 I slot print_timing: id  1 | task 802 | n_gen =    137, tg =   5.88 t/s, tg_3s =   6.02 t/s
+3.03.285.779 I slot print_timing: id  2 | task 803 | n_gen =    137, tg =   6.18 t/s, tg_3s =   6.02 t/s
+3.03.285.908 I slot print_timing: id  3 | task 801 | n_gen =    137, tg =   6.32 t/s, tg_3s =   6.02 t/s
+LOGITS_FNV 920 664ee0ccb335f832 chain 3b8e9fccebbb1621
+LOGITS_FNV 921 43430ac7a3bea49a chain e8b6010ef86b07fc
+LOGITS_FNV 922 d264e898cc36dcfc chain 0c249958a9f59117
+LOGITS_FNV 923 6ea9286887a0fa40 chain 8660bc92f92803fc
+LOGITS_FNV 924 c36d55e4d0b1d0a5 chain 85b5cf1179c36a12
+LOGITS_FNV 925 a01ebd1da5ac207f chain b20c8071992d059e
+LOGITS_FNV 926 badf24776c1a8012 chain b16a18c3ef6ec44f
+LOGITS_FNV 927 dd50766a29cd8a56 chain 1616c01b66b07962
+LOGITS_FNV 928 b53b817fe9a5c326 chain 84f020f648d5ad0f
+LOGITS_FNV 929 6f6ce3039d2b31f3 chain 8713e5755ac5ee97
+LOGITS_FNV 930 a480302a7f092a45 chain a926ea6f69c26341
+LOGITS_FNV 931 02c6db7506f6a614 chain b7a5add560e05de6
+LOGITS_FNV 932 2252117902337d1e chain fddd4b708e059edf
+LOGITS_FNV 933 70cc3a67c153f8eb chain 4cd72a0c6580ec2f
+LOGITS_FNV 934 d37d37f448466e49 chain 9b412581d40d4a75
+LOGITS_FNV 935 de1a38f118a64ea0 chain e612956ed140a256
+LOGITS_FNV 936 5a3d00ea0505ae9f chain 2e790602298b6a2e
+LOGITS_FNV 937 07bd29882362854f chain 6d3d3d3a6484109a
+LOGITS_FNV 938 85fcf91180825606 chain 4d7483523366ee7b
+3.06.433.161 I slot print_timing: id  0 | task 804 | n_gen =    156, tg =   6.03 t/s, tg_3s =   6.04 t/s
+3.06.433.294 I slot print_timing: id  1 | task 802 | n_gen =    156, tg =   5.90 t/s, tg_3s =   6.04 t/s
+3.06.433.423 I slot print_timing: id  2 | task 803 | n_gen =    156, tg =   6.16 t/s, tg_3s =   6.04 t/s
+3.06.433.563 I slot print_timing: id  3 | task 801 | n_gen =    156, tg =   6.28 t/s, tg_3s =   6.04 t/s
+LOGITS_FNV 939 64233d099df7b794 chain 5943d6623ce2ccbc
+LOGITS_FNV 940 01eafbd494e9a411 chain bc01b4d10fe0dcee
+LOGITS_FNV 941 35def283be97b05e chain de2cb200cbb3f98b
+LOGITS_FNV 942 93e0ffc1bf76b77d chain 296116f71e762395
+LOGITS_FNV 943 f3680cfebc17ecd5 chain 00eae9a3bb8425ff
+LOGITS_FNV 944 9172cab967f71756 chain 639d1e75f6af1faa
+LOGITS_FNV 945 5bcb83a87441b641 chain fc35a4e9019acf80
+LOGITS_FNV 946 1f634a0816d361ef chain 05a56c5ce1d4bf0c
+LOGITS_FNV 947 2f73576cbc684e1e chain 48d3779b1e3b5615
+LOGITS_FNV 948 daf3811cb1dc94b4 chain 09667b40f5c766aa
+LOGITS_FNV 949 037b0c1e6bc8d15d chain ed6dfbfe72b1550c
+LOGITS_FNV 950 98f0bda2874408b2 chain c547f9a9a3f68d99
+LOGITS_FNV 951 7c47c0432c387323 chain 814702b9496ce2c1
+LOGITS_FNV 952 abe2f046bd00f8e5 chain 1c5eaf196b2a4d53
+LOGITS_FNV 953 2d8981fd78714ba6 chain e32be975aa073136
+LOGITS_FNV 954 a2491abcaa917f19 chain e0e3e582f691fde4
+LOGITS_FNV 955 18df93b8e93e1aa4 chain fd64fa01eed49203
+LOGITS_FNV 956 957031dd0efd72a2 chain d15b28ba8f261222
+LOGITS_FNV 957 5bcb1050d30ad620 chain af1dbbaa866c40d9
+3.09.531.356 I slot print_timing: id  0 | task 804 | n_gen =    175, tg =   6.05 t/s, tg_3s =   6.13 t/s
+3.09.531.493 I slot print_timing: id  1 | task 802 | n_gen =    175, tg =   5.92 t/s, tg_3s =   6.13 t/s
+3.09.531.624 I slot print_timing: id  2 | task 803 | n_gen =    175, tg =   6.16 t/s, tg_3s =   6.13 t/s
+3.09.531.753 I slot print_timing: id  3 | task 801 | n_gen =    175, tg =   6.27 t/s, tg_3s =   6.13 t/s
+LOGITS_FNV 958 b8a676438179c464 chain 0c3d7a9d11e63836
+LOGITS_FNV 959 372c13ad82f6f58d chain 5e8b95cf0c273860
+3.09.856.465 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 20, n_diff = 20
+LOGITS_FNV 960 82370925e6ef0bb9 chain 523c0aacd2f37006
+LOGITS_FNV 961 fbbe7657bafeb9fd chain 06062e8365798794
+LOGITS_FNV 962 5513ac728bca0b04 chain ee2bc3e0078dbda7
+LOGITS_FNV 963 fee891c94344f186 chain 9a2f05c16d7c02ca
+3.10.558.305 I fill_decode: expert store: 763305 lookups, hit rate 95.9%, 258.7 GB read for decode, 185.0 GB for prefill
+3.10.558.309 I fill_decode: expert store: per layer fill: plan 0.02 ms, reads 0.47 ms (0.8 records, 13.55 GB/s), between fills 3.01 ms
+3.10.558.312 I fill_decode: expert store: memory valve: host MemAvailable 23.98 GB (lowest 23.98, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+3.10.558.321 I fill_decode: expert store: split GEMV: 21714 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 842 lookups with more misses (0.05 records read at the early lookup), plan 0.045 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+3.10.558.322 I fill_decode: expert store: self-prefetch: 18784 posts, 0.1 records and 0.05 ms of reads per post
+LOGITS_FNV 964 facfdabfd7c86b46 chain d8991a1487e73eab
+LOGITS_FNV 965 47d202bc28e25ba6 chain 308d103bcda128ae
+LOGITS_FNV 966 cd45cc1acff8ded7 chain 56e87516b3693416
+LOGITS_FNV 967 7df862621bf0e326 chain f52c5c8b7f1b487b
+LOGITS_FNV 968 b91e05e22bee5c63 chain caeaeed76c5aecab
+LOGITS_FNV 969 1e321f6b9ba0fc5a chain d9916040ea69e882
+LOGITS_FNV 970 6c5e345be8a46f89 chain e6e43e1b90877bc0
+LOGITS_FNV 971 437482eeca72778c chain 45d4b5ada1ea1047
+LOGITS_FNV 972 d4bbdcbea4496cfb chain b6b462a746c3f15f
+LOGITS_FNV 973 7ca111c5796f364a chain 145dd6bf65142856
+LOGITS_FNV 974 4911f97b9778d01f chain deeb5bf59ccc983e
+LOGITS_FNV 975 71acc0d52be48dc2 chain 973459d81f0d8abb
+LOGITS_FNV 976 eeb9cc7f23ffbf1e chain f0d088cfa225e316
+3.12.654.001 I slot print_timing: id  0 | task 804 | n_gen =    194, tg =   6.05 t/s, tg_3s =   6.08 t/s
+3.12.654.130 I slot print_timing: id  1 | task 802 | n_gen =    194, tg =   5.94 t/s, tg_3s =   6.08 t/s
+3.12.654.262 I slot print_timing: id  2 | task 803 | n_gen =    194, tg =   6.15 t/s, tg_3s =   6.08 t/s
+3.12.654.397 I slot print_timing: id  3 | task 801 | n_gen =    194, tg =   6.25 t/s, tg_3s =   6.08 t/s
+LOGITS_FNV 977 85c83cd5bfee9aec chain ca6742c925d83b9d
+LOGITS_FNV 978 0e33917a2c6f4d26 chain 5886c1cdf7266f78
+LOGITS_FNV 979 e26fe0c255d499c2 chain 6f07b4a530d558f5
+LOGITS_FNV 980 b693ac0e57f6b8e6 chain 57d3863b9565e50c
+LOGITS_FNV 981 213aed2fb0bf759c chain 95931c93d6e74e5f
+LOGITS_FNV 982 7a26eb854351f6ac chain 0b5a7a2a65e044b0
+LOGITS_FNV 983 28e764d4c76b1d82 chain dad8dbfe0df069e9
+LOGITS_FNV 984 e953a7d9bccc8883 chain 85db75c3ad3aa7f5
+LOGITS_FNV 985 7d588537a8fe5ea2 chain 0f8863bd4b1bd3c8
+LOGITS_FNV 986 de8cd1cec7b85f69 chain 2ffda60563d5c2ee
+LOGITS_FNV 987 d7d499d16bfd31f2 chain e1468d54023431df
+LOGITS_FNV 988 de2580acea7a20e1 chain d638403e0709d63d
+LOGITS_FNV 989 d24d1018ab854e37 chain 49a6ae0194f1fcc5
+LOGITS_FNV 990 5311e7983baa6f60 chain 3d438e58d25c32f2
+LOGITS_FNV 991 2f022b1a2b2371da chain df1f0f8b1c0e1cbf
+LOGITS_FNV 992 29e8d0b6463d2bdb chain f8fb0964d7865367
+LOGITS_FNV 993 63ea4a884c511614 chain 97cad7f0505f99c0
+LOGITS_FNV 994 862030e8b48e6d89 chain 6a84b417ae896a3e
+LOGITS_FNV 995 a4045c123387b501 chain 279f77cd8b7b4be8
+3.15.751.226 I slot print_timing: id  0 | task 804 | n_gen =    213, tg =   6.06 t/s, tg_3s =   6.13 t/s
+3.15.751.359 I slot print_timing: id  1 | task 802 | n_gen =    213, tg =   5.95 t/s, tg_3s =   6.13 t/s
+3.15.751.493 I slot print_timing: id  2 | task 803 | n_gen =    213, tg =   6.15 t/s, tg_3s =   6.13 t/s
+3.15.751.621 I slot print_timing: id  3 | task 801 | n_gen =    213, tg =   6.24 t/s, tg_3s =   6.13 t/s
+LOGITS_FNV 996 b3286c3c412c9a40 chain 95208f871647e69b
+LOGITS_FNV 997 78c65e7a2e0c73a6 chain 3fb79f6af8b46ede
+LOGITS_FNV 998 4471978b84dedfbf chain 4554b24f58e1220a
+LOGITS_FNV 999 3f9d9a6ab6e78c19 chain 582eb6468a0fe924
+LOGITS_FNV 1000 9e93577216409b87 chain 5c77d3a55750fea8
+LOGITS_FNV 1001 beeff72d27dd02ec chain 83d5194048b1ceaf
+LOGITS_FNV 1002 9820405364291f5d chain bd9b6670a7a84031
+LOGITS_FNV 1003 66d7dc8708828f31 chain 95be3cdb36424937
+LOGITS_FNV 1004 7b40b176134a2e1e chain 26db2c04094d9e1a
+LOGITS_FNV 1005 4629f6ac335a666b chain 7d54db687d9abb16
+LOGITS_FNV 1006 33ba898b3f10163e chain eaf0f25c8342fe03
+LOGITS_FNV 1007 92acca23c34d85fc chain a1af16f95b6f1f7c
+LOGITS_FNV 1008 ba174fd2e1b6d2fa chain 77629cbdc79bd275
+LOGITS_FNV 1009 63edc435d3ac4506 chain 88896f8524e711c0
+LOGITS_FNV 1010 df085d957e7f505b chain dfc2eaf6fccc38b8
+LOGITS_FNV 1011 c6b468bf84c954fe chain c34c10360cfa7b31
+LOGITS_FNV 1012 e22e74fe2893a9ed chain e18bcdd4cea75d1b
+LOGITS_FNV 1013 116442d03b303e51 chain 8ba6ce06c5dd8d69
+3.18.785.882 I slot print_timing: id  0 | task 804 | n_gen =    231, tg =   6.05 t/s, tg_3s =   5.93 t/s
+3.18.786.019 I slot print_timing: id  1 | task 802 | n_gen =    231, tg =   5.95 t/s, tg_3s =   5.93 t/s
+3.18.786.156 I slot print_timing: id  2 | task 803 | n_gen =    231, tg =   6.13 t/s, tg_3s =   5.93 t/s
+3.18.786.296 I slot print_timing: id  3 | task 801 | n_gen =    231, tg =   6.21 t/s, tg_3s =   5.93 t/s
+LOGITS_FNV 1014 63a6d3e129b7e9a3 chain e293bdd5d8cca849
+LOGITS_FNV 1015 ca390f6779c7728e chain 6b7f90d645d8385c
+LOGITS_FNV 1016 52e52a60a86456b0 chain c95a055ff5ae5f53
+LOGITS_FNV 1017 a0aa4ecd86bfa4a1 chain ee4f40c70258c451
+LOGITS_FNV 1018 175a16adbbbc5e0d chain 1c12970468baddbf
+3.19.596.353 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 21, n_diff = 20
+LOGITS_FNV 1019 a9a4c3ec1f28734a chain a90c349f326d296e
+LOGITS_FNV 1020 033a21a63f354cb7 chain 93204a4096030d1a
+LOGITS_FNV 1021 31563746439d2314 chain a821023578ddb9c9
+LOGITS_FNV 1022 77843ef64838c699 chain ce7d7700a00954ef
+LOGITS_FNV 1023 0521ccf7603e3932 chain 11e002874ac9609e
+3.20.476.543 I sched_graph_realloc: graph reallocation: nodes = 8239 (changed = 0), splits = 2, n_same = 22, n_diff = 20
+LOGITS_FNV 1024 221ddab058c0a7e3 chain 4a4cf96d17f0c5d2
+LOGITS_FNV 1025 bb722a3a122eb424 chain eefd716eba0e9501
+LOGITS_FNV 1026 2de62b785fd3d731 chain 6af20f673e92c4c3
+LOGITS_FNV 1027 b97bd2fc99340e93 chain d5b2b82b4e5ec253
+LOGITS_FNV 1028 b94a2b034ee97cc4 chain 4fc4ae95de60bbf4
+LOGITS_FNV 1029 4c76dde745ed1a1c chain 2ea397c045de568b
+LOGITS_FNV 1030 9816dd94a1d3f669 chain 1c6be57b84cb9521
+LOGITS_FNV 1031 2223ccdd2ca07b89 chain edb0ac8367d9cc77
+3.21.871.701 I slot print_timing: id  0 | task 804 | n_gen =    249, tg =   6.03 t/s, tg_3s =   5.83 t/s
+3.21.871.830 I slot print_timing: id  1 | task 802 | n_gen =    249, tg =   5.94 t/s, tg_3s =   5.83 t/s
+3.21.871.961 I slot print_timing: id  2 | task 803 | n_gen =    249, tg =   6.11 t/s, tg_3s =   5.83 t/s
+3.21.872.094 I slot print_timing: id  3 | task 801 | n_gen =    249, tg =   6.18 t/s, tg_3s =   5.83 t/s
+LOGITS_FNV 1032 12612e20ca02508a chain 698d1356fc0e499e
+LOGITS_FNV 1033 4a604906ba91599d chain 23588f765ebf1358
+LOGITS_FNV 1034 a872d0c9f6683b77 chain 19e7043abc0a36a8
+LOGITS_FNV 1035 b71bde8f4328ad84 chain 7b467aece84c6b2f
+LOGITS_FNV 1036 ceda3fff844f3d0b chain 083ff82db04985ef
+LOGITS_FNV 1037 4279cc225ef7033b chain 0e705e3da159b9c7
+LOGITS_FNV 1038 74661fd966ea7039 chain 409a7b009a958885
+3.23.020.024 I slot print_timing: id  0 | task 804 | prompt eval time =     608.26 ms /    21 tokens (   28.96 ms per token,    34.52 tokens per second)
+3.23.020.028 I slot print_timing: id  0 | task 804 |        eval time =   42271.32 ms /   256 tokens (  165.77 ms per token,     6.03 tokens per second)
+3.23.020.028 I slot print_timing: id  0 | task 804 |       total time =   42879.57 ms /   277 tokens
+3.23.020.029 I slot print_timing: id  0 | task 804 |    graphs reused =       1008
+3.23.020.030 I slot print_timing: id  0 | task 804 |   graph reallocs =         22    /    20        (same size) / (changed size)
+3.23.020.045 I slot      release: id  0 | task 804 | stop processing: n_tokens = 276, truncated = 0
+3.23.020.184 I slot print_timing: id  1 | task 802 | prompt eval time =     430.26 ms /    10 tokens (   43.03 ms per token,    23.24 tokens per second)
+3.23.020.186 I slot print_timing: id  1 | task 802 |        eval time =   42879.76 ms /   256 tokens (  168.16 ms per token,     5.95 tokens per second)
+3.23.020.187 I slot print_timing: id  1 | task 802 |       total time =   43310.02 ms /   266 tokens
+3.23.020.187 I slot print_timing: id  1 | task 802 |    graphs reused =       1008
+3.23.020.187 I slot print_timing: id  1 | task 802 |   graph reallocs =         22    /    20        (same size) / (changed size)
+3.23.020.196 I slot      release: id  1 | task 802 | stop processing: n_tokens = 265, truncated = 0
+3.23.020.332 I slot print_timing: id  2 | task 803 | prompt eval time =     517.70 ms /    19 tokens (   27.25 ms per token,    36.70 tokens per second)
+3.23.020.334 I slot print_timing: id  2 | task 803 |        eval time =   41753.91 ms /   256 tokens (  163.74 ms per token,     6.11 tokens per second)
+3.23.020.335 I slot print_timing: id  2 | task 803 |       total time =   42271.61 ms /   275 tokens
+3.23.020.335 I slot print_timing: id  2 | task 803 |    graphs reused =       1008
+3.23.020.335 I slot print_timing: id  2 | task 803 |   graph reallocs =         22    /    20        (same size) / (changed size)
+3.23.020.342 I slot      release: id  2 | task 803 | stop processing: n_tokens = 274, truncated = 0
+3.23.020.482 I slot print_timing: id  3 | task 801 | prompt eval time =     493.87 ms /    18 tokens (   27.44 ms per token,    36.45 tokens per second)
+3.23.020.484 I slot print_timing: id  3 | task 801 |        eval time =   41260.17 ms /   256 tokens (  161.80 ms per token,     6.18 tokens per second)
+3.23.020.485 I slot print_timing: id  3 | task 801 |       total time =   41754.04 ms /   274 tokens
+3.23.020.485 I slot print_timing: id  3 | task 801 |    graphs reused =       1008
+3.23.020.485 I slot print_timing: id  3 | task 801 |   graph reallocs =         22    /    20        (same size) / (changed size)
+3.23.020.491 I slot      release: id  3 | task 801 | stop processing: n_tokens = 273, truncated = 0
+3.23.020.495 I srv  update_slots: all slots are idle
+3.23.029.160 I srv    operator(): operator(): cleaning up before exit...
+3.23.039.746 I common_memory_breakdown_print: | memory breakdown [MiB] |  total    free     self   model   context   compute    unaccounted |
+3.23.039.749 I common_memory_breakdown_print: |   - CUDA0 (GB10)       | 124607 = 23022 + (29413 =  6153 +   19977 +    3281) +       72171 |
+3.23.039.749 I common_memory_breakdown_print: |   - Host               |                   96008 = 94861 +       0 +    1146                |
+3.23.272.225 I llama_moe_cache: ubatch <= 8: hits = 806171, misses = 32214, hit rate = 96.16%, uploaded = 256682.12 MiB
+3.23.272.230 I llama_moe_cache: ubatch  > 8: hits = 18166, misses = 2698, hit rate = 87.07%, uploaded = 21131.81 MiB
+3.23.272.231 I llama_moe_cache: expert store: 291.31 GB read for decode, 184.96 GB read for prefill
+3.23.272.232 I llama_moe_cache: expert store: per layer fill: plan 0.02 ms, reads 0.50 ms (0.8 records, 13.18 GB/s), between fills 3.00 ms
+3.23.272.235 I llama_moe_cache: expert store: memory valve: host MemAvailable 23.99 GB (lowest 23.98, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+3.23.272.238 I llama_moe_cache: expert store: split GEMV: 21714 early lookups, 7.8 of 8 experts complete at the early lookup, 0.22 read under the early matmul (1 rows), 842 lookups with more misses (0.05 records read at the early lookup), plan 0.045 ms, wait at the real lookup 0.13 ms, 0 early lookups without a real one
+3.23.272.239 I llama_moe_cache: expert store: self-prefetch: 21924 posts, 0.1 records and 0.05 ms of reads per post
+3.23.362.874 I snapshot_save: expert store: cache snapshot (exit): 9537 resident experts, 57.3 KB to /srv/glm-5.3-flash/snapshot/nc-SSL0u.k3sn
