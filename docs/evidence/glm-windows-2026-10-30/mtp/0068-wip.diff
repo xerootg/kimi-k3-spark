@@ -1,0 +1,664 @@
+diff --git a/common/speculative.cpp b/common/speculative.cpp
+index d8afd40..eeff2d3 100644
+--- a/common/speculative.cpp
++++ b/common/speculative.cpp
+@@ -415,7 +415,14 @@ struct common_speculative_impl_draft_simple : public common_speculative_impl {
+                 }
+ 
+                 // add drafted token for each sequence
+-                const llama_token id = dparams.at(seq_id).result_q ? id_sampled : cur_p->data[0].id;
++                llama_token id = dparams.at(seq_id).result_q ? id_sampled : cur_p->data[0].id;
++
++                // kimi-k3-spark patch 0068: coupled drafting, the token the target's sampler picks on these logits
++                // (grammar after sampling, as the verifier samples, so the random draws line up)
++                auto * smpl_cpl = dparams.at(seq_id).result_q ? nullptr : dparams.at(seq_id).smpl_cpl;
++                if (smpl_cpl) {
++                    id = common_sampler_sample(smpl_cpl, ctx_dft, i_batch - 1, false);
++                }
+ 
+                 // only collect very high-confidence draft tokens
+                 if (cur_p->data[0].p < params.p_min) {
+@@ -426,6 +433,9 @@ struct common_speculative_impl_draft_simple : public common_speculative_impl {
+                 }
+ 
+                 common_sampler_accept(smpl, id, true);
++                if (smpl_cpl) {
++                    common_sampler_accept(smpl_cpl, id, true);
++                }
+ 
+                 auto & dp = dparams.at(seq_id);
+                 auto & result = *dp.result;
+@@ -1782,7 +1792,14 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 }
+ 
+                 // add drafted token for each sequence
+-                const llama_token id = dparams.at(seq_id).result_q ? id_sampled : cur_p->data[0].id;
++                llama_token id = dparams.at(seq_id).result_q ? id_sampled : cur_p->data[0].id;
++
++                // kimi-k3-spark patch 0068: coupled drafting, the token the target's sampler picks on these logits
++                // (grammar after sampling, as the verifier samples, so the random draws line up)
++                auto * smpl_cpl = dparams.at(seq_id).result_q ? nullptr : dparams.at(seq_id).smpl_cpl;
++                if (smpl_cpl) {
++                    id = common_sampler_sample(smpl_cpl, ctx_dft, i_last[seq_id], false);
++                }
+ 
+                 // only collect very high-confidence draft tokens
+                 if (cur_p->data[0].p < params.p_min) {
+@@ -1793,6 +1810,9 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 }
+ 
+                 common_sampler_accept(smpl, id, true);
++                if (smpl_cpl) {
++                    common_sampler_accept(smpl_cpl, id, true);
++                }
+ 
+                 auto & dp = dparams.at(seq_id);
+                 auto & result = *dp.result;
+@@ -1803,7 +1823,9 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                     dp.result_q->emplace_back(cur_p->data, cur_p->data + cur_p->size);
+                 }
+ 
+-                if (params.n_max <= (int) result.size()) {
++                // kimi-k3-spark patch 0068: also stop at the caller's limit for this step (the caller truncates to it anyway)
++                if (params.n_max <= (int) result.size() ||
++                    (dp.n_max > 0 && dp.n_max <= (int) result.size())) {
+                     drafting[seq_id] = false;
+                     n_drafting--;
+                     continue;
+diff --git a/common/speculative.h b/common/speculative.h
+index a598468..0223b72 100644
+--- a/common/speculative.h
++++ b/common/speculative.h
+@@ -79,6 +79,14 @@ struct common_speculative_draft_params {
+     // the target's temp and seed, read only when the drafter samples probabilistically
+     float    temp = 1.0f;
+     uint32_t seed = LLAMA_DEFAULT_SEED;
++
++    // kimi-k3-spark patch 0068: coupled drafting (draft-simple and draft-mtp). A copy of the target's sampler in the
++    // state from which the target will sample the first draft position (owned by the caller, advanced by the
++    // drafter). When set, every draft token is sampled with it from the drafter's logits: the target's own chain
++    // and the random draws the target will use, so the verifier's sample-and-match accepts a draft token whenever
++    // both distributions put the same draw on the same token. The drafter's own sampler still supplies the
++    // confidence for p_min. Not combined with result_q.
++    struct common_sampler * smpl_cpl = nullptr;
+ };
+ 
+ common_speculative_draft_params & common_speculative_get_draft_params(common_speculative * spec, llama_seq_id seq_id);
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 1936fd4..b9ef005 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -205,6 +205,7 @@ llama_context::llama_context(
+     cparams.embeddings              = params.embeddings;
+     cparams.embeddings_nextn        = false;
+     cparams.embeddings_nextn_masked = false;
++    cparams.exact_verify            = false;
+     cparams.offload_kqv             = params.offload_kqv;
+     cparams.no_perf                 = params.no_perf;
+     cparams.warmup                  = false;
+@@ -1526,6 +1527,13 @@ void llama_context::set_embeddings_nextn(bool value, bool masked) {
+     cparams.embeddings_nextn_masked = masked;
+ }
+ 
++void llama_context::set_exact_verify(bool value) {
++    // kimi-k3-spark patch 0068: the flag is part of the graph parameters (llm_graph_params::allow_reuse), so a change
++    // rebuilds the graph. It needs no new reservation: the per-token attention calls of a verify ubatch (a few tokens)
++    // are far below the worst case that was reserved (a full prompt ubatch).
++    cparams.exact_verify = value;
++}
++
+ void llama_context::set_embeddings_layer_inp(uint32_t lid, bool enable) {
+     LLAMA_LOG_DEBUG("%s: lid = %d, enable = %d\n", __func__, lid, enable);
+ 
+@@ -4724,6 +4732,10 @@ void llama_set_embeddings_nextn(llama_context * ctx, bool value, bool masked) {
+     ctx->set_embeddings_nextn(value, masked);
+ }
+ 
++void llama_set_exact_verify(llama_context * ctx, bool value) {
++    ctx->set_exact_verify(value);
++}
++
+ void llama_set_embeddings_layer_inp(llama_context * ctx, uint32_t lid, bool value) {
+     ctx->set_embeddings_layer_inp(lid, value);
+ }
+diff --git a/src/llama-context.h b/src/llama-context.h
+index 6482cd2..afbbeaf 100644
+--- a/src/llama-context.h
++++ b/src/llama-context.h
+@@ -123,6 +123,7 @@ struct llama_context {
+ 
+     void set_embeddings (bool value);
+     void set_embeddings_nextn(bool value, bool masked);
++    void set_exact_verify(bool value);
+     void set_embeddings_layer_inp(uint32_t lid, bool enable);
+     void set_nextn_layer_offset(int32_t offset);
+     void set_causal_attn(bool value);
+diff --git a/src/llama-cparams.h b/src/llama-cparams.h
+index f4eb181..18c5c45 100644
+--- a/src/llama-cparams.h
++++ b/src/llama-cparams.h
+@@ -35,6 +35,8 @@ struct llama_cparams {
+     bool embeddings;
+     bool embeddings_nextn;        // also extract the hidden state before the final output norm
+     bool embeddings_nextn_masked; // extract for only rows where batch.logits != 0
++    bool exact_verify;            // kimi-k3-spark patch 0068: several tokens of a sequence in one ubatch compute each token
++                                  //   with the arithmetic of a single-token decode step (speculative verification)
+     bool causal_attn;
+     bool offload_kqv;
+     bool flash_attn;
+diff --git a/src/llama-ext.h b/src/llama-ext.h
+index 8b3932b..ab5d237 100644
+--- a/src/llama-ext.h
++++ b/src/llama-ext.h
+@@ -103,6 +103,13 @@ LLAMA_API void llama_model_set_attn_rot(struct llama_model * model, bool value);
+ // If masked == false, output the embeddings for all tokens in the batch regardless of batch.logits
+ LLAMA_API void llama_set_embeddings_nextn(struct llama_context * ctx, bool value, bool masked);
+ 
++// kimi-k3-spark patch 0068: exact verification of speculative drafts.
++// While set, a ubatch that holds several tokens per sequence computes every token with the arithmetic of a
++// single-token decode step (glm5-next: one attention call per token index, one query per stream), so its logits are
++// bitwise those of decoding the tokens one step at a time. Meant for generation-only batches (the sampled token plus
++// its draft tokens); leave it off for prompt batches, whose arithmetic it would change.
++LLAMA_API void llama_set_exact_verify(struct llama_context * ctx, bool value);
++
+ // Select which appended NextN block the DECODER_MTP graph runs (offset past
+ // the trunk: il = n_layer() + offset). Used by the speculative NextN driver to
+ // chain multiple trained NextN heads. Default 0 (first head).
+diff --git a/src/llama-graph.h b/src/llama-graph.h
+index be5a7ef..f422947 100644
+--- a/src/llama-graph.h
++++ b/src/llama-graph.h
+@@ -913,6 +913,7 @@ struct llm_graph_params {
+             cparams.embeddings              == other.cparams.embeddings              &&
+             cparams.embeddings_nextn        == other.cparams.embeddings_nextn        &&
+             cparams.embeddings_nextn_masked == other.cparams.embeddings_nextn_masked &&
++            cparams.exact_verify            == other.cparams.exact_verify            &&
+             cparams.causal_attn             == other.cparams.causal_attn             &&
+             arch  == other.arch  &&
+             gtype == other.gtype &&
+diff --git a/src/llama-memory-hybrid-idx.cpp b/src/llama-memory-hybrid-idx.cpp
+index ac02cf8..96094d6 100644
+--- a/src/llama-memory-hybrid-idx.cpp
++++ b/src/llama-memory-hybrid-idx.cpp
+@@ -108,7 +108,17 @@ llama_memory_context_ptr llama_memory_hybrid_idx::init_batch(llama_batch_allocr
+                     return e != nullptr && strcmp(e, "1") == 0;
+                 }();
+ 
+-                ubatch = balloc.split_equal(n_ubatch, !unified && !stream_holes, n_rs_seq > 0 ? n_rs_seq + 1 : 0);
++                // kimi-k3-spark patch 0068: LLAMA_RS_KEEP_TAIL=0 (exact value, inert when unset) splits a batch as
++                // without rollback snapshots, so that a prompt is cut into the same ubatches (and so computes the same
++                // bytes) whether speculation is configured or not. The caller then has to give every sequence of a
++                // batch it may roll back the same number of tokens (the server's exact speculation does); a rollback
++                // into a plane that was not written is refused (llama_memory_recurrent::rs_valid).
++                static const bool keep_tail = [] {
++                    const char * e = getenv("LLAMA_RS_KEEP_TAIL");
++                    return !(e != nullptr && strcmp(e, "0") == 0);
++                }();
++
++                ubatch = balloc.split_equal(n_ubatch, !unified && !stream_holes, n_rs_seq > 0 && keep_tail ? n_rs_seq + 1 : 0);
+             }
+ 
+             if (ubatch.n_tokens == 0) {
+diff --git a/src/llama-memory-recurrent.cpp b/src/llama-memory-recurrent.cpp
+index 2893d81..060f905 100644
+--- a/src/llama-memory-recurrent.cpp
++++ b/src/llama-memory-recurrent.cpp
+@@ -34,6 +34,7 @@ llama_memory_recurrent::llama_memory_recurrent(
+ 
+     this->n_rs_seq = n_rs_seq;
+     rs_idx.assign(n_seq_max, 0);
++    rs_valid.assign(n_seq_max, 0);
+ 
+     cells.clear();
+     cells.resize(mem_size);
+@@ -163,6 +164,7 @@ void llama_memory_recurrent::clear(bool data) {
+     }
+ 
+     std::fill(rs_idx.begin(), rs_idx.end(), 0);
++    std::fill(rs_valid.begin(), rs_valid.end(), 0);
+ }
+ 
+ bool llama_memory_recurrent::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos p1) {
+@@ -211,7 +213,9 @@ bool llama_memory_recurrent::seq_rm(llama_seq_id seq_id, llama_pos p0, llama_pos
+                 const llama_pos rollback = cell.pos - (p0 - 1);
+                 // pending rollback is single-use
+                 const bool pending = rs_idx[seq_id] != 0;
+-                if (!pending && rollback >= 1 && rollback <= (llama_pos) n_rs_seq) {
++                // patch 0068: only into a plane that the sequence's last ubatch wrote
++                const bool valid = rollback <= (llama_pos) rs_valid[seq_id];
++                if (!pending && valid && rollback >= 1 && rollback <= (llama_pos) n_rs_seq) {
+                     set_rs_idx(seq_id, (uint32_t) rollback);
+                     cell.pos = p0 - 1;
+                     return true;
+@@ -422,6 +426,7 @@ llama_pos llama_memory_recurrent::seq_pos_max(llama_seq_id seq_id) const {
+ void llama_memory_recurrent::set_rs_idx(llama_seq_id seq_id, uint32_t idx) {
+     if (seq_id < 0) {
+         std::fill(rs_idx.begin(), rs_idx.end(), 0);
++        std::fill(rs_valid.begin(), rs_valid.end(), 0);
+         return;
+     }
+ 
+@@ -431,6 +436,28 @@ void llama_memory_recurrent::set_rs_idx(llama_seq_id seq_id, uint32_t idx) {
+     GGML_ASSERT(idx <= n_rs_seq);
+ 
+     rs_idx[seq_id] = idx;
++
++    // a rollback uses up the planes; a reset (whole sequence removed, state loaded) leaves none that belong to the new state
++    rs_valid[seq_id] = 0;
++}
++
++void llama_memory_recurrent::set_rs_valid(const llama_ubatch & ubatch) {
++    if (n_rs_seq == 0) {
++        return;
++    }
++
++    const uint32_t n_valid = std::min(ubatch.n_seq_tokens, n_rs_seq + 1) - 1;
++
++    for (uint32_t s = 0; s < ubatch.n_seqs; ++s) {
++        const uint32_t i = s*ubatch.n_seq_tokens; // first token of sequence set s
++
++        for (int32_t j = 0; j < ubatch.n_seq_id[i]; ++j) {
++            const llama_seq_id seq_id = ubatch.seq_id[i][j];
++            if (seq_id >= 0 && (size_t) seq_id < rs_valid.size()) {
++                rs_valid[seq_id] = n_valid;
++            }
++        }
++    }
+ }
+ 
+ std::map<ggml_backend_buffer_type_t, size_t> llama_memory_recurrent::memory_breakdown() const {
+@@ -1323,6 +1350,7 @@ bool llama_memory_recurrent_context::apply() {
+     }
+ 
+     mem->find_slot(ubatches[i_next]);
++    mem->set_rs_valid(ubatches[i_next]);
+ 
+     return true;
+ }
+diff --git a/src/llama-memory-recurrent.h b/src/llama-memory-recurrent.h
+index 08489a4..a8d0c3e 100644
+--- a/src/llama-memory-recurrent.h
++++ b/src/llama-memory-recurrent.h
+@@ -78,6 +78,14 @@ public:
+ 
+     void set_rs_idx(llama_seq_id seq_id, uint32_t idx);
+ 
++    // kimi-k3-spark patch 0068: per-seq number of snapshot planes that the last ubatch of the sequence wrote, i.e. how
++    // many tokens seq_rm may roll back. A ubatch with n tokens of a sequence writes the states 0 .. min(n, 1 + n_rs_seq) - 1
++    // tokens back; older planes keep what an earlier ubatch left there. Upstream relies on the batch split alone
++    // ([TAG_RECURRENT_ROLLBACK_SPLITS]); the count makes a rollback into a stale plane fail instead of corrupting the state.
++    std::vector<uint32_t> rs_valid;
++
++    void set_rs_valid(const llama_ubatch & ubatch);
++
+     // computed before each graph build
+     uint32_t n = 0;
+ 
+diff --git a/src/models/glm5-next.cpp b/src/models/glm5-next.cpp
+index c280209..0811868 100644
+--- a/src/models/glm5-next.cpp
++++ b/src/models/glm5-next.cpp
+@@ -1139,7 +1139,9 @@ ggml_tensor * llama_model_glm5_next::graph::build_dsa_layer(
+     ggml_tensor * k = mctx_mla->get_k(ctx0, il);
+     ggml_tensor * v = ggml_view_4d(ctx0, k, kv_lora_rank, k->ne[1], k->ne[2], k->ne[3], k->nb[1], k->nb[2], k->nb[3], 0);
+ 
+-    ggml_tensor * out = nullptr;
++    // q_use [kv_lora_rank, n_head, n_tps*ns] and sel_use [n_kv, n_tps, 1, ns]: one row block per viewed stream
++    ggml_tensor * q_use   = q_absorbed;
++    ggml_tensor * sel_use = sel;
+     if (inp_kpool->stream_pad != nullptr) {
+         // patch 0058: the KV view spans the streams [s0, s1] and some of them are not in this ubatch. Give the attention
+         // one query row per viewed stream (a hole repeats the first sequence's rows), then keep only the real rows.
+@@ -1158,10 +1160,49 @@ ggml_tensor * llama_model_glm5_next::graph::build_dsa_layer(
+         sel_pad = ggml_cast(ctx0, sel_pad, sel->type);
+         sel_pad = ggml_reshape_4d(ctx0, sel_pad, sel->ne[0], n_tps, 1, ns);
+ 
+-        out = build_attn_mha(q_pad, k, v, nullptr, sel_pad, nullptr, layer.wv_b, inp_kpool->n_sel, kq_scale, il);
+-        out = ggml_get_rows(ctx0, out, inp_kpool->stream_unpad);
++        q_use   = q_pad;
++        sel_use = sel_pad;
++    }
++
++    ggml_tensor * out = nullptr;
++    if (cparams.exact_verify && sel_use->ne[1] > 1) {
++        // patch 0068: exact verification. This ubatch holds n_tps tokens per sequence (the sampled token and its draft
++        // tokens). One attention call with n_tps queries per stream takes kernels whose arithmetic follows the number
++        // of queries; the batch-invariant decode path (patch 0054/0056) needs one query per stream. So run one
++        // attention call per token index, each with one query per viewed stream: token t reads the same query, the
++        // same selection (its own causal mask hides the cells of the later tokens, which are already in the cache)
++        // and the same cells in the same order as the decode step that would have produced it alone.
++        const int64_t ns    = k->ne[3];
++        const int64_t n_tps = sel_use->ne[1];
++        GGML_ASSERT(sel_use->ne[2] == 1 && sel_use->ne[3] == ns && q_use->ne[2] == n_tps*ns);
++
++        ggml_tensor * q4 = ggml_cont(ctx0, q_use);
++        q4 = ggml_reshape_4d(ctx0, q4, q_use->ne[0], q_use->ne[1], n_tps, ns);
++
++        for (int64_t t = 0; t < n_tps; ++t) {
++            ggml_tensor * q_t = ggml_view_4d(ctx0, q4, q4->ne[0], q4->ne[1], 1, ns,
++                    q4->nb[1], q4->nb[2], q4->nb[3], t*q4->nb[2]);
++            q_t = ggml_cont(ctx0, q_t);
++            q_t = ggml_reshape_3d(ctx0, q_t, q4->ne[0], q4->ne[1], ns);
++
++            ggml_tensor * sel_t = ggml_view_4d(ctx0, sel_use, sel_use->ne[0], 1, 1, ns,
++                    sel_use->nb[1], sel_use->nb[2], sel_use->nb[3], t*sel_use->nb[1]);
++            sel_t = ggml_cont(ctx0, sel_t);
++
++            ggml_tensor * out_t = build_attn_mha(q_t, k, v, nullptr, sel_t, nullptr, layer.wv_b, inp_kpool->n_sel, kq_scale, il);
++            GGML_ASSERT(out_t->ne[1] == ns);
++            out_t = ggml_reshape_3d(ctx0, out_t, out_t->ne[0], 1, ns);
++
++            out = out == nullptr ? out_t : ggml_concat(ctx0, out, out_t, 1);
++        }
++
++        // [d, n_tps, ns] -> one column per (stream, token), the layout of the single call
++        out = ggml_reshape_2d(ctx0, out, out->ne[0], n_tps*ns);
+     } else {
+-        out = build_attn_mha(q_absorbed, k, v, nullptr, sel, nullptr, layer.wv_b, inp_kpool->n_sel, kq_scale, il);
++        out = build_attn_mha(q_use, k, v, nullptr, sel_use, nullptr, layer.wv_b, inp_kpool->n_sel, kq_scale, il);
++    }
++    if (inp_kpool->stream_pad != nullptr) {
++        out = ggml_get_rows(ctx0, out, inp_kpool->stream_unpad);
+     }
+     cb(out, "kqv_out", il);
+ 
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 38e2d2b..ac8eaa4 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -15,6 +15,7 @@
+ #include "log.h"
+ #include "sampling.h"
+ #include "speculative.h"
++#include "../../src/llama-ext.h" // staging API: llama_set_exact_verify (patch 0068)
+ #include "mtmd.h"
+ #include "mtmd-helper.h"
+ 
+@@ -30,6 +31,7 @@
+ #include <utility>
+ #include <fstream>
+ #include <climits>
++#include <limits>
+ #include <sstream>
+ #include <unordered_map>
+ 
+@@ -341,6 +343,76 @@ int server_client_priority(const std::map<std::string, std::string> & headers, s
+     return it->second.priority;
+ }
+ 
++// kimi-k3-spark patch 0068: exact speculative decoding.
++//
++// LLAMA_SPEC_EXACT=1 (exact value, inert when unset) makes speculation invisible in the output: a slot's bytes are the
++// same with and without drafts, alone and batched. Three parts:
++//  - the draft is verified with the sampler of the slot, one sample and one accept per emitted token, so the sampler
++//    state (RNG included) advances exactly as without drafts; a draft token is kept only if it is the token that was
++//    sampled (the rejection and replay verifiers, which change the output distribution's realisation, are not used);
++//  - the batch that holds draft tokens is computed with llama_set_exact_verify, so every logits row has the bits of
++//    the single-token decode step it replaces, and it holds no prompt tokens (LLAMA_PREFILL_ISOLATE=1 is required);
++//  - the slot's token list, context and stop checks advance one emitted token at a time, as without drafts.
++// Every sequence of such a batch gets the same number of draft tokens, so the batch is one ubatch (one forward pass)
++// and the rollback snapshots of the recurrent layers are valid without [TAG_RECURRENT_ROLLBACK_SPLITS].
++//
++// LLAMA_SPEC_EXACT_COLS (default 4): columns (sequences x tokens) of a batch with drafts; with G slots generating
++// each gets floor(cols / G) - 1 draft tokens, so drafting stops by itself when the step is already full of clients.
++// LLAMA_SPEC_EXACT_TRACE=1 (debug): log slot, index, token and an FNV-1a hash of the logits row of every sampled token.
++static bool server_spec_exact() {
++    static const bool on = [] {
++        const char * e = std::getenv("LLAMA_SPEC_EXACT");
++        if (e == nullptr || std::strcmp(e, "1") != 0) {
++            return false;
++        }
++        // a prompt ubatch must not share a batch with draft tokens: it would be computed with the verification graph
++        const char * iso = std::getenv("LLAMA_PREFILL_ISOLATE");
++        if (iso == nullptr || std::strcmp(iso, "1") != 0) {
++            GGML_ABORT("LLAMA_SPEC_EXACT=1 requires LLAMA_PREFILL_ISOLATE=1");
++        }
++        return true;
++    }();
++    return on;
++}
++
++static int server_spec_exact_cols() {
++    static const int cols = [] {
++        const char * e = std::getenv("LLAMA_SPEC_EXACT_COLS");
++        const int v = e != nullptr ? atoi(e) : 4;
++        return std::max(1, std::min(v, 64));
++    }();
++    return cols;
++}
++
++// LLAMA_SPEC_EXACT_COUPLED (default 1; 0 = the drafter's own greedy pick): the drafter samples every draft token with
++// a copy of the slot's sampler, i.e. with the chain and the random draws the target will use. It changes which
++// tokens are drafted, never what is emitted.
++static bool server_spec_exact_coupled() {
++    static const bool on = [] {
++        const char * e = std::getenv("LLAMA_SPEC_EXACT_COUPLED");
++        return e == nullptr || std::strcmp(e, "0") != 0;
++    }();
++    return on;
++}
++
++static void server_spec_trace(int slot_id, int64_t i_gen, llama_token id, llama_context * ctx, int idx) {
++    static const bool on = [] {
++        const char * e = std::getenv("LLAMA_SPEC_EXACT_TRACE");
++        return e != nullptr && std::strcmp(e, "1") == 0;
++    }();
++    if (!on) {
++        return;
++    }
++    const float * logits = llama_get_logits_ith(ctx, idx);
++    const size_t n = (size_t) llama_vocab_n_tokens(llama_model_get_vocab(llama_get_model(ctx))) * sizeof(float);
++    const uint8_t * b = (const uint8_t *) logits;
++    uint64_t h = 1469598103934665603ULL;
++    for (size_t i = 0; i < n; ++i) {
++        h = (h ^ b[i]) * 1099511628211ULL;
++    }
++    fprintf(stderr, "SPEC_TRACE %d %lld %d %016llx\n", slot_id, (long long) i_gen, (int) id, (unsigned long long) h);
++}
++
+ struct server_slot {
+     int id;
+ 
+@@ -360,6 +432,9 @@ struct server_slot {
+ 
+     // draft candidates per token in spec_draft; only draft-simple and draft-mtp fill it
+     std::vector<std::vector<llama_token_data>> spec_draft_q;
++
++    // patch 0068: the copy of smpl the drafter samples with (coupled drafting), remade for every draft
++    common_sampler_ptr spec_smpl_cpl;
+     llama_tokens spec_prompt;
+     std::vector<int32_t> spec_i_batch;
+     common_prompt_checkpoint spec_ckpt;
+@@ -3986,7 +4061,12 @@ private:
+                 const bool use_ckpt_tgt = ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_FULL;
+                 const bool use_ckpt_dft = ctx_dft_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_FULL;
+ 
+-                const int n_draft_max = slot.get_n_draft_max();
++                int n_draft_max = slot.get_n_draft_max();
++
++                if (server_spec_exact() && slot.task->params.sampling.n_probs > 0) {
++                    // patch 0068: the verification path fills no token probabilities, so such a request decodes plainly
++                    n_draft_max = 0;
++                }
+ 
+                 if (n_draft_max > 0) {
+                     GGML_ASSERT(slot.can_speculate());
+@@ -4013,7 +4093,8 @@ private:
+ 
+                         slot.spec_prompt = slot.prompt.tokens.get_text_tokens();
+ 
+-                        const bool spec_reject = slot.use_spec_rejection();
++                        // patch 0068: exact mode drafts greedily and verifies by sample-and-match
++                        const bool spec_reject = slot.use_spec_rejection() && !server_spec_exact();
+ 
+                         common_speculative_get_draft_params(spec.get(), slot.id) = {
+                             /* .drafting = */ true,
+@@ -4027,12 +4108,42 @@ private:
+                             /* .seed     = */ slot.task->params.sampling.seed,
+                         };
+ 
++                        if (server_spec_exact() && server_spec_exact_coupled()) {
++                            // patch 0068: the drafter samples with a copy of this slot's sampler, which stands
++                            // where the target will sample the first draft position
++                            slot.spec_smpl_cpl.reset(common_sampler_clone(slot.smpl.get()));
++                            common_speculative_get_draft_params(spec.get(), slot.id).smpl_cpl = slot.spec_smpl_cpl.get();
++                        }
++
+                         drafting.push_back(&slot);
+                     }
+                 }
+             }
+         });
+ 
++        if (server_spec_exact() && spec) {
++            // patch 0068: the draft budget of this step follows the number of slots that decode in it
++            const int n_gen  = (int) generating.size();
++            const int n_step = n_gen > 0 ? server_spec_exact_cols() / n_gen - 1 : 0;
++
++            bool reuse = false;
++            for (auto * slot : generating) {
++                reuse = reuse || (std::find(drafting.begin(), drafting.end(), slot) == drafting.end() && !slot->spec_draft.empty());
++            }
++            GGML_ASSERT(!reuse && "exact speculation never replays a draft");
++
++            for (auto * slot : drafting) {
++                auto & dp = common_speculative_get_draft_params(spec.get(), slot->id);
++                dp.n_max = std::min(dp.n_max, n_step);
++                if (dp.n_max <= 0) {
++                    dp.drafting = false;
++                }
++            }
++            if (n_step <= 0) {
++                drafting.clear();
++            }
++        }
++
+         // generate the actual drafts (if any)
+         if (!drafting.empty()) {
+             queue_tasks.yield_to_queue([&]() {
+@@ -4040,6 +4151,22 @@ private:
+             });
+         }
+ 
++        if (server_spec_exact() && spec && !drafting.empty()) {
++            // patch 0068: the same number of draft tokens for every slot of the step (none if one slot has none), so
++            // the step stays one ubatch and every rollback finds its snapshot
++            size_t n_equal = std::numeric_limits<size_t>::max();
++            for (auto * slot : generating) {
++                const bool drafted = std::find(drafting.begin(), drafting.end(), slot) != drafting.end();
++                n_equal = std::min(n_equal, drafted ? slot->spec_draft.size() : (size_t) 0);
++            }
++            for (auto * slot : drafting) {
++                if (slot->spec_draft.size() > n_equal) {
++                    slot->spec_draft.resize(n_equal);
++                }
++                GGML_ASSERT(slot->spec_draft_q.empty());
++            }
++        }
++
+         // make checkpoints if needed
+         iterate(drafting, [&](server_slot & slot) {
+             auto & draft = slot.spec_draft;
+@@ -4818,6 +4945,18 @@ private:
+ 
+         // yield to the queue, so we can still handle metrics tasks while decoding
+         // note: the sync is done here too, so that the wait is also covered by the yield
++        if (server_spec_exact()) {
++            // patch 0068: a batch with draft tokens computes every token as a single-token decode step would
++            bool has_draft = false;
++            for (auto & slot : slots) {
++                has_draft = has_draft || !slot.spec_i_batch.empty();
++            }
++            // a generation step is a few tokens, so it is never cut into several llama_process calls
++            GGML_ASSERT((!has_draft || (off == 0 && batch.view.size() == batch.size())) &&
++                    "exact speculation: the batch with draft tokens must be decoded in one piece");
++            llama_set_exact_verify(ctx_tgt, has_draft);
++        }
++
+         int ret = 0;
+         queue_tasks.yield_to_queue([&]() {
+             ret = llama_process(ctx_tgt, LLAMA_PROCESS_TYPE_DECODE, batch.view.get());
+@@ -5024,6 +5163,7 @@ private:
+                 scoped_timer timer(t_sampl, n_sampl);
+                 id = common_sampler_sample(slot.smpl.get(), slot.ctx_tgt, tok_idx);
+             }
++            server_spec_trace(slot.id, slot.stats.n_gen, id, slot.ctx_tgt, tok_idx);
+ 
+             slot.i_batch = -1;
+ 
+@@ -5087,7 +5227,13 @@ private:
+                 const bool use_rejection = slot.use_spec_rejection() && !slot.spec_draft_q.empty();
+ 
+                 std::vector<llama_token> accepted;
+-                if (!synth_probs.empty()) {
++                if (server_spec_exact()) {
++                    // patch 0068: one sample and one accept per emitted token, as without drafts
++                    accepted = common_sampler_sample_and_accept_n(slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);
++                    for (size_t i = 0; i < accepted.size(); ++i) {
++                        server_spec_trace(slot.id, slot.stats.n_gen + (int64_t) i, accepted[i], slot.ctx_tgt, slot.spec_i_batch[i]);
++                    }
++                } else if (!synth_probs.empty()) {
+                     // synthetic acceptance replaces verification entirely, so it comes first
+                     accepted = server_sample_and_accept_synth(
+                             slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft,
+@@ -5109,6 +5255,9 @@ private:
+                     ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_FULL ||
+                     (ctx_tgt_seq_rm_type == COMMON_CONTEXT_SEQ_RM_TYPE_RS && n_rollback > llama_n_rs_seq(ctx_tgt));
+ 
++                GGML_ASSERT(!(server_spec_exact() && n_rollback > 0 && use_ckpt_tgt) &&
++                        "exact speculation rolls back with the recurrent snapshots only");
++
+                 // check for partial draft acceptance
+                 if (n_rollback > 0) {
+                     if (use_ckpt_tgt) {
+@@ -5170,6 +5319,50 @@ private:
+                 n_accepted_per_pos[i]++;
+             }
+ 
++            if (server_spec_exact()) {
++                // patch 0068: emit the tokens one at a time. Each stop check sees the token list it sees without
++                // drafts (the tokens before the one being emitted), and a stop leaves the list and the context where
++                // a plain decode leaves them: nothing after the last emitted token stays.
++                slot.prompt.tokens.keep_first(slot.prompt.n_tokens() - n_draft);
++
++                bool stopped = false;
++                for (size_t i = 0; i < ids.size(); ++i) {
++                    completion_token_output result;
++
++                    result.tok          = ids[i];
++                    result.text_to_send = common_token_to_piece(slot.ctx_tgt, result.tok, accept_special_token(slot, result.tok));
++                    result.prob         = 1.0f;
++
++                    slot.stats.n_gen += 1;
++
++                    if (!process_token(result, slot)) {
++                        stopped = true;
++                        break;
++                    }
++
++                    if (i + 1 < ids.size()) {
++                        slot.prompt.tokens.push_back(ids[i]); // an accepted draft token, already in the context
++                    }
++                }
++
++                // one rollback for the rejected draft tokens and for the accepted ones after a stop
++                slot.mem.seq_rm(slot.id, slot.prompt.tokens.pos_next(), -1);
++
++                if (stopped) {
++                    slot.print_timings();
++                    send_final_response(slot);
++                    slot.release();
++
++                    return;
++                }
++
++                slot.sampled = ids.back(); // the next token to decode
++
++                slot.print_timings_tg();
++
++                return;
++            }
++
+             // add accepted tokens to the prompt
+             slot.prompt.tokens.keep_first(slot.prompt.n_tokens() - n_draft);
+             slot.prompt.tokens.insert({ids.begin(), ids.end() - 1});
