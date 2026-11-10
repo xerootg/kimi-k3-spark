@@ -1,0 +1,9 @@
+SV7 lowest MemAvailable 17640 MiB
+SA6 lowest MemAvailable 17619 MiB
+SP7 lowest MemAvailable 21915 MiB
+SA7 lowest MemAvailable 17623 MiB
+RF7 lowest MemAvailable 18955 MiB
+SD7 lowest MemAvailable 17550 MiB
+G7 lowest MemAvailable 15667 MiB
+SQ7 lowest MemAvailable 18430 MiB
+SS7 lowest MemAvailable 17888 MiB

@@ -1,0 +1,78 @@
+412:0.24.145.816 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+417:0.24.292.964 I sched_reserve: elastic KV floor: the prompt graph is reserved for 20480 cells (1.24 GiB of compute buffer), a full-depth one would need 18.84 GiB: 18.0 KiB per cell past it, grown on demand
+451:0.26.126.095 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+1009:0.43.300.435 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+1017:0.43.300.646 I llama_elastic_kv_reserve: elastic KV seq 1: burst to 79893 cells (2.27 GB past the floor): MemAvailable 25.60 GB + releasable 40.88 GB, growth 2.67 + other slots' floors 1.61 + reserve 39.51 + compute buffer owed to earlier bursts 0.00 GB
+1018:0.43.369.424 I elastic_fit_stream: elastic KV (reserve, burst) stream 1: 4352 -> 84480 of 1048576 cells, 1188.0 MiB mapped in all streams (68.7 ms)
+1019:0.43.419.902 I elastic_fit_stream: elastic KV idx_ (reserve, burst) stream 1: 4352 -> 84480 of 1048576 cells, 858.0 MiB mapped in all streams (50.4 ms)
+1036:0.53.516.906 I slot get_availabl: id  2 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+1187:2.43.281.064 I elastic_fit_stream: elastic KV idx_ (seq_rm) stream 0: 4352 -> 23552 of 1048576 cells, 1166.0 MiB mapped in all streams (13.4 ms)
+1188:2.43.297.829 I elastic_fit_stream: elastic KV (seq_rm) stream 0: 4352 -> 23552 of 1048576 cells, 1584.0 MiB mapped in all streams (16.3 ms)
+1191:2.43.386.985 I elastic_fit_stream: elastic KV idx_ (seq_rm) stream 3: 4352 -> 23552 of 1048576 cells, 1320.0 MiB mapped in all streams (12.9 ms)
+1192:2.43.404.061 I elastic_fit_stream: elastic KV (seq_rm) stream 3: 4352 -> 23552 of 1048576 cells, 1782.0 MiB mapped in all streams (16.6 ms)
+1224:2.43.496.870 I elastic_fit_stream: elastic KV idx_ (seq_rm) stream 4: 4352 -> 23552 of 1048576 cells, 1474.0 MiB mapped in all streams (13.0 ms)
+1225:2.43.513.628 I elastic_fit_stream: elastic KV (seq_rm) stream 4: 4352 -> 23552 of 1048576 cells, 1980.0 MiB mapped in all streams (16.3 ms)
+1233:2.43.899.937 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 0.999 (> 0.100 thold), f_keep = 1.000
+1246:2.43.900.000 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 0.999 (> 0.100 thold), f_keep = 1.000
+1259:2.43.900.033 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 0.999 (> 0.100 thold), f_keep = 1.000
+1272:2.43.900.058 I slot get_availabl: id  4 | task -1 | selected slot by LCP similarity, f_sim_best = 0.999 (> 0.100 thold), f_keep = 1.000
+1542:3.42.762.034 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+1555:3.42.762.105 I slot get_availabl: id  4 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+1568:3.42.762.139 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+1581:3.42.762.164 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+1838:4.36.697.591 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+1851:4.36.697.658 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+1864:4.36.697.699 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+1877:4.36.697.724 I slot get_availabl: id  4 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+2128:5.27.454.311 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+2141:5.27.454.378 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+2154:5.27.454.413 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+2167:5.27.454.438 I slot get_availabl: id  4 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+2425:6.19.668.444 I slot get_availabl: id  4 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+2438:6.19.668.513 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+2451:6.19.668.550 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+2464:6.19.668.579 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+2728:7.04.404.250 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+2891:7.08.407.866 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+3048:7.12.444.349 I slot get_availabl: id  4 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+3211:7.16.506.326 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+3368:7.20.606.597 I slot get_availabl: id  1 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 1.000
+3376:7.20.606.765 I llama_elastic_kv_reserve: elastic KV seq 1: burst to 79975 cells (0.00 GB past the floor): MemAvailable 18.33 GB + releasable 40.88 GB, growth 0.00 + other slots' floors 0.10 + reserve 39.51 + compute buffer owed to earlier bursts 0.07 GB
+3534:7.25.706.720 I slot get_availabl: id  4 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+3547:7.25.706.795 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+3572:7.25.894.458 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+3585:7.25.894.504 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+3598:7.25.894.556 I slot get_availabl: id  1 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.999
+3606:7.25.894.664 I llama_elastic_kv_reserve: elastic KV seq 1: burst to 80038 cells (0.00 GB past the floor): MemAvailable 17.98 GB + releasable 40.88 GB, growth 0.00 + other slots' floors 0.10 + reserve 39.51 + compute buffer owed to earlier bursts 0.07 GB
+3821:7.40.608.191 I slot get_availabl: id  1 | task -1 | selected slot by id (1)
+3830:7.40.608.813 W llama_elastic_kv_reserve: elastic KV seq 1: REFUSED a burst to 999430 cells (35.03 GB past the floor of 20480 cells): MemAvailable 17.65 GB + expert cache releasable 40.88 GB < growth 35.03 + other slots' floors 0.10 + reserve 39.51 + compute buffer owed to earlier bursts 0.07 GB
+3831:7.40.608.815 W slot   operator(): id  1 | task 2176 | elastic KV refused 999430 cells, failing this request
+3832:7.40.608.818 E srv    send_error: task id = 2176, error: out of KV cache memory: the server cannot hold this conversation now (elastic KV refused 999430 cells)
+3834:7.40.608.829 I slot prompt_clear: id  1 | task -1 | clearing prompt with 79973 tokens
+3843:7.40.778.651 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = 804606010225
+4238:12.04.005.276 I slot get_availabl: id  1 | task -1 | selected slot by id (1)
+4247:12.04.005.518 I llama_elastic_kv_reserve: elastic KV seq 1: burst to 119792 cells (1.51 GB past the floor): MemAvailable 18.21 GB + releasable 40.88 GB, growth 1.51 + other slots' floors 0.10 + reserve 39.51 + compute buffer owed to earlier bursts 0.07 GB
+4248:12.04.039.918 I elastic_fit_stream: elastic KV (reserve, burst) stream 1: 84480 -> 124160 of 1048576 cells, 2398.0 MiB mapped in all streams (34.4 ms)
+4249:12.04.066.428 I elastic_fit_stream: elastic KV idx_ (reserve, burst) stream 1: 84480 -> 124160 of 1048576 cells, 1804.0 MiB mapped in all streams (26.5 ms)
+4278:12.24.592.414 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 19063, t_last = 804604554887
+4289:12.26.501.085 I llama_elastic_kv_reserve: elastic KV seq 0: burst to 79975 cells (1.18 GB past the floor): MemAvailable 17.47 GB + releasable 40.88 GB, growth 1.20 + other slots' floors 0.08 + reserve 39.51 + compute buffer owed to earlier bursts 0.78 GB
+4290:12.26.554.556 I elastic_fit_stream: elastic KV (reserve, burst) stream 0: 23552 -> 84480 of 1048576 cells, 3058.0 MiB mapped in all streams (53.5 ms)
+4291:12.26.593.585 I elastic_fit_stream: elastic KV idx_ (reserve, burst) stream 0: 23552 -> 84480 of 1048576 cells, 2288.0 MiB mapped in all streams (39.0 ms)
+4682:17.45.192.576 I slot get_availabl: id  4 | task -1 | selected slot by id (4)
+4895:18.32.089.076 I slot get_availabl: id  0 | task -1 | selected slot by id (0)
+4940:18.32.943.444 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+4953:18.32.943.505 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 0.999 (> 0.100 thold), f_keep = 0.996
+4966:18.32.943.536 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 84006, t_last = 804890619407
+4980:18.32.977.687 I elastic_fit_stream: elastic KV idx_ (seq_rm) stream 0: 84480 -> 4608 of 1048576 cells, 1650.0 MiB mapped in all streams (30.3 ms)
+4981:18.33.018.549 I elastic_fit_stream: elastic KV (seq_rm) stream 0: 84480 -> 4608 of 1048576 cells, 2200.0 MiB mapped in all streams (40.4 ms)
+4992:18.33.202.044 I slot get_availabl: id  4 | task -1 | selected slot by LRU, n_tokens = 14985, t_last = 805257424546
+5178:18.44.893.861 I elastic_fit_stream: elastic KV idx_ (seq_rm) stream 1: 124160 -> 23552 of 1048576 cells, 836.0 MiB mapped in all streams (40.5 ms)
+5179:18.44.948.949 I elastic_fit_stream: elastic KV (seq_rm) stream 1: 124160 -> 23552 of 1048576 cells, 1122.0 MiB mapped in all streams (53.7 ms)
+5180:18.44.949.803 I decode: elastic KV floor: no conversation past the floor any more, the compute buffer goes back to its reserve
+5182:18.45.142.335 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+5187:18.45.295.593 I sched_reserve: elastic KV floor: the prompt graph is reserved for 20480 cells (1.28 GiB of compute buffer), a full-depth one would need 18.84 GiB: 17.9 KiB per cell past it, grown on demand
+5529:20.38.996.833 I slot get_availabl: id  4 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+5542:20.38.996.909 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+5555:20.38.996.949 I slot get_availabl: id  1 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+5568:20.38.996.984 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.997
+5781:20.49.458.470 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 10, t_last = 805258264786

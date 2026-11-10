@@ -1,0 +1,86 @@
+== SA6 (24 rows)
+  solo p0      ce2fc95752 gold dec  15.43 pre     23.7 n 256
+  solo p1      bb64203d71 gold dec  15.87 pre     29.8 n 256
+  solo p2      2d592efcb6 gold dec  15.35 pre     27.8 n 256
+  solo p3      1aab74269d gold dec  14.53 pre     26.7 n 256
+  solo p4      0c3f28294b gold dec  15.26 pre     32.8 n 256
+  solo p0      ee079496a4  dec  14.87 pre     25.2 n 128
+  solo L16384  145c14aa8b gold dec  13.78 pre    346.9 n 128
+  multi n=2 round=warm agg  19.45 per [9.85, 10.06] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=1 agg  20.79 per [10.53, 10.75] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=2 agg  21.27 per [10.77, 11.01] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=3 round=warm agg  23.70 per [8.14, 8.27, 8.04] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=1 agg  24.20 per [8.14, 8.41, 8.27] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=2 agg  24.24 per [8.15, 8.42, 8.28] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=4 round=warm agg  25.19 per [6.43, 6.37, 6.51, 6.62] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=1 agg  25.78 per [6.49, 6.66, 6.57, 6.76] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=2 agg  25.86 per [6.51, 6.68, 6.59, 6.78] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=5 round=warm agg  24.52 per [4.99, 5.09, 5.04, 4.95, 5.15] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=1 agg  24.72 per [5.02, 5.12, 5.07, 5.19, 4.98] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=2 agg  24.71 per [4.96, 5.06, 5.01, 5.12, 5.18] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=warm agg  11.94 per [3.4, 3.38, 3.43, 3.36, 13.4] OK ['p1', 'p2', 'p3', 'p4', 'L16384'] ['bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b', '145c14aa8b']
+  multi n=5 round=1 agg  12.10 per [3.39, 3.36, 3.41, 3.44, 14.63] OK ['p1', 'p2', 'p3', 'p4', 'L16384'] ['bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b', '145c14aa8b']
+  multi n=2 round=warm agg   5.20 per [6.8, 15.4] OK ['p0', 'L16384'] ['ce2fc95752', '145c14aa8b']
+  multi n=2 round=1 agg   5.34 per [7.32, 15.71] OK ['p0', 'L16384'] ['ce2fc95752', '145c14aa8b']
+  solo p0      ee079496a4  dec  15.60 pre     25.1 n 128
+  SOLO-DIFF p0 {'ce2fc95752', 'ee079496a4'} gold ce2fc95752
+  multi rounds differing from solo/gold: 0
+== SA7 (24 rows)
+  solo p0      ce2fc95752 gold dec  15.38 pre     23.4 n 256
+  solo p1      bb64203d71 gold dec  15.85 pre     29.5 n 256
+  solo p2      2d592efcb6 gold dec  15.35 pre     27.7 n 256
+  solo p3      1aab74269d gold dec  14.49 pre     26.4 n 256
+  solo p4      0c3f28294b gold dec  15.26 pre     32.8 n 256
+  solo p0      ee079496a4  dec  14.82 pre     24.4 n 128
+  solo L16384  145c14aa8b gold dec  13.81 pre    350.5 n 128
+  multi n=2 round=warm agg  19.46 per [9.85, 10.06] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=1 agg  20.76 per [10.51, 10.74] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=2 agg  21.22 per [10.75, 10.98] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=3 round=warm agg  23.76 per [8.16, 8.29, 8.05] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=1 agg  24.20 per [8.14, 8.41, 8.27] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=2 agg  24.27 per [8.16, 8.43, 8.29] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=4 round=warm agg  25.21 per [6.35, 6.51, 6.43, 6.63] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=1 agg  25.79 per [6.49, 6.66, 6.57, 6.77] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=2 agg  25.85 per [6.5, 6.68, 6.59, 6.79] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=5 round=warm agg  24.32 per [4.94, 4.9, 4.99, 5.04, 5.11] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=1 agg  24.47 per [4.96, 5.01, 4.92, 5.13, 5.07] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=2 agg  24.70 per [5.01, 4.97, 5.06, 5.12, 5.18] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=warm agg  11.90 per [3.35, 3.37, 3.4, 3.42, 13.43] OK ['p1', 'p2', 'p3', 'p4', 'L16384'] ['bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b', '145c14aa8b']
+  multi n=5 round=1 agg  12.10 per [3.41, 3.39, 3.44, 3.36, 14.68] OK ['p1', 'p2', 'p3', 'p4', 'L16384'] ['bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b', '145c14aa8b']
+  multi n=2 round=warm agg   5.23 per [6.83, 15.42] OK ['p0', 'L16384'] ['ce2fc95752', '145c14aa8b']
+  multi n=2 round=1 agg   5.36 per [7.34, 15.75] OK ['p0', 'L16384'] ['ce2fc95752', '145c14aa8b']
+  solo p0      ee079496a4  dec  15.57 pre     25.0 n 128
+  SOLO-DIFF p0 {'ee079496a4', 'ce2fc95752'} gold ce2fc95752
+  multi rounds differing from solo/gold: 0
+== SP7 (15 rows)
+  solo p0      ce2fc95752 gold dec  15.45 pre     23.9 n 256
+  multi n=2 round=warm agg  20.61 per [10.44, 10.71] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=1 agg  21.48 per [10.88, 11.11] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=2 agg  21.64 per [10.96, 11.2] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=3 round=warm agg  23.59 per [7.94, 8.07, 8.24] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=1 agg  24.24 per [8.15, 8.28, 8.42] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=2 agg  24.26 per [8.16, 8.29, 8.42] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=4 round=warm agg  25.20 per [6.35, 6.43, 6.51, 6.63] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=1 agg  25.88 per [6.6, 6.53, 6.68, 6.78] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=2 agg  25.96 per [6.53, 6.62, 6.7, 6.81] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=5 round=warm agg  24.55 per [4.99, 4.95, 5.04, 5.09, 5.16] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=1 agg  24.74 per [4.97, 5.02, 5.07, 5.12, 5.18] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=2 agg  24.73 per [4.97, 5.02, 5.06, 5.12, 5.18] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=warm agg  12.23 per [5.6, 5.66, 5.73, 2.73, 4.71] OK ['p1', 'p2', 'p3', 'p4', 'L16384'] ['bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b', '145c14aa8b']
+  multi n=5 round=1 agg  12.42 per [2.76, 5.66, 5.74, 5.81, 4.78] OK ['p1', 'p2', 'p3', 'p4', 'L16384'] ['bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b', '145c14aa8b']
+  multi rounds differing from solo/gold: 0
+== SQ7 (13 rows)
+  solo p0      ce2fc95752 gold dec  15.44 pre     23.7 n 256
+  multi n=2 round=warm agg  20.30 per [10.5, 10.77] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=1 agg  21.23 per [10.9, 11.14] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=2 agg  21.34 per [10.96, 11.21] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=3 round=warm agg  23.17 per [8.04, 8.37, 8.15] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=1 agg  23.82 per [8.22, 8.51, 8.31] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=2 agg  23.87 per [8.23, 8.52, 8.33] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=4 round=warm agg  24.56 per [6.45, 6.55, 6.48, 6.73] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=1 agg  25.34 per [6.64, 6.72, 6.61, 6.87] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=2 agg  25.36 per [6.61, 6.75, 6.65, 6.91] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=5 round=warm agg  24.23 per [5.08, 5.18, 5.12, 5.08, 5.29] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=1 agg  24.36 per [5.09, 5.14, 5.09, 5.3, 5.21] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=2 agg  24.33 per [5.09, 5.13, 5.08, 5.29, 5.2] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi rounds differing from solo/gold: 0

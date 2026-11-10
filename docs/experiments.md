@@ -2374,3 +2374,103 @@ LLAMA_PREFILL_TURNS=1`, hold rule off), `LLAMA_KPOOL_OWN_SEQS=1` (0071), `LLAMA_
 - **Window closed 15:20 UTC.** glm53-gh200 back at one replica on `547208dca250-g68d4166`, gold `bc32ecab82` three
   times through the Service (58.7-59.0 tok/s), workbench-queue unsuspended, no test container or key file left, the
   laptop deadman disarmed.
+
+**2026-11-10, Spark window nc-s3 (15:34-17:20 UTC): the proposed Spark config on the binaries of the CI image
+`547208dca250-gb5ee55a` passes the detector gate and two acceptance processes; a refused growth clears the
+conversation in its slot, which has to be fixed before the floor and burst can ship.** `/opt/llama` of the image
+copied to `~/nc/ci-b5ee55a` (the server library byte-identical to the image's), bare servers on 127.0.0.1:18080 under
+`window.lock`, glm53-spark at 0, glm53-gh200 serving throughout. "FIN" as in window nc-s2 (five slots of 1M, floor
+204800 cells, pieces of 2 layers at share 0.05, hold rule off, `LLAMA_KPOOL_OWN_SEQS=1`,
+`LLAMA_PREFILL_SHORT_FIRST=1`) plus `LLAMA_PREFILL_SLICE_SAME_FREE=512` (patch 0074). Evidence:
+`docs/evidence/glm-windows-2026-10-30/nc/spark/nc-s3/` (runner `spark-nc7.sh`, its log `spark-nc7a.log`,
+`legs-nc2/results.jsonl`, the digests, `server-G7-mechanics.txt`).
+- **Leg SV7 (FIN, client classes, detectors): gate PASS.** 21 of 21 answers gold, 8 distinct long ubatches and none
+  with more than one result hash, 40 ubatches read in pieces, 3966 ubatches while a recurrent cell was frozen and none
+  that contained it, no guard refusal, no test key in the log.
+- **Legs SA6 and SA7 (acceptance on FIN, two server processes): 0 multi rounds differing from solo or gold in
+  either.** Solo p0-p4 `ce2fc95752` `bb64203d71` `2d592efcb6` `1aab74269d` `0c3f28294b` at 14.5-15.9 tok/s, the 16k
+  prompt `145c14aa8b` read at 347 and 351 tok/s, quicksort-128 `ee079496a4`. One to five clients with two rounds, four
+  short clients next to a 16k prompt and p0 next to a 16k prompt in both processes (the mixes that SA5 of window nc-s2
+  still owed). Lowest MemAvailable 17619 and 17623 MiB.
+- **Speed against the production config on the same binaries in the same window.** SP7 = today's production config
+  (five 200k slots, no floor, no pieces); SQ7 = FIN without `LLAMA_PREFILL_SLICE_SAME_FREE`. Decode aggregate, tok/s,
+  rounds 1 / 2:
+
+  | clients | FIN (SA6) | FIN (SA7) | FIN without 0074 (SQ7) | production config (SP7) |
+  |---|---|---|---|---|
+  | two | 20.79 / 21.27 | 20.76 / 21.22 | 21.23 / 21.34 | 21.48 / 21.64 |
+  | three | 24.20 / 24.24 | 24.20 / 24.27 | 23.82 / 23.87 | 24.24 / 24.26 |
+  | four | 25.78 / 25.86 | 25.79 / 25.85 | 25.34 / 25.36 | 25.88 / 25.96 |
+  | five | 24.72 / 24.71 | 24.47 / 24.70 | 24.36 / 24.33 | 24.74 / 24.73 |
+  | four short + a 16k prompt | 12.10 | 12.10 | - | 12.42 |
+
+  Patch 0074 does on the Spark what it did on the GH200: without it three to five clients are 1.5-2.3 % under the
+  production config, with it 0-0.4 %. **Two clients stay 1.0-1.9 % under** (round 2: 21.22-21.34 against 21.64). SA6
+  and SA7 ran their two-client rounds after a 16k prompt and SP7 and SQ7 after one short request, so round 1 is not
+  comparable between them; SQ7 has SP7's order and is 1.2-1.4 % under. Not attributed yet (five 1M slots with the
+  floor, or the pieces flags): owed are FIN in SP7's order next to SP7, and each half alone. In the 16k mix the
+  split differs by design: under FIN the four short clients get 3.4 tok/s each while the prompt is read and the 16k
+  client then decodes alone at 14.6; in production the 16k prompt is read first (2.8-5.8 tok/s per client).
+- **Leg RF7 (staggered pairs): 20 of 20 equal to solo** (the pairs that aborted before patch 0073).
+- **Leg SD7 (FIN with client classes; Juno alone 16.5-16.6 tok/s at 512 tokens).** All md5 gold, no key in the log,
+  no key: 401. Against production with the hold rule (leg SB1 of window nc-s2, another build):
+
+  | scenario | FIN (SD7) | production, hold rule (SB1) |
+  |---|---|---|
+  | junolong: a 16k low prompt one second into her 512-token answer | Juno 15.72 tok/s (95 %); the prompt's first token 77.8 s | not run in SB1 |
+  | prefill: she arrives ten seconds into a 16k low prompt | her first token 1.37 s, 15.41 tok/s; the prompt's first token 62.7 s | not run in SB1 |
+  | junofirst: four low clients one second into her answer | Juno 15.48 tok/s; their first tokens after 9.3, 16.5, 17.2 and 17.8 s | not run in SB1 |
+  | mixed: Juno's decode | 14.62 tok/s (88 %), first token 5.3 s | 6.61 tok/s (40 %), first token 4.7 s |
+  | mixed: three short low clients | first token 0.7-1.8 s, 3.0 tok/s, done after 87 s, largest gap 8.2 s | first token 1.2-2.5 s, 5.5-5.7 tok/s, done after 47 s |
+  | mixed: the 16k low prompt's first token | 96.9 s | 87.9 s |
+  | samelong: a client generating while a 16k prompt of its class is read | 7.61 tok/s, largest gap 0.43 s, done after 67.7 s | stalls 46.4 s, done after 84.6 s |
+  | samelong: the 16k prompt's first token | 79.0 s | 46.3 s |
+  | shortbehind: a short prompt 5 s behind a 16k prompt | first token 1.1 s (the long one 62.7 s) | first token 41.8 s (the long one 46.2 s) |
+
+- **Correction to window nc-s2: why Juno's first token is 5.3 s in "mixed".** Not "the short tails now go before
+  her". The server log of SD7 shows her request starting 3.4 s after the low 16k prompt's first ubatch began and her
+  first token right after that ubatch ended (2048 tokens, 23 pieces, 5.55 s of GPU time). Only one ubatch can be
+  pending in pieces, and `pp_step` finishes it without yielding when a prompt of a higher class is waiting
+  (`pp_higher_prompt_waiting`), so her prompt waits for the rest of that one ubatch: at most about six seconds on the
+  Spark, the same bound as in production, where a ubatch runs whole (4.7 s in SB1). The three low clients' 8.2-second
+  gap is the same ubatch. In "prefill" she met a ubatch near its end (1.4 s).
+- **Leg SS7 (the same with `LLAMA_PREFILL_SLICE_SHARE_SAME=0.25`), the knob left open in nc-s2.** mixed: the short low
+  clients 4.1-4.2 tok/s, done after 63 s (87 s at 0.5), largest gap 6.0 s; the 16k prompt's first token 98.9 s (96.9);
+  Juno 15.41 tok/s, first token 0.41 s (the long prompt had not started a ubatch yet when she came). samelong: the
+  generating client 11.44 tok/s, done after 45.3 s (67.7); the 16k prompt's first token 78.6 s (79.0). shortbehind:
+  the short client 12.04 tok/s, done after 22.3 s (33.5); the long prompt 62.8 s (62.7). All md5 gold. Where the
+  prompt outlasts the answers next to it, it ends at the same time at either share and the answers end sooner at
+  0.25. The other side was not measured: next to a client that generates for longer than the prompt takes, a prompt
+  at 0.25 gets a quarter of the time instead of half. FIN stays at 0.5 (the value accepted on both boxes).
+- **Leg G7 (floor and burst mechanics at one tenth scale: floor 20480 cells, an 80k "burst" conversation, four
+  19k "floor" clients, `LLAMA_ELASTIC_KV_FLOOR_MIB=30000` so that refusals happen at this size).**
+  - Burst admitted while the floors fill ("burst to 79893 cells (2.27 GB past the floor)"); read at 209.8 tok/s next
+    to the four floor clients, 254-309 tok/s alone.
+  - The four floor clients during the burst's read, five rounds: every answer equal to its answer alone
+    (`2a0f08f093` `91f44f357f` `a146549ea2` `b8fc999a72`), 3.3-3.5 tok/s each (16.3-16.6 alone). All five together:
+    4.75-5.06 tok/s each, the same bytes.
+  - A growth to 1M cells is refused with a clean 503 in 0.2 s ("REFUSED a burst to 999430 cells (35.03 GB past the
+    floor of 20480 cells)"); a growth to 120k is admitted (1.51 GB past the floor); a newcomer on a floor client's
+    slot is served (15k tokens at 350 tok/s); after the release "no conversation past the floor any more, the
+    compute buffer goes back to its reserve"; the four floor clients afterwards answer with the same bytes in two
+    rounds. No refusal of anything under the floor. The valve never had to release at this scale (lowest
+    MemAvailable 15667 MiB), so the valve under load is still only covered by the full-scale leg.
+  - **Fault: the refused growth cleared the conversation it was refused on.** Server log: "elastic KV refused 999430
+    cells, failing this request", then "clearing prompt with 79973 tokens"; the next request of that conversation had
+    `cache_n` 0 and re-read its 79910 tokens in 259 s. The code is patch 0052's refusal path ("a slot whose growth is
+    refused gets an error and gives its memory back"), written for a refusal in the middle of an answer; patch 0060
+    refuses a burst before anything of the request has touched the cache and went through the same path. At full
+    scale this means: a 500k session whose next turn is refused loses its cache and pays the whole prompt again
+    (about an hour on the Spark) once memory is free. The harness text says "a 503 that leaves B as it was"; the
+    server did not do that. Not shippable as is. Fix (to become patch 0075): a request refused at its start leaves
+    the slot's conversation and memory as they were.
+  - The 80k answer after a cached prefix (`3a3224351a`) differs from the answer after a fresh read of the same
+    prompt (`5984a50a8c`, twice): the known dependence of prompt bytes on the ubatch boundaries (window nc1), each
+    reproducible, the same in production.
+  - Harness artifact: the request sent right after the cancelled 120k growth went to another slot by LRU (the
+    cancelled request still held its slot for the rest of its ubatch) and evicted a floor client's conversation
+    there. Upstream slot selection, the same in production.
+- **Window closed 17:20 UTC.** glm53-spark back at one replica on image `547208dca250-g08d176f`, quicksort gold
+  `ee079496a4` three times through the Service (16.5-17.1 tok/s); no test server, runner, key file or test snapshot
+  left; the laptop deadman disarmed at 17:20:14. Not run: the full-scale burst leg FB7 (a 500k session next to four
+  ~190k clients, about 100 minutes); it waits for the fix above.

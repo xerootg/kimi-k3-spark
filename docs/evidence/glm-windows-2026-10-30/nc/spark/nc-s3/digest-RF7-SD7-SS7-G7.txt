@@ -1,0 +1,109 @@
+RF7 staggered pairs equal to solo: 20 of 20
+  p1 then p0 delay 1.0 rep 0 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [11.61, 12.86]
+  p1 then p0 delay 1.0 rep 1 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [11.82, 13.02]
+  p1 then p0 delay 1.0 rep 2 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [12.03, 13.23]
+  p1 then p0 delay 1.0 rep 3 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [12.01, 13.25]
+  p1 then p0 delay 0.01 rep 0 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [11.4, 12.55]
+  p1 then p0 delay 0.01 rep 1 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [11.54, 12.73]
+  p1 then p0 delay 0.01 rep 2 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [11.63, 12.81]
+  p1 then p0 delay 0.01 rep 3 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [11.63, 12.81]
+  p1 then p0 delay 0.3 rep 0 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [11.63, 12.8]
+  p1 then p0 delay 0.3 rep 1 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [11.62, 12.79]
+  p1 then p0 delay 0.3 rep 2 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [11.61, 12.79]
+  p1 then p0 delay 0.3 rep 3 ok=True md5 ['08815159c3', '3c0baad848'] ref ['08815159c3', '3c0baad848'] dec [11.56, 12.76]
+  p0 then p1 delay 1.0 rep 0 ok=True md5 ['3c0baad848', '08815159c3'] ref ['3c0baad848', '08815159c3'] dec [12.02, 13.48]
+  p0 then p1 delay 1.0 rep 1 ok=True md5 ['3c0baad848', '08815159c3'] ref ['3c0baad848', '08815159c3'] dec [12.03, 13.49]
+  p0 then p1 delay 1.0 rep 2 ok=True md5 ['3c0baad848', '08815159c3'] ref ['3c0baad848', '08815159c3'] dec [12.03, 13.48]
+  p0 then p1 delay 0.01 rep 0 ok=True md5 ['3c0baad848', '08815159c3'] ref ['3c0baad848', '08815159c3'] dec [11.48, 12.78]
+  p0 then p1 delay 0.01 rep 1 ok=True md5 ['3c0baad848', '08815159c3'] ref ['3c0baad848', '08815159c3'] dec [11.46, 12.76]
+  p0 then p1 delay 0.01 rep 2 ok=True md5 ['3c0baad848', '08815159c3'] ref ['3c0baad848', '08815159c3'] dec [11.45, 12.76]
+  p2 then p0 delay 2.0 rep 0 ok=True md5 ['2d592efcb6', 'ce2fc95752'] ref ['2d592efcb6', 'ce2fc95752'] dec [10.55, 10.66]
+  p2 then p0 delay 2.0 rep 1 ok=True md5 ['2d592efcb6', 'ce2fc95752'] ref ['2d592efcb6', 'ce2fc95752'] dec [10.92, 11.05]
+
+SD7 (prio_spark.py)
+  warm        warm   p0      send   0.0 first token    0.44 s wall   32.87 s largest gap   0.09 s decode  15.76 tok/s prompt     10 md5 cfa6c68a74
+  warm        warm   p0      send  32.9 first token    0.39 s wall   31.31 s largest gap   0.08 s decode  16.52 tok/s prompt     10 md5 cfa6c68a74
+  warm        warm   p0      send  64.2 first token    0.39 s wall   31.18 s largest gap   0.08 s decode  16.60 tok/s prompt     10 md5 cfa6c68a74
+  junolong    juno   p0      send   0.0 first token    0.42 s wall   32.93 s largest gap   0.36 s decode  15.72 tok/s prompt     10 md5 cfa6c68a74
+  junolong    low    L16384  send   1.0 first token   77.76 s wall   87.14 s largest gap   0.10 s decode  13.54 tok/s prompt  16414 md5 145c14aa8b
+  prefill     low    L16384  send   0.0 first token   62.72 s wall   70.96 s largest gap   0.08 s decode  15.41 tok/s prompt  16414 md5 145c14aa8b
+  prefill     juno   p0      send  10.0 first token    1.37 s wall   17.92 s largest gap   0.34 s decode  15.41 tok/s prompt     10 md5 ce2fc95752
+  junofirst   juno   p0      send   0.0 first token    0.41 s wall   16.89 s largest gap   0.51 s decode  15.48 tok/s prompt     10 md5 ce2fc95752
+  junofirst   low    p2      send   1.0 first token    9.27 s wall   58.52 s largest gap   4.05 s decode   5.18 tok/s prompt     18 md5 2d592efcb6
+  junofirst   low    p4      send   1.0 first token   17.15 s wall   58.80 s largest gap   0.83 s decode   6.12 tok/s prompt     21 md5 0c3f28294b
+  junofirst   low    p1      send   1.0 first token   16.50 s wall   58.80 s largest gap   1.48 s decode   6.03 tok/s prompt     19 md5 bb64203d71
+  junofirst   low    p3      send   1.0 first token   17.79 s wall   58.80 s largest gap   0.20 s decode   6.22 tok/s prompt     21 md5 1aab74269d
+  mixed       low    p1      send   0.0 first token    1.75 s wall   87.08 s largest gap   8.24 s decode   2.99 tok/s prompt     19 md5 bb64203d71
+  mixed       low    p3      send   0.0 first token    0.68 s wall   87.08 s largest gap   8.24 s decode   2.95 tok/s prompt     21 md5 1aab74269d
+  mixed       low    p2      send   0.0 first token    1.22 s wall   87.08 s largest gap   8.24 s decode   2.97 tok/s prompt     18 md5 2d592efcb6
+  mixed       low    L16384  send   0.5 first token   96.91 s wall  105.75 s largest gap   0.10 s decode  14.36 tok/s prompt  16414 md5 145c14aa8b
+  mixed       juno   p0      send   4.0 first token    5.27 s wall   22.71 s largest gap   0.29 s decode  14.62 tok/s prompt     10 md5 ce2fc95752
+  samelong    gen    p1      send   0.0 first token    0.55 s wall   67.73 s largest gap   0.43 s decode   7.61 tok/s prompt     19 md5 4d4058c69f
+  samelong    low    L16384  send   2.0 first token   79.03 s wall   87.38 s largest gap   0.09 s decode  15.21 tok/s prompt  16414 md5 145c14aa8b
+  shortbehind long   L16384  send   0.0 first token   62.65 s wall   70.76 s largest gap   0.08 s decode  15.67 tok/s prompt  16414 md5 145c14aa8b
+  shortbehind short  p1      send   5.0 first token    1.12 s wall   33.49 s largest gap   0.38 s decode   7.88 tok/s prompt     19 md5 bb64203d71
+  nokey       nokey  p0      error 401
+
+SS7 (prio_spark.py)
+  warm        warm   p0      send   0.0 first token    0.44 s wall   32.86 s largest gap   0.09 s decode  15.77 tok/s prompt     10 md5 cfa6c68a74
+  warm        warm   p0      send  32.9 first token    0.39 s wall   31.26 s largest gap   0.08 s decode  16.55 tok/s prompt     10 md5 cfa6c68a74
+  warm        warm   p0      send  64.1 first token    0.40 s wall   31.20 s largest gap   0.08 s decode  16.59 tok/s prompt     10 md5 cfa6c68a74
+  mixed       low    p2      send   0.0 first token    1.52 s wall   63.20 s largest gap   5.98 s decode   4.13 tok/s prompt     18 md5 2d592efcb6
+  mixed       low    p3      send   0.0 first token    0.88 s wall   63.20 s largest gap   5.98 s decode   4.09 tok/s prompt     21 md5 1aab74269d
+  mixed       low    p1      send   0.0 first token    2.14 s wall   63.20 s largest gap   5.98 s decode   4.18 tok/s prompt     19 md5 bb64203d71
+  mixed       low    L16384  send   0.5 first token   98.85 s wall  108.20 s largest gap   0.11 s decode  13.59 tok/s prompt  16414 md5 145c14aa8b
+  mixed       juno   p0      send   4.0 first token    0.41 s wall   16.95 s largest gap   0.25 s decode  15.41 tok/s prompt     10 md5 ce2fc95752
+  samelong    gen    p1      send   0.0 first token    0.58 s wall   45.26 s largest gap   0.36 s decode  11.44 tok/s prompt     19 md5 4d4058c69f
+  samelong    low    L16384  send   2.0 first token   78.60 s wall   87.06 s largest gap   0.09 s decode  15.01 tok/s prompt  16414 md5 145c14aa8b
+  shortbehind long   L16384  send   0.0 first token   62.77 s wall   70.84 s largest gap   0.08 s decode  15.73 tok/s prompt  16414 md5 145c14aa8b
+  shortbehind short  p1      send   5.0 first token    1.13 s wall   22.31 s largest gap   0.35 s decode  12.04 tok/s prompt     19 md5 bb64203d71
+
+G7 (fb2.py, one tenth scale)
+  solo p0 md5 ce2fc95752 decode 15.35 tok/s
+  fill-during-burst  P x4      round -    slot 2 prompt_n  18980 cache_n      0 read   108.9 s ( 174.3 tok/s) decode  0.00 tok/s wall  110.2 s md5 bbfd0eef44
+  floor-during-burst P+S0      round 0    slot 0 prompt_n     20 cache_n  18980 read     0.7 s (  27.7 tok/s) decode  3.34 tok/s wall   27.6 s md5 2a0f08f093
+  floor-during-burst P+S1      round 0    slot 2 prompt_n     20 cache_n  18980 read     0.5 s (  40.5 tok/s) decode  3.43 tok/s wall   27.6 s md5 91f44f357f
+  floor-during-burst P+S3      round 0    slot 3 prompt_n     20 cache_n  18980 read     0.5 s (  42.9 tok/s) decode  3.37 tok/s wall   28.9 s md5 b8fc999a72
+  floor-during-burst P+S2      round 0    slot 4 prompt_n     20 cache_n  18980 read     0.5 s (  43.4 tok/s) decode  3.50 tok/s wall   29.2 s md5 a146549ea2
+  floor-during-burst P+S0      round 1    slot 0 prompt_n      4 cache_n  18996 read     0.2 s (  19.7 tok/s) decode  3.33 tok/s wall   23.4 s md5 2a0f08f093
+  floor-during-burst P+S2      round 1    slot 4 prompt_n      4 cache_n  18996 read     0.2 s (  20.8 tok/s) decode  3.37 tok/s wall   23.3 s md5 a146549ea2
+  floor-during-burst P+S3      round 1    slot 3 prompt_n      4 cache_n  18996 read     0.2 s (  21.6 tok/s) decode  3.36 tok/s wall   23.8 s md5 b8fc999a72
+  floor-during-burst P+S1      round 1    slot 2 prompt_n      4 cache_n  18996 read     0.2 s (  21.8 tok/s) decode  3.40 tok/s wall   23.9 s md5 91f44f357f
+  floor-during-burst P+S0      round 2    slot 0 prompt_n      4 cache_n  18996 read     0.2 s (  21.8 tok/s) decode  3.34 tok/s wall   20.0 s md5 2a0f08f093
+  floor-during-burst P+S1      round 2    slot 2 prompt_n      4 cache_n  18996 read     0.2 s (  19.5 tok/s) decode  3.31 tok/s wall   20.0 s md5 91f44f357f
+  floor-during-burst P+S3      round 2    slot 3 prompt_n      4 cache_n  18996 read     0.2 s (  21.8 tok/s) decode  3.37 tok/s wall   20.2 s md5 b8fc999a72
+  floor-during-burst P+S2      round 2    slot 4 prompt_n      4 cache_n  18996 read     0.2 s (  20.8 tok/s) decode  3.34 tok/s wall   20.7 s md5 a146549ea2
+  floor-during-burst P+S0      round 3    slot 0 prompt_n      4 cache_n  18996 read     0.2 s (  21.4 tok/s) decode  3.32 tok/s wall   21.8 s md5 2a0f08f093
+  floor-during-burst P+S3      round 3    slot 3 prompt_n      4 cache_n  18996 read     0.2 s (  19.8 tok/s) decode  3.28 tok/s wall   21.8 s md5 b8fc999a72
+  floor-during-burst P+S1      round 3    slot 2 prompt_n      4 cache_n  18996 read     0.2 s (  21.6 tok/s) decode  3.35 tok/s wall   22.0 s md5 91f44f357f
+  floor-during-burst P+S2      round 3    slot 4 prompt_n      4 cache_n  18996 read     0.2 s (  21.9 tok/s) decode  3.34 tok/s wall   22.3 s md5 a146549ea2
+  floor-during-burst P+S2      round 4    slot 4 prompt_n      4 cache_n  18996 read     0.2 s (  20.3 tok/s) decode  3.27 tok/s wall   23.2 s md5 a146549ea2
+  floor-during-burst P+S1      round 4    slot 2 prompt_n      4 cache_n  18996 read     0.2 s (  21.7 tok/s) decode  3.30 tok/s wall   23.2 s md5 91f44f357f
+  floor-during-burst P+S3      round 4    slot 3 prompt_n      4 cache_n  18996 read     0.2 s (  21.6 tok/s) decode  3.25 tok/s wall   23.9 s md5 b8fc999a72
+  floor-during-burst P+S0      round 4    slot 0 prompt_n      4 cache_n  18996 read     0.2 s (  21.6 tok/s) decode  3.29 tok/s wall   23.9 s md5 2a0f08f093
+  burst-fill         B         round -    slot 1 prompt_n  79891 cache_n      0 read   380.9 s ( 209.8 tok/s) decode  0.00 tok/s wall  381.0 s md5 c4b8d24f39
+  floor-solo         P+S0      round -    slot 0 prompt_n      4 cache_n  18996 read     0.2 s (  21.8 tok/s) decode 16.51 tok/s wall    4.0 s md5 2a0f08f093
+  floor-solo         P+S1      round -    slot 2 prompt_n      4 cache_n  18996 read     0.2 s (  21.7 tok/s) decode 16.38 tok/s wall    4.0 s md5 91f44f357f
+  floor-solo         P+S2      round -    slot 4 prompt_n      4 cache_n  18996 read     0.2 s (  21.7 tok/s) decode 16.27 tok/s wall    4.1 s md5 a146549ea2
+  floor-solo         P+S3      round -    slot 3 prompt_n      4 cache_n  18996 read     0.2 s (  21.6 tok/s) decode 16.62 tok/s wall    4.0 s md5 b8fc999a72
+  burst-solo         B+T       round -    slot 1 prompt_n     19 cache_n  79891 read     0.5 s (  37.1 tok/s) decode 14.23 tok/s wall    5.0 s md5 3a3224351a
+  conc               P+S0      round -    slot 0 prompt_n      4 cache_n  18996 read     0.2 s (  21.3 tok/s) decode  4.75 tok/s wall   13.5 s md5 2a0f08f093
+  conc               P+S2      round -    slot 4 prompt_n      4 cache_n  18996 read     0.2 s (  21.7 tok/s) decode  4.82 tok/s wall   13.5 s md5 a146549ea2
+  conc               P+S3      round -    slot 3 prompt_n      4 cache_n  18996 read     0.2 s (  20.8 tok/s) decode  4.86 tok/s wall   13.7 s md5 b8fc999a72
+  conc               P+S1      round -    slot 2 prompt_n      4 cache_n  18996 read     0.2 s (  22.1 tok/s) decode  4.94 tok/s wall   13.8 s md5 91f44f357f
+  conc               B+T       round -    slot 1 prompt_n      4 cache_n  79906 read     0.2 s (  19.6 tok/s) decode  5.06 tok/s wall   13.9 s md5 3a3224351a
+  grow               G1000000  n_tok  999428 error 503 wall 0.2 s {"error":{"code":503,"message":"out of KV cache memory: the server cannot hold this conversation now (elastic KV refused 999430 cells)","type":"unavai
+  burst-solo         B+T       round -    slot 1 prompt_n  79910 cache_n      0 read   258.9 s ( 308.7 tok/s) decode 15.10 tok/s wall  263.1 s md5 5984a50a8c
+  grow               G120000   n_tok  119790 error client wall 20.0 s TimeoutError: timed out
+  burst-solo         B+T       round -    slot 0 prompt_n  79910 cache_n      0 read   314.4 s ( 254.1 tok/s) decode 15.48 tok/s wall  321.0 s md5 5984a50a8c
+  newcomer           N15000    round -    slot 4 prompt_n  14922 cache_n      0 read    42.6 s ( 349.9 tok/s) decode 15.07 tok/s wall   46.8 s md5 9c80718286
+  release            REL       round -    slot 0 prompt_n      3 cache_n      0 read     0.2 s (  15.7 tok/s) decode 11.99 tok/s wall    0.8 s md5 f9537946f2
+  floor-conc         P+S2      round 0    slot 2 prompt_n     20 cache_n  18980 read     0.5 s (  40.2 tok/s) decode  5.94 tok/s wall   11.4 s md5 a146549ea2
+  floor-conc         P+S3      round 0    slot 3 prompt_n      4 cache_n  18996 read     0.3 s (  15.5 tok/s) decode  5.68 tok/s wall   11.4 s md5 b8fc999a72
+  floor-conc         P+S0      round 0    slot 1 prompt_n  19000 cache_n      0 read   108.6 s ( 175.0 tok/s) decode  4.55 tok/s wall  123.6 s md5 920fcb6b3d
+  floor-conc         P+S1      round 0    slot 4 prompt_n  19000 cache_n      0 read   109.6 s ( 173.4 tok/s) decode 13.82 tok/s wall  126.0 s md5 67302b2525
+  floor-conc         P+S0      round 1    slot 1 prompt_n      4 cache_n  18996 read     0.2 s (  20.7 tok/s) decode  6.46 tok/s wall   10.1 s md5 920fcb6b3d
+  floor-conc         P+S1      round 1    slot 4 prompt_n      4 cache_n  18996 read     0.2 s (  20.3 tok/s) decode  6.34 tok/s wall   10.1 s md5 67302b2525
+  floor-conc         P+S2      round 1    slot 2 prompt_n      4 cache_n  18996 read     0.2 s (  21.7 tok/s) decode  6.57 tok/s wall   10.3 s md5 a146549ea2
+  floor-conc         P+S3      round 1    slot 3 prompt_n      4 cache_n  18996 read     0.2 s (  20.7 tok/s) decode  6.76 tok/s wall   10.4 s md5 b8fc999a72
+  solo p0 md5 ce2fc95752 decode 14.49 tok/s
