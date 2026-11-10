@@ -1,0 +1,153 @@
+=== LEG CP parallel=5 ctx=5242880 img=547208dca250-g68d4166 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_PRIORITY_HOLD_PROMPTS=1] xargs=[] cache_ram=65536 08:52:29
+READY CP after 45s
+0.11.208.143 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.300.243 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.300.281 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.300.283 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.493.523 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.336.383 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.336.416 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.336.417 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.846.707 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.577.649 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79965 MiB
+--- ekbench.py solo p0 L16384 08:53:15
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 78.51, "decode_n": 256, "decode_tps": 53.68, "md5": "8e312d7bdd", "t0": 1794300795.9973397, "t1": 1794300800.898178, "kind": "solo", "tag": "CP"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.07, "prefill_tps": 1629.86, "decode_n": 128, "decode_tps": 37.55, "md5": "145c14aa8b", "t0": 1794300800.8983078, "t1": 1794300814.4005103, "kind": "solo", "tag": "CP"}
+--- ekbench.py multi p1 p2 L16384 L65536 --rounds 1 08:53:34
+{"kind": "multi", "tag": "CP", "n": 4, "round": "warm", "agg_tps": 10.73, "wall_s": 71.59, "gen": 768, "per_stream_tps": [4.23, 3.59, 2.28, 13.81], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [91.49, 76.19, 1550.48, 1412.34], "t0": 1794300814.4465213, "t1": 1794300886.0378528}
+{"kind": "multi", "tag": "CP", "n": 4, "round": 1, "agg_tps": 10.74, "wall_s": 71.49, "gen": 768, "per_stream_tps": [4.37, 3.6, 2.35, 16.1], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [90.57, 82.02, 1338.24, 1419.57], "t0": 1794300886.0386257, "t1": 1794300957.524151}
+--- ekbench.py solo p0 L16384 L65536 08:55:57
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 75.05, "decode_n": 256, "decode_tps": 47.8, "md5": "8e312d7bdd", "t0": 1794300957.5711117, "t1": 1794300963.0888834, "kind": "solo", "tag": "CP"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 12.24, "prefill_tps": 1341.04, "decode_n": 128, "decode_tps": 48.49, "md5": "145c14aa8b", "t0": 1794300963.0889866, "t1": 1794300977.9843931, "kind": "solo", "tag": "CP"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 45.88, "prefill_tps": 1422.18, "decode_n": 128, "decode_tps": 47.52, "md5": "8acec1b966", "t0": 1794300977.9844823, "t1": 1794301026.608896, "kind": "solo", "tag": "CP"}
+--- ekbench.py solo L200000 08:57:06
+{"spec": "L200000", "prompt_n": 199685, "cache_n": 0, "prefill_s": 165.53, "prefill_tps": 1206.36, "decode_n": 128, "decode_tps": 42.67, "md5": "145c14aa8b", "t0": 1794301026.655217, "t1": 1794301195.370382, "kind": "solo", "tag": "CP"}
+--- ekbench.py solo L16384 p0 p0 p0 08:59:55
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 16.98, "prefill_tps": 966.43, "decode_n": 128, "decode_tps": 49.11, "md5": "145c14aa8b", "t0": 1794301195.415022, "t1": 1794301215.5283775, "kind": "solo", "tag": "CP"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.15, "prefill_tps": 67.51, "decode_n": 256, "decode_tps": 44.04, "md5": "8e312d7bdd", "t0": 1794301215.5285091, "t1": 1794301221.5012982, "kind": "solo", "tag": "CP"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 62.61, "decode_n": 256, "decode_tps": 45.38, "md5": "8e312d7bdd", "t0": 1794301221.5013804, "t1": 1794301227.3150208, "kind": "solo", "tag": "CP"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 74.98, "decode_n": 256, "decode_tps": 46.37, "md5": "8e312d7bdd", "t0": 1794301227.3151038, "t1": 1794301232.9834032, "kind": "solo", "tag": "CP"}
+PEAK GPU 80309 MiB, LOWEST MemAvailable 140985 MiB; END CP 09:00:35
+NC-LEG-DONE CP 09:00:35
+=== LEG KP parallel=5 ctx=5242880 img=547208dca250-gadd9f81 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_PRIORITY_HOLD_PROMPTS=1 LLAMA_KPOOL_OWN_SEQS=1] xargs=[] cache_ram=65536 09:00:37
+READY KP after 42s
+0.10.884.163 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.003.610 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.003.648 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.003.649 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.195.220 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.064.690 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.064.723 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.064.724 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.607.887 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.331.348 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79968 MiB
+--- ekbench.py solo p0 L16384 09:01:22
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 78.36, "decode_n": 256, "decode_tps": 53.66, "md5": "8e312d7bdd", "t0": 1794301282.1216142, "t1": 1794301287.025298, "kind": "solo", "tag": "KP"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.06, "prefill_tps": 1632.09, "decode_n": 128, "decode_tps": 37.53, "md5": "145c14aa8b", "t0": 1794301287.025408, "t1": 1794301300.5174823, "kind": "solo", "tag": "KP"}
+--- ekbench.py multi p1 p2 L16384 L65536 --rounds 1 09:01:40
+{"kind": "multi", "tag": "KP", "n": 4, "round": "warm", "agg_tps": 11.21, "wall_s": 68.53, "gen": 768, "per_stream_tps": [4.41, 3.75, 2.38, 13.78], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [92.45, 76.41, 1641.81, 1486.89], "t0": 1794301300.5646622, "t1": 1794301369.0936303}
+{"kind": "multi", "tag": "KP", "n": 4, "round": 1, "agg_tps": 11.53, "wall_s": 66.63, "gen": 768, "per_stream_tps": [4.56, 3.86, 2.45, 16.06], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [92.98, 84.19, 1655.53, 1495.53], "t0": 1794301369.0943584, "t1": 1794301435.7212214}
+--- ekbench.py solo p0 L16384 L65536 09:03:55
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 77.42, "decode_n": 256, "decode_tps": 51.17, "md5": "8e312d7bdd", "t0": 1794301435.7691643, "t1": 1794301440.9353423, "kind": "solo", "tag": "KP"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 9.88, "prefill_tps": 1661.33, "decode_n": 128, "decode_tps": 50.54, "md5": "145c14aa8b", "t0": 1794301440.9354458, "t1": 1794301453.366974, "kind": "solo", "tag": "KP"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 43.47, "prefill_tps": 1500.92, "decode_n": 128, "decode_tps": 48.45, "md5": "8acec1b966", "t0": 1794301453.36706, "t1": 1794301499.5354838, "kind": "solo", "tag": "KP"}
+--- ekbench.py solo L200000 09:04:59
+{"spec": "L200000", "prompt_n": 199685, "cache_n": 0, "prefill_s": 158.23, "prefill_tps": 1261.96, "decode_n": 128, "decode_tps": 43.52, "md5": "145c14aa8b", "t0": 1794301499.581281, "t1": 1794301660.9483967, "kind": "solo", "tag": "KP"}
+--- ekbench.py solo L16384 p0 p0 p0 09:07:40
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 9.83, "prefill_tps": 1669.5, "decode_n": 128, "decode_tps": 54.88, "md5": "145c14aa8b", "t0": 1794301660.994872, "t1": 1794301673.6910594, "kind": "solo", "tag": "KP"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 71.94, "decode_n": 256, "decode_tps": 50.0, "md5": "8e312d7bdd", "t0": 1794301673.6911826, "t1": 1794301678.9674377, "kind": "solo", "tag": "KP"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.15, "prefill_tps": 66.12, "decode_n": 256, "decode_tps": 51.75, "md5": "8e312d7bdd", "t0": 1794301678.9675224, "t1": 1794301684.0836968, "kind": "solo", "tag": "KP"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 79.7, "decode_n": 256, "decode_tps": 53.02, "md5": "8e312d7bdd", "t0": 1794301684.0837727, "t1": 1794301689.0562086, "kind": "solo", "tag": "KP"}
+PEAK GPU 80309 MiB, LOWEST MemAvailable 140972 MiB; END KP 09:08:11
+NC-LEG-DONE KP 09:08:11
+=== LEG KV parallel=5 ctx=5242880 img=547208dca250-gadd9f81 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_CLIENT_CLASSES=/keys/classes.txt LLAMA_SLOT_RESERVE=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.12 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SLICE_LOG=1 LLAMA_RS_LOG=1 LLAMA_RS_SUM=512] xargs=[] cache_ram=65536 09:08:12
+READY KV after 42s
+0.00.298.619 I srv  server_clien: client classes: 5 keys loaded, top priority 10 (keys not logged)
+0.10.903.369 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.003.940 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.003.978 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.003.980 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.199.157 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.043.290 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.043.321 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.043.322 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.340.111 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.053.212 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80615 MiB
+--- prio_nc_e.py warm --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:08:57
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.157, "wall_s": 4.91, "max_gap_s": 0.04, "decode_tps": 53.65, "prompt_n": 10, "prefill_tps": 74.5, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "KV"}
+{"tag": "warm", "spec": "p0", "t_send": 4.91, "ttft_s": 0.168, "wall_s": 4.89, "max_gap_s": 0.04, "decode_tps": 54.0, "prompt_n": 10, "prefill_tps": 76.1, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "KV"}
+{"tag": "warm", "spec": "p0", "t_send": 9.8, "ttft_s": 0.118, "wall_s": 4.79, "max_gap_s": 0.04, "decode_tps": 54.58, "prompt_n": 10, "prefill_tps": 90.8, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "KV"}
+--- prio_nc_e.py sololong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:09:12
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 10.759, "wall_s": 14.04, "max_gap_s": 0.04, "decode_tps": 38.68, "prompt_n": 16414, "prefill_tps": 1531.4, "md5": "145c14aa8b", "scenario": "sololong", "kind": "prio", "leg": "KV"}
+--- prio_nc_e.py sololong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:09:26
+{"tag": "low", "spec": "L65536", "t_send": 0.01, "ttft_s": 46.673, "wall_s": 49.82, "max_gap_s": 0.04, "decode_tps": 40.38, "prompt_n": 65243, "prefill_tps": 1400.0, "md5": "8acec1b966", "scenario": "sololong", "kind": "prio", "leg": "KV"}
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:10:16
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 3.411, "wall_s": 31.21, "max_gap_s": 2.76, "decode_tps": 9.17, "prompt_n": 18, "prefill_tps": 5.8, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 3.471, "wall_s": 31.21, "max_gap_s": 2.76, "decode_tps": 9.19, "prompt_n": 19, "prefill_tps": 6.3, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 3.628, "wall_s": 31.28, "max_gap_s": 2.76, "decode_tps": 9.22, "prompt_n": 21, "prefill_tps": 7.3, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "L16384", "t_send": 0.5, "ttft_s": 21.959, "wall_s": 30.17, "max_gap_s": 0.09, "decode_tps": 15.47, "prompt_n": 16414, "prefill_tps": 763.5, "md5": "145c14aa8b", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 2.455, "wall_s": 7.86, "max_gap_s": 0.25, "decode_tps": 47.22, "prompt_n": 10, "prefill_tps": 81.8, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:10:47
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 3.213, "wall_s": 29.92, "max_gap_s": 2.77, "decode_tps": 9.55, "prompt_n": 21, "prefill_tps": 7.3, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 3.272, "wall_s": 29.93, "max_gap_s": 2.77, "decode_tps": 9.57, "prompt_n": 19, "prefill_tps": 6.9, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 3.429, "wall_s": 30.02, "max_gap_s": 2.77, "decode_tps": 9.59, "prompt_n": 18, "prefill_tps": 6.5, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "L16384", "t_send": 0.5, "ttft_s": 21.854, "wall_s": 29.55, "max_gap_s": 0.08, "decode_tps": 16.5, "prompt_n": 16414, "prefill_tps": 761.3, "md5": "145c14aa8b", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 2.24, "wall_s": 7.73, "max_gap_s": 0.26, "decode_tps": 46.46, "prompt_n": 10, "prefill_tps": 77.4, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:11:17
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 3.096, "wall_s": 29.44, "max_gap_s": 2.55, "decode_tps": 9.68, "prompt_n": 18, "prefill_tps": 6.5, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 3.033, "wall_s": 29.44, "max_gap_s": 2.55, "decode_tps": 9.66, "prompt_n": 21, "prefill_tps": 7.3, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 3.23, "wall_s": 29.54, "max_gap_s": 2.55, "decode_tps": 9.69, "prompt_n": 19, "prefill_tps": 6.9, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "L16384", "t_send": 0.5, "ttft_s": 22.036, "wall_s": 29.28, "max_gap_s": 0.08, "decode_tps": 17.53, "prompt_n": 16414, "prefill_tps": 748.7, "md5": "145c14aa8b", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 2.221, "wall_s": 7.9, "max_gap_s": 0.25, "decode_tps": 44.88, "prompt_n": 10, "prefill_tps": 73.6, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:11:47
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 3.107, "wall_s": 32.6, "max_gap_s": 2.55, "decode_tps": 8.65, "prompt_n": 21, "prefill_tps": 7.6, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 3.045, "wall_s": 32.6, "max_gap_s": 2.55, "decode_tps": 8.63, "prompt_n": 19, "prefill_tps": 6.6, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 3.264, "wall_s": 32.95, "max_gap_s": 2.55, "decode_tps": 8.59, "prompt_n": 18, "prefill_tps": 6.5, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "L65536", "t_send": 0.51, "ttft_s": 63.071, "wall_s": 66.17, "max_gap_s": 0.04, "decode_tps": 40.97, "prompt_n": 65243, "prefill_tps": 1036.3, "md5": "8acec1b966", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 2.213, "wall_s": 7.99, "max_gap_s": 0.26, "decode_tps": 44.17, "prompt_n": 10, "prefill_tps": 71.6, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+--- prio_nc_e.py stagger --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:12:54
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 3.213, "wall_s": 32.75, "max_gap_s": 2.74, "decode_tps": 8.63, "prompt_n": 18, "prefill_tps": 6.2, "md5": "f8531a5f07", "scenario": "stagger", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 3.274, "wall_s": 32.75, "max_gap_s": 2.74, "decode_tps": 8.65, "prompt_n": 19, "prefill_tps": 6.7, "md5": "74fb633e8e", "scenario": "stagger", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "L65536", "t_send": 0.51, "ttft_s": 63.323, "wall_s": 66.27, "max_gap_s": 0.04, "decode_tps": 43.21, "prompt_n": 65243, "prefill_tps": 1031.9, "md5": "8acec1b966", "scenario": "stagger", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p3", "t_send": 1.5, "ttft_s": 4.773, "wall_s": 31.72, "max_gap_s": 1.96, "decode_tps": 9.46, "prompt_n": 21, "prefill_tps": 6.4, "md5": "4d6338450b", "scenario": "stagger", "kind": "prio", "leg": "KV"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 2.21, "wall_s": 8.27, "max_gap_s": 0.26, "decode_tps": 42.11, "prompt_n": 10, "prefill_tps": 69.1, "md5": "8e312d7bdd", "scenario": "stagger", "kind": "prio", "leg": "KV"}
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:14:00
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 3.07, "wall_s": 32.69, "max_gap_s": 2.56, "decode_tps": 8.61, "prompt_n": 18, "prefill_tps": 6.3, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 3.132, "wall_s": 32.69, "max_gap_s": 2.56, "decode_tps": 8.63, "prompt_n": 19, "prefill_tps": 6.8, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 3.274, "wall_s": 32.76, "max_gap_s": 2.56, "decode_tps": 8.65, "prompt_n": 21, "prefill_tps": 7.5, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "L65536", "t_send": 0.51, "ttft_s": 63.149, "wall_s": 66.03, "max_gap_s": 0.04, "decode_tps": 44.09, "prompt_n": 65243, "prefill_tps": 1035.2, "md5": "8acec1b966", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 2.203, "wall_s": 8.18, "max_gap_s": 0.26, "decode_tps": 42.68, "prompt_n": 10, "prefill_tps": 68.7, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "KV"}
+--- prio_nc_e.py junolong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 512 --delay 1 --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:15:07
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.204, "wall_s": 12.07, "max_gap_s": 0.23, "decode_tps": 43.05, "prompt_n": 10, "prefill_tps": 68.1, "md5": "22da3a7294", "scenario": "junolong", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "L65536", "t_send": 1.01, "ttft_s": 56.187, "wall_s": 58.86, "max_gap_s": 0.04, "decode_tps": 47.6, "prompt_n": 65243, "prefill_tps": 1162.8, "md5": "8acec1b966", "scenario": "junolong", "kind": "prio", "leg": "KV"}
+--- prio_nc_e.py prefill --classes /srv/glm-5.3-flash/nc/keys/classes.txt --delay 10 --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:16:07
+{"tag": "low", "spec": "L65536", "t_send": 0.01, "ttft_s": 51.551, "wall_s": 54.05, "max_gap_s": 0.04, "decode_tps": 50.8, "prompt_n": 65243, "prefill_tps": 1268.6, "md5": "8acec1b966", "scenario": "prefill", "kind": "prio", "leg": "KV"}
+{"tag": "juno", "spec": "p0", "t_send": 10.01, "ttft_s": 0.564, "wall_s": 6.34, "max_gap_s": 0.29, "decode_tps": 44.17, "prompt_n": 10, "prefill_tps": 61.5, "md5": "8e312d7bdd", "scenario": "prefill", "kind": "prio", "leg": "KV"}
+--- prio_nc_e.py stagger --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV 09:17:01
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.58, "wall_s": 27.62, "max_gap_s": 1.65, "decode_tps": 9.43, "prompt_n": 18, "prefill_tps": 64.6, "md5": "f8531a5f07", "scenario": "stagger", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.511, "wall_s": 27.62, "max_gap_s": 1.65, "decode_tps": 9.41, "prompt_n": 19, "prefill_tps": 51.8, "md5": "74fb633e8e", "scenario": "stagger", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "L16384", "t_send": 0.5, "ttft_s": 26.304, "wall_s": 31.65, "max_gap_s": 0.09, "decode_tps": 23.76, "prompt_n": 16414, "prefill_tps": 626.4, "md5": "145c14aa8b", "scenario": "stagger", "kind": "prio", "leg": "KV"}
+{"tag": "low", "spec": "p3", "t_send": 1.5, "ttft_s": 13.756, "wall_s": 30.81, "max_gap_s": 0.31, "decode_tps": 14.95, "prompt_n": 21, "prefill_tps": 2.0, "md5": "4d6338450b", "scenario": "stagger", "kind": "prio", "leg": "KV"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.737, "wall_s": 6.59, "max_gap_s": 0.18, "decode_tps": 43.55, "prompt_n": 10, "prefill_tps": 71.6, "md5": "8e312d7bdd", "scenario": "stagger", "kind": "prio", "leg": "KV"}
+PEAK GPU 80879 MiB, LOWEST MemAvailable 144313 MiB; END KV 09:17:35
+NC-LEG-DONE KV 09:17:35
+server-KV.log no key in log
+requests with gold md5: 44 of 44
+state hashes: 17 distinct long ubatches (end position, length), 0 seen once only, 0 with MORE THAN ONE hash
+prompt ubatches done in pieces: 154, run whole (state not in place): 0
+ubatches while a cell was frozen: 7226; range contains the frozen cell: 0; guard refusals: 0
+  frozen cell 2:     32 ubatches above it with 1 sequence(s)
+  frozen cell 2:      2 ubatches below it with 2 sequence(s)
+  frozen cell 3:   2040 ubatches above it with 1 sequence(s)
+  frozen cell 3:      4 ubatches below it with 1 sequence(s)
+  frozen cell 3:     12 ubatches below it with 2 sequence(s)
+  frozen cell 3:   1166 ubatches below it with 3 sequence(s)
+  frozen cell 4:   2588 ubatches below it with 1 sequence(s)
+  frozen cell 4:    210 ubatches below it with 2 sequence(s)
+  frozen cell 4:   1148 ubatches below it with 3 sequence(s)
+  frozen cell 4:     24 ubatches below it with 4 sequence(s)
+V1-DIGEST KV PASS
+NC5-DONE gate=ok 09:17:35
