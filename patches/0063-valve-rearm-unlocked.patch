@@ -1,0 +1,117 @@
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index 2f2fbe0..4e5803f 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -1811,6 +1811,27 @@ static size_t store_anon_huge(const void * base = nullptr, size_t size = 0) {
+ 
+ static void store_thp_populate(void * p, size_t size, bool regrow = false) {
+ #if defined(__linux__)
++    if (regrow) {
++        // patch 0063: a valve re-arm populates slot by slot (8 MiB each). The accounting below reads
++        // /proc/self/smaps_rollup twice per call (~0.1 s each in a 100 GB process), which made a 2 GB re-arm
++        // take 55 s; a re-arm only advises, populates and collapses, and reports a failure once.
++        const int advice   = madvise(p, size, MADV_HUGEPAGE);
++        const int populate = madvise(p, size, MADV_POPULATE_WRITE);
++        if (populate) {
++            for (size_t off = 0; off < size; off += (size_t) sysconf(_SC_PAGESIZE)) {
++                ((volatile char *) p)[off] = 0;
++            }
++        }
++        const int collapse = madvise(p, size, 25 /* MADV_COLLAPSE */);
++        if (advice || collapse) {
++            static std::atomic<int> warned{0};
++            if (warned.fetch_add(1) % 256 == 0) {
++                LLAMA_LOG_WARN("expert store: THP bank regrow of %zu bytes: HUGEPAGE=%d COLLAPSE=%d (%s); continuing with base pages where needed\n",
++                    size, advice, collapse, strerror(errno));
++            }
++        }
++        return;
++    }
+     const size_t before = store_anon_huge();
+     const int advice = madvise(p, size, MADV_HUGEPAGE);
+     const int advice_errno = advice ? errno : 0;
+@@ -3047,22 +3068,36 @@ struct llama_moe_cache::impl {
+     // re-arm released slots of a domain, at most a chunk and at most `room` bytes worth, so a regrowth never
+     // takes the domain back under the reserve
+     void valve_rearm(bool hbm, size_t room) {
+-        std::lock_guard<std::recursive_mutex> lock(lru_mutex);
++        // patch 0063: the pages are taken outside the LRU lock. The slots leave the released list under the lock and
++        // stay parked (spec_state 3, no key: every victim scan skips them), so nothing else can pick them while their pages are
++        // populated; they join the LRU under the lock again. Before, a chunk of 256 slots held the lock for the
++        // whole populate (55 s on the Spark with THP banks) and every decode step waited for it.
++        const auto t0 = std::chrono::steady_clock::now();
++        std::vector<std::vector<int32_t>> taken(groups.size());
+         int n = 0;
+         size_t bytes = 0;
++        {
++            std::lock_guard<std::recursive_mutex> lock(lru_mutex);
++            for (size_t ig = 0; ig < groups.size(); ++ig) {
++                group & g = groups[ig];
++                std::vector<int32_t> & released = hbm ? valve_released_hbm[ig] : valve_released_host[ig];
++                auto & back = taken[ig];
++                while (!released.empty() && n < valve_regrow_chunk && bytes + g.slot_stride <= room) {
++                    const int32_t s = released.back();
++                    released.pop_back();
++                    back.push_back(s);
++                    n++;
++                    bytes += g.slot_stride;
++                }
++                std::sort(back.begin(), back.end());
++            }
++        }
++        if (n == 0) {
++            return;
++        }
+         for (size_t ig = 0; ig < groups.size(); ++ig) {
+             group & g = groups[ig];
+-            std::vector<int32_t> & released = hbm ? valve_released_hbm[ig] : valve_released_host[ig];
+-            auto & back = valve_victims;
+-            back.clear();
+-            while (!released.empty() && n < valve_regrow_chunk && bytes + g.slot_stride <= room) {
+-                const int32_t s = released.back();
+-                released.pop_back();
+-                back.push_back(s);
+-                n++;
+-                bytes += g.slot_stride;
+-            }
+-            std::sort(back.begin(), back.end());
++            const auto & back = taken[ig];
+             for (size_t i = 0; i < back.size();) {
+                 size_t j = i;
+                 while (j + 1 < back.size() && back[j + 1] == back[j] + 1) {
+@@ -3071,13 +3106,17 @@ struct llama_moe_cache::impl {
+                 slots_take_pages(g, back[i], back[j]);
+                 i = j + 1;
+             }
+-            for (int32_t slot : back) {
+-                g.spec_state[slot].store(0, std::memory_order_release);
+-                g.lru.n_parked--;
+-                g.lru.demote(slot);
+-            }
+         }
+-        if (n > 0) {
++        {
++            std::lock_guard<std::recursive_mutex> lock(lru_mutex);
++            for (size_t ig = 0; ig < groups.size(); ++ig) {
++                group & g = groups[ig];
++                for (int32_t slot : taken[ig]) {
++                    g.spec_state[slot].store(0, std::memory_order_release);
++                    g.lru.n_parked--;
++                    g.lru.demote(slot);
++                }
++            }
+             valve_n_rearms++;
+             if (hbm) {
+                 valve_released_bytes_hbm -= std::min(valve_released_bytes_hbm, bytes);
+@@ -3088,8 +3127,9 @@ struct llama_moe_cache::impl {
+             for (size_t ig = 0; ig < groups.size(); ++ig) {
+                 left += (hbm ? valve_released_hbm[ig] : valve_released_host[ig]).size();
+             }
+-            LLAMA_LOG_INFO("%s: expert store: memory valve: %s calm for %d s: %d slots (%.2f GB) re-armed, %zu still released\n", __func__,
+-                hbm ? "HBM node" : "host", valve_regrow_s, n, bytes/1e9, left);
++            LLAMA_LOG_INFO("%s: expert store: memory valve: %s calm for %d s: %d slots (%.2f GB) re-armed in %.0f ms, %zu still released\n", __func__,
++                hbm ? "HBM node" : "host", valve_regrow_s, n, bytes/1e9,
++                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count(), left);
+         }
+     }
+ 

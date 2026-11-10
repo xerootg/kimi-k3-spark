@@ -1326,3 +1326,83 @@ shapes of every graph that runs are unchanged, so the bytes are too.
 the HBM expert tier at start (decode hit rate 99.9 % with 3.7 GB read from NVMe -> 100 %, tier share 47.5 -> 50.4 %).
 One client, seventh warm request: 50.5 -> 51.7 tok/s; five clients 66.7 -> 68.5-69.8. Every client its gold md5 at N=1, 2, 3,
 5 and next to the 16k request. On the Spark the compute buffer comes out of the same memory as the expert cache.
+
+## 0060-elastic-kv-floor-burst
+
+Guaranteed floor + burst for per-slot elastic KV (0052), so a slot can take a conversation longer than its fixed share
+without any other slot ever being refused below its share. All off unless `LLAMA_ELASTIC_KV_FLOOR_CELLS` is set with
+`LLAMA_ELASTIC_KV_REFUSE=1`.
+
+- **`LLAMA_ELASTIC_KV_FLOOR_CELLS=<cells>`**: every slot may always grow to the floor; a growth to the floor is never
+  refused for lack of memory (only if the device itself cannot map it, logged as an error). Growth past the floor (a
+  *burst*) is allowed while MemAvailable plus what the expert cache's valve can still release (down to its floor,
+  `llama_moe_cache_releasable()`) covers the growth, plus what every *other* slot still needs to reach its floor, plus
+  the valve's reserve and `LLAMA_ELASTIC_KV_FLOOR_MIB`. Otherwise that one request gets HTTP 503 before its prompt runs;
+  the other slots are unaffected. The accounting runs over all caches of the model (attention KV and DSA indexer).
+  A burst asks the valve to make room for its growth only, so the expert cache shrinks only while a long conversation is
+  resident.
+- **Answer reserved with the prompt** (server, `LLAMA_ELASTIC_KV_GEN_RESERVE`, default 8192 cells): a prompt past the
+  floor reserves its whole answer too (`n_predict`, or the default when unset), so a burst that cannot be met is a clean
+  503 at the start and not an error mid-answer; a prompt under the floor reserves up to the floor at most.
+- **No shrink under an active reservation**: a long prompt's per-ubatch `seq_rm` used to shrink the stream and the
+  next ubatch's reserve mapped it again (~1.7 s each; window spark4); streams now keep their last reservation mapped.
+
+Measured on the Spark in window nc-s1 (2026-11-10, dev build): the refusal path returns a clean 503 with every gold
+md5 before and after (leg F2); a 500k-token conversation was admitted next to floor-sized ones with the valve releasing
+15.5 GB of expert cache and MemAvailable never under 5.2 GB (leg F1). Not in production until the acceptance of 0062.
+
+## 0061-prompt-pieces
+
+A lower class's prompt ubatch computed in pieces while a higher class generates, so the higher class keeps most of its
+decode speed and the other prompt still moves, without changing anyone's bytes. Off unless
+`LLAMA_PREFILL_SLICE_LAYERS=<k>` is set (needs `LLAMA_PREFILL_ISOLATE=1` and `--parallel` > 1).
+
+- **Why pieces and not smaller ubatches:** a prompt's bytes depend on its ubatch boundaries (window nc1: logits hash of
+  the 16k request differs when the same prompt runs in ubatches that start at another offset, or with
+  `--ubatch-size 2048`). The ubatches stay as they are; each is computed as views of its own graph that end between
+  two layers (every k layers), with the same kernels and fusions as the whole graph (`ggml_backend_sched_graph_compute_part`).
+- **libllama:** a prompt ubatch (one sequence, more tokens than slots) goes to a scheduler and compute buffer of its own;
+  `llama_decode` returns 3 after the first piece and `llama_decode_resume` computes the next one (3 while pieces
+  remain, 0 with the outputs in place as `llama_decode` would have left them). Decode batches of other slots run on the
+  main scheduler in between; the decode graph's own buffer is reserved for 64k-cell views
+  (`LLAMA_PREFILL_SLICE_TG_CELLS`) and grows on demand. Ubatches under `LLAMA_PREFILL_SLICE_MIN_TOKENS` (512) run whole.
+- **Server:** while a higher class is generating, a lower class's prompt pieces get `LLAMA_PREFILL_SLICE_SHARE`
+  (default 0.12) of the time; a higher class's own prompt never waits for the share (it waits at most for the rest of
+  the pending ubatch). With `LLAMA_PREFILL_SLICE_DECODE_SHARE=1` the lower classes' decode steps join the higher
+  class's steps only within the same share (their prompts still progress and their first token comes when the prompt
+  is done). Use with `LLAMA_PRIORITY_HOLD_PROMPTS=0`: the hold rule is what this replaces.
+
+Measured (dev builds; hold rule on -> pieces with the hold rule off): GH200, pieces of 4 layers, Juno answering while a
+64k prompt arrives: Juno 54.2 -> 46.6 tok/s (88 % of alone) and the 64k prompt's first token at 52.8 s instead of 53.5 s
+(window nc2). Spark, pieces of 2 layers with the decode share: Juno 16.6 tok/s alone, 14.5 (87 %) next to a 16k prompt
+and 13.9 (86 %) with four short clients arriving a second after her, whose first tokens come after 4-18 s instead of
+16-18 s (window nc-s1). Prompt logits and every answer are bit-identical with and without pieces on both boxes.
+
+## 0062-floor-compute-reserve
+
+The compute buffers of a floor + burst server (0060) sized for the floor, so 1M slots cost what 200k slots cost until a
+conversation passes the floor. Active with `LLAMA_ELASTIC_KV_FLOOR_CELLS` + `LLAMA_ELASTIC_KV_REFUSE=1` and
+`LLAMA_PREFILL_ISOLATE=1` (0059).
+
+- **Prompt graph reserved at the floor** (`LLAMA_ELASTIC_KV_PP_CELLS` overrides the size): a full-depth prompt graph of
+  a 1M slot costs ~14 GB of compute buffer on the Spark (about 19 KiB per cell past 200k), which a five-slot server would
+  otherwise hold at all times. What it would need is measured at start (sizes only), the buffer grows when a
+  conversation past the floor first runs a prompt ubatch (counted in that conversation's burst, and the valve makes
+  room for it), and goes back to the reserve once no conversation is past the floor.
+- **Decode graph reserved at the floor:** reserved at full depth, the decode graph of five 1M streams took 10.3 GB on
+  the Spark where five 200k streams take 3.3 GB (window nc-s1, leg F1). It is reserved for streams viewed at the floor
+  (with prompts in pieces, 0061: at `LLAMA_PREFILL_SLICE_TG_CELLS`) and grows on demand by ~2 KiB per cell and stream,
+  which the prompt graph's burst accounting covers. A memory update re-reserves with the same caps.
+- **`LLAMA_SLOT_KEEP_CHILD=1`** (server, tests only): the children of an `n_cmpl` request keep their context, so one
+  request leaves several slots holding the same long conversation without reading it once per slot.
+
+## 0063-valve-rearm-unlocked
+
+The memory valve's re-arm (0039/0044: released expert-cache slots get their pages back once the host has been calm for
+10 s) held the cache's LRU lock while it populated a chunk of 256 slots, and with THP banks (0026) every slot's populate
+read `/proc/self/smaps_rollup` twice for its log line. In window nc-s1 (Spark, after a 500k-token burst had made the
+valve release 15.5 GB) each 2.15 GB chunk took about 55 s under the lock: a decode ran at 0.28 tok/s for 226 s and a
+prompt lost 65 s. Now the slots leave the released list under the lock and stay parked (no key, never a victim) while
+their pages are populated outside it; they rejoin the LRU under the lock. A re-arm populates without the smaps reads
+and logs one line per chunk with its duration. Byte-neutral: only when slots become usable again changes.
+

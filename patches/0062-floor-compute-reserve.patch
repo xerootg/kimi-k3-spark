@@ -1,0 +1,262 @@
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index cdea8c6..9f62645 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -834,6 +834,35 @@ void llama_context::sched_reserve() {
+         mctx_pp_own = pp_reserve_mctx();
+         LLAMA_LOG_INFO("%s: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (%u slots)\n", __func__, n_seqs);
+     }
++    // patch 0062 (guaranteed floor + burst): the prompt graph is reserved for views of the floor only, so 1M slots cost
++    // no compute buffer until a conversation passes the floor. What a full-depth prompt graph would need is measured
++    // first (sizes only, nothing allocated) and handed to the burst accounting as bytes per cell past the floor; the
++    // buffer grows on demand and is trimmed back once no conversation is past the floor (decode()).
++    uint32_t pp_cap = 0;
++    std::vector<size_t> pp_full(backend_ptrs.size(), 0);
++    if (mctx_pp_own && !model.hparams.no_alloc) {
++        const char * v_cap = getenv("LLAMA_ELASTIC_KV_PP_CELLS");
++        const char * v_fl  = getenv("LLAMA_ELASTIC_KV_FLOOR_CELLS");
++        const char * v_ref = getenv("LLAMA_ELASTIC_KV_REFUSE");
++        const uint32_t n_ctx_seq = cparams.n_ctx / std::max<uint32_t>(1, cparams.n_seq_max);
++        pp_cap = v_cap ? (uint32_t) std::max(0, atoi(v_cap)) :
++                 (v_fl && v_ref && strcmp(v_ref, "1") == 0) ? (uint32_t) std::max(0, atoi(v_fl)) : 0;
++        if (pp_cap >= n_ctx_seq) {
++            pp_cap = 0;
++        }
++        if (pp_cap > 0) {
++            if (pp_slice_layers > 0) {
++                pp_swap();
++            }
++            graph_reserve(n_tokens, 1, n_outputs_pp, mctx_pp_own.get(), true, pp_full.data());
++            if (pp_slice_layers > 0) {
++                pp_swap();
++            }
++            llama_kv_cache_set_reserve_n_kv_cap(pp_cap);
++            mctx_pp_own = pp_reserve_mctx();
++            llama_kv_cache_set_reserve_n_kv_cap(0);
++        }
++    }
+     const llama_memory_context_i * mctx_pp = mctx_pp_own ? mctx_pp_own.get() : mctx.get();
+ 
+     // patch 0061: with prompts in pieces the prompt graph is reserved on the prompt scheduler only
+@@ -888,10 +917,19 @@ void llama_context::sched_reserve() {
+         // patch 0061: with prompts in pieces the decode graph has a buffer of its own, which a decode at full depth in
+         // every slot would size at ~10 GB (five 1M streams on the GH200). It is reserved for streams viewed at
+         // LLAMA_PREFILL_SLICE_TG_CELLS (default 65536) and grows when a deeper batch first needs it.
++        // With an elastic KV floor (and no pieces) the same holds for the shared buffer: reserved at full depth the
++        // decode graph of five 1M streams took 10.3 GB on the Spark where five 200k streams took 3.3 GB. It is
++        // reserved for streams viewed at the floor; past it the decode graph grows by ~2 KiB per cell and stream,
++        // which the burst accounting of the prompt graph (~19 KiB per cell) covers.
+         llama_memory_context_ptr mctx_tg;
+-        if (pp_slice_layers > 0 && memory) {
++        reserve_cap_pp = pp_cap;
++        reserve_cap_tg = pp_cap;
++        if (pp_slice_layers > 0) {
+             static const int cap = [] { const char * v = getenv("LLAMA_PREFILL_SLICE_TG_CELLS"); return v ? atoi(v) : 65536; }();
+-            llama_kv_cache_set_reserve_n_kv_cap((uint32_t) std::max(256, cap));
++            reserve_cap_tg = (uint32_t) std::max(256, cap);
++        }
++        if (reserve_cap_tg > 0 && memory) {
++            llama_kv_cache_set_reserve_n_kv_cap(reserve_cap_tg);
+             mctx_tg = memory->init_full();
+             llama_kv_cache_set_reserve_n_kv_cap(0);
+         }
+@@ -941,6 +979,26 @@ void llama_context::sched_reserve() {
+         }
+     }
+ 
++    if (pp_cap > 0) {
++        // patch 0062: compute bytes per cell past the floor for the burst accounting
++        if (pp_slice_layers > 0) {
++            pp_swap();
++        }
++        size_t full = 0, now = 0;
++        for (size_t i = 0; i < backend_ptrs.size(); ++i) {
++            full += pp_full[i];
++            now  += ggml_backend_sched_get_buffer_size(sched.get(), backend_ptrs[i]);
++        }
++        if (pp_slice_layers > 0) {
++            pp_swap();
++        }
++        const uint32_t n_ctx_seq = cparams.n_ctx / std::max<uint32_t>(1, cparams.n_seq_max);
++        const double per_cell = full > now ? (double) (full - now)/(double) (n_ctx_seq - pp_cap) : 0.0;
++        llama_elastic_kv_set_pp_compute(pp_cap, per_cell);
++        LLAMA_LOG_INFO("%s: elastic KV floor: the prompt graph is reserved for %u cells (%.2f GiB of compute buffer), a full-depth one "
++            "would need %.2f GiB: %.1f KiB per cell past it, grown on demand\n", __func__, pp_cap, now/1073741824.0, full/1073741824.0, per_cell/1024.0);
++    }
++
+     {
+         const bool diff = n_nodes_pp != n_nodes_tg || n_splits_pp != n_splits_tg ||
+                           n_inputs_pp != n_inputs_tg || n_input_tensors_pp != n_input_tensors_tg;
+@@ -1111,10 +1169,16 @@ bool llama_context::memory_update(bool optimize) {
+         const uint32_t n_outputs_max = std::min(n_tokens, cparams.n_outputs_max);
+ 
+         // patch 0059: the same one-sequence prompt graph as sched_reserve()
++        // patch 0062: with the same cell caps as sched_reserve(), so a memory update does not bring the full-depth
++        // buffers back
++        llama_kv_cache_set_reserve_n_kv_cap(reserve_cap_pp);
+         llama_memory_context_ptr mctx_pp = pp_reserve_one_seq() ? pp_reserve_mctx() : nullptr;
++        llama_kv_cache_set_reserve_n_kv_cap(reserve_cap_tg);
++        llama_memory_context_ptr mctx_tg = reserve_cap_tg > 0 ? memory->init_full() : nullptr;
++        llama_kv_cache_set_reserve_n_kv_cap(0);
+         // patch 0061: with prompts in pieces the main scheduler keeps the decode graph only (and never while a prompt
+         // is pending: its graph lives in the prompt scheduler)
+-        auto * gf = pp_slice_layers > 0 ? graph_reserve(n_seqs, n_seqs, n_seqs, mctx.get())
++        auto * gf = pp_slice_layers > 0 ? graph_reserve(n_seqs, n_seqs, n_seqs, mctx_tg ? mctx_tg.get() : mctx.get())
+                                         : graph_reserve(n_tokens, mctx_pp ? 1 : n_seqs, n_outputs_max, mctx_pp ? mctx_pp.get() : mctx.get());
+         if (!gf) {
+             LLAMA_LOG_ERROR("%s: failed to reserve graph after the memory update\n", __func__);
+@@ -2401,6 +2465,12 @@ int llama_context::decode(const llama_batch_ext & batch_inp) {
+     output_swaps.clear();
+     embd_batch_idxs.clear();
+ 
++    // patch 0062: a prompt graph grown past the floor goes back to its reserved size once no conversation is past it
++    if (!pp_pend.active && llama_elastic_kv_pp_trim_wanted()) {
++        LLAMA_LOG_INFO("%s: elastic KV floor: no conversation past the floor any more, the compute buffer goes back to its reserve\n", __func__);
++        sched_need_reserve = true;
++    }
++
+     sched_reserve();
+ 
+     // patch 0061: a prompt ubatch goes to the prompt scheduler and may be computed in pieces
+diff --git a/src/llama-context.h b/src/llama-context.h
+index db7593f..da75400 100644
+--- a/src/llama-context.h
++++ b/src/llama-context.h
+@@ -263,6 +263,8 @@ private:
+         llm_graph_result * gf_res_prev_active = nullptr;
+     } pp_alt;
+     int  pp_slice_layers = 0;     // LLAMA_PREFILL_SLICE_LAYERS (0: off)
++    uint32_t reserve_cap_pp = 0;    // patch 0062: KV cells the prompt graph is reserved for (0 = full depth)
++    uint32_t reserve_cap_tg = 0;    // patch 0062: KV cells per stream the decode graph is reserved for (0 = full depth)
+     bool pp_swapped      = false; // the prompt scheduler is in `sched` right now
+     void pp_swap();
+     bool pp_route(const llama_batch_ext & batch) const;
+diff --git a/src/llama-kv-cache.cpp b/src/llama-kv-cache.cpp
+index 7e6b79b..de9b66e 100644
+--- a/src/llama-kv-cache.cpp
++++ b/src/llama-kv-cache.cpp
+@@ -1652,6 +1652,18 @@ uint32_t llama_kv_cache::elastic_target(uint32_t n_cells) const {
+     return std::min<uint32_t>(GGML_PAD(n_cells, pad) + pad + elastic_margin, get_size());
+ }
+ 
++bool llama_kv_cache::elastic_any_stream_past(uint32_t n_cells) const {
++    if (!elastic_ms) {
++        return false;
++    }
++    for (uint32_t s = 0; s < n_stream; ++s) {
++        if (std::max(v_cells[s].used_max_p1(), elastic_reserved_s.empty() ? 0u : elastic_reserved_s[s]) > n_cells) {
++            return true;
++        }
++    }
++    return false;
++}
++
+ size_t llama_kv_cache::elastic_floor_deficit(uint32_t s_excl) const {
+     const uint32_t fl = elastic_target(elastic_policy().floor_cells);
+     size_t r = 0;
+@@ -1682,6 +1694,32 @@ bool llama_kv_cache::elastic_reserve_floor(llama_seq_id seq_id, uint32_t n_cells
+     return ok;
+ }
+ 
++// patch 0062: the prompt graph's compute buffer (see llama-kv-cache.h)
++static uint32_t g_pp_cap        = 0;   // cells the prompt graph is reserved for
++static double   g_pp_per_cell   = 0;   // bytes per cell past it
++static uint32_t g_pp_cells_now  = 0;   // cells the buffer has been granted up to
++
++void llama_elastic_kv_set_pp_compute(uint32_t cap, double per_cell) {
++    std::lock_guard<std::mutex> lock(elastic_registry_mutex);
++    g_pp_cap = cap;
++    g_pp_per_cell = per_cell;
++    g_pp_cells_now = cap;
++}
++
++bool llama_elastic_kv_pp_trim_wanted() {
++    std::lock_guard<std::mutex> lock(elastic_registry_mutex);
++    if (g_pp_cap == 0 || g_pp_cells_now <= g_pp_cap) {
++        return false;
++    }
++    for (auto & [kv, m] : elastic_registry) {
++        if (kv->elastic_any_stream_past(g_pp_cap)) {
++            return false;
++        }
++    }
++    g_pp_cells_now = g_pp_cap;
++    return true;
++}
++
+ bool llama_elastic_kv_reserve(llama_context * ctx, llama_seq_id seq_id, int32_t n_cells) {
+     const llama_model * mdl = ctx != nullptr ? &ctx->get_model() : nullptr;
+     std::lock_guard<std::mutex> lock(elastic_registry_mutex);
+@@ -1713,6 +1751,13 @@ bool llama_elastic_kv_reserve(llama_context * ctx, llama_seq_id seq_id, int32_t
+             }
+             deficit += kv->elastic_floor_deficit(s);
+         }
++        // the prompt graph's compute buffer grows with the deepest conversation past its reserve (counted once)
++        size_t pp_grow = 0;
++        if (g_pp_cap > 0 && n > g_pp_cells_now) {
++            pp_grow = (size_t) ((double) (n - g_pp_cells_now)*g_pp_per_cell);
++            grow  += pp_grow;
++            burst += pp_grow;
++        }
+         if (burst > 0) {
+             const size_t avail = elastic_mem_available();
+             const size_t rel   = llama_moe_cache_releasable();
+@@ -1728,6 +1773,9 @@ bool llama_elastic_kv_reserve(llama_context * ctx, llama_seq_id seq_id, int32_t
+                 "growth %.2f + other slots' floors %.2f + reserve %.2f GB\n",
+                 __func__, seq_id, n, burst/1e9, avail/1e9, rel == SIZE_MAX ? 0.0 : rel/1e9, grow/1e9, deficit/1e9, keep/1e9);
+         }
++        if (pp_grow > 0) {
++            llama_moe_cache_make_room(pp_grow); // the compute buffer grows when the deep prompt graph first runs
++        }
+         bool ok = true;
+         for (auto & [kv, m] : elastic_registry) {
+             if ((mdl == nullptr || m == mdl) && kv->elastic_floor_mode()) {
+@@ -1737,6 +1785,9 @@ bool llama_elastic_kv_reserve(llama_context * ctx, llama_seq_id seq_id, int32_t
+                 }
+             }
+         }
++        if (ok && pp_grow > 0) {
++            g_pp_cells_now = n;
++        }
+         return ok;
+     }
+     bool ok = true;
+diff --git a/src/llama-kv-cache.h b/src/llama-kv-cache.h
+index 45f2be9..827d1fc 100644
+--- a/src/llama-kv-cache.h
++++ b/src/llama-kv-cache.h
+@@ -352,6 +352,7 @@ public:
+     uint32_t elastic_mapped(uint32_t s) const { return elastic_cells_s[s]; }
+     size_t   elastic_bytes_per_cell() const { return elastic_cell_bytes; }
+     size_t   elastic_floor_deficit(uint32_t s_excl) const; // bytes the other streams need to reach the floor
++    bool     elastic_any_stream_past(uint32_t n_cells) const; // a stream uses or holds a reservation past n_cells
+     bool     elastic_reserve_floor(llama_seq_id seq_id, uint32_t n_cells, bool burst);
+ private:
+     std::vector<uint32_t> elastic_reserved_s; // patch 0060: cells of each stream's last reservation (no shrink below)
+@@ -423,6 +424,10 @@ bool llama_kv_cache_get_reserve_one_stream();
+ // patch 0061: while non-zero, init_full()'s dummy context views at most this many cells per stream (a smaller worst case
+ // for the decode graph's own buffer when prompts run in pieces)
+ void llama_kv_cache_set_reserve_n_kv_cap(uint32_t n);
++// patch 0062: the prompt graph's compute buffer for the floor + burst accounting: reserved for `cap` cells, `per_cell`
++// bytes more per cell of the deepest conversation past it; trim_wanted() once none is past it after a growth
++void llama_elastic_kv_set_pp_compute(uint32_t cap, double per_cell);
++bool llama_elastic_kv_pp_trim_wanted();
+ uint32_t llama_kv_cache_get_reserve_n_kv_cap();
+ 
+ class llama_kv_cache_context : public llama_memory_context_i {
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index eeebbf8..9879b94 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -699,7 +699,10 @@ struct server_slot {
+ 
+             // do not keep context of the child slots - the parent's context is enough
+             // nor of the stateless slots - no task ever reuses it
+-            if ((task->is_child() || task->is_stateless()) && !pp_pending) { // patch 0060: not under a pending ubatch
++            // patch 0062: LLAMA_SLOT_KEEP_CHILD=1 (tests) keeps the children's context, so one n_cmpl request leaves
++            // several slots holding the same long conversation without reading it once per slot
++            static const bool keep_child = [] { const char * v = getenv("LLAMA_SLOT_KEEP_CHILD"); return v != nullptr && strcmp(v, "1") == 0; }();
++            if (((task->is_child() && !keep_child) || task->is_stateless()) && !pp_pending) { // patch 0061: not under a pending ubatch
+                 prompt_clear();
+             }
+ 

@@ -1,0 +1,314 @@
+diff --git a/src/llama-kv-cache.cpp b/src/llama-kv-cache.cpp
+index 1c00a86..c77acee 100644
+--- a/src/llama-kv-cache.cpp
++++ b/src/llama-kv-cache.cpp
+@@ -459,10 +459,17 @@ llama_kv_cache::llama_kv_cache(
+         elastic_ms = true;
+         elastic_tag = name_tag;
+         elastic_cells_s.assign(n_stream, 0);
++        elastic_reserved_s.assign(n_stream, 0);
+         elastic_registry_add(this, &model);
+         LLAMA_LOG_INFO("%s: elastic KV per stream%s%s: %zu buffer(s), %u streams of %u cells, %.1f KiB per cell, mapped on use (margin %u cells, shrink at %u spare cells)%s%s\n", __func__,
+             name_tag[0] ? " " : "", name_tag, elastic_bufs.size(), n_stream, get_size(), elastic_cell_bytes/1024.0, elastic_margin, elastic_shrink,
+-            elastic_policy().refuse ? ", refuse when memory runs out" : "", elastic_policy().stream_max ? ", fixed share per stream" : "");
++            elastic_policy().refuse ? (elastic_policy().floor_cells ? ", guaranteed floor per stream, burst past it from free memory" : ", refuse when memory runs out") : "",
++            elastic_policy().stream_max ? ", fixed share per stream" : "");
++        if (elastic_policy().floor_cells) {
++            LLAMA_LOG_INFO("%s: elastic KV%s%s: floor %u cells per stream (%.2f GiB), %u streams of %u cells\n", __func__,
++                name_tag[0] ? " " : "", name_tag, elastic_policy().floor_cells,
++                (double) elastic_target(elastic_policy().floor_cells)*elastic_cell_bytes/(1024.0*1024.0*1024.0), n_stream, get_size());
++        }
+         elastic_fit_used(false, "init");
+     } else if (!elastic_bufs.empty()) {
+         LLAMA_LOG_INFO("%s: elastic KV: %zu buffer(s), %.1f KiB per cell, mapped on use (margin %u cells, shrink at %u spare cells)\n", __func__,
+@@ -1501,6 +1508,9 @@ const llama_kv_cache::elastic_policy_t & llama_kv_cache::elastic_policy() {
+         if (const char * v = getenv("LLAMA_ELASTIC_KV_STREAM_MAX")) {
+             r.stream_max = (uint32_t) std::max(0, atoi(v));
+         }
++        if (const char * v = getenv("LLAMA_ELASTIC_KV_FLOOR_CELLS")) {
++            r.floor_cells = (uint32_t) std::max(0, atoi(v)); // patch 0060
++        }
+         return r;
+     }();
+     return p;
+@@ -1543,7 +1553,9 @@ void llama_kv_cache::elastic_fit_used_ms(bool shrink, const char * why) {
+     const uint32_t pad = std::max(n_pad, 256u);
+     for (uint32_t s = 0; s < n_stream; ++s) {
+         const uint32_t used = v_cells[s].used_max_p1();
+-        const uint32_t need = GGML_PAD(used, pad) + pad;
++        // patch 0060: never below the stream's active reservation (a long prompt's seq_rm per ubatch used to shrink
++        // the stream and the next ubatch's reserve mapped it again, ~1.7 s each time; window spark4)
++        const uint32_t need = std::max<uint32_t>(GGML_PAD(used, pad) + pad, elastic_reserved_s.empty() ? 0 : elastic_reserved_s[s]);
+         if (need > elastic_cells_s[s]) {
+             elastic_fit_stream(s, need + elastic_margin, false, false, why);
+         } else if (shrink && elastic_cells_s[s] > need + elastic_margin + elastic_shrink) {
+@@ -1552,7 +1564,7 @@ void llama_kv_cache::elastic_fit_used_ms(bool shrink, const char * why) {
+     }
+ }
+ 
+-bool llama_kv_cache::elastic_fit_stream(uint32_t s, uint32_t n_cells, bool shrink, bool may_refuse, const char * why) {
++bool llama_kv_cache::elastic_fit_stream(uint32_t s, uint32_t n_cells, bool shrink, bool may_refuse, const char * why, bool check_avail) {
+     n_cells = std::min(n_cells, get_size());
+     if (n_cells == elastic_cells_s[s]) {
+         return true;
+@@ -1568,7 +1580,7 @@ bool llama_kv_cache::elastic_fit_stream(uint32_t s, uint32_t n_cells, bool shrin
+     const size_t delta = (size_t) (grow ? n_cells - elastic_cells_s[s] : elastic_cells_s[s] - n_cells)*elastic_cell_bytes;
+     if (grow) {
+         llama_moe_cache_make_room(delta); // the expert cache gives the memory back before the GPU takes it
+-        if (may_refuse && pol.refuse) {
++        if (may_refuse && pol.refuse && check_avail) {
+             const size_t avail = elastic_mem_available();
+             if (avail != SIZE_MAX && avail < delta + pol.floor) {
+                 LLAMA_LOG_WARN("%s: elastic KV %s%s(%s) stream %u: REFUSED %u -> %u cells (%.2f GB): MemAvailable %.2f GB, floor %.2f GB\n", __func__,
+@@ -1628,15 +1640,105 @@ bool llama_kv_cache::elastic_reserve(llama_seq_id seq_id, uint32_t n_cells) {
+     }
+     const uint32_t pad  = std::max(n_pad, 256u);
+     const uint32_t need = GGML_PAD(n_cells, pad) + pad;
++    elastic_reserved_s[s] = std::min(need, get_size());
+     if (need <= elastic_cells_s[s]) {
+         return true;
+     }
+     return elastic_fit_stream(s, need + elastic_margin, false, true, "reserve");
+ }
+ 
++uint32_t llama_kv_cache::elastic_target(uint32_t n_cells) const {
++    const uint32_t pad = std::max(n_pad, 256u);
++    return std::min<uint32_t>(GGML_PAD(n_cells, pad) + pad + elastic_margin, get_size());
++}
++
++size_t llama_kv_cache::elastic_floor_deficit(uint32_t s_excl) const {
++    const uint32_t fl = elastic_target(elastic_policy().floor_cells);
++    size_t r = 0;
++    for (uint32_t t = 0; t < n_stream; ++t) {
++        if (t != s_excl && elastic_cells_s[t] < fl) {
++            r += (size_t) (fl - elastic_cells_s[t])*elastic_cell_bytes;
++        }
++    }
++    return r;
++}
++
++bool llama_kv_cache::elastic_reserve_floor(llama_seq_id seq_id, uint32_t n_cells, bool burst) {
++    GGML_ASSERT(seq_id >= 0 && (size_t) seq_id < seq_to_stream.size());
++    const uint32_t s    = seq_to_stream[seq_id];
++    const uint32_t pad  = std::max(n_pad, 256u);
++    const uint32_t need = GGML_PAD(n_cells, pad) + pad;
++    elastic_reserved_s[s] = std::min(need, get_size());
++    if (need <= elastic_cells_s[s]) {
++        return true;
++    }
++    // the accounting over all caches was done by the caller (llama_elastic_kv_reserve): a growth to the floor is
++    // never refused for lack of MemAvailable, only if the device cannot map it; a burst was checked there
++    const bool ok = elastic_fit_stream(s, need + elastic_margin, false, true, burst ? "reserve, burst" : "reserve", false);
++    if (!ok && !burst) {
++        LLAMA_LOG_ERROR("%s: elastic KV %s%sstream %u: could not map %u cells UNDER the floor of %u (the device refused the mapping)\n",
++            __func__, elastic_tag, elastic_tag[0] ? " " : "", s, n_cells, elastic_policy().floor_cells);
++    }
++    return ok;
++}
++
+ bool llama_elastic_kv_reserve(llama_context * ctx, llama_seq_id seq_id, int32_t n_cells) {
+     const llama_model * mdl = ctx != nullptr ? &ctx->get_model() : nullptr;
+     std::lock_guard<std::mutex> lock(elastic_registry_mutex);
++    // patch 0060: guaranteed floor + burst
++    bool floor_mode = false;
++    for (auto & [kv, m] : elastic_registry) {
++        if ((mdl == nullptr || m == mdl) && kv->elastic_floor_mode()) {
++            floor_mode = true;
++        }
++    }
++    if (floor_mode) {
++        const uint32_t n = (uint32_t) std::max(0, n_cells);
++        const uint32_t fl_cells = llama_kv_cache::elastic_floor_cells();
++        size_t grow = 0, burst = 0, deficit = 0;
++        for (auto & [kv, m] : elastic_registry) {
++            if (!(mdl == nullptr || m == mdl) || !kv->elastic_floor_mode()) {
++                continue;
++            }
++            const uint32_t s   = kv->elastic_stream_of(seq_id);
++            const uint32_t cur = kv->elastic_mapped(s);
++            const uint32_t tgt = kv->elastic_target(n);
++            const uint32_t fl  = kv->elastic_target(fl_cells);
++            const size_t   cb  = kv->elastic_bytes_per_cell();
++            if (tgt > cur) {
++                grow += (size_t) (tgt - cur)*cb;
++            }
++            if (tgt > std::max(cur, fl)) {
++                burst += (size_t) (tgt - std::max(cur, fl))*cb;
++            }
++            deficit += kv->elastic_floor_deficit(s);
++        }
++        if (burst > 0) {
++            const size_t avail = elastic_mem_available();
++            const size_t rel   = llama_moe_cache_releasable();
++            const size_t keep  = llama_moe_cache_valve_reserve() + llama_kv_cache::elastic_policy_floor_bytes();
++            const size_t have  = (avail == SIZE_MAX || rel == SIZE_MAX) ? SIZE_MAX : avail + rel;
++            if (have != SIZE_MAX && have < grow + deficit + keep) {
++                LLAMA_LOG_WARN("%s: elastic KV seq %d: REFUSED a burst to %u cells (%.2f GB past the floor of %u cells): "
++                    "MemAvailable %.2f GB + expert cache releasable %.2f GB < growth %.2f + other slots' floors %.2f + reserve %.2f GB\n",
++                    __func__, seq_id, n, burst/1e9, fl_cells, avail/1e9, rel/1e9, grow/1e9, deficit/1e9, keep/1e9);
++                return false;
++            }
++            LLAMA_LOG_INFO("%s: elastic KV seq %d: burst to %u cells (%.2f GB past the floor): MemAvailable %.2f GB + releasable %.2f GB, "
++                "growth %.2f + other slots' floors %.2f + reserve %.2f GB\n",
++                __func__, seq_id, n, burst/1e9, avail/1e9, rel == SIZE_MAX ? 0.0 : rel/1e9, grow/1e9, deficit/1e9, keep/1e9);
++        }
++        bool ok = true;
++        for (auto & [kv, m] : elastic_registry) {
++            if ((mdl == nullptr || m == mdl) && kv->elastic_floor_mode()) {
++                ok = kv->elastic_reserve_floor(seq_id, n, burst > 0) && ok;
++                if (!ok) {
++                    break;
++                }
++            }
++        }
++        return ok;
++    }
+     bool ok = true;
+     for (auto & [kv, m] : elastic_registry) {
+         if (mdl == nullptr || m == mdl) {
+diff --git a/src/llama-kv-cache.h b/src/llama-kv-cache.h
+index ac83fc4..afc672b 100644
+--- a/src/llama-kv-cache.h
++++ b/src/llama-kv-cache.h
+@@ -327,8 +327,13 @@ private:
+         bool     refuse     = false;             // LLAMA_ELASTIC_KV_REFUSE=1
+         size_t   floor      = (size_t) 2048 << 20; // LLAMA_ELASTIC_KV_FLOOR_MIB
+         uint32_t stream_max = 0;                 // LLAMA_ELASTIC_KV_STREAM_MAX (cells, 0 = the stream's size)
++        uint32_t floor_cells = 0;                // patch 0060: LLAMA_ELASTIC_KV_FLOOR_CELLS, guaranteed share per stream
+     };
+     static const elastic_policy_t & elastic_policy();
++public:
++    static uint32_t elastic_floor_cells() { return elastic_policy().floor_cells; }
++    static size_t   elastic_policy_floor_bytes() { return elastic_policy().floor; }
++private:
+     static void elastic_registry_add(llama_kv_cache * kv, const llama_model * mdl);
+ public:
+     // patch 0052: make sure the stream of seq_id has cells [0, n_cells) mapped (plus the usual pad and margin).
+@@ -336,8 +341,21 @@ public:
+     // would keep less than LLAMA_ELASTIC_KV_FLOOR_MIB after the expert cache gave back what it could, and
+     // LLAMA_ELASTIC_KV_STREAM_MAX (cells) caps each stream (a fixed share). Always true when neither is set.
+     bool elastic_reserve(llama_seq_id seq_id, uint32_t n_cells);
++
++    // patch 0060: guaranteed floor + burst (LLAMA_ELASTIC_KV_FLOOR_CELLS with LLAMA_ELASTIC_KV_REFUSE=1). Every stream may
++    // always grow to the floor; growth past it is allowed only while the memory that is free, plus what the expert cache
++    // can still release, covers it AND what the other streams need to reach their floors. llama_elastic_kv_reserve()
++    // does the accounting over all caches of the model, these are its per-cache parts.
++    bool     elastic_floor_mode() const { return elastic_ms && elastic_policy().refuse && elastic_policy().floor_cells > 0; }
++    uint32_t elastic_stream_of(llama_seq_id seq_id) const { return seq_to_stream[seq_id]; }
++    uint32_t elastic_target(uint32_t n_cells) const;   // cells mapped by a reserve of n_cells
++    uint32_t elastic_mapped(uint32_t s) const { return elastic_cells_s[s]; }
++    size_t   elastic_bytes_per_cell() const { return elastic_cell_bytes; }
++    size_t   elastic_floor_deficit(uint32_t s_excl) const; // bytes the other streams need to reach the floor
++    bool     elastic_reserve_floor(llama_seq_id seq_id, uint32_t n_cells, bool burst);
+ private:
+-    bool elastic_fit_stream(uint32_t s, uint32_t n_cells, bool shrink, bool may_refuse, const char * why);
++    std::vector<uint32_t> elastic_reserved_s; // patch 0060: cells of each stream's last reservation (no shrink below)
++    bool elastic_fit_stream(uint32_t s, uint32_t n_cells, bool shrink, bool may_refuse, const char * why, bool check_avail = true);
+     void elastic_fit_used_ms(bool shrink, const char * why);
+ 
+     // the current index from where we start searching for a free slot in the ring buffer of KV cells (see find_slot())
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index 2185e05..2f2fbe0 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -2743,6 +2743,38 @@ struct llama_moe_cache::impl {
+         }
+     }
+ 
++    // patch 0060: host bytes valve_release() could still free, down to the valve floor (protected and busy slots are
++    // counted too, so this is an upper bound; the burst check keeps a margin)
++    size_t releasable_host() {
++        if (!valve_thread.joinable() || valve_broken) {
++            return 0;
++        }
++        std::lock_guard<std::recursive_mutex> lock(lru_mutex);
++        size_t r = 0;
++        for (size_t ig = 0; ig < groups.size(); ++ig) {
++            const group & g = groups[ig];
++            if (g.region == nullptr || g.n_slots == 0) {
++                continue;
++            }
++            const int32_t lo = g.lru.n_hbm;
++            const int32_t hi = g.n_slots;
++            if (hi <= lo) {
++                continue;
++            }
++            const size_t n        = (size_t) (hi - lo);
++            const size_t keep_min = n*valve_floor_pct/100;
++            const size_t gone     = valve_released_host[ig].size();
++            if (n > keep_min + gone) {
++                r += (n - keep_min - gone)*g.slot_stride;
++            }
++        }
++        return r;
++    }
++
++    size_t valve_reserve_bytes() const {
++        return valve_reserve + valve_reserve/4; // what make_room() keeps free besides the request
++    }
++
+     void valve_stop_thread() {
+         {
+             std::lock_guard<std::mutex> lock(moe_cache_elastic_mutex);
+@@ -6435,6 +6467,21 @@ void llama_moe_cache_make_room(size_t bytes) {
+     }
+ }
+ 
++size_t llama_moe_cache_releasable() {
++    std::lock_guard<std::mutex> lock(moe_cache_elastic_mutex);
++    llama_moe_cache::impl * owner = moe_cache_elastic_owner.load();
++    if (owner == nullptr) {
++        return SIZE_MAX;
++    }
++    return owner->releasable_host();
++}
++
++size_t llama_moe_cache_valve_reserve() {
++    std::lock_guard<std::mutex> lock(moe_cache_elastic_mutex);
++    llama_moe_cache::impl * owner = moe_cache_elastic_owner.load();
++    return owner != nullptr ? owner->valve_reserve_bytes() : 0;
++}
++
+ ggml_backend_t llama_moe_cache::backend(int32_t il) const {
+     return pimpl->backend(il);
+ }
+diff --git a/src/llama-moe-cache.h b/src/llama-moe-cache.h
+index 1349458..37cad76 100644
+--- a/src/llama-moe-cache.h
++++ b/src/llama-moe-cache.h
+@@ -129,3 +129,10 @@ using llama_moe_cache_ptr = std::unique_ptr<llama_moe_cache>;
+ // reserve with those bytes taken. The valve re-arms them by itself once the memory is free again. No-op without a
+ // running valve.
+ void llama_moe_cache_make_room(size_t bytes);
++
++// kimi-k3-spark patch 0060: bytes of host cache slots the memory valve could still release (down to its floor), so a
++// caller can tell whether a growth of the KV cache can be met without taking memory that is promised elsewhere.
++// SIZE_MAX when there is no valve (nothing to account against).
++size_t llama_moe_cache_releasable();
++// patch 0060: host MemAvailable the valve keeps besides a make_room() request (0 without a valve)
++size_t llama_moe_cache_valve_reserve();
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 799b53b..38ccedc 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -3576,8 +3576,19 @@ private:
+             if (!slot.task || !(slot.state == SLOT_STATE_STARTED || slot.state == SLOT_STATE_PROCESSING_PROMPT || slot.state == SLOT_STATE_GENERATING)) {
+                 return;
+             }
+-            const int32_t n_need = slot.state == SLOT_STATE_GENERATING ? slot.prompt.n_tokens() + 1 :
++            int32_t n_need = slot.state == SLOT_STATE_GENERATING ? slot.prompt.n_tokens() + 1 :
+                 std::max<int32_t>((int32_t) slot.task->n_tokens(), slot.prompt.n_tokens()) + 1;
++            // patch 0060: guaranteed floor + burst (LLAMA_ELASTIC_KV_FLOOR_CELLS). A prompt reserves its answer too before
++            // it runs (n_predict, or LLAMA_ELASTIC_KV_GEN_RESERVE cells when it has none): a prompt past the floor the whole
++            // answer, so a burst that cannot be met is a clean 503 at the start and not an error mid-answer; a prompt
++            // under the floor up to the floor at most, which is never refused.
++            static const int32_t floor_cells = env_int("LLAMA_ELASTIC_KV_FLOOR_CELLS", 0);
++            static const int32_t gen_reserve = env_int("LLAMA_ELASTIC_KV_GEN_RESERVE", 8192);
++            if (floor_cells > 0 && slot.state != SLOT_STATE_GENERATING) {
++                const int32_t n_gen = slot.n_predict_max > 0 ? slot.n_predict_max : gen_reserve;
++                n_need = n_need > floor_cells ? std::min<int32_t>(slot.n_ctx, n_need + n_gen)
++                                              : std::min<int32_t>(n_need + n_gen, floor_cells);
++            }
+             if (!llama_elastic_kv_reserve(ctx_tgt, slot.id, n_need)) {
+                 SLT_WRN(slot, "elastic KV refused %d cells, failing this request\n", n_need);
+                 send_error(slot, "out of KV cache memory: the server cannot hold this conversation now (elastic KV refused " + std::to_string(n_need) + " cells)", ERROR_TYPE_UNAVAILABLE);
