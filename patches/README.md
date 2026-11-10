@@ -1724,3 +1724,36 @@ After the patch a short prompt ubatch finishes in its first call (the log line w
 later piece ends, no longer appears for it), and the repro (p1, then p0 one second later) returns both answers equal
 to their solo bytes. Acceptance and numbers: docs/experiments.md, window
 nc-s2.
+
+## 0074-prompt-short-rest-same-class
+
+`LLAMA_PREFILL_SLICE_SAME_FREE=<tokens>` (default 0 = off; meant for use with `LLAMA_PREFILL_SHORT_FIRST=1` of 0072):
+a prompt with at most that many tokens left to read is not held to the same-class share
+(`LLAMA_PREFILL_SLICE_SHARE_SAME` of 0064). It is read at once, as without the pieces.
+
+The same-class share exists so that the answers of one class do not stop while a long prompt of that class is read.
+It also applied to prompts of a few tokens, where there is nothing to protect: the answers wait for one or two short
+ubatches, as they always did. Holding such a prompt back costs time instead. With 0072 the first of several short
+prompts that arrive together finishes both of its ubatches and starts to generate; from then on the others were held
+to the share (0.5: as much prompt time as decode time), and the clients that already generated ran in smaller, less
+efficient batches until the last one had joined them. GH200 window nc6 (2026-11-10), pieces config on image g76c2c21
+against the production image in the same window, tokens over the wall time of a 256-token round: equal at two
+clients, 1.2 % lower at three, 2.6 % at four, 2.3 % at five, while each stream's own decode speed was equal or
+higher. The Spark showed the same pattern in window nc-s2 (1.3 to 3 % at two to five clients).
+
+`pp_budget_ok` now takes the prompt's slot; when the prompt's class is the class that is generating and `pp_left`
+(the tokens the prompt still has to read) is at most the variable, the prompt is within budget. The share against a
+higher class (`LLAMA_PREFILL_SLICE_SHARE`) is not touched: a lower class's short prompt still waits for its share of
+the higher class's time. The time the prompt takes is still booked in the accounts, so a long prompt of the class
+pays for it afterwards. 512 is the value to use: ubatches of up to `LLAMA_PREFILL_SLICE_MIN_TOKENS` (512) tokens are
+never cut into pieces, so the answers wait for whole short ubatches only, at most two per prompt.
+
+Only when a prompt ubatch runs changes; each is still computed alone and split the same way
+(`LLAMA_PREFILL_ISOLATE=1`), so every client's bytes stay those of a solo run.
+
+Measured in GH200 window nc6 on a dev build mounted over image g76c2c21, one server process each: with the variable
+unset the build repeats the image (69.0-70.0 tok/s at four clients, 66.6-67.0 at five); with 512 it reaches the
+production image's numbers (two clients 60.9/62.8 against 60.4/62.3, three 67.4/68.7 against 67.2/68.3, four
+70.6/71.2 against 70.9/71.5, five 68.3/68.8 against 68.2/68.6, four short prompts and a 16k prompt 41.6-41.7
+against 41.5-41.8), every md5 equal to solo and gold, six of six staggered pairs equal to solo. Not in production;
+acceptance on the CI image is owed on both boxes. Ledger: docs/experiments.md, window nc6.

@@ -1,0 +1,59 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index eda1444..03ad4ab 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -3471,6 +3471,19 @@ private:
+         return slot.state == SLOT_STATE_STARTED ? n : std::max<int64_t>(0, n - (int64_t) slot.prompt.n_tokens());
+     }
+ 
++    // kimi-k3-spark patch 0074: LLAMA_PREFILL_SLICE_SAME_FREE=<tokens> (default 0 = off): a prompt with at most that
++    // many tokens left is not held to LLAMA_PREFILL_SLICE_SHARE_SAME, it is read at once as without the pieces. The
++    // same-class share exists so that answers do not stop while a long prompt is read; for a prompt of a few tokens
++    // there is nothing to protect (the answers wait for one or two short ubatches, as they always did), and holding
++    // it back costs time: the clients that already generate run in smaller batches until it has joined them (three
++    // to five short prompts arriving together: 1.2 to 2.6 % of a 256-token round on the GH200 in window nc6, 1.3 to
++    // 3 % on the Spark in window nc-s2). The share against a higher class (LLAMA_PREFILL_SLICE_SHARE) is not
++    // touched, and the prompt's time still counts in the accounts.
++    static int64_t pp_same_free() {
++        static const int64_t v = std::max(0, env_int("LLAMA_PREFILL_SLICE_SAME_FREE", 0));
++        return v;
++    }
++
+     // does slot a's prompt go before slot b's (same class)? With patch 0072 a prompt whose rest fits in one ubatch
+     // first (fewest tokens left first). Then a prompt that has not started yet, then the one whose last ubatch is
+     // oldest; ties: the oldest task.
+@@ -3585,12 +3598,15 @@ private:
+     // already had their share of the time while it did (a higher class's own prompt never waits for this). The
+     // accounts only run while there is contention, so a share never piles up while nobody waits.
+     // Patch 0064: the same holds, with its own share, while a client of the prompt's own class is generating.
+-    bool pp_budget_ok(int prio) {
++    bool pp_budget_ok(int prio, const server_slot * slot = nullptr) {
+         const int hi = pp_top_generating();
+         pp_regime(hi);
+         if (!pp_contends(prio, hi)) {
+             return true;
+         }
++        if (prio == hi && slot != nullptr && slot->task && pp_same_free() > 0 && pp_left(*slot) <= pp_same_free()) {
++            return true; // patch 0074: a short rest is read at once among clients of one class
++        }
+         const double share = prio < hi ? pp_share() : pp_share_same();
+         return (double) pp_t_pp_us <= share/(1.0 - share)*(double) pp_t_dec_us;
+     }
+@@ -3615,7 +3631,7 @@ private:
+         server_slot & ps = *pp_slot;
+         const int prio = ps.task ? (int) ps.task->params.client_priority : INT_MAX;
+         const bool must = !ps.task || pp_top_generating() == INT_MIN || pp_higher_prompt_waiting(prio);
+-        if (!must && (!pp_budget_ok(prio) || !pp_lower_prompt_turn(prio))) {
++        if (!must && (!pp_budget_ok(prio, &ps) || !pp_lower_prompt_turn(prio))) {
+             return false; // a decode step for the generating slots first
+         }
+         const int64_t t0 = ggml_time_us();
+@@ -3997,7 +4013,7 @@ private:
+         if (pp_slicing_enabled() && slot_prefill != nullptr) {
+             if (pp_slot != nullptr) {
+                 slot_prefill = nullptr;
+-            } else if (slot_prefill->task && (!pp_budget_ok((int) slot_prefill->task->params.client_priority) ||
++            } else if (slot_prefill->task && (!pp_budget_ok((int) slot_prefill->task->params.client_priority, slot_prefill) ||
+                                               !pp_lower_prompt_turn((int) slot_prefill->task->params.client_priority))) {
+                 slot_prefill = nullptr; // patch 0069: or it is the lower classes' answers' turn within their share
+             }
