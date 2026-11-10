@@ -2123,13 +2123,15 @@ something else dominated at the time. Re-test them after any change that shifts 
     53.3 s against 52.9 s in junolong, 49.1 against 48.9 in prefill), while Juno pays 6-8 %. The hold rule only ever
     delayed it by her answer, and a 64k read is five times longer than that.
   - The hold rule did not protect Juno from clients that were already decoding: in mixed she runs at 18.5 tok/s (36 %)
-    in production because the three low decoders share her batch. With pieces and decode share 1 she keeps 90 %, and
-    the low decoders pay for it and for the same-class prompt next to them: 8.5 tok/s each and done after 33 s instead
-    of 13.5 tok/s and 19.5 s. The 64k prompt in that scenario finishes at 61.2 s against 58.4 s.
+    in production because the three low decoders share her batch. With pieces and decode share 1 she keeps 90 %.
+  - In mixed the low decoders finish after 33 s with pieces and after 19.5 s in production, but the 19.5 s is a side
+    effect of the hold rule: the 64k prompt stalls them first (largest gap 5.1 s), then Juno's slow answer holds that
+    prompt for eleven seconds and they decode in her batch. Without Juno, production gives short clients next to a
+    long prompt of their own class 3.6-4.2 tok/s (leg CP, mix `p1 p2 L16384 L65536`); the pieces give them 15.8 in
+    the same mix and 8.5 with three decoders in mixed. The 64k prompt of mixed finishes at 61.2 s against 58.4 s.
   - Net: the pieces move waiting from "others' prompts wait for her answer" to "her answer runs 6-12 % slower while
-    others' prompts are read", and they protect her from decoders, which the hold rule never did. Other clients' short
-    answers next to a long prompt of their own class get faster when they start together (15.8 against about 4 tok/s)
-    and slower when they were already decoding (8.5 against 13.5).
+    others' prompts are read", they protect her from decoders, which the hold rule never did, and short answers no
+    longer crawl while a long prompt of the same class is read.
 - **Decision for the GH200: pieces with `LLAMA_PREFILL_SLICE_SHARE=0.05`, hold rule off, `LLAMA_KPOOL_OWN_SEQS=1`,
   image `gadd9f81`.** 0.05 is the only share of the three that keeps Juno at or above about 88 % in all five
   scenarios; 0.08 and 0.12 start the others' prompts three to eight seconds earlier in the 1024-token case and cost
