@@ -1,0 +1,121 @@
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 9f62645..1936fd4 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -994,7 +994,8 @@ void llama_context::sched_reserve() {
+         }
+         const uint32_t n_ctx_seq = cparams.n_ctx / std::max<uint32_t>(1, cparams.n_seq_max);
+         const double per_cell = full > now ? (double) (full - now)/(double) (n_ctx_seq - pp_cap) : 0.0;
+-        llama_elastic_kv_set_pp_compute(pp_cap, per_cell);
++        llama_elastic_kv_set_pp_compute(pp_cap, per_cell, now);
++        pp_floor_reserve = true; // patch 0066
+         LLAMA_LOG_INFO("%s: elastic KV floor: the prompt graph is reserved for %u cells (%.2f GiB of compute buffer), a full-depth one "
+             "would need %.2f GiB: %.1f KiB per cell past it, grown on demand\n", __func__, pp_cap, now/1073741824.0, full/1073741824.0, per_cell/1024.0);
+     }
+@@ -2465,6 +2466,16 @@ int llama_context::decode(const llama_batch_ext & batch_inp) {
+     output_swaps.clear();
+     embd_batch_idxs.clear();
+ 
++    // patch 0066: the prompt graph's buffer as it is now, for the burst accounting
++    if (pp_floor_reserve) {
++        ggml_backend_sched_t s_pp = (pp_slice_layers > 0 && !pp_swapped) ? pp_alt.sched.get() : sched.get();
++        size_t have = 0;
++        for (size_t i = 0; s_pp != nullptr && i < backend_ptrs.size(); ++i) {
++            have += ggml_backend_sched_get_buffer_size(s_pp, backend_ptrs[i]);
++        }
++        llama_elastic_kv_pp_buffer_now(have);
++    }
++
+     // patch 0062: a prompt graph grown past the floor goes back to its reserved size once no conversation is past it
+     if (!pp_pend.active && llama_elastic_kv_pp_trim_wanted()) {
+         LLAMA_LOG_INFO("%s: elastic KV floor: no conversation past the floor any more, the compute buffer goes back to its reserve\n", __func__);
+diff --git a/src/llama-context.h b/src/llama-context.h
+index da75400..6482cd2 100644
+--- a/src/llama-context.h
++++ b/src/llama-context.h
+@@ -266,6 +266,7 @@ private:
+     uint32_t reserve_cap_pp = 0;    // patch 0062: KV cells the prompt graph is reserved for (0 = full depth)
+     uint32_t reserve_cap_tg = 0;    // patch 0062: KV cells per stream the decode graph is reserved for (0 = full depth)
+     bool pp_swapped      = false; // the prompt scheduler is in `sched` right now
++    bool pp_floor_reserve = false; // patch 0066: the prompt graph is reserved at the floor (its buffer size is reported)
+     void pp_swap();
+     bool pp_route(const llama_batch_ext & batch) const;
+     ggml_status graph_compute_piece(ggml_cgraph * gf, bool first, bool & done);
+diff --git a/src/llama-kv-cache.cpp b/src/llama-kv-cache.cpp
+index de9b66e..bcaf6fc 100644
+--- a/src/llama-kv-cache.cpp
++++ b/src/llama-kv-cache.cpp
+@@ -1698,12 +1698,21 @@ bool llama_kv_cache::elastic_reserve_floor(llama_seq_id seq_id, uint32_t n_cells
+ static uint32_t g_pp_cap        = 0;   // cells the prompt graph is reserved for
+ static double   g_pp_per_cell   = 0;   // bytes per cell past it
+ static uint32_t g_pp_cells_now  = 0;   // cells the buffer has been granted up to
++static size_t   g_pp_base_bytes = 0;   // patch 0066: the buffer's size at its reserve
++static size_t   g_pp_have_bytes = 0;   // patch 0066: the buffer's size now (the context reports it before every decode)
+ 
+-void llama_elastic_kv_set_pp_compute(uint32_t cap, double per_cell) {
++void llama_elastic_kv_set_pp_compute(uint32_t cap, double per_cell, size_t base_bytes) {
+     std::lock_guard<std::mutex> lock(elastic_registry_mutex);
+     g_pp_cap = cap;
+     g_pp_per_cell = per_cell;
+     g_pp_cells_now = cap;
++    g_pp_base_bytes = base_bytes;
++    g_pp_have_bytes = base_bytes;
++}
++
++void llama_elastic_kv_pp_buffer_now(size_t bytes) {
++    std::lock_guard<std::mutex> lock(elastic_registry_mutex);
++    g_pp_have_bytes = bytes;
+ }
+ 
+ bool llama_elastic_kv_pp_trim_wanted() {
+@@ -1758,20 +1767,29 @@ bool llama_elastic_kv_reserve(llama_context * ctx, llama_seq_id seq_id, int32_t
+             grow  += pp_grow;
+             burst += pp_grow;
+         }
++        // patch 0066: compute buffer granted to earlier bursts that the prompt graph has not grown into yet (it grows
++        // ubatch by ubatch as the deepest conversation is read); MemAvailable does not show it, so it is owed
++        size_t pp_owed = 0;
++        if (g_pp_cap > 0 && g_pp_cells_now > g_pp_cap) {
++            const size_t granted = (size_t) ((double) (g_pp_cells_now - g_pp_cap)*g_pp_per_cell);
++            const size_t grown   = g_pp_have_bytes > g_pp_base_bytes ? g_pp_have_bytes - g_pp_base_bytes : 0;
++            pp_owed = granted > grown ? granted - grown : 0;
++        }
+         if (burst > 0) {
+             const size_t avail = elastic_mem_available();
+             const size_t rel   = llama_moe_cache_releasable();
+             const size_t keep  = llama_moe_cache_valve_reserve() + llama_kv_cache::elastic_policy_floor_bytes();
+             const size_t have  = (avail == SIZE_MAX || rel == SIZE_MAX) ? SIZE_MAX : avail + rel;
+-            if (have != SIZE_MAX && have < grow + deficit + keep) {
++            if (have != SIZE_MAX && have < grow + deficit + keep + pp_owed) {
+                 LLAMA_LOG_WARN("%s: elastic KV seq %d: REFUSED a burst to %u cells (%.2f GB past the floor of %u cells): "
+-                    "MemAvailable %.2f GB + expert cache releasable %.2f GB < growth %.2f + other slots' floors %.2f + reserve %.2f GB\n",
+-                    __func__, seq_id, n, burst/1e9, fl_cells, avail/1e9, rel/1e9, grow/1e9, deficit/1e9, keep/1e9);
++                    "MemAvailable %.2f GB + expert cache releasable %.2f GB < growth %.2f + other slots' floors %.2f + reserve %.2f "
++                    "+ compute buffer owed to earlier bursts %.2f GB\n",
++                    __func__, seq_id, n, burst/1e9, fl_cells, avail/1e9, rel/1e9, grow/1e9, deficit/1e9, keep/1e9, pp_owed/1e9);
+                 return false;
+             }
+             LLAMA_LOG_INFO("%s: elastic KV seq %d: burst to %u cells (%.2f GB past the floor): MemAvailable %.2f GB + releasable %.2f GB, "
+-                "growth %.2f + other slots' floors %.2f + reserve %.2f GB\n",
+-                __func__, seq_id, n, burst/1e9, avail/1e9, rel == SIZE_MAX ? 0.0 : rel/1e9, grow/1e9, deficit/1e9, keep/1e9);
++                "growth %.2f + other slots' floors %.2f + reserve %.2f + compute buffer owed to earlier bursts %.2f GB\n",
++                __func__, seq_id, n, burst/1e9, avail/1e9, rel == SIZE_MAX ? 0.0 : rel/1e9, grow/1e9, deficit/1e9, keep/1e9, pp_owed/1e9);
+         }
+         if (pp_grow > 0) {
+             llama_moe_cache_make_room(pp_grow); // the compute buffer grows when the deep prompt graph first runs
+diff --git a/src/llama-kv-cache.h b/src/llama-kv-cache.h
+index 827d1fc..bfb6061 100644
+--- a/src/llama-kv-cache.h
++++ b/src/llama-kv-cache.h
+@@ -426,7 +426,10 @@ bool llama_kv_cache_get_reserve_one_stream();
+ void llama_kv_cache_set_reserve_n_kv_cap(uint32_t n);
+ // patch 0062: the prompt graph's compute buffer for the floor + burst accounting: reserved for `cap` cells, `per_cell`
+ // bytes more per cell of the deepest conversation past it; trim_wanted() once none is past it after a growth
+-void llama_elastic_kv_set_pp_compute(uint32_t cap, double per_cell);
++// patch 0066: `base_bytes` is the buffer's size at its reserve, pp_buffer_now() its size now, so a later burst is not
++// admitted against memory that an earlier burst's prompt graph was granted and has not grown into yet
++void llama_elastic_kv_set_pp_compute(uint32_t cap, double per_cell, size_t base_bytes);
++void llama_elastic_kv_pp_buffer_now(size_t bytes);
+ bool llama_elastic_kv_pp_trim_wanted();
+ uint32_t llama_kv_cache_get_reserve_n_kv_cap();
+ 

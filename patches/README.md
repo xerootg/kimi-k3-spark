@@ -1443,3 +1443,19 @@ were the same in the solo run, the old order and the new order):
 | the same: B's first token | 46.5 s | 46.4 s |
 
 Not in production until its acceptance windows are done (see docs/experiments.md).
+
+## 0066-burst-owed-compute
+
+A correction to the burst admission of 0060/0062. A burst past the floor needs two kinds of memory: its KV cells,
+which are mapped at admission, and the growth of the prompt graph's compute buffer (about 9.5 KiB per cell past the
+floor on the Spark), which only happens ubatch by ubatch as the long prompt is read. The admission of a second burst
+looked at free memory (MemAvailable plus what the expert cache can release) and did not see the part of the compute
+buffer already promised to the first burst but not allocated yet, so two bursts admitted shortly after each other
+could together promise up to about 8 GB more than was free, against a reserve of about 10 GB.
+
+The context now reports the compute buffer's real size before every decode (`llama_elastic_kv_pp_buffer_now`), and
+the admission adds "granted growth minus growth already allocated" to what a new burst has to leave free. Both
+admission log lines print the number ("compute buffer owed to earlier bursts"). Admission only: no ubatch is computed
+differently, and with no floor configured (the GH200) nothing changes.
+
+Not in production until its acceptance windows are done (see docs/experiments.md).
