@@ -1,0 +1,55 @@
+=== LEG R3 parallel=5 ctx=1024000 seed=fl-mtp.k3sn extra=[LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_SPEC_EXACT_TRACE=1 LLAMA_EXPERT_STORE_PLAN_CHECK=1 LLAMA_SPEC_EXACT=1 LLAMA_RS_KEEP_TAIL=0] xargs=[--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.7] 05:48:24
+READY R3 after 28s; MemAvailable 19758 MiB
+0.00.402.012 I llama_model_loader: - kv  72: glm5-next.attention.indexer.index_share_mtp bool             = true
+0.12.892.254 I llama_context: n_rs_seq              = 3
+0.24.069.930 I snapshot_restore: expert store: cache snapshot restored: 7556 experts, 62.0 GB read in 4.8 s (12.9 GB/s)
+0.24.640.310 I common_speculative_init_result: creating MTP draft context against the target model 'q2/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf'
+0.24.640.333 I llama_context: n_rs_seq              = 0
+0.25.159.064 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 204800, kv_unified = 'false'
+0.25.159.094 I spec common_specu: adding speculative implementation 'draft-mtp'
+0.25.898.896 I srv    load_model: speculative decoding context initialized
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 2.9, "prefill_tps": 6.21, "decode_n": 400, "decode_tps": 14.59, "md5": "ba820728cb", "draft_n": 215, "draft_ok": 145, "stop": "limit", "t0": 1794289731.8639278, "t1": 1794289762.1217768, "kind": "stop", "tag": "R3", "temp": 1.0, "seed": 3}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.47, "prefill_tps": 37.99, "decode_n": 37, "decode_tps": 15.2, "md5": "6ebb44a43b", "draft_n": 18, "draft_ok": 11, "stop": "limit", "t0": 1794289762.1218598, "t1": 1794289764.9648051, "kind": "limit37", "tag": "R3", "temp": 1.0, "seed": 3}
+{"spec": "p5", "prompt_n": 15, "cache_n": 0, "prefill_s": 0.52, "prefill_tps": 28.72, "decode_n": 400, "decode_tps": 18.31, "md5": "b85a4af907", "draft_n": 292, "draft_ok": 241, "stop": "limit", "t0": 1794289764.964863, "t1": 1794289787.2845, "kind": "stop", "tag": "R3", "temp": 1.0, "seed": 3}
+{"spec": "p5", "prompt_n": 15, "cache_n": 0, "prefill_s": 0.45, "prefill_tps": 33.49, "decode_n": 37, "decode_tps": 17.81, "md5": "fbd339a499", "draft_n": 33, "draft_ok": 20, "stop": "limit", "t0": 1794289787.2845619, "t1": 1794289789.7553487, "kind": "limit37", "tag": "R3", "temp": 1.0, "seed": 3}
+{"kind": "multi", "tag": "R3", "temp": 0, "seed": 1, "n": 3, "round": "warm", "agg_tps": 7.36, "wall_s": 86.92, "gen": 640, "per_stream_tps": [6.25, 2.96, 2.98], "md5": ["145c14aa8b", "ce2fc95752", "bb64203d71"], "specs": ["L16384", "p0", "p1"], "draft_n": [null, 50, 51], "draft_ok": [null, 50, 47], "prefill_tps": [324.17, 18.28, 28.26], "t0": 1794289789.78605, "t1": 1794289876.7023761}
+{"kind": "multi", "tag": "R3", "temp": 0, "seed": 1, "n": 3, "round": "warm", "agg_tps": 7.96, "wall_s": 80.37, "gen": 640, "per_stream_tps": [7.23, 3.23, 3.2], "md5": ["145c14aa8b", "ce2fc95752", "bb64203d71"], "specs": ["L16384", "p0", "p1"], "draft_n": [null, 50, 51], "draft_ok": [null, 50, 47], "prefill_tps": [339.51, 22.29, 34.08], "t0": 1794289876.733974, "t1": 1794289957.1041963}
+{"kind": "multi", "tag": "R3", "temp": 0, "seed": 1, "n": 3, "round": "warm", "agg_tps": 7.89, "wall_s": 81.13, "gen": 640, "per_stream_tps": [7.49, 3.18, 3.19], "md5": ["145c14aa8b", "ce2fc95752", "bb64203d71"], "specs": ["L16384", "p0", "p1"], "draft_n": [null, 50, 51], "draft_ok": [null, 50, 47], "prefill_tps": [335.15, 21.24, 34.41], "t0": 1794289957.1386995, "t1": 1794290038.2652106}
+5.33.831.385 I slot print_timing: id  0 | task 916 | draft acceptance = 1.00000 (   50 accepted /    50 generated), mean len =  2.00
+5.34.161.736 I slot print_timing: id  1 | task 915 | draft acceptance = 0.92157 (   47 accepted /    51 generated), mean len =  1.92
+5.34.664.639 I llama_moe_cache: ubatch <= 8: hits = 848262, misses = 38062, hit rate = 95.71%, uploaded = 303201.25 MiB
+5.34.664.643 I llama_moe_cache: ubatch  > 8: hits = 22343, misses = 3099, hit rate = 87.82%, uploaded = 24241.19 MiB
+0.13.078.033 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 204800 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.13.363.211 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 204800 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.24.669.838 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 204800 cells, 1.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.24.695.843 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 204800 cells, 0.8 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+trace lines: 2794; lowest MemAvailable 15652 MiB; now 120774 MiB; END R3 05:54:01
+MTP-LEG-DONE R3 05:54:01
+=== LEG R1 parallel=5 ctx=1024000 seed=fl-mtp.k3sn extra=[LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_SPEC_EXACT_TRACE=1 LLAMA_EXPERT_STORE_PLAN_CHECK=1 LLAMA_SPEC_EXACT=1 LLAMA_SPEC_EXACT_COLS=1 LLAMA_RS_KEEP_TAIL=0] xargs=[--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.7] 05:54:01
+READY R1 after 28s; MemAvailable 19781 MiB
+0.00.360.558 I llama_model_loader: - kv  72: glm5-next.attention.indexer.index_share_mtp bool             = true
+0.12.921.483 I llama_context: n_rs_seq              = 3
+0.24.071.333 I snapshot_restore: expert store: cache snapshot restored: 7556 experts, 62.0 GB read in 4.9 s (12.6 GB/s)
+0.24.612.828 I common_speculative_init_result: creating MTP draft context against the target model 'q2/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf'
+0.24.612.849 I llama_context: n_rs_seq              = 0
+0.25.123.098 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 204800, kv_unified = 'false'
+0.25.123.128 I spec common_specu: adding speculative implementation 'draft-mtp'
+0.25.838.389 I srv    load_model: speculative decoding context initialized
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 2.59, "prefill_tps": 6.94, "decode_n": 400, "decode_tps": 14.67, "md5": "ba820728cb", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794290068.719525, "t1": 1794290098.531248, "kind": "stop", "tag": "R1", "temp": 1.0, "seed": 3}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.46, "prefill_tps": 38.81, "decode_n": 37, "decode_tps": 15.38, "md5": "6ebb44a43b", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794290098.5313194, "t1": 1794290101.336719, "kind": "limit37", "tag": "R1", "temp": 1.0, "seed": 3}
+{"spec": "p5", "prompt_n": 15, "cache_n": 0, "prefill_s": 0.47, "prefill_tps": 32.18, "decode_n": 400, "decode_tps": 14.27, "md5": "b85a4af907", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794290101.3367784, "t1": 1794290129.764892, "kind": "stop", "tag": "R1", "temp": 1.0, "seed": 3}
+{"spec": "p5", "prompt_n": 15, "cache_n": 0, "prefill_s": 0.44, "prefill_tps": 33.9, "decode_n": 37, "decode_tps": 15.33, "md5": "fbd339a499", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794290129.764948, "t1": 1794290132.5573053, "kind": "limit37", "tag": "R1", "temp": 1.0, "seed": 3}
+{"kind": "multi", "tag": "R1", "temp": 0, "seed": 1, "n": 3, "round": "warm", "agg_tps": 7.49, "wall_s": 85.44, "gen": 640, "per_stream_tps": [6.35, 3.0, 3.03], "md5": ["145c14aa8b", "ce2fc95752", "bb64203d71"], "specs": ["L16384", "p0", "p1"], "draft_n": [null, null, null], "draft_ok": [null, null, null], "prefill_tps": [331.86, 19.38, 28.4], "t0": 1794290132.587425, "t1": 1794290218.0264268}
+{"kind": "multi", "tag": "R1", "temp": 0, "seed": 1, "n": 3, "round": "warm", "agg_tps": 7.94, "wall_s": 80.58, "gen": 640, "per_stream_tps": [7.25, 3.18, 3.21], "md5": ["145c14aa8b", "ce2fc95752", "bb64203d71"], "specs": ["L16384", "p0", "p1"], "draft_n": [null, null, null], "draft_ok": [null, null, null], "prefill_tps": [338.27, 21.94, 34.26], "t0": 1794290218.084043, "t1": 1794290298.661244}
+{"kind": "multi", "tag": "R1", "temp": 0, "seed": 1, "n": 3, "round": "warm", "agg_tps": 8.1, "wall_s": 79.01, "gen": 640, "per_stream_tps": [7.47, 3.25, 3.27], "md5": ["145c14aa8b", "ce2fc95752", "bb64203d71"], "specs": ["L16384", "p0", "p1"], "draft_n": [null, null, null], "draft_ok": [null, null, null], "prefill_tps": [343.96, 21.12, 34.72], "t0": 1794290298.7083123, "t1": 1794290377.719462}
+5.26.094.817 I fill_decode: expert store: 886283 lookups, hit rate 95.7%, 319.5 GB read for decode, 264.8 GB for prefill
+5.36.079.776 I fill_decode: expert store: 949802 lookups, hit rate 95.7%, 337.0 GB read for decode, 264.8 GB for prefill
+5.36.920.893 I llama_moe_cache: ubatch <= 8: hits = 888862, misses = 37488, hit rate = 95.95%, uploaded = 298524.75 MiB
+5.36.920.898 I llama_moe_cache: ubatch  > 8: hits = 22442, misses = 3000, hit rate = 88.21%, uploaded = 23450.62 MiB
+0.13.103.246 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 204800 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.13.374.464 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 204800 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.24.640.941 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 204800 cells, 1.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.24.666.594 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 204800 cells, 0.8 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+trace lines: 2794; lowest MemAvailable 15535 MiB; now 120757 MiB; END R1 05:59:40
+MTP-LEG-DONE R1 05:59:40
+SPARK-MTP2R-DONE 05:59:40
