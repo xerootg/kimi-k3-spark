@@ -1,0 +1,47 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 68695f2..1e342bf 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -3543,9 +3543,39 @@ private:
+         return on;
+     }
+ 
+-    // does slot a's prompt go before slot b's (same class)? A prompt that has not started yet first, then the one
+-    // whose last ubatch is oldest; ties: the oldest task.
+-    static bool pp_turn_before(const server_slot & a, const server_slot & b) {
++    // kimi-k3-spark patch 0072: LLAMA_PREFILL_SHORT_FIRST=1 (with LLAMA_PREFILL_TURNS=1): a prompt whose rest fits in
++    // one ubatch goes before a prompt that needs more, the one with the fewest tokens left first. The server reads a
++    // prompt in two ubatches at least (all but its last tokens, a checkpoint, then the tail), and with the turns
++    // alone the tail of a short prompt waited for a whole ubatch of a long prompt that arrived after it (a new
++    // prompt goes first). A long prompt waits for two short ubatches per short prompt at most, as it waits for one
++    // per turn without this. Only the order of the prompt ubatches changes, every ubatch is computed as before.
++    static bool pp_short_first() {
++        static const bool on = env_int("LLAMA_PREFILL_SHORT_FIRST", 0) == 1;
++        return on;
++    }
++
++    // prompt tokens this slot still has to read; before the prompt has started the part already in the slot's
++    // cache is not known yet, so this is the whole prompt then (an upper bound)
++    static int64_t pp_left(const server_slot & slot) {
++        const int64_t n = slot.task->n_tokens();
++        return slot.state == SLOT_STATE_STARTED ? n : std::max<int64_t>(0, n - (int64_t) slot.prompt.n_tokens());
++    }
++
++    // does slot a's prompt go before slot b's (same class)? With patch 0072 a prompt whose rest fits in one ubatch
++    // first (fewest tokens left first). Then a prompt that has not started yet, then the one whose last ubatch is
++    // oldest; ties: the oldest task.
++    bool pp_turn_before(const server_slot & a, const server_slot & b) const {
++        if (pp_short_first()) {
++            const int64_t n_batch = llama_n_batch(ctx_tgt);
++            const int64_t la = pp_left(a), lb = pp_left(b);
++            const bool sa = la <= n_batch, sb = lb <= n_batch;
++            if (sa != sb) {
++                return sa;
++            }
++            if (sa && la != lb) {
++                return la < lb;
++            }
++        }
+         const int64_t ta = a.state == SLOT_STATE_STARTED ? 0 : a.pp_turn;
+         const int64_t tb = b.state == SLOT_STATE_STARTED ? 0 : b.pp_turn;
+         return ta < tb || (ta == tb && a.task->id < b.task->id);

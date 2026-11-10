@@ -1651,6 +1651,43 @@ list is exactly what a server holding only those sequences builds. Solo and mixe
 different list sizes. It needs one stream per sequence (the non-unified cache every multi-slot server here runs); with
 a unified cache the variable does nothing.
 
-Candidate, not in production and not measured yet (written 2026-11-10 between windows nc4 and nc5). Acceptance is the
-usual one (per-client md5 against solo, two processes, gold) plus the speed of a long prompt after other slots hold
-long conversations; the result goes into docs/experiments.md either way.
+Measured in GH200 window nc5 (2026-11-10, image gadd9f81 against the production image g68d4166, same flags, same
+request sequence, every md5 equal): a 16k prompt is read at 1630 tok/s in a fresh server on both; with a 16k and a 64k
+conversation in two other slots the production image reads it at 1341 tok/s and at 966 once a 200k conversation is
+there as well, with the variable set it stays at 1661 and 1670. Decode of a short prompt next to those conversations:
+47.8 and 44.0-46.4 tok/s on production (53.7 alone), 51.2 and 50.0-53.0 with the variable. The detector gate and two
+acceptance processes (per-client md5 against solo at one to five clients, long-prompt mixes, gold) passed with it.
+Not in production yet: the rollout waits for the image that also has 0072. Ledger: docs/experiments.md, window nc5;
+evidence: docs/evidence/glm-windows-2026-10-30/nc/.
+
+## 0072-prompt-short-first
+
+`LLAMA_PREFILL_SHORT_FIRST=1` (off unless set; needs `LLAMA_PREFILL_TURNS=1` of 0065): a prompt whose rest fits in
+one ubatch goes before a prompt that needs more, the one with the fewest tokens left first.
+
+The server reads every prompt in two ubatches at least: all but its last tokens, a context checkpoint, then the tail.
+With the turns of 0065 alone (a prompt that has not started goes first, then the one whose last ubatch is oldest) the
+tail of a short prompt queues behind the first ubatch of a long prompt that arrived just after it. GH200 window nc5,
+scenario "mixed" (three short prompts, a 64k prompt of the same class half a second later): the short prompts got
+their first token after 3.1-3.3 s, against 0.4-1.0 s with the production order (an in-flight prompt first), because
+each tail waited for a 4096-token ubatch (2.5 s). On the Spark (window nc-s2) the same order cost more: the ubatch of
+the long prompt takes 5.7 s there, the higher class had started to generate by then, and the three tails then ran
+within the lower classes' share of her time, about six seconds apart (first tokens after 7.6, 13.6 and 19.3 s).
+
+With the variable set `pp_turn_before` first compares what the two prompts still have to read (`pp_left`: the whole
+prompt before it has started, since the part already in the slot's cache is not known then; the rest afterwards). A
+prompt with at most one ubatch (`n_batch` tokens) left goes before one with more, and of two such prompts the one
+with fewer tokens left goes first; otherwise the turns of 0065 decide as before. A short prompt therefore runs both of
+its ubatches before a long prompt's next one, and the last ubatch of a long prompt goes before a new long prompt's
+first. A long prompt waits for two short ubatches per short prompt at most (one per turn without the patch); the
+arrival order the turns were made for (a short prompt arriving while a long one is read waits for one ubatch, not
+for the whole prompt) is unchanged, as a new short prompt went first already.
+
+Only the order of the prompt ubatches changes. Every prompt ubatch is still computed alone and split the same way
+whenever it runs (`LLAMA_PREFILL_ISOLATE=1`), which is what 0055 and 0065 already rely on, so the bytes of every
+client stay those of a solo run. The shares of 0061/0064/0069 are untouched: a short prompt's ubatches still count
+against the share while a higher class generates.
+
+Candidate, not in production and not measured yet (written 2026-11-10 during Spark window nc-s2). Acceptance: the
+detector gate, per-client md5 against solo in two processes, gold, and the "mixed" and "shortbehind" scenarios
+against the production configuration; the result goes into docs/experiments.md either way.
