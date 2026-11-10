@@ -1,0 +1,71 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index a42db3e..38e2d2b 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -378,6 +378,7 @@ struct server_slot {
+     int32_t last_priority = 0;
+     int64_t n_steps_served = 0;
+     bool    pp_pending = false; // patch 0061: this slot's prompt ubatch is being computed in pieces
++    int64_t pp_turn    = 0;     // patch 0065: when this slot's prompt last had a ubatch (a server-wide count)
+ 
+     // generation props
+     int32_t n_ctx   = 0;  // context size per slot
+@@ -1135,6 +1136,7 @@ private:
+     int64_t       pp_t_pp_us   = 0;       // prompt pieces and decode steps while a higher class generates
+     int64_t       pp_t_dec_us  = 0;
+     int64_t       pp_n_pieces  = 0;
++    int64_t       pp_turn_count = 0;      // patch 0065: prompt ubatches started, for the turns
+     bool          pp_step_lower = false;  // the decode step pre_decode built has lower-class sequences next to a higher one
+     double        pp_solo_us    = 0;      // moving average of a decode step with the higher class only
+     std::vector<server_slot *> generating_scratch, drafting_scratch;
+@@ -3437,6 +3439,23 @@ private:
+         return v;
+     }
+ 
++    // kimi-k3-spark patch 0065: LLAMA_PREFILL_TURNS=1: prompts of one class take turns, one ubatch each (the prompt
++    // that waited longest goes next; a new prompt goes first), instead of each prompt running to its end before the
++    // next one starts. A short prompt then waits for one ubatch of a long one, not for all of it. Every ubatch is
++    // computed the same way whenever it runs (0055 already relies on this for a higher class's prompt).
++    static bool pp_turns() {
++        static const bool on = env_int("LLAMA_PREFILL_TURNS", 0) == 1;
++        return on;
++    }
++
++    // does slot a's prompt go before slot b's (same class)? A prompt that has not started yet first, then the one
++    // whose last ubatch is oldest; ties: the oldest task.
++    static bool pp_turn_before(const server_slot & a, const server_slot & b) {
++        const int64_t ta = a.state == SLOT_STATE_STARTED ? 0 : a.pp_turn;
++        const int64_t tb = b.state == SLOT_STATE_STARTED ? 0 : b.pp_turn;
++        return ta < tb || (ta == tb && a.task->id < b.task->id);
++    }
++
+     // does a prompt of class `prio` share the GPU with the generating class `hi` (and not simply run first)?
+     static bool pp_contends(int prio, int hi) {
+         return hi != INT_MIN && (prio < hi || (prio == hi && pp_share_same() > 0.0));
+@@ -3840,7 +3859,15 @@ private:
+                 }
+                 const int pa = slot.task->params.client_priority, pb = slot_prefill->task->params.client_priority;
+                 const bool fa = slot.state == SLOT_STATE_PROCESSING_PROMPT, fb = slot_prefill->state == SLOT_STATE_PROCESSING_PROMPT;
+-                if (pa > pb || (pa == pb && (fa > fb || (fa == fb && slot.task->id < slot_prefill->task->id)))) {
++                if (pa > pb || (pa == pb && (pp_turns() ? pp_turn_before(slot, *slot_prefill)
++                                                        : (fa > fb || (fa == fb && slot.task->id < slot_prefill->task->id))))) {
++                    slot_prefill = &slot;
++                }
++            }
++        } else if (prefill_isolate && pp_turns()) {
++            for (auto & slot : slots) {
++                if (slot.task && (slot.state == SLOT_STATE_PROCESSING_PROMPT || slot.state == SLOT_STATE_STARTED) &&
++                        (slot_prefill == nullptr || pp_turn_before(slot, *slot_prefill))) {
+                     slot_prefill = &slot;
+                 }
+             }
+@@ -3888,6 +3915,9 @@ private:
+             }
+         }
+ 
++        if (slot_prefill != nullptr) {
++            slot_prefill->pp_turn = ++pp_turn_count; // patch 0065
++        }
+         pp_cur_prompt = slot_prefill; // patch 0061
+         pp_step_lower = false;
+         const int  pp_hi_now      = pp_slicing_enabled() ? pp_top_generating() : INT_MIN;

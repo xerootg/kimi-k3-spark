@@ -1420,3 +1420,26 @@ A higher class's prompt still runs first, and a lower class's prompt still gets 
 higher class generates.
 
 Not in production until its acceptance windows are done (see docs/experiments.md).
+
+## 0065-prompt-turns
+
+With prompts read alone (0035) the prompts of one class were read one after another: the prompt in flight first, then
+the oldest task. A short prompt that arrived behind a long one waited for the whole long prompt, which on the Spark
+is 12 minutes behind a 190k prompt and about an hour behind a 500k burst (0060). `LLAMA_PREFILL_TURNS=1` (default 0 =
+the old order) makes the prompts of one class take turns, one ubatch each: the prompt that had its last ubatch longest
+ago goes next, and a prompt that has not started yet goes before all of them (ties by task id). A higher class's
+prompt still goes first. Scheduling only: every ubatch still holds one prompt alone and is computed as before, so
+nobody's bytes change.
+
+Smoke test for 0064 and 0065 on a small CPU model (SmolLM2-135M Q8, three slots, no GPU; the bytes of every client
+were the same in the solo run, the old order and the new order):
+
+| | old order | `LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1` |
+|---|---|---|
+| A is answering, B's long prompt arrives: A's longest gap between tokens | 46.5 s | 2.9 s |
+| the same: A's answer done after | 73.8 s | 55.0 s |
+| the same: B's first token | 46.5 s | 72.9 s |
+| B's long prompt is being read, C's short prompt arrives: C's first token | 45.9 s | 4.9 s |
+| the same: B's first token | 46.5 s | 46.4 s |
+
+Not in production until its acceptance windows are done (see docs/experiments.md).
