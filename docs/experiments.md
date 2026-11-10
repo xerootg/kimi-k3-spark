@@ -2595,3 +2595,69 @@ with `repgen-spark.txt` and `repgen-gh200.txt`).
   `ee079496a4` three times through the Service (17.1 tok/s); no test server, runner, key file or test snapshot
   left; the laptop deadman disarmed. Not run yet: the full-scale burst leg FB9 (a 500k session next to four ~190k
   clients, about 105 minutes), window nc-s6.
+
+**2026-11-10, Spark window nc-s6 (21:13-22:26 UTC): the burst at full scale. A 500k conversation is read next to
+four 190k clients with every client's bytes unchanged; its growth to 1M is refused cleanly because the memory is
+not there.** One leg, FB9, on the CI binaries of image `547208dca250-gfbb8831` (`~/nc/ci-fbb8831/bin`), "FIN" as in
+window nc-s5 (five slots of 1M, floor 204800 cells, pieces flags, `LLAMA_KPOOL_OWN_SEQS=1`) plus the test flag
+`LLAMA_SLOT_KEEP_CHILD=1`; no client classes, no key. `window.lock`, glm53-spark at 0, glm53-gh200 serving
+throughout. Evidence: [nc/spark/nc-s6/](evidence/glm-windows-2026-10-30/nc/spark/nc-s6/) (`results-FB9.jsonl`,
+`server-FB9.log`, `mem-FB9.txt`, `nc9b.log`, the driver `fb3.py`).
+
+- **How the leg is built.** B is a 499594-token prompt (seed 13), sent first and read cold. Sixty seconds later P, a
+  189735-token prompt (seed 11), is sent once with `n_cmpl 4`; with the test flag the four slots of that request keep
+  their copies, so four slots hold a 190k conversation each after one read (the trick of legs G7 and G8; the flag is
+  not part of the proposed production env). Each of the four then gets its own suffix (P+S0 to P+S3, 64 tokens of
+  answer): five rounds of the four together while B is still being read, then with B+T (B plus a suffix) as a fifth,
+  then each alone, then two rounds of four after B's slot is released. B+T is asked alone, with the four, and again
+  after a refused growth.
+- **Admission.** "burst to 499596 cells (11.26 GB past the floor): MemAvailable 20.38 GB + releasable 40.88 GB,
+  growth 15.30 + other slots' floors 16.15 + reserve 10.20 + compute buffer owed to earlier bursts 0.00 GB". Nothing
+  under the floor was refused at any point (one refusal in the whole log, the growth to 1M below).
+- **Bytes: no client's answer depends on the others.** P+S0 `a62124c36d`, P+S1 `39e8ad6f81`, P+S2 `32339177bd`,
+  P+S3 `1973057f0d` in all five rounds during B's read, with B+T as a fifth client, each alone, and in both rounds
+  after the release (9 answers each, 36 of 36). B+T `beb0e88556` alone, with the four, and after the refused growth
+  (3 of 3). p0 gold `ce2fc95752` before and after. (All comparisons are like with like: the same cached prefix in
+  the same slot. The known effect that a prompt's bytes depend on where its ubatches were cut is not exercised
+  here.)
+- **The read.** B: 3987.8 s for 499594 tokens (125.3 tok/s overall). Alone in the first 22 s 345-364 tok/s; next to
+  P's read 89.5 tok/s (P itself 104.3 tok/s over its 1820 s; the two take turns ubatch by ubatch); alone between the
+  rounds 182.5 tok/s at 213-287k tokens of depth, 152.7 at 295-354k, 133.1 at 360-412k, 123.6 at 420-467k and 116.9
+  at 473-500k. A ubatch of 2048 tokens therefore takes 11 s at about 250k of depth and 17.5 s near 500k.
+- **The floor clients during the read.** 2.47-2.63 tok/s each in every round (four at once, 10.1-10.4 tok/s
+  together: half of the 20.2-20.4 tok/s the same four reach with nobody reading, which is the half share
+  `LLAMA_PREFILL_SLICE_SHARE_SAME=0.5` gives a prompt of their class). The 64 tokens took 30.0-40.8 s wall in rounds
+  1-4, of which 4.4-5.5, 7.6-8.7, 13.1-14.3 and 15.0-16.2 s were neither prompt nor decode time: a new request
+  starts when the ubatch in flight ends (server log, round 3: tasks launched 55:00.25, taken up 55:13.57), and B's
+  ubatches get longer with its depth. Round 0 (50-52 s, 22-27 s of it waiting) also contains the valve releasing
+  15.66 GB when the four copies of P were mapped.
+- **Five together and the solo speeds.** Four 190k clients and B+T together: 3.38-3.54 tok/s each (17.3 together).
+  Each 190k client alone 13.98-14.17 tok/s; B+T alone 8.88 (right after its read) and 10.13 tok/s; after the release
+  four together 4.90-5.25 each (20.2-20.4 together). p0 alone 15.50 tok/s at the start of the leg and 12.69 right
+  after it (the four 190k conversations still resident, 8.38 GB of the expert cache still released, re-arming under
+  way: 11 re-arms in the last minute).
+- **Growth to 1M refused, cleanly.** A request that extends B+T to 999428 tokens got HTTP 503 after 0.2 s: "REFUSED
+  a burst to 999430 cells (19.09 GB past the floor of 204800 cells): MemAvailable 8.28 GB + expert cache releasable
+  18.31 GB < growth 19.09 + other slots' floors 1.17 + reserve 10.20 + compute buffer owed to earlier bursts 0.03
+  GB", then "the refused request leaves the slot's conversation as it was (499676 tokens)"; the next B+T request
+  found 499609 tokens cached and answered with the same bytes. So with four clients at 190k and 500k already held,
+  26.6 GB were available against 30.5 GB needed; by the same arithmetic (38.2 kB per cell past the floor by the
+  log's own figures: 19.2 KiB of KV, the rest compute buffers that grow with the depth) a growth to about 0.9M would
+  have been admitted. That figure is arithmetic, not
+  a measurement. Leg M1 of window nc-s2 had a 1M burst admitted in a fresh server (other slots empty, their floors
+  set aside, 0.5 GB to spare); here about 4.4 GB more were in use than the KV and the compute buffer account for
+  (context checkpoints of 145.6 MiB each, up to four per slot in this log, among other things; not broken down
+  further). The admission counts the real MemAvailable, so it refused.
+- **Memory.** Lowest MemAvailable 6153 MiB (watchdog at 3072 MiB; never near). The valve released 20.54 GB of the
+  expert cache in 11 releases during the read (22.6 GB in 13 by the end of the five-client step) and held
+  MemAvailable between 6.2 and 7.8 GB the whole time, as designed; no PSI wake-up. After the release: stream 1 back from
+  504064 to 4608 cells, "no conversation past the floor any more, the compute buffer goes back to its reserve",
+  11 re-arms (14.2 GB back within 6 s).
+- **What this leg does not show.** A burst deeper than 500k was not read (the 1M read alone would take hours on
+  this box). Client classes were not part of this leg: the bound "a new request waits for the ubatch in flight"
+  holds for Juno's key as well, so next to a conversation that is being read at 500k of depth her first token can
+  wait up to 17.5 s where the bound was about 11 s at the old 200k limit; measured for the default class here, read
+  from the code for hers. Four separate 190k reads were replaced by the `n_cmpl` copy.
+- **Window closed 22:26 UTC.** glm53-spark back at one replica on image `547208dca250-g08d176f`, quicksort gold
+  `ee079496a4` three times through the Service (17.0 tok/s); no test server, runner or test snapshot left; the
+  laptop deadman disarmed at 22:26:36.
