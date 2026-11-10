@@ -8,14 +8,18 @@
 // ex2/rcp; quantize_q8_1(h); mmvq down rows. The AVX2/VNNI row is tools/glm53/cpu/g53cpu.cpp's fast_row (the same
 // FMA order and FTZ/NaN canonicalisation), generalised to K=4096. Checked against GPU rows with `f53s check`.
 //
-// Wire (little endian): request = int32 hdr[4 + 2*KMAX] { 0x4E440000|k, ntok, seq, 0, (gid, tok) x k } followed by
+// Wire (little endian): request = int32 hdr[4 + 2*KMAX] { magic|k, ntok, seq, 0, (gid, tok) x k } followed by
 // ntok * 4096 f32 inputs; reply = k rows of 4096 f32 in request order. gid = engine layer * 288 + expert. A pair the
-// box does not hold gets a NaN row (the engine computes it itself).
+// box does not hold gets a NaN row (the engine computes it itself). The magic names the row order the engine's own
+// kernel uses, so a box can never answer in the other one: 0x4E440000 = the four-warp ncols_dst=1 kernel
+// (GGML_CUDA_MMVQ_EXACT_COLS=1, windows nd0-nd9), 0x4E450000 = the one-warp-per-token MoE kernel
+// (GGML_CUDA_BATCH_INVARIANT=1, window nuc5). A box built before the second magic drops the connection on it.
 //
 // usage: f53s serve <records.bin> <records.idx> <port>     (idx lines: "gid offset"; records gate|up|down, 8060928 B)
 //        f53s check <recs8.bin> <flashrow.bin>              (8 records, the flashrow cases)
 //        f53s bench <recs8.bin> <k> <ntok> <reps>
-// env: F53_MUFU=<dir with rcp/ex2p/ex2n.bin> (required), F53_CPUS=0,1,... (worker cpus), F53_SPIN_US (idle spin, 2000)
+// env: F53_MUFU=<dir with rcp/ex2p/ex2n.bin> (required), F53_CPUS=0,1,... (worker cpus), F53_SPIN_US (idle spin, 2000),
+//      F53_ORDER=moe (check and bench only: rows in the one-warp MoE kernel's order; serve takes it from the magic)
 #include "../g53exact.h"
 #define GGML_COMMON_DECL_C
 #define GGML_COMMON_IMPL_SYCL
@@ -50,7 +54,7 @@ using namespace g53exact;
 static constexpr int D = 4096, F = 2048, NBG = D / 256, NBD = F / 256;
 static constexpr int KMAX = 32, TMAX = 8, NEXP = 288, NLAYER = 48;
 static constexpr size_t GSZ = size_t(F) * NBG * 74, USZ = GSZ, DSZ = size_t(D) * NBD * 98, REC = GSZ + USZ + DSZ;
-static constexpr uint32_t MAGIC = 0x4E440000u;
+static constexpr uint32_t MAGIC = 0x4E440000u, MAGIC_MOE = 0x4E450000u;
 static constexpr float LIMIT = 10.0f;
 
 static int sum4(__m128i v) {
@@ -116,8 +120,26 @@ static __m256 clean(__m256 x) {
     return _mm256_castsi256_ps(_mm256_blendv_epi8(u, _mm256_set1_epi32(0x7fffffff), _mm256_cmpgt_epi32(a, _mm256_set1_epi32(0x7f800000))));
 }
 // p[b % 16] packs virtual CUDA threads 8*(b%16) .. +7 (kbx = tid/8 + 16*i): each thread's increasing-kb FMA sequence.
-template <int ty, int nb> static float fast_row(const uint8_t * r, const RowInput * y) {
-    __m256 p[16];
+// ng = 16: the four-warp ncols_dst=1 kernel (mul_mat_vec_q). ng = 4: the one-warp-per-token MoE kernel
+// (mul_mat_vec_q_moe: 32 threads, kbx = tid/8 + 4*i, warp_reduce_sum), which GGML_CUDA_BATCH_INVARIANT=1 uses for
+// every MUL_MAT_ID width including one.
+template <int ng> static inline __m256 reduce_groups(const __m256 * p) {
+    __m256 lane[4];
+    if constexpr (ng == 16) {
+        for (int i = 0; i < 4; i++)
+            lane[i] = clean(_mm256_add_ps(clean(_mm256_add_ps(clean(_mm256_add_ps(p[i], p[i + 4])), p[i + 8])), p[i + 12]));
+    } else {
+        for (int i = 0; i < 4; i++) lane[i] = p[i];
+    }
+    lane[0] = clean(_mm256_add_ps(lane[0], lane[2]));   // shfl xor 16
+    lane[1] = clean(_mm256_add_ps(lane[1], lane[3]));
+    lane[0] = clean(_mm256_add_ps(lane[0], lane[1]));   // xor 8
+    auto v = clean(_mm256_add_ps(lane[0], _mm256_permute2f128_ps(lane[0], lane[0], 1))); // xor 4
+    v = clean(_mm256_add_ps(v, _mm256_permute_ps(v, 0x4e)));                              // xor 2
+    return clean(_mm256_add_ps(v, _mm256_permute_ps(v, 0xb1)));                           // xor 1
+}
+template <int ty, int nb, int ng = 16> static float fast_row(const uint8_t * r, const RowInput * y) {
+    __m256 p[ng];
     for (auto & v : p) v = _mm256_setzero_ps();
     for (int b = 0; b < nb; b++) {
         alignas(32) int aa[8], cc[8], ss[8];
@@ -143,18 +165,9 @@ template <int ty, int nb> static float fast_row(const uint8_t * r, const RowInpu
             sum = _mm256_srai_epi32(_mm256_add_epi32(sum, bias), 2);
         }
         auto d = clean(_mm256_mul_ps(_mm256_set1_ps(half(u16(w))), y->scale[b]));
-        p[b % 16] = clean(_mm256_fmadd_ps(d, _mm256_cvtepi32_ps(sum), p[b % 16]));
+        p[b % ng] = clean(_mm256_fmadd_ps(d, _mm256_cvtepi32_ps(sum), p[b % ng]));
     }
-    __m256 lane[4];
-    for (int i = 0; i < 4; i++)
-        lane[i] = clean(_mm256_add_ps(clean(_mm256_add_ps(clean(_mm256_add_ps(p[i], p[i + 4])), p[i + 8])), p[i + 12]));
-    lane[0] = clean(_mm256_add_ps(lane[0], lane[2]));
-    lane[1] = clean(_mm256_add_ps(lane[1], lane[3]));
-    lane[0] = clean(_mm256_add_ps(lane[0], lane[1]));
-    auto v = clean(_mm256_add_ps(lane[0], _mm256_permute2f128_ps(lane[0], lane[0], 1)));
-    v = clean(_mm256_add_ps(v, _mm256_permute_ps(v, 0x4e)));
-    v = clean(_mm256_add_ps(v, _mm256_permute_ps(v, 0xb1)));
-    return _mm_cvtss_f32(_mm256_castps256_ps128(v));
+    return _mm_cvtss_f32(_mm256_castps256_ps128(reduce_groups<ng>(p)));
 }
 // The same row with the 16 per-j horizontal sums replaced by one transposed hadd reduction per block (integer adds
 // in another order: exact). F53_ROW=1 selects fast_row (the original) for comparison.
@@ -177,8 +190,8 @@ template <int ty> static inline __m256i wdec(const uint8_t * b, int j) {
     return _mm256_xor_si256(w, _mm256_set1_epi8(char(128)));
 }
 static inline __m256i idiv2(__m256i x) { return _mm256_srai_epi32(_mm256_add_epi32(x, _mm256_srli_epi32(x, 31)), 1); } // C x/2
-template <int ty, int nb> static float fast_row2(const uint8_t * r, const RowInput * y) {
-    __m256 p[16];
+template <int ty, int nb, int ng = 16> static float fast_row2(const uint8_t * r, const RowInput * y) {
+    __m256 p[ng];
     for (auto & v : p) v = _mm256_setzero_ps();
     for (int b = 0; b < nb; b++) {
         const auto * w = r + b * blockbytes(ty);
@@ -205,21 +218,17 @@ template <int ty, int nb> static float fast_row2(const uint8_t * r, const RowInp
             sum = _mm256_srai_epi32(_mm256_add_epi32(sum, bias), 2);
         }
         auto d = clean(_mm256_mul_ps(_mm256_set1_ps(half(u16(w))), y->scale[b]));
-        p[b % 16] = clean(_mm256_fmadd_ps(d, _mm256_cvtepi32_ps(sum), p[b % 16]));
+        p[b % ng] = clean(_mm256_fmadd_ps(d, _mm256_cvtepi32_ps(sum), p[b % ng]));
     }
-    __m256 lane[4];
-    for (int i = 0; i < 4; i++)
-        lane[i] = clean(_mm256_add_ps(clean(_mm256_add_ps(clean(_mm256_add_ps(p[i], p[i + 4])), p[i + 8])), p[i + 12]));
-    lane[0] = clean(_mm256_add_ps(lane[0], lane[2]));
-    lane[1] = clean(_mm256_add_ps(lane[1], lane[3]));
-    lane[0] = clean(_mm256_add_ps(lane[0], lane[1]));
-    auto vv = clean(_mm256_add_ps(lane[0], _mm256_permute2f128_ps(lane[0], lane[0], 1)));
-    vv = clean(_mm256_add_ps(vv, _mm256_permute_ps(vv, 0x4e)));
-    vv = clean(_mm256_add_ps(vv, _mm256_permute_ps(vv, 0xb1)));
-    return _mm_cvtss_f32(_mm256_castps256_ps128(vv));
+    return _mm_cvtss_f32(_mm256_castps256_ps128(reduce_groups<ng>(p)));
 }
 static const bool row_v1 = getenv("F53_ROW") != nullptr && getenv("F53_ROW")[0] == '1';
-template <int ty, int nb> static inline float row_sel(const uint8_t * r, const RowInput * y) {
+// moe: the one-warp MoE kernel's order (an engine running GGML_CUDA_BATCH_INVARIANT=1); otherwise the four-warp
+// order (GGML_CUDA_MMVQ_EXACT_COLS=1 without batch invariance, windows nd0-nd9). Per request (the wire magic);
+// F53_ORDER=moe sets it for check and bench.
+static const bool env_moe = getenv("F53_ORDER") != nullptr && strcmp(getenv("F53_ORDER"), "moe") == 0;
+template <int ty, int nb> static inline float row_sel(const uint8_t * r, const RowInput * y, bool moe) {
+    if (moe) return row_v1 ? fast_row<ty, nb, 4>(r, y) : fast_row2<ty, nb, 4>(r, y);
     return row_v1 ? fast_row<ty, nb>(r, y) : fast_row2<ty, nb>(r, y);
 }
 // fused GLU of the GB10 path: x_bias/gate_bias placeholders (+0), then ggml_cuda_op_swiglu_clamp_single
@@ -262,6 +271,7 @@ struct Pool {
     mufu_tables mt;
     Pair pr[KMAX];
     int k = 0, ntok = 0, phase = 0;
+    bool moe = env_moe;   // row order of the request being run (set by the caller before pool_run)
     Q8 qx[TMAX][D / 32];
     Q8 qh[KMAX][F / 32];
     RowInput ix[TMAX], ih[KMAX];
@@ -278,17 +288,18 @@ static void work(Pool * p) {
     for (int n; (n = p->next.fetch_add(1, std::memory_order_relaxed)) < p->k * chunks;) {
         const int e = n / chunks, start = (n % chunks) * 32;
         const Pair & v = p->pr[e];
+        const bool moe = p->moe;
         if (!p->phase) {
             const RowInput * x = &p->ix[v.tok];
             for (int i = start; i < start + 32; i++) {
-                const float g = row_sel<17, NBG>(v.rec + size_t(i) * NBG * 74, x);
-                const float u = row_sel<17, NBG>(v.rec + GSZ + size_t(i) * NBG * 74, x);
+                const float g = row_sel<17, NBG>(v.rec + size_t(i) * NBG * 74, x, moe);
+                const float u = row_sel<17, NBG>(v.rec + GSZ + size_t(i) * NBG * 74, x, moe);
                 p->h[e][i] = swiglu_clamp(g, u, p->mt);
             }
             quant(p->h[e] + start, p->qh[e][start / 32], p->mt);
         } else {
             const RowInput * hh = &p->ih[e];
-            for (int i = start; i < start + 32; i++) v.out[i] = row_sel<18, NBD>(v.rec + GSZ + USZ + size_t(i) * NBD * 98, hh);
+            for (int i = start; i < start + 32; i++) v.out[i] = row_sel<18, NBD>(v.rec + GSZ + USZ + size_t(i) * NBD * 98, hh, moe);
         }
     }
 }
@@ -308,7 +319,9 @@ static Pool * pool_create(const mufu_tables & mt, const std::vector<int> & cpus,
             if (cpu >= 0) { cpu_set_t s; CPU_ZERO(&s); CPU_SET(cpu, &s); pthread_setaffinity_np(pthread_self(), sizeof s, &s); }
             prefault_stack();
             { RowInput in{}; uint8_t raw[16 * 98]{}; volatile float r = fast_row<17, NBG>(raw, &in); r = fast_row<18, NBD>(raw, &in);
-              r = fast_row2<17, NBG>(raw, &in); r = fast_row2<18, NBD>(raw, &in); (void) r; }
+              r = fast_row2<17, NBG>(raw, &in); r = fast_row2<18, NBD>(raw, &in);
+              r = fast_row<17, NBG, 4>(raw, &in); r = fast_row<18, NBD, 4>(raw, &in);
+              r = fast_row2<17, NBG, 4>(raw, &in); r = fast_row2<18, NBD, 4>(raw, &in); (void) r; }
             errno = 0;
             int last = 0;
             auto idle = std::chrono::steady_clock::now();
@@ -489,7 +502,7 @@ static int cmd_serve(Pool * pool, const char * recs, const char * idx, int port,
     int32_t hdr[4 + 2 * KMAX];
     std::vector<float> x((size_t) TMAX * D), out((size_t) KMAX * D);
     const std::vector<float> nanrow(D, __builtin_nanf(""));
-    uint64_t nreq = 0, npairs = 0, nnan = 0; double tc = 0;
+    uint64_t nreq = 0, npairs = 0, nnan = 0, nmoe = 0; double tc = 0;
     std::vector<float> tlat(1 << 16, 0.f); // ring of per-request compute times (us)
     rusage ru0{}; getrusage(RUSAGE_SELF, &ru0);
     for (;;) {
@@ -500,7 +513,8 @@ static int cmd_serve(Pool * pool, const char * recs, const char * idx, int port,
         for (;;) {
             if (!recv_all(fd, hdr, sizeof hdr, spin_us)) break;
             const int k = hdr[0] & 0xffff, ntok = hdr[1];
-            if ((uint32_t(hdr[0]) & 0xffff0000u) != MAGIC || k < 1 || k > KMAX || ntok < 1 || ntok > TMAX) { fprintf(stderr, "f53s: bad header %08x %d\n", hdr[0], ntok); break; }
+            const uint32_t magic = uint32_t(hdr[0]) & 0xffff0000u;
+            if ((magic != MAGIC && magic != MAGIC_MOE) || k < 1 || k > KMAX || ntok < 1 || ntok > TMAX) { fprintf(stderr, "f53s: bad header %08x %d\n", hdr[0], ntok); break; }
             if (!recv_all(fd, x.data(), size_t(ntok) * D * 4, spin_us)) break;
             const double t0 = now_us();
             Pair pr[KMAX]; int kk = 0; int map[KMAX];
@@ -509,6 +523,8 @@ static int cmd_serve(Pool * pool, const char * recs, const char * idx, int port,
                 const uint8_t * r = g >= 0 && g < NLAYER * NEXP && t >= 0 && t < ntok ? by_gid[(size_t) g] : nullptr;
                 if (r) { pr[kk] = { r, t, out.data() + size_t(i) * D }; map[i] = kk++; } else { map[i] = -1; nnan++; }
             }
+            pool->moe = magic == MAGIC_MOE;
+            nmoe += magic == MAGIC_MOE;
             if (kk) pool_run(pool, x.data(), ntok, pr, kk);
             const double dt = now_us() - t0;
             tc += dt;
@@ -529,8 +545,8 @@ static int cmd_serve(Pool * pool, const char * recs, const char * idx, int port,
             if (!v.empty()) fprintf(stderr, "f53s: compute per pair p50 %.0f us p90 %.0f us p99 %.0f us (last %zu requests)\n", v[v.size() / 2], v[v.size() * 9 / 10], v[v.size() * 99 / 100], v.size());
         }
         rusage ru{}; getrusage(RUSAGE_SELF, &ru);
-        fprintf(stderr, "f53s: client gone after %llu requests (%.2f pairs per request, compute %.0f us per request, %llu NaN rows; minor faults %ld major %ld since start)\n",
-                (unsigned long long) nreq, nreq ? (double) npairs / nreq : 0.0, nreq ? tc / nreq : 0.0, (unsigned long long) nnan, ru.ru_minflt - ru0.ru_minflt, ru.ru_majflt - ru0.ru_majflt);
+        fprintf(stderr, "f53s: client gone after %llu requests, %llu in the one-warp MoE order (%.2f pairs per request, compute %.0f us per request, %llu NaN rows; minor faults %ld major %ld since start)\n",
+                (unsigned long long) nreq, (unsigned long long) nmoe, nreq ? (double) npairs / nreq : 0.0, nreq ? tc / nreq : 0.0, (unsigned long long) nnan, ru.ru_minflt - ru0.ru_minflt, ru.ru_majflt - ru0.ru_majflt);
     }
 }
 
