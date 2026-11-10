@@ -2067,3 +2067,73 @@ something else dominated at the time. Re-test them after any change that shifts 
 - Restored at 08:52 UTC: glm53-gh200 at 1 replica on `g68d4166`, quicksort gold `bc32ecab82` twice through the
   Service (59.8-60.0 tok/s), `workbench-queue` unsuspended, no test container or key file left, `window.lock` free.
   The Spark stayed up throughout.
+
+**2026-11-10, GH200 window nc5 (08:52-10:21 UTC): the slowdown next to other slots' conversations is in production and patch 0071 removes it with the same bytes; prompts in pieces pass acceptance with 0071; share 0.05 keeps Juno at 88-94 % of alone.** Evidence: `docs/evidence/glm-windows-2026-10-30/nc/nc5/` (`nc5.sh`, `results-CP-KP-KV.jsonl`, `results-KA-WK-WH.jsonl`, `digest-KV.txt`, `digest-KA1-KA2.txt`, `digest-share-legs.txt`, `wdigest.py`, `nc5a.log`, `nc5b.log`). Images: production `547208dca250-g68d4166` (legs CP, WH), candidate `547208dca250-gadd9f81` (patches through 0069 plus 0071, without 0070; all other legs).
+
+- **Leg CP, the control the correction above asked for: the production image has the slowdown.** Production flags and
+  the hold rule, one process, in this order: p0 and a 16k prompt fresh, the mix `p1 p2 L16384 L65536` (it leaves a 16k
+  and a 64k conversation in two slots), p0/16k/64k alone, a 200k prompt alone, 16k and p0 again.
+
+  | request | fresh | next to 16k + 64k in other slots | after a 200k conversation as well |
+  |---|---|---|---|
+  | 16k prompt read (tok/s), production | 1630 | 1341 | 966 |
+  | 16k prompt read (tok/s), 0071 on (leg KP) | 1632 | 1661 | 1670 |
+  | p0 decode (tok/s), production | 53.68 | 47.8 | 44.0, 45.4, 46.4 |
+  | p0 decode (tok/s), 0071 on | 53.66 | 51.17 | 50.0, 51.75, 53.02 |
+
+  So on the image that serves today a prompt reads at 59 % of its fresh speed and a short answer decodes at 82-86 %
+  once the other slots hold about 280k cells. It is not only the prompt read: every decode step pays for the pools of
+  idle conversations too. No acceptance run before nc4 had two long conversations in different slots, which is why
+  #169 and #174 never saw it.
+- **Leg KP: `LLAMA_KPOOL_OWN_SEQS=1` (patch 0071) on the same flags.** Every md5 equals CP's and the golds (p0
+  `8e312d7bdd`, p1 `74fb633e8e`, p2 `f8531a5f07`, 16k `145c14aa8b`, 64k `8acec1b966`). The 16k read stays at
+  1632-1670 tok/s whatever the other slots hold; 64k alone 1501 against 1422, 200k 1262 against 1206; the mix's wall
+  66.6 s against 71.5 s. Decode next to the held conversations 50.0-53.0 tok/s against 44.0-46.4. The remaining dip
+  of the first p0 after a long read (51.2, 50.0 rising to 53.0) is the expert cache warming back, as in a fresh
+  process after a long prompt; it is there in both legs.
+- **Leg KV, the detector gate (pieces at share 0.12, client classes, 0071): PASS.** 44 of 44 answers gold; 17 distinct
+  long ubatches by content hash, none with more than one result hash; 154 ubatches read in pieces; no frozen-cell
+  violation; no guard refusal (`digest-KV.txt`).
+- **Legs KA1, KA2: acceptance in two server processes (pieces at share 0.12, hold rule off, 0071 on).** No multi round
+  differs from solo or gold in either process (`digest-KA1-KA2.txt`). Quicksort gold `bc32ecab82` at 60.65-60.79
+  tok/s. Aggregate tok/s: two clients 62.8-65.1, three 68.4-71.3, four 71.8-72.2, five 68.8-69.3 (the #174 runs gave
+  72.5-74.2 at four: about 1 % lower here, inside the spread between processes of that window but not above it).
+  Alone: 16k 1632-1653, 64k 1486, 100k 1430-1433 (depth md5 `9c80718286`). Same-class mixes: short clients next to a
+  16k and a 64k prompt of their own class decode at 15.8 tok/s where production (leg CP) gives them 3.6-4.2, wall 68.3
+  s against 71.5 s.
+- **Share legs: Juno's decode as a share of her speed alone in the same process** (`digest-share-legs.txt`; Juno
+  alone 53 tok/s at 256 tokens, 53.6 at 512, 52.4 at 1024; all md5 gold in all four legs; no test key in any log).
+  Scenarios: junolong = a 64k low prompt arrives one second into her 512-token answer; prefill = she arrives ten
+  seconds into a 64k low prompt; junofirst = four low clients arrive one second into her answer (256 and 1024
+  tokens); mixed = three low clients decoding, a 64k low prompt, then Juno.
+
+  | leg | junolong | prefill | junofirst 256 | junofirst 1024 | mixed |
+  |---|---|---|---|---|---|
+  | WH: production image, hold rule | 99 % | 100 % | 98 % | 92 % | 36 % |
+  | WK05: pieces, share 0.05 | 92 % | 94 % | 93 % | 88 % | 90 % |
+  | WK08: pieces, share 0.08 | 90 % | 89 % | 90 % | 83 % | 83 % |
+  | WK12: pieces, share 0.12 | 87 % | 85 % | 88 % | 78 % | 82 % |
+
+- **What the pieces buy, and what they do not.**
+  - The hold rule's cost shows in junofirst 1024: the four low clients get their first token after 20.8-21.5 s (her
+    whole answer). With pieces at 0.05 three of them start after 9.3, 11.9 and 14.6 s; the fourth still waits 22 s,
+    because it needs the slot reserved for Juno's class until her request ends. With a 256-token answer both configs
+    start the others at about 5 s: nothing to win on short answers.
+  - A long low prompt gains nothing: its first token comes at the same second with pieces as with the hold rule (64k:
+    53.3 s against 52.9 s in junolong, 49.1 against 48.9 in prefill), while Juno pays 6-8 %. The hold rule only ever
+    delayed it by her answer, and a 64k read is five times longer than that.
+  - The hold rule did not protect Juno from clients that were already decoding: in mixed she runs at 18.5 tok/s (36 %)
+    in production because the three low decoders share her batch. With pieces and decode share 1 she keeps 90 %, and
+    the low decoders pay for it and for the same-class prompt next to them: 8.5 tok/s each and done after 33 s instead
+    of 13.5 tok/s and 19.5 s. The 64k prompt in that scenario finishes at 61.2 s against 58.4 s.
+  - Net: the pieces move waiting from "others' prompts wait for her answer" to "her answer runs 6-12 % slower while
+    others' prompts are read", and they protect her from decoders, which the hold rule never did. Other clients' short
+    answers next to a long prompt of their own class get faster when they start together (15.8 against about 4 tok/s)
+    and slower when they were already decoding (8.5 against 13.5).
+- **Decision for the GH200: pieces with `LLAMA_PREFILL_SLICE_SHARE=0.05`, hold rule off, `LLAMA_KPOOL_OWN_SEQS=1`,
+  image `gadd9f81`.** 0.05 is the only share of the three that keeps Juno at or above about 88 % in all five
+  scenarios; 0.08 and 0.12 start the others' prompts three to eight seconds earlier in the 1024-token case and cost
+  her 5-10 points more. 0071 is the larger win of the window and independent of the pieces. Images built from `77d372d`
+  or later also carry patch 0070 (off by default) and have no acceptance run; the manifest pins `gadd9f81`.
+- Restored at 10:21 UTC: glm53-gh200 at 1 replica on `g68d4166`, gold `bc32ecab82` three times through the Service,
+  `workbench-queue` unsuspended, test keys deleted, `window.lock` free. The Spark stayed up throughout.

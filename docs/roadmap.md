@@ -378,11 +378,16 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   multi-block top-k for rows past ~256k pools (250 us per row at 1M on the Spark); 0052's reserve/shrink churn on
   prompts with more than 64k tokens left (~16 % of a 255k prompt's prefill on the Spark); parking idle slots' KV on
   NVMe when the pool is full (instead of refusing); root-cause the GDN fusion crash.
-- **Found 2026-11-10 (GH200 window nc4), open:** a prompt reads slower by about 2 ns per token for every KV cell held
-  by other slots (16k: 1640 -> 1340 tok/s next to one 64k conversation). Likely the pooled indexer's pool list, which
-  covers all sequences (`kpool_layout_update`, `build_inp_kpool`); base code, so production has it. Control leg on the
-  production image first, then a per-sequence pool list with a byte-identity proof. Matters most for the goal of
-  several long conversations per box.
+- **Found 2026-11-10 (GH200 window nc4), fixed in patch 0071 (window nc5), rollout pending:** the base code lists
+  the pools of every slot's conversation in each ubatch, so a prompt read and every decode step slow down with what
+  the other slots hold. On the production image a 16k prompt reads at 1630 tok/s fresh, 1341 next to a 16k and a 64k
+  conversation, 966 after a 200k one as well, and a short answer decodes at 44-46 tok/s instead of 53.7. With
+  `LLAMA_KPOOL_OWN_SEQS=1` the read stays at 1632-1670 and the decode at 50-53, every md5 unchanged.
+- **Prompts in pieces instead of the hold rule (patches 0060-0066, 0069), GH200 accepted in window nc5, rollout
+  pending:** detector gate and two acceptance processes pass on image `gadd9f81`; at share 0.05 Juno keeps 88-94 % of
+  her speed alone in five scenarios (the hold rule: 92-100 % in four and 36 % when other clients are already
+  decoding), and other clients' prompts no longer wait for her whole answer. A long prompt of another client gains
+  nothing from it. The Spark decision and "guaranteed floor + burst" are measured in window nc-s2.
 
 ## Cluster layout for this work
 

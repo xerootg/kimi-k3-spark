@@ -276,6 +276,12 @@ double the time to read a prompt, and four at 1M would make it about fifteen tim
 once" is close to free only while the others' conversations are short. Next: confirm on the production image, then
 build the pool list per conversation and prove the bytes do not change.
 
+**Confirmed and fixed, 2026-11-10 (GH200 window nc5, patch 0071):** the production image shows it (a 16k prompt reads
+at 1630 tok/s in a fresh server, 1341 next to a 16k and a 64k conversation, 966 after a 200k one as well), and it
+slows decoding too (53.7 tok/s down to 44-46). With the pool list built per conversation the read stays at 1632-1670
+tok/s and the decode at 50-53, and every answer is byte-identical to before. So several long conversations per box no
+longer tax each other's speed through the indexer; what they still share is memory and the batch itself.
+
 ## RDMA over Thunderbolt between the NUCs and the Spark (2026-11-09)
 
 Idea: Hellas' `thunderbolt-ibverbs` (https://blog.hellas.ai/blog/thunderbolt-ibverbs/, May 2026) exposes USB4/Thunderbolt
