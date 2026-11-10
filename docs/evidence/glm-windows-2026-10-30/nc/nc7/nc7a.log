@@ -1,0 +1,419 @@
+=== LEG KV7 parallel=5 ctx=5242880 img=547208dca250-gb5ee55a opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_CLIENT_CLASSES=/keys/classes.txt LLAMA_SLOT_RESERVE=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_SAME_FREE=512 LLAMA_PREFILL_SLICE_LOG=1 LLAMA_RS_LOG=1 LLAMA_RS_SUM=512] xargs=[] cache_ram=65536 14:08:39
+READY KV7 after 45s
+0.00.296.611 I srv  server_clien: client classes: 5 keys loaded, top priority 10 (keys not logged)
+0.11.202.253 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.402.926 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.402.966 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.402.968 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.600.088 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.507.909 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.507.943 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.507.944 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.43.146.813 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.899.872 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80616 MiB
+--- prio_nc_e.py warm --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:09:26
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.16, "wall_s": 5.0, "max_gap_s": 0.04, "decode_tps": 52.69, "prompt_n": 10, "prefill_tps": 73.3, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "KV7"}
+{"tag": "warm", "spec": "p0", "t_send": 5.0, "ttft_s": 0.169, "wall_s": 4.96, "max_gap_s": 0.04, "decode_tps": 53.22, "prompt_n": 10, "prefill_tps": 74.7, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "KV7"}
+{"tag": "warm", "spec": "p0", "t_send": 9.96, "ttft_s": 0.12, "wall_s": 4.83, "max_gap_s": 0.04, "decode_tps": 54.13, "prompt_n": 10, "prefill_tps": 88.8, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "KV7"}
+--- prio_nc_e.py sololong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:09:40
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 10.73, "wall_s": 13.9, "max_gap_s": 0.04, "decode_tps": 40.08, "prompt_n": 16414, "prefill_tps": 1535.4, "md5": "145c14aa8b", "scenario": "sololong", "kind": "prio", "leg": "KV7"}
+--- prio_nc_e.py sololong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:09:54
+{"tag": "low", "spec": "L65536", "t_send": 0.01, "ttft_s": 46.57, "wall_s": 49.63, "max_gap_s": 0.04, "decode_tps": 41.6, "prompt_n": 65243, "prefill_tps": 1403.1, "md5": "8acec1b966", "scenario": "sololong", "kind": "prio", "leg": "KV7"}
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:10:44
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.548, "wall_s": 31.52, "max_gap_s": 5.08, "decode_tps": 8.23, "prompt_n": 18, "prefill_tps": 76.6, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.927, "wall_s": 31.52, "max_gap_s": 5.08, "decode_tps": 8.33, "prompt_n": 19, "prefill_tps": 75.2, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.175, "wall_s": 31.52, "max_gap_s": 5.08, "decode_tps": 8.4, "prompt_n": 21, "prefill_tps": 84.4, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "L16384", "t_send": 0.5, "ttft_s": 23.159, "wall_s": 31.2, "max_gap_s": 0.09, "decode_tps": 15.8, "prompt_n": 16414, "prefill_tps": 746.5, "md5": "145c14aa8b", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 1.334, "wall_s": 6.47, "max_gap_s": 0.21, "decode_tps": 49.61, "prompt_n": 10, "prefill_tps": 79.6, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:11:16
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.563, "wall_s": 29.86, "max_gap_s": 4.91, "decode_tps": 8.7, "prompt_n": 18, "prefill_tps": 86.6, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.004, "wall_s": 29.86, "max_gap_s": 4.91, "decode_tps": 8.84, "prompt_n": 21, "prefill_tps": 93.7, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.781, "wall_s": 29.86, "max_gap_s": 4.91, "decode_tps": 8.77, "prompt_n": 19, "prefill_tps": 90.3, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "L16384", "t_send": 0.5, "ttft_s": 23.106, "wall_s": 29.94, "max_gap_s": 0.09, "decode_tps": 18.58, "prompt_n": 16414, "prefill_tps": 740.2, "md5": "145c14aa8b", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 1.159, "wall_s": 6.37, "max_gap_s": 0.22, "decode_tps": 48.89, "prompt_n": 10, "prefill_tps": 75.4, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:11:46
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.38, "wall_s": 29.43, "max_gap_s": 4.9, "decode_tps": 8.78, "prompt_n": 18, "prefill_tps": 90.1, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.59, "wall_s": 29.43, "max_gap_s": 4.9, "decode_tps": 8.84, "prompt_n": 19, "prefill_tps": 90.8, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 0.816, "wall_s": 29.43, "max_gap_s": 4.9, "decode_tps": 8.91, "prompt_n": 21, "prefill_tps": 95.2, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "L65536", "t_send": 0.51, "ttft_s": 63.208, "wall_s": 66.27, "max_gap_s": 0.04, "decode_tps": 41.55, "prompt_n": 65243, "prefill_tps": 1044.2, "md5": "8acec1b966", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 1.137, "wall_s": 6.46, "max_gap_s": 0.22, "decode_tps": 47.95, "prompt_n": 10, "prefill_tps": 73.0, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+--- prio_nc_e.py stagger --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:12:53
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.534, "wall_s": 27.92, "max_gap_s": 4.11, "decode_tps": 9.31, "prompt_n": 18, "prefill_tps": 90.8, "md5": "f8531a5f07", "scenario": "stagger", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.76, "wall_s": 27.92, "max_gap_s": 4.11, "decode_tps": 9.39, "prompt_n": 19, "prefill_tps": 84.5, "md5": "74fb633e8e", "scenario": "stagger", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "L65536", "t_send": 0.51, "ttft_s": 63.87, "wall_s": 66.77, "max_gap_s": 0.04, "decode_tps": 43.92, "prompt_n": 65243, "prefill_tps": 1028.8, "md5": "8acec1b966", "scenario": "stagger", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p3", "t_send": 1.5, "ttft_s": 8.871, "wall_s": 28.84, "max_gap_s": 0.31, "decode_tps": 12.77, "prompt_n": 21, "prefill_tps": 3.9, "md5": "4d6338450b", "scenario": "stagger", "kind": "prio", "leg": "KV7"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.936, "wall_s": 6.31, "max_gap_s": 0.19, "decode_tps": 47.49, "prompt_n": 10, "prefill_tps": 69.7, "md5": "8e312d7bdd", "scenario": "stagger", "kind": "prio", "leg": "KV7"}
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:14:00
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.388, "wall_s": 29.23, "max_gap_s": 4.92, "decode_tps": 8.84, "prompt_n": 18, "prefill_tps": 90.6, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 0.827, "wall_s": 29.23, "max_gap_s": 4.92, "decode_tps": 8.98, "prompt_n": 21, "prefill_tps": 95.4, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.6, "wall_s": 29.23, "max_gap_s": 4.92, "decode_tps": 8.91, "prompt_n": 19, "prefill_tps": 89.7, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "L65536", "t_send": 0.51, "ttft_s": 63.302, "wall_s": 66.09, "max_gap_s": 0.04, "decode_tps": 45.65, "prompt_n": 65243, "prefill_tps": 1042.8, "md5": "8acec1b966", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 1.151, "wall_s": 6.61, "max_gap_s": 0.22, "decode_tps": 46.74, "prompt_n": 10, "prefill_tps": 71.0, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "KV7"}
+--- prio_nc_e.py junolong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 512 --delay 1 --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:15:07
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.201, "wall_s": 11.35, "max_gap_s": 0.24, "decode_tps": 45.84, "prompt_n": 10, "prefill_tps": 69.9, "md5": "22da3a7294", "scenario": "junolong", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "L65536", "t_send": 1.01, "ttft_s": 56.166, "wall_s": 58.79, "max_gap_s": 0.04, "decode_tps": 48.46, "prompt_n": 65243, "prefill_tps": 1163.2, "md5": "8acec1b966", "scenario": "junolong", "kind": "prio", "leg": "KV7"}
+--- prio_nc_e.py stagger --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:16:07
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.375, "wall_s": 29.13, "max_gap_s": 4.21, "decode_tps": 8.87, "prompt_n": 18, "prefill_tps": 84.6, "md5": "f8531a5f07", "scenario": "stagger", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.618, "wall_s": 29.13, "max_gap_s": 4.21, "decode_tps": 8.94, "prompt_n": 19, "prefill_tps": 78.4, "md5": "74fb633e8e", "scenario": "stagger", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "L16384", "t_send": 0.5, "ttft_s": 23.432, "wall_s": 30.38, "max_gap_s": 0.09, "decode_tps": 18.29, "prompt_n": 16414, "prefill_tps": 710.6, "md5": "145c14aa8b", "scenario": "stagger", "kind": "prio", "leg": "KV7"}
+{"tag": "low", "spec": "p3", "t_send": 1.5, "ttft_s": 8.782, "wall_s": 29.6, "max_gap_s": 2.99, "decode_tps": 12.25, "prompt_n": 21, "prefill_tps": 3.9, "md5": "4d6338450b", "scenario": "stagger", "kind": "prio", "leg": "KV7"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.931, "wall_s": 6.21, "max_gap_s": 0.19, "decode_tps": 48.29, "prompt_n": 10, "prefill_tps": 70.5, "md5": "8e312d7bdd", "scenario": "stagger", "kind": "prio", "leg": "KV7"}
+PEAK GPU 80879 MiB, LOWEST MemAvailable 143629 MiB; END KV7 14:16:40
+NC-LEG-DONE KV7 14:16:40
+server-KV7.log no key in log
+requests with gold md5: 37 of 37
+state hashes: 17 distinct long ubatches (end position, length), 0 seen once only, 0 with MORE THAN ONE hash
+prompt ubatches done in pieces: 96, run whole (state not in place): 0
+ubatches while a cell was frozen: 5270; range contains the frozen cell: 0; guard refusals: 0
+  frozen cell 3:   2974 ubatches above it with 1 sequence(s)
+  frozen cell 3:    108 ubatches below it with 1 sequence(s)
+  frozen cell 3:    182 ubatches below it with 2 sequence(s)
+  frozen cell 3:   2006 ubatches below it with 3 sequence(s)
+V1-DIGEST KV7 PASS
+=== LEG ST7 parallel=5 ctx=5242880 img=547208dca250-gb5ee55a opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_SAME_FREE=512 LLAMA_PREFILL_SLICE_LOG=1] xargs=[] cache_ram=65536 14:16:41
+READY ST7 after 42s
+0.10.954.001 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.110.732 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.110.770 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.110.772 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.307.126 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.182.619 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.182.651 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.182.652 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.680.062 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.426.173 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80614 MiB
+--- stag.py p1 p0 --delays 1.0 0.01 0.3 --reps 3 14:17:26
+{"kind": "stag-solo", "tag": "ST7", "spec": "p1", "md5": "19ea697dcf", "decode_tps": 47.02, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "ST7", "spec": "p0", "md5": "ed94761011", "decode_tps": 58.82, "error": null, "body": null}
+{"kind": "stag", "tag": "ST7", "a": "p1", "b": "p0", "delay": 1.0, "rep": 0, "ok": true, "md5": ["19ea697dcf", "ed94761011"], "ref": ["19ea697dcf", "ed94761011"], "decode_tps": [37.81, 48.19], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p1", "b": "p0", "delay": 1.0, "rep": 1, "ok": true, "md5": ["19ea697dcf", "ed94761011"], "ref": ["19ea697dcf", "ed94761011"], "decode_tps": [39.32, 50.01], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p1", "b": "p0", "delay": 1.0, "rep": 2, "ok": true, "md5": ["19ea697dcf", "ed94761011"], "ref": ["19ea697dcf", "ed94761011"], "decode_tps": [40.89, 52.12], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p1", "b": "p0", "delay": 0.01, "rep": 0, "ok": true, "md5": ["19ea697dcf", "ed94761011"], "ref": ["19ea697dcf", "ed94761011"], "decode_tps": [35.81, 30.99], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p1", "b": "p0", "delay": 0.01, "rep": 1, "ok": true, "md5": ["19ea697dcf", "ed94761011"], "ref": ["19ea697dcf", "ed94761011"], "decode_tps": [36.54, 31.6], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p1", "b": "p0", "delay": 0.01, "rep": 2, "ok": true, "md5": ["19ea697dcf", "ed94761011"], "ref": ["19ea697dcf", "ed94761011"], "decode_tps": [37.01, 32.0], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p1", "b": "p0", "delay": 0.3, "rep": 0, "ok": true, "md5": ["19ea697dcf", "ed94761011"], "ref": ["19ea697dcf", "ed94761011"], "decode_tps": [34.14, 37.29], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p1", "b": "p0", "delay": 0.3, "rep": 1, "ok": true, "md5": ["19ea697dcf", "ed94761011"], "ref": ["19ea697dcf", "ed94761011"], "decode_tps": [34.2, 37.78], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p1", "b": "p0", "delay": 0.3, "rep": 2, "ok": true, "md5": ["19ea697dcf", "ed94761011"], "ref": ["19ea697dcf", "ed94761011"], "decode_tps": [34.6, 38.14], "body": []}
+--- stag.py p0 p1 --delays 1.0 0.01 --reps 3 14:17:44
+{"kind": "stag-solo", "tag": "ST7", "spec": "p0", "md5": "ed94761011", "decode_tps": 61.91, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "ST7", "spec": "p1", "md5": "19ea697dcf", "decode_tps": 55.73, "error": null, "body": null}
+{"kind": "stag", "tag": "ST7", "a": "p0", "b": "p1", "delay": 1.0, "rep": 0, "ok": true, "md5": ["ed94761011", "19ea697dcf"], "ref": ["ed94761011", "19ea697dcf"], "decode_tps": [61.86, 56.15], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p0", "b": "p1", "delay": 1.0, "rep": 1, "ok": true, "md5": ["ed94761011", "19ea697dcf"], "ref": ["ed94761011", "19ea697dcf"], "decode_tps": [61.91, 56.68], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p0", "b": "p1", "delay": 1.0, "rep": 2, "ok": true, "md5": ["ed94761011", "19ea697dcf"], "ref": ["ed94761011", "19ea697dcf"], "decode_tps": [61.95, 57.1], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p0", "b": "p1", "delay": 0.01, "rep": 0, "ok": true, "md5": ["ed94761011", "19ea697dcf"], "ref": ["ed94761011", "19ea697dcf"], "decode_tps": [34.1, 39.41], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p0", "b": "p1", "delay": 0.01, "rep": 1, "ok": true, "md5": ["ed94761011", "19ea697dcf"], "ref": ["ed94761011", "19ea697dcf"], "decode_tps": [34.39, 39.78], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p0", "b": "p1", "delay": 0.01, "rep": 2, "ok": true, "md5": ["ed94761011", "19ea697dcf"], "ref": ["ed94761011", "19ea697dcf"], "decode_tps": [34.78, 40.21], "body": []}
+--- stag.py p2 p0 --delays 2.0 --reps 2 --n-predict 256 14:17:57
+{"kind": "stag-solo", "tag": "ST7", "spec": "p2", "md5": "f8531a5f07", "decode_tps": 43.75, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "ST7", "spec": "p0", "md5": "8e312d7bdd", "decode_tps": 51.4, "error": null, "body": null}
+{"kind": "stag", "tag": "ST7", "a": "p2", "b": "p0", "delay": 2.0, "rep": 0, "ok": true, "md5": ["f8531a5f07", "8e312d7bdd"], "ref": ["f8531a5f07", "8e312d7bdd"], "decode_tps": [36.74, 36.19], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p2", "b": "p0", "delay": 2.0, "rep": 1, "ok": true, "md5": ["f8531a5f07", "8e312d7bdd"], "ref": ["f8531a5f07", "8e312d7bdd"], "decode_tps": [39.2, 38.04], "body": []}
+--- stag.py L16384 p0 --delays 0.5 2.0 --reps 2 14:18:26
+{"kind": "stag-solo", "tag": "ST7", "spec": "L16384", "md5": "4f77bd831f", "decode_tps": 37.77, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "ST7", "spec": "p0", "md5": "ed94761011", "decode_tps": 57.26, "error": null, "body": null}
+{"kind": "stag", "tag": "ST7", "a": "L16384", "b": "p0", "delay": 0.5, "rep": 0, "ok": true, "md5": ["4f77bd831f", "ed94761011"], "ref": ["4f77bd831f", "ed94761011"], "decode_tps": [41.27, 27.76], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "L16384", "b": "p0", "delay": 0.5, "rep": 1, "ok": true, "md5": ["4f77bd831f", "ed94761011"], "ref": ["4f77bd831f", "ed94761011"], "decode_tps": [43.99, 27.88], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "L16384", "b": "p0", "delay": 2.0, "rep": 0, "ok": true, "md5": ["4f77bd831f", "ed94761011"], "ref": ["4f77bd831f", "ed94761011"], "decode_tps": [46.3, 27.97], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "L16384", "b": "p0", "delay": 2.0, "rep": 1, "ok": true, "md5": ["4f77bd831f", "ed94761011"], "ref": ["4f77bd831f", "ed94761011"], "decode_tps": [49.39, 27.98], "body": []}
+--- stag.py p0 L16384 --delays 0.3 --reps 2 --n-predict 128 14:19:27
+{"kind": "stag-solo", "tag": "ST7", "spec": "p0", "md5": "bc32ecab82", "decode_tps": 56.49, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "ST7", "spec": "L16384", "md5": "145c14aa8b", "decode_tps": 49.78, "error": null, "body": null}
+{"kind": "stag", "tag": "ST7", "a": "p0", "b": "L16384", "delay": 0.3, "rep": 0, "ok": true, "md5": ["bc32ecab82", "145c14aa8b"], "ref": ["bc32ecab82", "145c14aa8b"], "decode_tps": [26.84, 52.79], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "p0", "b": "L16384", "delay": 0.3, "rep": 1, "ok": true, "md5": ["bc32ecab82", "145c14aa8b"], "ref": ["bc32ecab82", "145c14aa8b"], "decode_tps": [28.15, 55.11], "body": []}
+--- stag.py L16384 p1 --delays 0.2 --reps 2 14:20:12
+{"kind": "stag-solo", "tag": "ST7", "spec": "L16384", "md5": "4f77bd831f", "decode_tps": 56.07, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "ST7", "spec": "p1", "md5": "19ea697dcf", "decode_tps": 48.96, "error": null, "body": null}
+{"kind": "stag", "tag": "ST7", "a": "L16384", "b": "p1", "delay": 0.2, "rep": 0, "ok": true, "md5": ["4f77bd831f", "19ea697dcf"], "ref": ["4f77bd831f", "19ea697dcf"], "decode_tps": [56.62, 23.3], "body": []}
+{"kind": "stag", "tag": "ST7", "a": "L16384", "b": "p1", "delay": 0.2, "rep": 1, "ok": true, "md5": ["4f77bd831f", "19ea697dcf"], "ref": ["4f77bd831f", "19ea697dcf"], "decode_tps": [56.6, 23.43], "body": []}
+PEAK GPU 80881 MiB, LOWEST MemAvailable 146599 MiB; END ST7 14:20:50
+NC-LEG-DONE ST7 14:20:50
+=== LEG KA17 parallel=5 ctx=5242880 img=547208dca250-gb5ee55a opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_SAME_FREE=512] xargs=[] cache_ram=65536 14:20:50
+READY KA17 after 42s
+0.10.860.641 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.977.323 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.977.363 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.11.977.365 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.173.720 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.004.776 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.004.812 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.004.814 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.819.763 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.589.721 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80613 MiB
+--- gold.py 2 14:21:36
+{"kind": "gold", "tag": "KA17", "md5": "bc32ecab82", "decode_tps": 58.72, "wall_s": 2.32}
+{"kind": "gold", "tag": "KA17", "md5": "bc32ecab82", "decode_tps": 58.88, "wall_s": 2.33}
+--- ekbench.py solo p0 p1 p2 p3 p4 L16384 14:21:40
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.11, "prefill_tps": 87.13, "decode_n": 256, "decode_tps": 52.9, "md5": "8e312d7bdd", "t0": 1794320500.7652178, "t1": 1794320505.7303922, "kind": "solo", "tag": "KA17"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.22, "prefill_tps": 85.71, "decode_n": 256, "decode_tps": 46.55, "md5": "74fb633e8e", "t0": 1794320505.7305055, "t1": 1794320511.468071, "kind": "solo", "tag": "KA17"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 77.39, "decode_n": 256, "decode_tps": 44.54, "md5": "f8531a5f07", "t0": 1794320511.4681554, "t1": 1794320517.4680533, "kind": "solo", "tag": "KA17"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.26, "prefill_tps": 80.29, "decode_n": 256, "decode_tps": 48.06, "md5": "4d6338450b", "t0": 1794320517.468129, "t1": 1794320523.0775447, "kind": "solo", "tag": "KA17"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 91.04, "decode_n": 256, "decode_tps": 45.84, "md5": "e7851c4b56", "t0": 1794320523.0776362, "t1": 1794320528.9203763, "kind": "solo", "tag": "KA17"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.04, "prefill_tps": 1634.61, "decode_n": 128, "decode_tps": 41.56, "md5": "145c14aa8b", "t0": 1794320528.920457, "t1": 1794320542.0876653, "kind": "solo", "tag": "KA17"}
+--- ekbench.py multi p0 p1 --rounds 2 14:22:22
+{"kind": "multi", "tag": "KA17", "n": 2, "round": "warm", "agg_tps": 57.26, "wall_s": 8.94, "gen": 512, "per_stream_tps": [29.67, 30.41], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [73.19, 90.62], "t0": 1794320542.1343696, "t1": 1794320551.0763354}
+{"kind": "multi", "tag": "KA17", "n": 2, "round": 1, "agg_tps": 62.22, "wall_s": 8.23, "gen": 512, "per_stream_tps": [31.75, 32.55], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [74.3, 95.92], "t0": 1794320551.0768712, "t1": 1794320559.306346}
+{"kind": "multi", "tag": "KA17", "n": 2, "round": 2, "agg_tps": 63.98, "wall_s": 8.0, "gen": 512, "per_stream_tps": [32.65, 33.48], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [76.27, 98.56], "t0": 1794320559.3068135, "t1": 1794320567.3092425}
+--- ekbench.py multi p0 p1 p2 --rounds 2 14:22:47
+{"kind": "multi", "tag": "KA17", "n": 3, "round": "warm", "agg_tps": 65.3, "wall_s": 11.76, "gen": 768, "per_stream_tps": [22.29, 23.14, 22.74], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [75.44, 99.62, 78.55], "t0": 1794320567.3559132, "t1": 1794320579.1164649}
+{"kind": "multi", "tag": "KA17", "n": 3, "round": 1, "agg_tps": 68.48, "wall_s": 11.22, "gen": 768, "per_stream_tps": [23.18, 24.07, 23.64], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [74.76, 97.9, 85.53], "t0": 1794320579.1170557, "t1": 1794320590.332444}
+{"kind": "multi", "tag": "KA17", "n": 3, "round": 2, "agg_tps": 69.68, "wall_s": 11.02, "gen": 768, "per_stream_tps": [23.61, 24.52, 24.06], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [72.13, 94.84, 90.12], "t0": 1794320590.3329628, "t1": 1794320601.3545554}
+--- ekbench.py multi p0 p1 p2 p3 --rounds 2 14:23:21
+{"kind": "multi", "tag": "KA17", "n": 4, "round": "warm", "agg_tps": 69.9, "wall_s": 14.65, "gen": 1024, "per_stream_tps": [17.83, 18.34, 18.08, 18.66], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [71.94, 94.5, 91.96, 86.2], "t0": 1794320601.401156, "t1": 1794320616.051261}
+{"kind": "multi", "tag": "KA17", "n": 4, "round": 1, "agg_tps": 71.68, "wall_s": 14.29, "gen": 1024, "per_stream_tps": [18.14, 18.67, 18.39, 18.99], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [71.94, 94.1, 94.18, 90.74], "t0": 1794320616.0519032, "t1": 1794320630.338551}
+{"kind": "multi", "tag": "KA17", "n": 4, "round": 2, "agg_tps": 72.23, "wall_s": 14.18, "gen": 1024, "per_stream_tps": [18.29, 18.81, 18.54, 19.13], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [72.37, 94.19, 95.37, 93.24], "t0": 1794320630.339238, "t1": 1794320644.5162861}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 14:24:04
+{"kind": "multi", "tag": "KA17", "n": 5, "round": "warm", "agg_tps": 67.62, "wall_s": 18.93, "gen": 1280, "per_stream_tps": [13.74, 14.03, 13.88, 14.4, 14.22], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [72.22, 93.54, 95.32, 94.49, 88.44], "t0": 1794320644.5639763, "t1": 1794320663.493774}
+{"kind": "multi", "tag": "KA17", "n": 5, "round": 1, "agg_tps": 69.15, "wall_s": 18.51, "gen": 1280, "per_stream_tps": [13.95, 14.26, 14.1, 14.63, 14.45], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [73.32, 94.01, 95.77, 95.49, 90.68], "t0": 1794320663.4945495, "t1": 1794320682.0046935}
+{"kind": "multi", "tag": "KA17", "n": 5, "round": 2, "agg_tps": 69.55, "wall_s": 18.4, "gen": 1280, "per_stream_tps": [14.04, 14.35, 14.19, 14.72, 14.54], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [71.78, 93.16, 94.89, 94.93, 91.88], "t0": 1794320682.0054595, "t1": 1794320700.4087992}
+--- ekbench.py multi p0 L16384 --rounds 1 14:25:00
+{"kind": "multi", "tag": "KA17", "n": 2, "round": "warm", "agg_tps": 20.45, "wall_s": 18.78, "gen": 384, "per_stream_tps": [24.46, 39.6], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [66.95, 1075.66], "t0": 1794320700.4570239, "t1": 1794320719.2328448}
+{"kind": "multi", "tag": "KA17", "n": 2, "round": 1, "agg_tps": 20.96, "wall_s": 18.32, "gen": 384, "per_stream_tps": [24.56, 44.55], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [70.62, 1080.24], "t0": 1794320719.2333834, "t1": 1794320737.5568426}
+--- ekbench.py multi p1 p2 p3 p4 L16384 --rounds 2 14:25:37
+{"kind": "multi", "tag": "KA17", "n": 5, "round": "warm", "agg_tps": 41.07, "wall_s": 28.05, "gen": 1152, "per_stream_tps": [9.46, 9.38, 9.54, 9.62, 14.14], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [91.64, 89.74, 94.07, 92.38, 950.55], "t0": 1794320737.6044333, "t1": 1794320765.653079}
+{"kind": "multi", "tag": "KA17", "n": 5, "round": 1, "agg_tps": 41.82, "wall_s": 27.54, "gen": 1152, "per_stream_tps": [9.6, 9.52, 9.68, 9.77, 14.69], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [90.61, 89.61, 93.89, 92.71, 950.73], "t0": 1794320765.653984, "t1": 1794320793.1976519}
+{"kind": "multi", "tag": "KA17", "n": 5, "round": 2, "agg_tps": 42.01, "wall_s": 27.42, "gen": 1152, "per_stream_tps": [9.65, 9.58, 9.73, 9.82, 14.85], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [90.94, 90.08, 93.47, 93.82, 951.93], "t0": 1794320793.1984892, "t1": 1794320820.6189673}
+--- ekbench.py multi p0 p1 p2 p3 L65536 --rounds 1 14:27:00
+{"kind": "multi", "tag": "KA17", "n": 5, "round": "warm", "agg_tps": 18.48, "wall_s": 62.34, "gen": 1152, "per_stream_tps": [8.94, 9.07, 9.0, 9.14, 41.68], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [63.95, 89.94, 90.97, 94.12, 1132.52], "t0": 1794320820.6682904, "t1": 1794320883.0057497}
+{"kind": "multi", "tag": "KA17", "n": 5, "round": 1, "agg_tps": 18.55, "wall_s": 62.1, "gen": 1152, "per_stream_tps": [9.04, 9.18, 9.11, 9.25, 44.71], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [64.41, 89.99, 90.82, 94.26, 1133.85], "t0": 1794320883.0066948, "t1": 1794320945.1076117}
+--- ekbench.py multi p1 p2 L16384 L65536 --rounds 1 14:29:05
+{"kind": "multi", "tag": "KA17", "n": 4, "round": "warm", "agg_tps": 11.17, "wall_s": 68.73, "gen": 768, "per_stream_tps": [15.43, 15.24, 22.25, 46.52], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [91.34, 77.1, 650.93, 1078.1], "t0": 1794320945.1561782, "t1": 1794321013.8843148}
+{"kind": "multi", "tag": "KA17", "n": 4, "round": 1, "agg_tps": 11.28, "wall_s": 68.07, "gen": 768, "per_stream_tps": [15.76, 15.56, 24.38, 48.61], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [88.21, 91.33, 655.88, 1085.46], "t0": 1794321013.8851025, "t1": 1794321081.9537613}
+--- ekbench.py solo p0 L16384 L65536 14:31:21
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.17, "prefill_tps": 60.47, "decode_n": 256, "decode_tps": 46.44, "md5": "8e312d7bdd", "t0": 1794321082.000758, "t1": 1794321087.7160423, "kind": "solo", "tag": "KA17"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 9.93, "prefill_tps": 1653.33, "decode_n": 128, "decode_tps": 52.7, "md5": "145c14aa8b", "t0": 1794321087.716149, "t1": 1794321100.099114, "kind": "solo", "tag": "KA17"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 43.88, "prefill_tps": 1486.85, "decode_n": 128, "decode_tps": 51.5, "md5": "8acec1b966", "t0": 1794321100.099204, "t1": 1794321146.5300596, "kind": "solo", "tag": "KA17"}
+--- ekbench.py solo p0 p0 p0 p0 14:32:26
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 63.33, "decode_n": 256, "decode_tps": 48.43, "md5": "8e312d7bdd", "t0": 1794321146.5751767, "t1": 1794321152.058049, "kind": "solo", "tag": "KA17"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 60.74, "decode_n": 256, "decode_tps": 50.58, "md5": "8e312d7bdd", "t0": 1794321152.0581498, "t1": 1794321157.3022962, "kind": "solo", "tag": "KA17"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 75.0, "decode_n": 256, "decode_tps": 52.51, "md5": "8e312d7bdd", "t0": 1794321157.3023844, "t1": 1794321162.329294, "kind": "solo", "tag": "KA17"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 76.2, "decode_n": 256, "decode_tps": 53.53, "md5": "8e312d7bdd", "t0": 1794321162.32938, "t1": 1794321167.2620215, "kind": "solo", "tag": "KA17"}
+--- ekbench.py solo L16384 L16384 L65536 L65536 --cache 14:32:47
+{"spec": "L16384", "prompt_n": 4, "cache_n": 16410, "prefill_s": 0.09, "prefill_tps": 46.84, "decode_n": 128, "decode_tps": 49.38, "md5": "145c14aa8b", "t0": 1794321167.3075686, "t1": 1794321170.0314672, "kind": "solo", "tag": "KA17"}
+{"spec": "L16384", "prompt_n": 4, "cache_n": 16410, "prefill_s": 0.08, "prefill_tps": 48.09, "decode_n": 128, "decode_tps": 52.83, "md5": "145c14aa8b", "t0": 1794321170.0315833, "t1": 1794321172.5637372, "kind": "solo", "tag": "KA17"}
+{"spec": "L65536", "prompt_n": 4, "cache_n": 65239, "prefill_s": 0.1, "prefill_tps": 41.87, "decode_n": 128, "decode_tps": 50.18, "md5": "8acec1b966", "t0": 1794321172.5638332, "t1": 1794321175.275087, "kind": "solo", "tag": "KA17"}
+{"spec": "L65536", "prompt_n": 4, "cache_n": 65239, "prefill_s": 0.09, "prefill_tps": 43.2, "decode_n": 128, "decode_tps": 53.83, "md5": "8acec1b966", "t0": 1794321175.2751768, "t1": 1794321177.8121958, "kind": "solo", "tag": "KA17"}
+--- bench.py depth --lens 100000 --n-predict 64 14:32:57
+{"kind": "depth", "tag": "KA17", "target": 100000, "prompt_n": 99676, "prefill_tps": 1429.51, "prefill_s": 69.73, "decode_n": 64, "decode_tps": 52.01, "md5": "9c80718286", "t0": 1794321177.8731096, "t1": 1794321248.9321404}
+--- ekbench.py solo L100000 14:34:08
+{"spec": "L100000", "prompt_n": 99676, "cache_n": 0, "prefill_s": 69.63, "prefill_tps": 1431.49, "decode_n": 128, "decode_tps": 53.1, "md5": "145c14aa8b", "t0": 1794321248.9769673, "t1": 1794321321.1369753, "kind": "solo", "tag": "KA17"}
+--- ekbench.py multi p0 p1 p2 L100000 --rounds 1 14:35:21
+{"kind": "multi", "tag": "KA17", "n": 4, "round": "warm", "agg_tps": 10.41, "wall_s": 86.03, "gen": 896, "per_stream_tps": [9.9, 10.09, 9.99, 51.65], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "145c14aa8b"], "specs": ["p0", "p1", "p2", "L100000"], "prefill_tps": [62.78, 78.8, 74.18, 1216.44], "t0": 1794321321.184222, "t1": 1794321407.215966}
+{"kind": "multi", "tag": "KA17", "n": 4, "round": 1, "agg_tps": 10.56, "wall_s": 84.81, "gen": 896, "per_stream_tps": [10.71, 10.92, 10.81, 50.64], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "145c14aa8b"], "specs": ["p0", "p1", "p2", "L100000"], "prefill_tps": [63.37, 82.64, 83.94, 1228.8], "t0": 1794321407.21675, "t1": 1794321492.0292687}
+--- gold.py 1 14:38:12
+{"kind": "gold", "tag": "KA17", "md5": "bc32ecab82", "decode_tps": 51.76, "wall_s": 2.67}
+PEAK GPU 80879 MiB, LOWEST MemAvailable 140589 MiB; END KA17 14:38:16
+NC-LEG-DONE KA17 14:38:16
+=== LEG PB7 parallel=5 ctx=5242880 img=547208dca250-g68d4166 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_PRIORITY_HOLD_PROMPTS=1] xargs=[] cache_ram=65536 14:38:18
+READY PB7 after 45s
+0.11.045.200 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.158.063 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.158.102 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.158.103 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.354.419 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.197.459 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.197.491 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.197.492 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.702.349 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.456.317 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79965 MiB
+--- gold.py 2 14:39:04
+{"kind": "gold", "tag": "PB7", "md5": "bc32ecab82", "decode_tps": 58.55, "wall_s": 2.33}
+{"kind": "gold", "tag": "PB7", "md5": "bc32ecab82", "decode_tps": 58.88, "wall_s": 2.31}
+--- ekbench.py solo p0 p1 p2 p3 p4 L16384 14:39:09
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 75.1, "decode_n": 256, "decode_tps": 52.85, "md5": "8e312d7bdd", "t0": 1794321549.5515947, "t1": 1794321554.5392, "kind": "solo", "tag": "PB7"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.22, "prefill_tps": 86.67, "decode_n": 256, "decode_tps": 46.2, "md5": "74fb633e8e", "t0": 1794321554.539329, "t1": 1794321560.3156304, "kind": "solo", "tag": "PB7"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 77.64, "decode_n": 256, "decode_tps": 44.23, "md5": "f8531a5f07", "t0": 1794321560.3157196, "t1": 1794321566.353722, "kind": "solo", "tag": "PB7"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.26, "prefill_tps": 80.7, "decode_n": 256, "decode_tps": 47.56, "md5": "4d6338450b", "t0": 1794321566.3538089, "t1": 1794321572.016107, "kind": "solo", "tag": "PB7"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 91.32, "decode_n": 256, "decode_tps": 45.24, "md5": "e7851c4b56", "t0": 1794321572.0161948, "t1": 1794321577.9288342, "kind": "solo", "tag": "PB7"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.04, "prefill_tps": 1634.77, "decode_n": 128, "decode_tps": 41.42, "md5": "145c14aa8b", "t0": 1794321577.9289122, "t1": 1794321591.1020234, "kind": "solo", "tag": "PB7"}
+--- ekbench.py multi p0 p1 --rounds 2 14:39:51
+{"kind": "multi", "tag": "PB7", "n": 2, "round": "warm", "agg_tps": 56.61, "wall_s": 9.04, "gen": 512, "per_stream_tps": [29.27, 29.99], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [75.6, 90.45], "t0": 1794321591.1493008, "t1": 1794321600.1929035}
+{"kind": "multi", "tag": "PB7", "n": 2, "round": 1, "agg_tps": 61.36, "wall_s": 8.34, "gen": 512, "per_stream_tps": [31.26, 32.04], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [76.83, 95.43], "t0": 1794321600.193363, "t1": 1794321608.5368905}
+{"kind": "multi", "tag": "PB7", "n": 2, "round": 2, "agg_tps": 63.09, "wall_s": 8.12, "gen": 512, "per_stream_tps": [32.15, 32.96], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [78.6, 97.74], "t0": 1794321608.5373526, "t1": 1794321616.652638}
+--- ekbench.py multi p0 p1 p2 --rounds 2 14:40:16
+{"kind": "multi", "tag": "PB7", "n": 3, "round": "warm", "agg_tps": 64.66, "wall_s": 11.88, "gen": 768, "per_stream_tps": [22.86, 22.61, 22.23], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [78.84, 98.69, 77.15], "t0": 1794321616.6994617, "t1": 1794321628.576642}
+{"kind": "multi", "tag": "PB7", "n": 3, "round": 1, "agg_tps": 67.77, "wall_s": 11.33, "gen": 768, "per_stream_tps": [23.79, 23.51, 23.09], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [77.25, 96.88, 83.99], "t0": 1794321628.5772507, "t1": 1794321639.909173}
+{"kind": "multi", "tag": "PB7", "n": 3, "round": 2, "agg_tps": 69.05, "wall_s": 11.12, "gen": 768, "per_stream_tps": [24.27, 23.96, 23.52], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [75.2, 94.97, 88.6], "t0": 1794321639.9097483, "t1": 1794321651.0318074}
+--- ekbench.py multi p0 p1 p2 p3 --rounds 2 14:40:51
+{"kind": "multi", "tag": "PB7", "n": 4, "round": "warm", "agg_tps": 69.79, "wall_s": 14.67, "gen": 1024, "per_stream_tps": [18.29, 18.11, 17.86, 18.61], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [74.93, 94.19, 89.95, 86.41], "t0": 1794321651.0784056, "t1": 1794321665.75139}
+{"kind": "multi", "tag": "PB7", "n": 4, "round": 1, "agg_tps": 71.63, "wall_s": 14.3, "gen": 1024, "per_stream_tps": [18.63, 18.46, 18.19, 18.95], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [75.88, 94.46, 92.49, 90.87], "t0": 1794321665.752078, "t1": 1794321680.0479636}
+{"kind": "multi", "tag": "PB7", "n": 4, "round": 2, "agg_tps": 72.17, "wall_s": 14.19, "gen": 1024, "per_stream_tps": [18.78, 18.6, 18.33, 19.1], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [76.14, 94.42, 93.18, 93.22], "t0": 1794321680.0486226, "t1": 1794321694.2371364}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 14:41:34
+{"kind": "multi", "tag": "PB7", "n": 5, "round": "warm", "agg_tps": 67.49, "wall_s": 18.96, "gen": 1280, "per_stream_tps": [14.0, 13.9, 13.74, 14.36, 14.18], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [75.84, 93.67, 93.18, 94.29, 88.32], "t0": 1794321694.286126, "t1": 1794321713.2507865}
+{"kind": "multi", "tag": "PB7", "n": 5, "round": 1, "agg_tps": 68.67, "wall_s": 18.64, "gen": 1280, "per_stream_tps": [14.15, 14.05, 13.89, 14.51, 14.33], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [76.1, 93.63, 93.68, 94.94, 90.52], "t0": 1794321713.2515826, "t1": 1794321731.891554}
+{"kind": "multi", "tag": "PB7", "n": 5, "round": 2, "agg_tps": 69.11, "wall_s": 18.52, "gen": 1280, "per_stream_tps": [14.25, 14.14, 13.98, 14.61, 14.43], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [75.13, 93.11, 92.99, 94.96, 92.15], "t0": 1794321731.8923395, "t1": 1794321750.4125237}
+--- ekbench.py multi p0 L16384 --rounds 1 14:42:30
+{"kind": "multi", "tag": "PB7", "n": 2, "round": "warm", "agg_tps": 20.96, "wall_s": 18.32, "gen": 384, "per_stream_tps": [32.0, 23.86], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [73.58, 1632.98], "t0": 1794321750.4616315, "t1": 1794321768.7835035}
+{"kind": "multi", "tag": "PB7", "n": 2, "round": 1, "agg_tps": 21.37, "wall_s": 17.97, "gen": 384, "per_stream_tps": [33.29, 25.2], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [73.96, 1634.8], "t0": 1794321768.7840512, "t1": 1794321786.749275}
+--- ekbench.py multi p1 p2 p3 p4 L16384 --rounds 2 14:43:06
+{"kind": "multi", "tag": "PB7", "n": 5, "round": "warm", "agg_tps": 40.94, "wall_s": 28.14, "gen": 1152, "per_stream_tps": [14.42, 14.58, 14.97, 14.78, 12.12], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [91.51, 90.71, 93.8, 92.08, 1640.93], "t0": 1794321786.7978442, "t1": 1794321814.9380157}
+{"kind": "multi", "tag": "PB7", "n": 5, "round": 1, "agg_tps": 41.48, "wall_s": 27.77, "gen": 1152, "per_stream_tps": [14.58, 14.75, 15.14, 14.95, 12.3], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [91.43, 89.96, 93.82, 92.31, 1643.87], "t0": 1794321814.9388113, "t1": 1794321842.7129169}
+{"kind": "multi", "tag": "PB7", "n": 5, "round": 2, "agg_tps": 41.85, "wall_s": 27.52, "gen": 1152, "per_stream_tps": [14.79, 14.96, 15.36, 15.16, 12.49], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [90.3, 90.52, 93.58, 92.7, 1645.27], "t0": 1794321842.713712, "t1": 1794321870.237774}
+--- ekbench.py multi p0 p1 p2 p3 L65536 --rounds 1 14:44:30
+{"kind": "multi", "tag": "PB7", "n": 5, "round": "warm", "agg_tps": 18.51, "wall_s": 62.25, "gen": 1152, "per_stream_tps": [4.13, 4.14, 4.15, 14.67, 12.62], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [61.8, 89.72, 89.9, 91.8, 1490.97], "t0": 1794321870.286096, "t1": 1794321932.5371678}
+{"kind": "multi", "tag": "PB7", "n": 5, "round": 1, "agg_tps": 18.59, "wall_s": 61.96, "gen": 1152, "per_stream_tps": [4.15, 4.16, 4.17, 14.9, 12.87], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [67.28, 88.99, 88.73, 92.37, 1491.03], "t0": 1794321932.5379791, "t1": 1794321994.4964354}
+--- ekbench.py multi p1 p2 L16384 L65536 --rounds 1 14:46:34
+{"kind": "multi", "tag": "PB7", "n": 4, "round": "warm", "agg_tps": 9.82, "wall_s": 78.23, "gen": 768, "per_stream_tps": [10.39, 10.48, 16.69, 6.24], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [87.71, 87.91, 1333.37, 1228.16], "t0": 1794321994.5449636, "t1": 1794322072.7719948}
+{"kind": "multi", "tag": "PB7", "n": 4, "round": 1, "agg_tps": 11.11, "wall_s": 69.12, "gen": 768, "per_stream_tps": [4.4, 4.41, 2.36, 17.25], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [88.7, 90.22, 1554.51, 1415.94], "t0": 1794322072.7727304, "t1": 1794322141.8964229}
+--- ekbench.py solo p0 L16384 L65536 14:49:01
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.15, "prefill_tps": 65.33, "decode_n": 256, "decode_tps": 44.68, "md5": "8e312d7bdd", "t0": 1794322141.944414, "t1": 1794322147.8610015, "kind": "solo", "tag": "PB7"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 12.28, "prefill_tps": 1336.51, "decode_n": 128, "decode_tps": 48.19, "md5": "145c14aa8b", "t0": 1794322147.8611073, "t1": 1794322162.8198018, "kind": "solo", "tag": "PB7"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 46.07, "prefill_tps": 1416.3, "decode_n": 128, "decode_tps": 47.91, "md5": "8acec1b966", "t0": 1794322162.8198915, "t1": 1794322211.6185014, "kind": "solo", "tag": "PB7"}
+--- gold.py 1 14:50:11
+{"kind": "gold", "tag": "PB7", "md5": "bc32ecab82", "decode_tps": 47.46, "wall_s": 2.89}
+PEAK GPU 80231 MiB, LOWEST MemAvailable 144469 MiB; END PB7 14:50:16
+NC-LEG-DONE PB7 14:50:16
+=== LEG KA27 parallel=5 ctx=5242880 img=547208dca250-gb5ee55a opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_SAME_FREE=512] xargs=[] cache_ram=65536 14:50:17
+READY KA27 after 42s
+0.10.817.131 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.975.527 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.975.581 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.11.975.586 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.171.006 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.053.630 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.053.661 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.053.662 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.900.721 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.669.697 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80613 MiB
+--- gold.py 2 14:51:02
+{"kind": "gold", "tag": "KA27", "md5": "bc32ecab82", "decode_tps": 58.8, "wall_s": 2.32}
+{"kind": "gold", "tag": "KA27", "md5": "bc32ecab82", "decode_tps": 58.91, "wall_s": 2.33}
+--- ekbench.py solo p0 p1 p2 p3 p4 L16384 14:51:07
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.11, "prefill_tps": 87.12, "decode_n": 256, "decode_tps": 52.88, "md5": "8e312d7bdd", "t0": 1794322267.6087255, "t1": 1794322272.5761619, "kind": "solo", "tag": "KA27"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.22, "prefill_tps": 85.47, "decode_n": 256, "decode_tps": 46.48, "md5": "74fb633e8e", "t0": 1794322272.576285, "t1": 1794322278.322185, "kind": "solo", "tag": "KA27"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 77.21, "decode_n": 256, "decode_tps": 44.47, "md5": "f8531a5f07", "t0": 1794322278.322288, "t1": 1794322284.3319302, "kind": "solo", "tag": "KA27"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.26, "prefill_tps": 80.15, "decode_n": 256, "decode_tps": 48.02, "md5": "4d6338450b", "t0": 1794322284.3320127, "t1": 1794322289.9459677, "kind": "solo", "tag": "KA27"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 90.79, "decode_n": 256, "decode_tps": 45.76, "md5": "e7851c4b56", "t0": 1794322289.9460456, "t1": 1794322295.7974927, "kind": "solo", "tag": "KA27"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.05, "prefill_tps": 1633.7, "decode_n": 128, "decode_tps": 41.54, "md5": "145c14aa8b", "t0": 1794322295.7975707, "t1": 1794322308.9714332, "kind": "solo", "tag": "KA27"}
+--- ekbench.py multi p0 p1 --rounds 2 14:51:48
+{"kind": "multi", "tag": "KA27", "n": 2, "round": "warm", "agg_tps": 57.21, "wall_s": 8.95, "gen": 512, "per_stream_tps": [29.61, 30.35], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [72.82, 90.22], "t0": 1794322309.0181713, "t1": 1794322317.9672513}
+{"kind": "multi", "tag": "KA27", "n": 2, "round": 1, "agg_tps": 62.12, "wall_s": 8.24, "gen": 512, "per_stream_tps": [31.69, 32.49], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [74.51, 95.89], "t0": 1794322317.96777, "t1": 1794322326.2101705}
+{"kind": "multi", "tag": "KA27", "n": 2, "round": 2, "agg_tps": 63.82, "wall_s": 8.02, "gen": 512, "per_stream_tps": [32.57, 33.4], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "prefill_tps": [76.04, 98.34], "t0": 1794322326.2106583, "t1": 1794322334.2329075}
+--- ekbench.py multi p0 p1 p2 --rounds 2 14:52:14
+{"kind": "multi", "tag": "KA27", "n": 3, "round": "warm", "agg_tps": 65.17, "wall_s": 11.78, "gen": 768, "per_stream_tps": [22.25, 23.1, 22.71], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [75.28, 99.28, 78.3], "t0": 1794322334.2800577, "t1": 1794322346.064168}
+{"kind": "multi", "tag": "KA27", "n": 3, "round": 1, "agg_tps": 68.34, "wall_s": 11.24, "gen": 768, "per_stream_tps": [23.14, 24.02, 23.59], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [74.38, 97.61, 85.21], "t0": 1794322346.064762, "t1": 1794322357.3032558}
+{"kind": "multi", "tag": "KA27", "n": 3, "round": 2, "agg_tps": 69.53, "wall_s": 11.05, "gen": 768, "per_stream_tps": [23.56, 24.46, 24.0], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "prefill_tps": [71.89, 94.86, 89.71], "t0": 1794322357.303823, "t1": 1794322368.3500133}
+--- ekbench.py multi p0 p1 p2 p3 --rounds 2 14:52:48
+{"kind": "multi", "tag": "KA27", "n": 4, "round": "warm", "agg_tps": 69.66, "wall_s": 14.7, "gen": 1024, "per_stream_tps": [17.77, 18.28, 18.02, 18.6], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [71.62, 93.89, 91.76, 85.64], "t0": 1794322368.396885, "t1": 1794322383.0963087}
+{"kind": "multi", "tag": "KA27", "n": 4, "round": 1, "agg_tps": 71.54, "wall_s": 14.31, "gen": 1024, "per_stream_tps": [18.11, 18.64, 18.36, 18.96], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [71.25, 93.5, 93.69, 90.07], "t0": 1794322383.0969656, "t1": 1794322397.4096928}
+{"kind": "multi", "tag": "KA27", "n": 4, "round": 2, "agg_tps": 72.09, "wall_s": 14.2, "gen": 1024, "per_stream_tps": [18.25, 18.78, 18.5, 19.1], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [71.77, 93.43, 94.68, 92.68], "t0": 1794322397.4103293, "t1": 1794322411.6150696}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 14:53:31
+{"kind": "multi", "tag": "KA27", "n": 5, "round": "warm", "agg_tps": 67.43, "wall_s": 18.98, "gen": 1280, "per_stream_tps": [13.7, 14.0, 13.85, 14.36, 14.19], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [71.78, 93.17, 94.9, 94.12, 87.71], "t0": 1794322411.663309, "t1": 1794322430.645152}
+{"kind": "multi", "tag": "KA27", "n": 5, "round": 1, "agg_tps": 68.93, "wall_s": 18.57, "gen": 1280, "per_stream_tps": [13.91, 14.22, 14.06, 14.39, 14.59], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [72.68, 93.13, 95.06, 94.33, 89.95], "t0": 1794322430.645939, "t1": 1794322449.2157152}
+{"kind": "multi", "tag": "KA27", "n": 5, "round": 2, "agg_tps": 69.37, "wall_s": 18.45, "gen": 1280, "per_stream_tps": [14.0, 14.31, 14.15, 14.68, 14.5], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [71.69, 92.76, 94.45, 94.55, 91.64], "t0": 1794322449.2164898, "t1": 1794322467.6680417}
+--- ekbench.py multi p0 L16384 --rounds 1 14:54:27
+{"kind": "multi", "tag": "KA27", "n": 2, "round": "warm", "agg_tps": 20.43, "wall_s": 18.79, "gen": 384, "per_stream_tps": [24.45, 39.54], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [66.82, 1075.12], "t0": 1794322467.7175505, "t1": 1794322486.5094316}
+{"kind": "multi", "tag": "KA27", "n": 2, "round": 1, "agg_tps": 20.94, "wall_s": 18.34, "gen": 384, "per_stream_tps": [24.55, 44.44], "md5": ["8e312d7bdd", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [70.37, 1079.66], "t0": 1794322486.509969, "t1": 1794322504.84864}
+--- ekbench.py multi p1 p2 p3 p4 L16384 --rounds 2 14:55:04
+{"kind": "multi", "tag": "KA27", "n": 5, "round": "warm", "agg_tps": 40.98, "wall_s": 28.11, "gen": 1152, "per_stream_tps": [9.44, 9.36, 9.6, 9.52, 14.12], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [91.44, 89.21, 93.47, 92.02, 948.38], "t0": 1794322504.8956802, "t1": 1794322533.0061507}
+{"kind": "multi", "tag": "KA27", "n": 5, "round": 1, "agg_tps": 41.77, "wall_s": 27.58, "gen": 1152, "per_stream_tps": [9.59, 9.51, 9.67, 9.75, 14.67], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [90.48, 89.54, 93.75, 92.47, 949.47], "t0": 1794322533.00708, "t1": 1794322560.586613}
+{"kind": "multi", "tag": "KA27", "n": 5, "round": 2, "agg_tps": 41.9, "wall_s": 27.5, "gen": 1152, "per_stream_tps": [9.63, 9.55, 9.71, 9.79, 14.81], "md5": ["74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [89.59, 89.68, 93.19, 92.71, 949.73], "t0": 1794322560.5874178, "t1": 1794322588.083902}
+--- ekbench.py multi p0 p1 p2 p3 L65536 --rounds 1 14:56:28
+{"kind": "multi", "tag": "KA27", "n": 5, "round": "warm", "agg_tps": 18.44, "wall_s": 62.47, "gen": 1152, "per_stream_tps": [8.92, 9.05, 8.98, 9.12, 41.57], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [63.6, 89.52, 90.59, 93.43, 1130.12], "t0": 1794322588.1331966, "t1": 1794322650.6070786}
+{"kind": "multi", "tag": "KA27", "n": 5, "round": 1, "agg_tps": 18.52, "wall_s": 62.21, "gen": 1152, "per_stream_tps": [9.03, 9.16, 9.09, 9.23, 44.65], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "8acec1b966"], "specs": ["p0", "p1", "p2", "p3", "L65536"], "prefill_tps": [64.27, 89.72, 90.39, 93.78, 1131.87], "t0": 1794322650.6080012, "t1": 1794322712.8156369}
+--- ekbench.py multi p1 p2 L16384 L65536 --rounds 1 14:58:32
+{"kind": "multi", "tag": "KA27", "n": 4, "round": "warm", "agg_tps": 11.15, "wall_s": 68.86, "gen": 768, "per_stream_tps": [15.4, 15.2, 22.19, 46.46], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [90.41, 76.66, 649.53, 1076.1], "t0": 1794322712.864072, "t1": 1794322781.7263372}
+{"kind": "multi", "tag": "KA27", "n": 4, "round": 1, "agg_tps": 11.26, "wall_s": 68.18, "gen": 768, "per_stream_tps": [15.73, 15.53, 24.34, 48.55], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [87.91, 91.03, 654.73, 1083.61], "t0": 1794322781.7271497, "t1": 1794322849.9073908}
+--- ekbench.py solo p0 L16384 L65536 15:00:49
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.17, "prefill_tps": 60.25, "decode_n": 256, "decode_tps": 46.36, "md5": "8e312d7bdd", "t0": 1794322849.9560287, "t1": 1794322855.6821837, "kind": "solo", "tag": "KA27"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 9.94, "prefill_tps": 1651.51, "decode_n": 128, "decode_tps": 52.62, "md5": "145c14aa8b", "t0": 1794322855.6823165, "t1": 1794322868.0799177, "kind": "solo", "tag": "KA27"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 43.99, "prefill_tps": 1483.13, "decode_n": 128, "decode_tps": 51.46, "md5": "8acec1b966", "t0": 1794322868.08001, "t1": 1794322914.6229248, "kind": "solo", "tag": "KA27"}
+--- ekbench.py solo p0 p0 p0 p0 15:01:54
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 63.09, "decode_n": 256, "decode_tps": 48.36, "md5": "8e312d7bdd", "t0": 1794322914.6680655, "t1": 1794322920.1589885, "kind": "solo", "tag": "KA27"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 60.73, "decode_n": 256, "decode_tps": 50.54, "md5": "8e312d7bdd", "t0": 1794322920.1590872, "t1": 1794322925.4066608, "kind": "solo", "tag": "KA27"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 74.79, "decode_n": 256, "decode_tps": 52.49, "md5": "8e312d7bdd", "t0": 1794322925.4067595, "t1": 1794322930.4357376, "kind": "solo", "tag": "KA27"}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 75.91, "decode_n": 256, "decode_tps": 53.5, "md5": "8e312d7bdd", "t0": 1794322930.4358149, "t1": 1794322935.3712428, "kind": "solo", "tag": "KA27"}
+--- ekbench.py solo L16384 L16384 L65536 L65536 --cache 15:02:15
+{"spec": "L16384", "prompt_n": 4, "cache_n": 16410, "prefill_s": 0.09, "prefill_tps": 46.22, "decode_n": 128, "decode_tps": 49.23, "md5": "145c14aa8b", "t0": 1794322935.417255, "t1": 1794322938.1507466, "kind": "solo", "tag": "KA27"}
+{"spec": "L16384", "prompt_n": 4, "cache_n": 16410, "prefill_s": 0.08, "prefill_tps": 48.11, "decode_n": 128, "decode_tps": 52.78, "md5": "145c14aa8b", "t0": 1794322938.1508732, "t1": 1794322940.6848757, "kind": "solo", "tag": "KA27"}
+{"spec": "L65536", "prompt_n": 4, "cache_n": 65239, "prefill_s": 0.1, "prefill_tps": 41.76, "decode_n": 128, "decode_tps": 50.19, "md5": "8acec1b966", "t0": 1794322940.6849766, "t1": 1794322943.395876, "kind": "solo", "tag": "KA27"}
+{"spec": "L65536", "prompt_n": 4, "cache_n": 65239, "prefill_s": 0.09, "prefill_tps": 42.91, "decode_n": 128, "decode_tps": 53.71, "md5": "8acec1b966", "t0": 1794322943.3959653, "t1": 1794322945.9379494, "kind": "solo", "tag": "KA27"}
+--- bench.py depth --lens 100000 --n-predict 64 15:02:25
+{"kind": "depth", "tag": "KA27", "target": 100000, "prompt_n": 99676, "prefill_tps": 1426.78, "prefill_s": 69.86, "decode_n": 64, "decode_tps": 51.95, "md5": "9c80718286", "t0": 1794322945.999389, "t1": 1794323017.1935034}
+--- ekbench.py solo L100000 15:03:37
+{"spec": "L100000", "prompt_n": 99676, "cache_n": 0, "prefill_s": 69.77, "prefill_tps": 1428.58, "decode_n": 128, "decode_tps": 52.88, "md5": "145c14aa8b", "t0": 1794323017.2386057, "t1": 1794323089.5491388, "kind": "solo", "tag": "KA27"}
+--- ekbench.py multi p0 p1 p2 L100000 --rounds 1 15:04:49
+{"kind": "multi", "tag": "KA27", "n": 4, "round": "warm", "agg_tps": 10.4, "wall_s": 86.19, "gen": 896, "per_stream_tps": [9.88, 10.07, 9.97, 51.5], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "145c14aa8b"], "specs": ["p0", "p1", "p2", "L100000"], "prefill_tps": [62.89, 78.83, 74.34, 1214.12], "t0": 1794323089.596076, "t1": 1794323175.787974}
+{"kind": "multi", "tag": "KA27", "n": 4, "round": 1, "agg_tps": 10.55, "wall_s": 84.95, "gen": 896, "per_stream_tps": [10.69, 10.9, 10.79, 50.5], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "145c14aa8b"], "specs": ["p0", "p1", "p2", "L100000"], "prefill_tps": [62.97, 82.13, 83.94, 1226.87], "t0": 1794323175.788778, "t1": 1794323260.739729}
+--- gold.py 1 15:07:40
+{"kind": "gold", "tag": "KA27", "md5": "bc32ecab82", "decode_tps": 51.7, "wall_s": 2.68}
+PEAK GPU 80879 MiB, LOWEST MemAvailable 141483 MiB; END KA27 15:07:45
+NC-LEG-DONE KA27 15:07:45
+=== LEG XK7 parallel=5 ctx=5242880 img=547208dca250-gb5ee55a opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_CLIENT_CLASSES=/keys/classes.txt LLAMA_SLOT_RESERVE=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_SAME_FREE=512] xargs=[] cache_ram=65536 15:07:47
+READY XK7 after 42s
+0.00.302.763 I srv  server_clien: client classes: 5 keys loaded, top priority 10 (keys not logged)
+0.10.958.732 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.060.040 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.060.079 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.060.080 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.256.212 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.081.075 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.081.106 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.081.108 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.723.547 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.470.212 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80616 MiB
+--- prio_nc.py warm --classes /srv/glm-5.3-flash/nc/keys/classes.txt 15:08:32
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.161, "wall_s": 5.01, "max_gap_s": 0.04, "decode_tps": 52.57, "prompt_n": 10, "prefill_tps": 72.5, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+{"tag": "warm", "spec": "p0", "t_send": 5.01, "ttft_s": 0.17, "wall_s": 4.97, "max_gap_s": 0.04, "decode_tps": 53.14, "prompt_n": 10, "prefill_tps": 74.5, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+{"tag": "warm", "spec": "p0", "t_send": 9.98, "ttft_s": 0.12, "wall_s": 4.84, "max_gap_s": 0.04, "decode_tps": 54.06, "prompt_n": 10, "prefill_tps": 88.5, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py warm --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 512 15:08:47
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.142, "wall_s": 9.97, "max_gap_s": 0.04, "decode_tps": 52.02, "prompt_n": 10, "prefill_tps": 88.4, "md5": "22da3a7294", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+{"tag": "warm", "spec": "p0", "t_send": 9.97, "ttft_s": 0.154, "wall_s": 9.7, "max_gap_s": 0.04, "decode_tps": 53.51, "prompt_n": 10, "prefill_tps": 86.3, "md5": "22da3a7294", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+{"tag": "warm", "spec": "p0", "t_send": 19.67, "ttft_s": 0.128, "wall_s": 9.55, "max_gap_s": 0.04, "decode_tps": 54.23, "prompt_n": 10, "prefill_tps": 83.2, "md5": "22da3a7294", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py warm --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 1024 15:09:16
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.154, "wall_s": 19.85, "max_gap_s": 0.04, "decode_tps": 51.94, "prompt_n": 10, "prefill_tps": 80.5, "md5": "168f9c9c04", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+{"tag": "warm", "spec": "p0", "t_send": 19.85, "ttft_s": 0.182, "wall_s": 19.78, "max_gap_s": 0.04, "decode_tps": 52.2, "prompt_n": 10, "prefill_tps": 70.2, "md5": "168f9c9c04", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+{"tag": "warm", "spec": "p0", "t_send": 39.63, "ttft_s": 0.156, "wall_s": 19.77, "max_gap_s": 0.04, "decode_tps": 52.16, "prompt_n": 10, "prefill_tps": 67.3, "md5": "168f9c9c04", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py junolong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 512 --delay 1 15:10:15
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.183, "wall_s": 10.6, "max_gap_s": 0.24, "decode_tps": 49.03, "prompt_n": 10, "prefill_tps": 64.9, "md5": "22da3a7294", "scenario": "junolong", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "L65536", "t_send": 1.01, "ttft_s": 53.351, "wall_s": 56.49, "max_gap_s": 0.04, "decode_tps": 40.46, "prompt_n": 65243, "prefill_tps": 1224.3, "md5": "8acec1b966", "scenario": "junolong", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py prefill --classes /srv/glm-5.3-flash/nc/keys/classes.txt --delay 10 15:11:13
+{"tag": "low", "spec": "L65536", "t_send": 0.01, "ttft_s": 49.099, "wall_s": 51.77, "max_gap_s": 0.04, "decode_tps": 47.67, "prompt_n": 65243, "prefill_tps": 1330.7, "md5": "8acec1b966", "scenario": "prefill", "kind": "prio", "leg": "XK7"}
+{"tag": "juno", "spec": "p0", "t_send": 10.01, "ttft_s": 2.805, "wall_s": 7.93, "max_gap_s": 0.29, "decode_tps": 49.77, "prompt_n": 10, "prefill_tps": 59.4, "md5": "8e312d7bdd", "scenario": "prefill", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py junofirst --classes /srv/glm-5.3-flash/nc/keys/classes.txt 15:12:05
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.376, "wall_s": 5.41, "max_gap_s": 0.2, "decode_tps": 50.69, "prompt_n": 10, "prefill_tps": 65.8, "md5": "8e312d7bdd", "scenario": "junofirst", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p3", "t_send": 1.0, "ttft_s": 4.91, "wall_s": 21.06, "max_gap_s": 0.32, "decode_tps": 15.78, "prompt_n": 21, "prefill_tps": 79.2, "md5": "4d6338450b", "scenario": "junofirst", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p2", "t_send": 1.0, "ttft_s": 3.331, "wall_s": 21.07, "max_gap_s": 1.9, "decode_tps": 14.38, "prompt_n": 18, "prefill_tps": 5.5, "md5": "f8531a5f07", "scenario": "junofirst", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p1", "t_send": 1.0, "ttft_s": 4.645, "wall_s": 21.07, "max_gap_s": 0.59, "decode_tps": 15.53, "prompt_n": 19, "prefill_tps": 81.9, "md5": "74fb633e8e", "scenario": "junofirst", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p4", "t_send": 1.0, "ttft_s": 5.163, "wall_s": 21.07, "max_gap_s": 0.09, "decode_tps": 16.04, "prompt_n": 21, "prefill_tps": 83.0, "md5": "e7851c4b56", "scenario": "junofirst", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py junofirst --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 1024 15:12:27
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.309, "wall_s": 22.79, "max_gap_s": 0.22, "decode_tps": 45.51, "prompt_n": 10, "prefill_tps": 70.5, "md5": "168f9c9c04", "scenario": "junofirst", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p2", "t_send": 1.0, "ttft_s": 2.888, "wall_s": 36.03, "max_gap_s": 4.05, "decode_tps": 7.69, "prompt_n": 18, "prefill_tps": 6.4, "md5": "f8531a5f07", "scenario": "junofirst", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p4", "t_send": 1.0, "ttft_s": 12.156, "wall_s": 36.56, "max_gap_s": 4.05, "decode_tps": 10.45, "prompt_n": 21, "prefill_tps": 3.0, "md5": "e7851c4b56", "scenario": "junofirst", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p3", "t_send": 1.0, "ttft_s": 21.174, "wall_s": 36.79, "max_gap_s": 0.91, "decode_tps": 16.33, "prompt_n": 21, "prefill_tps": 3.3, "md5": "4d6338450b", "scenario": "junofirst", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p1", "t_send": 1.0, "ttft_s": 22.023, "wall_s": 36.79, "max_gap_s": 0.09, "decode_tps": 17.27, "prompt_n": 19, "prefill_tps": 85.0, "md5": "74fb633e8e", "scenario": "junofirst", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt 15:13:05
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.009, "wall_s": 29.85, "max_gap_s": 4.99, "decode_tps": 8.84, "prompt_n": 21, "prefill_tps": 80.3, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.392, "wall_s": 29.85, "max_gap_s": 4.99, "decode_tps": 8.66, "prompt_n": 18, "prefill_tps": 86.8, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.607, "wall_s": 29.86, "max_gap_s": 4.99, "decode_tps": 8.72, "prompt_n": 19, "prefill_tps": 88.8, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "L65536", "t_send": 0.51, "ttft_s": 61.513, "wall_s": 64.75, "max_gap_s": 0.04, "decode_tps": 39.26, "prompt_n": 65243, "prefill_tps": 1077.8, "md5": "8acec1b966", "scenario": "mixed", "kind": "prio", "leg": "XK7"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 1.05, "wall_s": 6.55, "max_gap_s": 0.22, "decode_tps": 46.38, "prompt_n": 10, "prefill_tps": 66.6, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt 15:14:10
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.029, "wall_s": 29.42, "max_gap_s": 4.96, "decode_tps": 8.98, "prompt_n": 21, "prefill_tps": 94.3, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.586, "wall_s": 29.42, "max_gap_s": 4.96, "decode_tps": 8.84, "prompt_n": 18, "prefill_tps": 89.7, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 0.808, "wall_s": 29.42, "max_gap_s": 4.96, "decode_tps": 8.91, "prompt_n": 19, "prefill_tps": 88.6, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "L65536", "t_send": 0.51, "ttft_s": 61.258, "wall_s": 64.25, "max_gap_s": 0.04, "decode_tps": 42.56, "prompt_n": 65243, "prefill_tps": 1081.7, "md5": "8acec1b966", "scenario": "mixed", "kind": "prio", "leg": "XK7"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 1.066, "wall_s": 6.62, "max_gap_s": 0.22, "decode_tps": 45.92, "prompt_n": 10, "prefill_tps": 66.8, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py shortbehind --classes /srv/glm-5.3-flash/nc/keys/classes.txt --delay 5 15:15:15
+{"tag": "long", "spec": "L65536", "t_send": 0.01, "ttft_s": 49.608, "wall_s": 52.37, "max_gap_s": 0.04, "decode_tps": 46.03, "prompt_n": 65243, "prefill_tps": 1317.6, "md5": "8acec1b966", "scenario": "shortbehind", "kind": "prio", "leg": "XK7"}
+{"tag": "short", "spec": "p1", "t_send": 5.01, "ttft_s": 2.378, "wall_s": 12.8, "max_gap_s": 0.3, "decode_tps": 24.47, "prompt_n": 19, "prefill_tps": 84.5, "md5": "74fb633e8e", "scenario": "shortbehind", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py samelong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 512 --delay 2 15:16:07
+{"tag": "gen", "spec": "p1", "t_send": 0.0, "ttft_s": 0.271, "wall_s": 18.61, "max_gap_s": 0.27, "decode_tps": 27.86, "prompt_n": 19, "prefill_tps": 89.1, "md5": "ad210f651f", "scenario": "samelong", "kind": "prio", "leg": "XK7"}
+{"tag": "low", "spec": "L65536", "t_send": 2.01, "ttft_s": 52.402, "wall_s": 55.09, "max_gap_s": 0.04, "decode_tps": 47.28, "prompt_n": 65243, "prefill_tps": 1246.6, "md5": "8acec1b966", "scenario": "samelong", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py twolong --classes /srv/glm-5.3-flash/nc/keys/classes.txt 15:17:04
+{"tag": "long", "spec": "L65536", "t_send": 0.01, "ttft_s": 62.697, "wall_s": 65.21, "max_gap_s": 0.04, "decode_tps": 50.7, "prompt_n": 65243, "prefill_tps": 1042.6, "md5": "8acec1b966", "scenario": "twolong", "kind": "prio", "leg": "XK7"}
+{"tag": "mid", "spec": "L16384", "t_send": 4.01, "ttft_s": 24.607, "wall_s": 30.14, "max_gap_s": 0.31, "decode_tps": 22.97, "prompt_n": 16414, "prefill_tps": 689.4, "md5": "145c14aa8b", "scenario": "twolong", "kind": "prio", "leg": "XK7"}
+{"tag": "short", "spec": "p2", "t_send": 8.01, "ttft_s": 1.873, "wall_s": 12.73, "max_gap_s": 0.28, "decode_tps": 23.49, "prompt_n": 18, "prefill_tps": 76.6, "md5": "f8531a5f07", "scenario": "twolong", "kind": "prio", "leg": "XK7"}
+--- prio_nc.py warm --classes /srv/glm-5.3-flash/nc/keys/classes.txt 15:18:09
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.493, "wall_s": 6.03, "max_gap_s": 0.04, "decode_tps": 46.03, "prompt_n": 10, "prefill_tps": 57.9, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+{"tag": "warm", "spec": "p0", "t_send": 6.03, "ttft_s": 0.207, "wall_s": 5.32, "max_gap_s": 0.04, "decode_tps": 49.86, "prompt_n": 10, "prefill_tps": 59.1, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+{"tag": "warm", "spec": "p0", "t_send": 11.35, "ttft_s": 0.172, "wall_s": 5.05, "max_gap_s": 0.04, "decode_tps": 52.29, "prompt_n": 10, "prefill_tps": 74.5, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "XK7"}
+PEAK GPU 80877 MiB, LOWEST MemAvailable 143103 MiB; END XK7 15:18:28
+NC-LEG-DONE XK7 15:18:28
+server-XK7.log no key in log
+NC7-DONE gate=ok 15:18:28

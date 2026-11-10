@@ -1,0 +1,24 @@
+0.44.899.872 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80616 MiB
+--- prio_nc_e.py warm --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:09:26
+--- prio_nc_e.py sololong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:09:40
+--- prio_nc_e.py sololong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:09:54
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:10:44
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:11:16
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:11:46
+--- prio_nc_e.py stagger --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:12:53
+--- prio_nc_e.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:14:00
+--- prio_nc_e.py junolong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 512 --delay 1 --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:15:07
+--- prio_nc_e.py stagger --classes /srv/glm-5.3-flash/nc/keys/classes.txt --long L16384 --dump /srv/glm-5.3-flash/nc/legs/dump-KV7 14:16:07
+PEAK GPU 80879 MiB, LOWEST MemAvailable 143629 MiB; END KV7 14:16:40
+NC-LEG-DONE KV7 14:16:40
+server-KV7.log no key in log
+requests with gold md5: 37 of 37
+state hashes: 17 distinct long ubatches (end position, length), 0 seen once only, 0 with MORE THAN ONE hash
+prompt ubatches done in pieces: 96, run whole (state not in place): 0
+ubatches while a cell was frozen: 5270; range contains the frozen cell: 0; guard refusals: 0
+  frozen cell 3:   2974 ubatches above it with 1 sequence(s)
+  frozen cell 3:    108 ubatches below it with 1 sequence(s)
+  frozen cell 3:    182 ubatches below it with 2 sequence(s)
+  frozen cell 3:   2006 ubatches below it with 3 sequence(s)
+V1-DIGEST KV7 PASS

@@ -1,0 +1,36 @@
+== XK7: 43 records
+  juno alone md5 8e312d7bdd: 52.57 53.14 54.06 46.03 49.86 52.29  mean 51.32
+  juno alone md5 22da3a7294: 52.02 53.51 54.23  mean 53.25
+  juno alone md5 168f9c9c04: 51.94 52.20 52.16  mean 52.10
+  junolong   juno  p0      send   0.00 ttft   0.183 wall  10.60 gap  0.24 decode  49.03 prefill    64.9 22da3a7294 = 92 % of alone (90-94 %)
+  junolong   low   L65536  send   1.01 ttft  53.351 wall  56.49 gap  0.04 decode  40.46 prefill  1224.3 8acec1b966
+  prefill    low   L65536  send   0.01 ttft  49.099 wall  51.77 gap  0.04 decode  47.67 prefill  1330.7 8acec1b966
+  prefill    juno  p0      send  10.01 ttft   2.805 wall   7.93 gap  0.29 decode  49.77 prefill    59.4 8e312d7bdd = 97 % of alone (92-108 %)
+  junofirst  juno  p0      send   0.00 ttft   0.376 wall   5.41 gap  0.20 decode  50.69 prefill    65.8 8e312d7bdd = 99 % of alone (94-110 %)
+  junofirst  low   p3      send   1.00 ttft   4.910 wall  21.06 gap  0.32 decode  15.78 prefill    79.2 4d6338450b
+  junofirst  low   p2      send   1.00 ttft   3.331 wall  21.07 gap  1.90 decode  14.38 prefill     5.5 f8531a5f07
+  junofirst  low   p1      send   1.00 ttft   4.645 wall  21.07 gap  0.59 decode  15.53 prefill    81.9 74fb633e8e
+  junofirst  low   p4      send   1.00 ttft   5.163 wall  21.07 gap  0.09 decode  16.04 prefill    83.0 e7851c4b56
+  junofirst  juno  p0      send   0.00 ttft   0.309 wall  22.79 gap  0.22 decode  45.51 prefill    70.5 168f9c9c04 = 87 % of alone (87-88 %)
+  junofirst  low   p2      send   1.00 ttft   2.888 wall  36.03 gap  4.05 decode   7.69 prefill     6.4 f8531a5f07
+  junofirst  low   p4      send   1.00 ttft  12.156 wall  36.56 gap  4.05 decode  10.45 prefill     3.0 e7851c4b56
+  junofirst  low   p3      send   1.00 ttft  21.174 wall  36.79 gap  0.91 decode  16.33 prefill     3.3 4d6338450b
+  junofirst  low   p1      send   1.00 ttft  22.023 wall  36.79 gap  0.09 decode  17.27 prefill    85.0 74fb633e8e
+  mixed      low   p3      send   0.00 ttft   1.009 wall  29.85 gap  4.99 decode   8.84 prefill    80.3 4d6338450b
+  mixed      low   p2      send   0.00 ttft   0.392 wall  29.85 gap  4.99 decode   8.66 prefill    86.8 f8531a5f07
+  mixed      low   p1      send   0.00 ttft   0.607 wall  29.86 gap  4.99 decode   8.72 prefill    88.8 74fb633e8e
+  mixed      low   L65536  send   0.51 ttft  61.513 wall  64.75 gap  0.04 decode  39.26 prefill  1077.8 8acec1b966
+  mixed      juno  p0      send   4.00 ttft   1.050 wall   6.55 gap  0.22 decode  46.38 prefill    66.6 8e312d7bdd = 90 % of alone (86-101 %)
+  mixed      low   p3      send   0.00 ttft   1.029 wall  29.42 gap  4.96 decode   8.98 prefill    94.3 4d6338450b
+  mixed      low   p2      send   0.00 ttft   0.586 wall  29.42 gap  4.96 decode   8.84 prefill    89.7 f8531a5f07
+  mixed      low   p1      send   0.00 ttft   0.808 wall  29.42 gap  4.96 decode   8.91 prefill    88.6 74fb633e8e
+  mixed      low   L65536  send   0.51 ttft  61.258 wall  64.25 gap  0.04 decode  42.56 prefill  1081.7 8acec1b966
+  mixed      juno  p0      send   4.00 ttft   1.066 wall   6.62 gap  0.22 decode  45.92 prefill    66.8 8e312d7bdd = 89 % of alone (85-100 %)
+  shortbehind long  L65536  send   0.01 ttft  49.608 wall  52.37 gap  0.04 decode  46.03 prefill  1317.6 8acec1b966
+  shortbehind short p1      send   5.01 ttft   2.378 wall  12.80 gap  0.30 decode  24.47 prefill    84.5 74fb633e8e
+  samelong   gen   p1      send   0.00 ttft   0.271 wall  18.61 gap  0.27 decode  27.86 prefill    89.1 ad210f651f
+  samelong   low   L65536  send   2.01 ttft  52.402 wall  55.09 gap  0.04 decode  47.28 prefill  1246.6 8acec1b966
+  twolong    long  L65536  send   0.01 ttft  62.697 wall  65.21 gap  0.04 decode  50.70 prefill  1042.6 8acec1b966
+  twolong    mid   L16384  send   4.01 ttft  24.607 wall  30.14 gap  0.31 decode  22.97 prefill   689.4 145c14aa8b
+  twolong    short p2      send   8.01 ttft   1.873 wall  12.73 gap  0.28 decode  23.49 prefill    76.6 f8531a5f07
+  md5 not gold: 0

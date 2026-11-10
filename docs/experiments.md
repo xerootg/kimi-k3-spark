@@ -2314,3 +2314,63 @@ Evidence: `docs/evidence/glm-windows-2026-10-30/nc/nc6/`.
 - **Window closed 13:43 UTC.** glm53-gh200 back at one replica on `547208dca250-g68d4166`, gold `bc32ecab82` three
   times through the Service (53.5-55.0 tok/s), workbench-queue unsuspended, no test container or key file left, the
   laptop deadman disarmed.
+
+**2026-11-10, GH200 window nc7 (14:08-15:20 UTC): the CI image `547208dca250-gb5ee55a` (the stack through patch
+0074) passes acceptance with the config proposed for production, and the decode aggregate is level with the
+production image measured in the same window. Nothing shipped from inside the window; the rollout is argo-things
+PR #177.** glm53-gh200 at 0 for 72 minutes, CronJob `re-lab/workbench-queue` suspended, the Spark served. Config of
+the legs: production flags, five slots of 1M, pieces of 4 layers at share 0.05 (`LLAMA_PREFILL_SLICE_LAYERS=4
+LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5
+LLAMA_PREFILL_TURNS=1`, hold rule off), `LLAMA_KPOOL_OWN_SEQS=1` (0071), `LLAMA_PREFILL_SHORT_FIRST=1` (0072),
+`LLAMA_PREFILL_SLICE_SAME_FREE=512` (0074). Evidence: `docs/evidence/glm-windows-2026-10-30/nc/nc7/`.
+- **Leg KV7 (detector gate, client classes, `LLAMA_RS_LOG=1 LLAMA_RS_SUM=512`): PASS.** 37 of 37 answers gold, 17
+  distinct long ubatches and none with more than one result hash, 96 prompt ubatches computed in pieces, 5270 ubatches
+  while a recurrent cell was frozen and none whose range contained the frozen cell, no guard refusal, no key in the
+  server log.
+- **Leg ST7 (staggered pairs): 25 of 25 pairs equal to solo**, short behind short at gaps of 1 s, 0.3 s and 0.01 s in
+  both orders, a short prompt during a 16k prompt and the reverse.
+- **Legs KA17 and KA27 (acceptance, two server processes, the full sequence of nc4-nc6): 0 multi rounds differing
+  from solo or gold in either.** Solo p0-p4, 16k, 64k, the 100k depth request and the quicksort gold as in window
+  nc6 (`bc32ecab82` at 58.8-58.9 tok/s fresh). Prompts alone: 16k 1634-1652, 64k 1483, 100k 1427-1432 tok/s.
+- **Leg PB7 (the production image `g68d4166` and config, adjacent): every md5 gold.** Aggregate tok/s, rounds 1 and
+  2, KA17 / KA27 against PB7:
+
+  | clients | KA17 | KA27 | PB7 (production) |
+  |---|---|---|---|
+  | two | 62.2 / 64.0 | 62.1 / 63.8 | 61.4 / 63.1 |
+  | three | 68.5 / 69.7 | 68.3 / 69.5 | 67.8 / 69.1 |
+  | four | 71.7 / 72.2 | 71.5 / 72.1 | 71.6 / 72.2 |
+  | five | 69.2 / 69.6 | 68.9 / 69.4 | 68.7 / 69.1 |
+  | p0 + 16k | 21.0 | 20.9 | 21.4 |
+  | four short + 16k | 41.8 / 42.0 | 41.8 / 41.9 | 41.5 / 41.9 |
+  | four short + 64k | 18.6 | 18.5 | 18.6 |
+  | two short + 16k + 64k | 11.3 | 11.3 | 11.1 |
+
+  The 1.2 to 2.6 % that window nc6 measured at three to five clients without 0074 is gone (new config against
+  production here: +1.0 %, +0.8 %, 0.0 %, +0.5 % at two to five clients). In the mixes the aggregate hides who gets
+  what: next to a 64k prompt of their class the four short clients decode at 9.0-9.3 tok/s each on the new config
+  and three of four at 4.2 tok/s on production; next to a 16k prompt they decode at 9.6-9.8 against 14.6-15.4,
+  because the 16k prompt now gets half of the time instead of waiting (its client's answer starts earlier and
+  decodes at 44.6 against 25.2 tok/s in p0 + 16k).
+- **Leg XK7 (client classes, the share and order scenarios of XK in window nc6): the same picture with 0074 on.**
+  Juno alone 51.3 tok/s (256 tokens), 53.3 (512), 52.1 (1024). junolong: Juno 92 %, the 64k low prompt's first token
+  after 53.4 s. prefill: Juno's first token after 2.8 s, 97 %. junofirst with 256 tokens: 99 %, the four low
+  clients' first tokens 3.3-5.2 s after sending; with 1024 tokens (22.8 s): 87 %, first tokens after 2.9, 12.2,
+  21.2 and 22.0 s. mixed, twice: Juno 89-90 %, first token after 1.05 s; the short low clients' first tokens after
+  0.4-1.0 s, their answers complete after 29.4-29.9 s with one pause of 5.0 s (Juno's answer: at share 0.05 with
+  `LLAMA_PREFILL_SLICE_DECODE_SHARE=1` a lower class nearly stops while she generates); the 64k low prompt's first
+  token after 61.3-61.5 s. shortbehind: the short prompt's first token after 2.4 s. samelong: the answer complete
+  after 18.6 s, largest gap 0.27 s; the 64k prompt's first token after 52.4 s. twolong: first tokens after 62.7 /
+  24.6 / 1.9 s. Every md5 gold (43 records, "md5 not gold: 0"), no key in the server log.
+- **Reading.** The config that goes to production on this box is the one of this window. What it buys against the
+  hold rule (legs XH of nc6 and WH of nc5 are the before): Juno at 87-99 % of alone where the hold rule gave 33-35 %
+  next to clients already generating; a short prompt behind a long one of its class starts after 2.4 s instead of
+  39 s; a generating client no longer stalls for 44 s behind a long prompt of its class. What it costs: Juno's answer
+  is 1-13 % slower while others' prompts are read (0-8 % under the hold rule); lower-class clients that are already
+  generating nearly stop for the length of her answer (under the hold rule they rode in her batch and she fell to a
+  third); a long prompt's first token comes 2 to 10 s later when clients of its class generate next to it (it now
+  shares the time with them); a queue of short low prompts during a long answer of hers drains at about one per nine
+  seconds.
+- **Window closed 15:20 UTC.** glm53-gh200 back at one replica on `547208dca250-g68d4166`, gold `bc32ecab82` three
+  times through the Service (58.7-59.0 tok/s), workbench-queue unsuspended, no test container or key file left, the
+  laptop deadman disarmed.
