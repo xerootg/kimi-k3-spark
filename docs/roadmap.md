@@ -369,6 +369,11 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   multi-block top-k for rows past ~256k pools (250 us per row at 1M on the Spark); 0052's reserve/shrink churn on
   prompts with more than 64k tokens left (~16 % of a 255k prompt's prefill on the Spark); parking idle slots' KV on
   NVMe when the pool is full (instead of refusing); root-cause the GDN fusion crash.
+- **Found 2026-11-10 (GH200 window nc4), open:** a prompt reads slower by about 2 ns per token for every KV cell held
+  by other slots (16k: 1640 -> 1340 tok/s next to one 64k conversation). Likely the pooled indexer's pool list, which
+  covers all sequences (`kpool_layout_update`, `build_inp_kpool`); base code, so production has it. Control leg on the
+  production image first, then a per-sequence pool list with a byte-identity proof. Matters most for the goal of
+  several long conversations per box.
 
 ## Cluster layout for this work
 

@@ -1920,3 +1920,48 @@ something else dominated at the time. Re-test them after any change that shifts 
 - **Open:** find and fix the long-prompt regression, new image, then a window with the V1 gate, acceptance including
   solo long prompts after mixes against the #174 numbers, and the share decision (0.12 against 0.08) with solo
   references in the same process. Patch 0069 stays out of production until then.
+
+**2026-11-10, correction to window nc4: the "long-prompt regression in `gc93c6d9`" is most likely not a regression. A prompt reads slower by about 2 ns per token for every KV cell that OTHER slots hold, and the base code of the fork (in production today) does the same. Control leg on the production image still to run.**
+
+- What was wrong in the nc4 entry above: the comparison with the #174 numbers was not like for like. The #174 sequence
+  (`nc/nc2.sh`) never leaves two long conversations in different slots: L16384 is a prefix of L65536, so both land in
+  one slot, and every solo long read ran with the other slots nearly empty. The nc4 sequence added
+  `ekbench.py multi p1 p2 L16384 L65536`, which leaves a 16k conversation in one slot and a 64k one in another; the
+  solo long reads after it are the slow ones.
+- The extra time is a constant per ubatch and follows the cells held by other slots (`nc/nc4/pieces-DG-DH-DI.txt`,
+  GPU time of each 4096-token prompt ubatch, legs DG and DH):
+
+  | read | other slots hold | per ubatch, fresh process (ms) | per ubatch, after the mix (ms) | extra |
+  |---|---|---|---|---|
+  | 16k | a 64k conversation | 2220, 2287, 2472, 2665 | 2745, 2837, 3021, 3213 | +525 to +570 ms |
+  | 64k | a 16k conversation | 2166 ... 2829 (16 ubatches) | 2308 ... 2965 | +121 to +142 ms |
+
+  The 30-token tail ubatch has no extra time. Both rows give about 2 ns per (prompt token x cell held by other slots),
+  or about 8.4 us per other-slot cell for a 4096-token ubatch.
+- It does not need the pieces: leg DJ (hold rule, none of the `LLAMA_PREFILL_SLICE_*` variables) shows the same
+  (16k 1334 tok/s after the mix). Inside DJ's mix the 16k prompt reads at 1555 tok/s while no other slot holds a long
+  conversation yet and at 1340 in the next round. Window nc3 leg HB3 (dev build through 0066, production config) had
+  already shown 16k at 1328 tok/s next to a 64k conversation; it was not recognised then.
+- Likely mechanism (read from the code, not yet isolated by a measurement): the pooled DSA indexer. Its pool list
+  covers every sequence, not the ubatch's own: `llama_memory_hybrid_idx::kpool_layout_update()` sums `n_pool_real` over
+  all sequences, `get_n_kpool()` returns that sum (padded), and `build_inp_kpool()` in `src/models/glm5-next.cpp`
+  sizes `pool_cells`, `pool_idxs` and `pool_mask` (n_pool x n_tokens) with it. Every layer of every ubatch gathers and
+  scores the pools of all slots and masks the others' out. This is base code of the fork; of 0060-0069 only 0061 (a
+  reserve cap on `n_pool_max`) and 0069 (the frozen-cell split) touch the file, and neither changes the pool list. So
+  the production image `g68d4166` should show the same cost; nc4 did not run it with this sequence.
+- Not found: the KV attention path is clean. `get_k`/`get_v` view only the ubatch's streams, and the 0057 stage
+  copies only those; the suspects named in the nc4 entry (0057, 0060-0062, 0066, 0067, 0069) are withdrawn.
+- What it means if it is linear (measured only up to 64k held by one other slot; the rest is extrapolation): other
+  slots holding 400k cells in total would add about 3.3 s to each 4096-token ubatch (alone about 2.3 s); four other
+  slots at 1M each about 33 s per ubatch. The same list feeds decode, where the cost per token would be about 0.8 ms
+  at 400k and about 8 ms at 4M other-slot cells; decode was not measured for this. That is a cost of serving several
+  long conversations at once that the acceptance sequences so far could not see, on both boxes.
+- Fix idea, not started: build the pool list from the ubatch's sequences only. Risk: `n_top_pool = min(n_pool,
+  indexer_top_k / kpool)` and the pool order shape the graph, so byte identity has to be shown (solo and mixed answers
+  already agree today with different `n_pool`, which says the result does not depend on the others' pools).
+- Side observation, cause unknown: within a 64k read the ubatch time grows about 185 ms per 4096 own cells up to 32768
+  cells, drops at the ninth ubatch (3401 to 2541 ms) and then grows about 40 ms per ubatch. A cheaper path seems to
+  start past 32768 cells; if it could start earlier, prompts under 32k would read faster.
+- **Next:** in the next GH200 window, a control leg on the production image `g68d4166` with the `nc4d.sh` sequence
+  (expect about 1340 tok/s for 16k after the mix). If it matches, image `gc93c6d9` has no regression and its two
+  acceptance processes from nc4 stand; the share decision (W08 against W12) is then the only gate left for the GH200.

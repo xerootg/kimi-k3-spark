@@ -267,6 +267,15 @@ alike; 0058 runs them in one pass. Against production #169: four clients 50 -> 6
 ~43 (stock single slot 41.6), a 100k prompt 647 -> 1422 tok/s with the KV in Grace, every client still byte-identical
 alone or batched. Verdict now: sane, and close to free (~2 % short single-stream left).
 
+**A cost the tests did not see, 2026-11-10 (GH200 window nc4):** reading a prompt gets slower with the context held by
+the other slots, about 2 ns per prompt token for every cell they hold: a 16k prompt reads at 1340 tok/s instead of
+1640 while another slot holds a 64k conversation. The earlier acceptance runs never had two long conversations in
+different slots. The likely cause is in the model's pooled indexer (its pool list covers all slots and masks the
+others out), which is base code and in production. If it is linear, four other customers at 100k each would more than
+double the time to read a prompt, and four at 1M would make it about fifteen times longer. So "several customers at
+once" is close to free only while the others' conversations are short. Next: confirm on the production image, then
+build the pool list per conversation and prove the bytes do not change.
+
 ## RDMA over Thunderbolt between the NUCs and the Spark (2026-11-09)
 
 Idea: Hellas' `thunderbolt-ibverbs` (https://blog.hellas.ai/blog/thunderbolt-ibverbs/, May 2026) exposes USB4/Thunderbolt

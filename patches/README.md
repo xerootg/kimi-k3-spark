@@ -1537,6 +1537,7 @@ hash after every ubatch and the same answer as alone; no range contained the fro
 first ubatch runs whole and the next ones are cut.
 
 Not in production. GH200 window nc4 (2026-11-10): detectors and two acceptance processes pass byte-identical on the CI
-image `547208dca250-gc93c6d9`, but that image reads a long prompt 5-18 % slower than production once other slots hold
-long conversations, also with the hold rule and none of the pieces variables set. The cause is somewhere in 0060-0069
-and is open (see docs/experiments.md).
+image `547208dca250-gc93c6d9`. That window also saw a long prompt read 5-18 % slower once other slots hold long
+conversations, also with the hold rule and none of the pieces variables set. It was first booked against 0060-0069;
+the per-ubatch times point at the pooled indexer of the base code instead (its pool list covers every slot), which
+production has too. A control leg on the production image is pending (see the correction in docs/experiments.md).
