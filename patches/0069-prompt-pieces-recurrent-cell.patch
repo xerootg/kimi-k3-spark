@@ -1,0 +1,691 @@
+diff --git a/src/llama-batch.cpp b/src/llama-batch.cpp
+index 321aa9d..acc34bd 100644
+--- a/src/llama-batch.cpp
++++ b/src/llama-batch.cpp
+@@ -633,6 +633,14 @@ llama_ubatch llama_batch_allocr::split_equal(uint32_t n_ubatch, bool sequential,
+             continue;
+         }
+ 
++        // patch 0069: only the sequences of the current group (see llama_rs_frozen_split)
++        if (split_allowed != nullptr) {
++            const llama_seq_id sid = batch.seq_id[i][0];
++            if (sid < 0 || (size_t) sid >= split_allowed->size() || !(*split_allowed)[sid]) {
++                continue;
++            }
++        }
++
+         bool add = true;
+ 
+         for (uint32_t s = 0; s < cur_seq_set.size(); ++s) {
+diff --git a/src/llama-batch.h b/src/llama-batch.h
+index e1e4397..1058ef4 100644
+--- a/src/llama-batch.h
++++ b/src/llama-batch.h
+@@ -185,6 +185,10 @@ public:
+     // n_keep_tail = minimum trailing tokens of a seq that must land in the same ubatch
+     llama_ubatch split_equal(uint32_t n_ubatch, bool sequential, uint32_t n_keep_tail);
+ 
++    // kimi-k3-spark patch 0069: while set, split_equal only takes tokens whose (first) sequence id is marked in `allow`
++    // (indexed by sequence id; an id beyond its size is not taken). nullptr = every sequence. The caller owns `allow`.
++    void split_allow(const std::vector<bool> * allow) { split_allowed = allow; }
++
+     // sequence-set-wise split - each ubatch contains a single sequence-set
+     // TODO: extend to support multiple _full_ sequences in the ubatch
+     llama_ubatch split_seq(uint32_t n_ubatch);
+@@ -194,6 +198,8 @@ public:
+     llama_ubatch ubatch_reserve(uint32_t n_seq_tokens, uint32_t n_seqs);
+ 
+ private:
++    const std::vector<bool> * split_allowed = nullptr; // patch 0069
++
+     void clear();
+ 
+     // create the next ubatch based on the provided batch indices (idxs) and the number of sequence sets (n_seqs)
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 1936fd4..770da76 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -8,6 +8,9 @@
+ #include "llama-io.h"
+ #include "llama-kv-cache.h"
+ #include "llama-memory.h"
++#include "llama-memory-hybrid.h"
++#include "llama-memory-hybrid-iswa.h"
++#include "llama-memory-recurrent.h"
+ #include "llama-mmap.h"
+ #include "llama-model.h"
+ #include "llama-moe-cache.h"
+@@ -587,7 +590,7 @@ llama_context::~llama_context() {
+     if (pp_swapped) {
+         pp_swap();
+     }
+-    pp_pend = pp_pending_t();
++    pp_pend_reset();
+     pp_alt  = pp_sched_set();
+ 
+     // when training, ggml_opt allocates extra buffers through the scheduler, so the sizes no longer match the expectation
+@@ -1760,6 +1763,19 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
+         // short prompt ubatches cost about as much as a few decode steps: they run whole
+         static const uint32_t min_tokens = [] { const char * v = getenv("LLAMA_PREFILL_SLICE_MIN_TOKENS"); return (uint32_t) (v ? atoi(v) : 512); }();
+         pp_pend.cut_ok = ubatch.n_tokens >= min_tokens;
++        // patch 0069: and only a ubatch whose recurrent state stays in its own cell. One that copies its state from
++        // another cell (a sequence that shares a cell after a copy) reads that cell layer by layer, and the cell's
++        // owner may decode between two pieces: it runs whole.
++        if (pp_pend.cut_ok) {
++            const llama_memory_recurrent * recr = pp_recr();
++            if (recr != nullptr && !recr->state_in_place()) {
++                pp_pend.cut_ok = false;
++                static const bool log_pieces = getenv("LLAMA_PREFILL_SLICE_LOG") != nullptr;
++                if (log_pieces) {
++                    LLAMA_LOG_INFO("%s: prompt ubatch of %u tokens runs whole: its recurrent state is not in place\n", __func__, ubatch.n_tokens);
++                }
++            }
++        }
+         status = graph_compute_piece(res->get_gf(), true, done);
+         pp_pend.part_more = !done;
+         pp_pend.res = res;
+@@ -2018,6 +2034,48 @@ static bool needs_raw_logits(const llama_ubatch & ubatch, const std::map<llama_s
+ 
+ // kimi-k3-spark patch 0061: prompt ubatches computed in pieces (see llama-context.h)
+ 
++// patch 0069: the recurrent part of the memory, if it has one (a pending prompt freezes its cell there)
++llama_memory_recurrent * llama_context::pp_recr() const {
++    llama_memory_i * mem = memory.get();
++    if (auto * m = dynamic_cast<llama_memory_hybrid *>(mem)) {
++        return m->get_mem_recr();
++    }
++    if (auto * m = dynamic_cast<llama_memory_hybrid_iswa *>(mem)) {
++        return m->get_mem_recr();
++    }
++    return dynamic_cast<llama_memory_recurrent *>(mem);
++}
++
++// patch 0069, debug only: LLAMA_RS_SUM=N logs a hash of the recurrent state of every sequence of a finished ubatch with
++// at least N tokens per sequence (N = 1 hashes every decode step too: about 145 MiB read back per sequence). The same
++// prompt gives the same line whether it ran alone or between other clients' steps, whole or in pieces: the answer of a
++// long prompt can stay the same with a damaged state, this line cannot.
++void llama_context::pp_rs_sum(const llama_ubatch & ubatch) {
++    static const uint32_t min_tokens = [] { const char * v = getenv("LLAMA_RS_SUM"); return (uint32_t) (v ? std::max(1, atoi(v)) : 0); }();
++    if (min_tokens == 0 || ubatch.n_seq_tokens < min_tokens) {
++        return;
++    }
++    const llama_memory_recurrent * recr = pp_recr();
++    if (recr == nullptr) {
++        return;
++    }
++    synchronize();
++    for (uint32_t s = 0; s < ubatch.n_seqs; ++s) {
++        const uint32_t i = s*ubatch.n_seq_tokens;
++        const llama_seq_id seq = ubatch.seq_id[i][0];
++        LLAMA_LOG_INFO("RSSUM seq=%d pos=%d n=%u sum=%016llx\n", seq, ubatch.pos[i + ubatch.n_seq_tokens - 1], ubatch.n_seq_tokens,
++            (unsigned long long) recr->seq_state_hash(seq));
++    }
++}
++
++// patch 0069: the one place where a pending prompt ends (done, failed or dropped): its cell is free to move again
++void llama_context::pp_pend_reset() {
++    pp_pend = pp_pending_t();
++    if (llama_memory_recurrent * recr = pp_recr()) {
++        recr->frozen = -1;
++    }
++}
++
+ void llama_context::pp_swap() {
+     std::swap(sched, pp_alt.sched);
+     std::swap(gf_res_prev, pp_alt.gf_res_prev);
+@@ -2137,7 +2195,7 @@ int32_t llama_context::decode_resume() {
+         for (uint32_t i = 0; i < ub.n_tokens; ++i) {
+             pos_min = std::min(pos_min, ub.pos[i]);
+         }
+-        pp_pend = pp_pending_t();
++        pp_pend_reset();
+         pp_swap();
+         LLAMA_LOG_WARN("%s: removing memory module entries for seq_id = %d, pos = [%d, +inf)\n", __func__, seq, pos_min);
+         memory->seq_rm(seq, pos_min, -1);
+@@ -2151,7 +2209,7 @@ int32_t llama_context::decode_resume() {
+     std::swap(balloc, pp_pend.balloc);
+     if (output_reserve(pp_pend.n_outputs_all) < pp_pend.n_outputs_all) {
+         LLAMA_LOG_ERROR("%s: could not reserve space for batch with %d outputs\n", __func__, (int) pp_pend.n_outputs_all);
+-        pp_pend = pp_pending_t();
++        pp_pend_reset();
+         pp_swap();
+         return -2;
+     }
+@@ -2164,12 +2222,13 @@ int32_t llama_context::decode_resume() {
+     n_outputs = pp_pend.n_outputs_ub;
+     decode_ubatch_out(pp_pend.res, *pp_pend.ubatch, 0, 0, pp_pend.n_outputs_all, pp_pend.has_samplers);
+     decode_map_outputs(pp_pend.n_outputs_all);
++    pp_rs_sum(*pp_pend.ubatch); // patch 0069, debug only
+     static const bool log_pieces = getenv("LLAMA_PREFILL_SLICE_LOG") != nullptr;
+     if (log_pieces) {
+         LLAMA_LOG_INFO("%s: prompt ubatch of %u tokens done in %d pieces, %.1f ms of GPU time\n", __func__,
+             pp_pend.ubatch->n_tokens, pp_pend.part.n_calls, pp_pend.t_us/1000.0);
+     }
+-    pp_pend = pp_pending_t();
++    pp_pend_reset();
+     pp_swap();
+     return 0;
+ }
+@@ -2593,6 +2652,11 @@ int llama_context::decode(const llama_batch_ext & batch_inp) {
+             // patch 0061: more pieces to go. Keep what finishing needs; the batch allocator goes with the prompt (its
+             // output ids), the context gets a fresh one for the decodes in between
+             GGML_ASSERT(!pp_pend.active);
++            // patch 0069: until the last piece the prompt's recurrent cell stays where its graph expects it
++            if (llama_memory_recurrent * recr = pp_recr()) {
++                GGML_ASSERT(recr->state_in_place() && "a prompt ubatch was cut although its recurrent state is not in place");
++                recr->frozen = (int32_t) recr->head;
++            }
+             pp_pend.active        = true;
+             pp_pend.balloc        = std::move(balloc);
+             balloc                = std::make_unique<llama_batch_allocr>(model.hparams.n_pos_per_embd());
+@@ -2637,6 +2701,8 @@ int llama_context::decode(const llama_batch_ext & batch_inp) {
+ 
+         decode_ubatch_out(res, ubatch, n_outputs_prev, n_tokens_prev, n_outputs_all, has_samplers);
+ 
++        pp_rs_sum(ubatch); // patch 0069, debug only
++
+         n_outputs_prev += n_outputs;
+         n_tokens_prev  += ubatch.n_tokens;
+     } while (mctx->next());
+diff --git a/src/llama-context.h b/src/llama-context.h
+index 6482cd2..d13cdd5 100644
+--- a/src/llama-context.h
++++ b/src/llama-context.h
+@@ -269,6 +269,9 @@ private:
+     bool pp_floor_reserve = false; // patch 0066: the prompt graph is reserved at the floor (its buffer size is reported)
+     void pp_swap();
+     bool pp_route(const llama_batch_ext & batch) const;
++    class llama_memory_recurrent * pp_recr() const; // patch 0069
++    void pp_pend_reset();                           // patch 0069
++    void pp_rs_sum(const struct llama_ubatch & ubatch); // patch 0069, debug only (LLAMA_RS_SUM)
+     ggml_status graph_compute_piece(ggml_cgraph * gf, bool first, bool & done);
+     static bool pp_can_stop(const ggml_tensor * prev, const ggml_tensor * next, void * ud);
+     struct pp_pending_t {
+@@ -285,7 +288,7 @@ private:
+         bool    has_samplers  = false;
+         int64_t t_us = 0;          // GPU wall time of the pieces so far
+         int     last_layer = -1;   // pp_can_stop's scan state
+-        bool    cut_ok = true;     // ubatch long enough to be cut (LLAMA_PREFILL_SLICE_MIN_TOKENS)
++        bool    cut_ok = true;     // ubatch long enough to be cut (LLAMA_PREFILL_SLICE_MIN_TOKENS), recurrent state in place (0069)
+     } pp_pend;
+ private:
+     // patch 0061: parts of decode() shared with a prompt computed in pieces
+diff --git a/src/llama-memory-hybrid-idx.cpp b/src/llama-memory-hybrid-idx.cpp
+index ac02cf8..ea042e2 100644
+--- a/src/llama-memory-hybrid-idx.cpp
++++ b/src/llama-memory-hybrid-idx.cpp
+@@ -83,6 +83,9 @@ llama_memory_context_ptr llama_memory_hybrid_idx::init_batch(llama_batch_allocr
+         // follow the recurrent pattern for creating the ubatch splits
+         std::vector<llama_ubatch> ubatches;
+ 
++        // kimi-k3-spark patch 0069: no ubatch may span the cell of a prompt that is being computed in pieces
++        llama_rs_frozen_split frozen_split(get_mem_recr(), balloc);
++
+         while (true) {
+             llama_ubatch ubatch;
+ 
+@@ -112,6 +115,9 @@ llama_memory_context_ptr llama_memory_hybrid_idx::init_batch(llama_batch_allocr
+             }
+ 
+             if (ubatch.n_tokens == 0) {
++                if (frozen_split.next_group()) {
++                    continue;
++                }
+                 break;
+             }
+ 
+diff --git a/src/llama-memory-hybrid-iswa.cpp b/src/llama-memory-hybrid-iswa.cpp
+index 06f7fd5..7035941 100644
+--- a/src/llama-memory-hybrid-iswa.cpp
++++ b/src/llama-memory-hybrid-iswa.cpp
+@@ -70,6 +70,9 @@ llama_memory_context_ptr llama_memory_hybrid_iswa::init_batch(llama_batch_allocr
+         // follow the recurrent pattern for creating the ubatch splits
+         std::vector<llama_ubatch> ubatches;
+ 
++        // kimi-k3-spark patch 0069: no ubatch may span the cell of a prompt that is being computed in pieces
++        llama_rs_frozen_split frozen_split(mem_recr.get(), balloc);
++
+         while (true) {
+             llama_ubatch ubatch;
+ 
+@@ -89,6 +92,9 @@ llama_memory_context_ptr llama_memory_hybrid_iswa::init_batch(llama_batch_allocr
+             }
+ 
+             if (ubatch.n_tokens == 0) {
++                if (frozen_split.next_group()) {
++                    continue;
++                }
+                 break;
+             }
+ 
+diff --git a/src/llama-memory-hybrid.cpp b/src/llama-memory-hybrid.cpp
+index bbd4bee..35b566a 100644
+--- a/src/llama-memory-hybrid.cpp
++++ b/src/llama-memory-hybrid.cpp
+@@ -71,6 +71,9 @@ llama_memory_context_ptr llama_memory_hybrid::init_batch(llama_batch_allocr & ba
+         // follow the recurrent pattern for creating the ubatch splits
+         std::vector<llama_ubatch> ubatches;
+ 
++        // kimi-k3-spark patch 0069: no ubatch may span the cell of a prompt that is being computed in pieces
++        llama_rs_frozen_split frozen_split(mem_recr.get(), balloc);
++
+         while (true) {
+             llama_ubatch ubatch;
+ 
+@@ -90,6 +93,9 @@ llama_memory_context_ptr llama_memory_hybrid::init_batch(llama_batch_allocr & ba
+             }
+ 
+             if (ubatch.n_tokens == 0) {
++                if (frozen_split.next_group()) {
++                    continue;
++                }
+                 break;
+             }
+ 
+diff --git a/src/llama-memory-recurrent.cpp b/src/llama-memory-recurrent.cpp
+index 2893d81..16b085e 100644
+--- a/src/llama-memory-recurrent.cpp
++++ b/src/llama-memory-recurrent.cpp
+@@ -293,6 +293,10 @@ void llama_memory_recurrent::seq_cp(llama_seq_id seq_id_src, llama_seq_id seq_id
+         if (tail_src.tail >= 0) {
+             auto & cell_src = cells[tail_src.tail];
+ 
++            // kimi-k3-spark patch 0069: the copy would read the state of a prompt between two of its pieces (some
++            // layers already written, the others not). The server never copies from a slot whose prompt is pending.
++            GGML_ASSERT(tail_src.tail != frozen && "sequence copy from a prompt that is being computed in pieces");
++
+             cell_src.seq_id.insert(seq_id_dst);
+             tail_dst.tail = tail_src.tail;
+         }
+@@ -441,10 +445,99 @@ std::map<ggml_backend_buffer_type_t, size_t> llama_memory_recurrent::memory_brea
+     return ret;
+ }
+ 
++//
++// patch 0069: a frozen cell
++//
++
++bool llama_memory_recurrent::state_in_place() const {
++    return n == 1 && n_rs_seq == 0 && head < size && cells[head].src0 == (int32_t) head;
++}
++
++uint64_t llama_memory_recurrent::seq_state_hash(llama_seq_id seq_id) const {
++    if (seq_id < 0 || (size_t) seq_id >= cells.size() || cells[seq_id].tail < 0) {
++        return 0;
++    }
++    const size_t cell = (size_t) cells[seq_id].tail;
++    uint64_t h = 1469598103934665603ull;
++    std::vector<uint8_t> buf;
++    for (const auto * tensors : { &r_l, &s_l, &p_l }) {
++        for (ggml_tensor * t : *tensors) {
++            if (t == nullptr) {
++                continue;
++            }
++            const size_t row = ggml_row_size(t->type, t->ne[0]);
++            buf.resize(row);
++            ggml_backend_tensor_get(t, buf.data(), cell*row, row);
++            for (size_t i = 0; i < row; ++i) {
++                h = (h ^ buf[i]) * 1099511628211ull;
++            }
++        }
++    }
++    return h;
++}
++
++llama_rs_frozen_split::llama_rs_frozen_split(const llama_memory_recurrent * recr, llama_batch_allocr & balloc) : balloc(balloc) {
++    if (recr == nullptr || recr->frozen < 0) {
++        return;
++    }
++    const int32_t frozen = recr->frozen;
++    const llama_batch & batch = balloc.get_batch();
++    const size_t size = recr->cells.size();
++
++    std::vector<bool> below(size, false);
++    std::vector<bool> above(size, false);
++    std::vector<bool> seen (size, false);
++    bool any_below = false;
++    bool any_above = false;
++    std::vector<llama_seq_id> alone;
++
++    for (int32_t i = 0; i < batch.n_tokens; ++i) {
++        const llama_seq_id sid = batch.seq_id[i][0];
++        if (sid < 0 || (size_t) sid >= size || seen[sid]) {
++            continue; // an id out of range is in no group: the batch is not consumed and init_batch fails
++        }
++        seen[sid] = true;
++        const int32_t tail = recr->cells[sid].tail;
++        const bool owns = tail >= 0 && recr->cells[tail].seq_id.size() == 1;
++        if (owns && tail < frozen) {
++            below[sid] = true; any_below = true;
++        } else if (owns && tail > frozen) {
++            above[sid] = true; any_above = true;
++        } else {
++            alone.push_back(sid); // no cell of its own (or the frozen cell itself: find_slot refuses it)
++        }
++    }
++    if (any_below) { groups.push_back(std::move(below)); }
++    if (any_above) { groups.push_back(std::move(above)); }
++    for (llama_seq_id sid : alone) {
++        std::vector<bool> g(size, false);
++        g[sid] = true;
++        groups.push_back(std::move(g));
++    }
++    if (groups.empty()) {
++        groups.emplace_back(size, false);
++    }
++    balloc.split_allow(&groups[0]);
++}
++
++llama_rs_frozen_split::~llama_rs_frozen_split() {
++    balloc.split_allow(nullptr);
++}
++
++bool llama_rs_frozen_split::next_group() {
++    if (cur + 1 >= groups.size()) {
++        return false;
++    }
++    balloc.split_allow(&groups[++cur]);
++    return true;
++}
++
+ llama_memory_context_ptr llama_memory_recurrent::init_batch(llama_batch_allocr & balloc, uint32_t n_ubatch, bool embd_all) {
+     do {
+         balloc.split_reset();
+ 
++        llama_rs_frozen_split frozen_split(this, balloc); // patch 0069
++
+         std::vector<llama_ubatch> ubatches;
+         while (true) {
+             llama_ubatch ubatch;
+@@ -462,6 +555,9 @@ llama_memory_context_ptr llama_memory_recurrent::init_batch(llama_batch_allocr &
+             }
+ 
+             if (ubatch.n_tokens == 0) {
++                if (frozen_split.next_group()) {
++                    continue;
++                }
+                 break;
+             }
+ 
+@@ -640,6 +736,16 @@ bool llama_memory_recurrent::find_slot(const llama_ubatch & ubatch) {
+         if (max < seq_meta.tail) { max = seq_meta.tail; }
+     }
+ 
++    // kimi-k3-spark patch 0069: a prompt ubatch that is being computed in pieces has the row of its cell built into its
++    // graph, and every ubatch reads and rewrites all the rows of its range [min, max]. A range that contains the frozen
++    // cell would move it (the swap below) or mix the layers of the two computations, so it is refused here, before any
++    // cell is swapped; the batch split (llama_rs_frozen_split) never produces one.
++    if (frozen >= 0 && min <= frozen && frozen <= max) {
++        LLAMA_LOG_ERROR("%s: the cell range [%d, %d] contains cell %d of a prompt that is being computed in pieces\n",
++            __func__, min, max, frozen);
++        return false;
++    }
++
+     // gather and re-order
+     for (uint32_t s = 0; s < n_seqs; ++s) {
+         const uint32_t i = s*n_seq_tokens;
+@@ -725,6 +831,21 @@ bool llama_memory_recurrent::find_slot(const llama_ubatch & ubatch) {
+     used = std::count_if(cells.begin(), cells.end(),
+         [](const mem_cell & cell){ return !cell.is_empty(); });
+ 
++    {   // patch 0069, debug only (LLAMA_RS_LOG): the cell layout after every ubatch, cells as [sequences:source row:pos]
++        static const bool rs_log = getenv("LLAMA_RS_LOG") != nullptr;
++        if (rs_log) {
++            std::string m;
++            for (uint32_t s = 0; s < n_seqs; ++s) { m += std::to_string(ubatch.seq_id[s*n_seq_tokens][0]) + ","; }
++            m += " cells:";
++            for (uint32_t i = 0; i < size; ++i) {
++                m += " [";
++                for (llama_seq_id q : cells[i].seq_id) { m += std::to_string(q); }
++                m += ":" + std::to_string(cells[i].src0) + ":" + std::to_string(cells[i].pos) + "]";
++            }
++            LLAMA_LOG_INFO("RSLOG nt=%u head=%u n=%u z=%d fz=%d seqs=%s\n", n_seq_tokens, head, n, rs_z, frozen, m.c_str());
++        }
++    }
++
+     // sanity check
+     return n >= n_seqs;
+ }
+diff --git a/src/llama-memory-recurrent.h b/src/llama-memory-recurrent.h
+index 08489a4..512b01a 100644
+--- a/src/llama-memory-recurrent.h
++++ b/src/llama-memory-recurrent.h
+@@ -59,6 +59,20 @@ public:
+     // find a contiguous slot of memory cells and emplace the ubatch there
+     bool find_slot(const llama_ubatch & ubatch);
+ 
++    // kimi-k3-spark patch 0069: the cell of a prompt ubatch that is being computed in pieces (-1 = none). Its row is
++    // built into the pending graph and is read and written layer by layer, piece by piece, so until the last piece no
++    // other ubatch may have it in its cell range: find_slot() refuses such a range, llama_rs_frozen_split avoids it.
++    int32_t frozen = -1;
++
++    // patch 0069, valid right after find_slot() of a ubatch: true if the ubatch reads and writes the recurrent state of
++    // exactly one cell in place (one cell in the range, its source row is its own row or the row is zeroed in place).
++    // Only then is the ubatch independent of the cells of other sequences between two of its layers.
++    bool state_in_place() const;
++
++    // patch 0069, debug only (LLAMA_RS_SUM): FNV-1a over the state rows of the cell of `seq_id` in every layer, read
++    // back from the device. 0 if the sequence has no cell. The caller synchronizes the backends first.
++    uint64_t seq_state_hash(llama_seq_id seq_id) const;
++
+     bool get_can_shift() const override;
+ 
+     // state write/load
+@@ -141,6 +155,24 @@ private:
+     void state_clear(llama_seq_id seq_id, uint32_t cell_head, uint32_t cell_count);
+ };
+ 
++// kimi-k3-spark patch 0069: the ubatch split while a cell is frozen. A ubatch takes the contiguous cell range from its
++// lowest to its highest cell and rewrites all of it, so the sequences of a batch are split into groups whose ranges
++// cannot contain the frozen cell: the sequences that own a cell below it, those that own a cell above it, and every
++// sequence without a cell of its own (new, or sharing one after a copy: it gets an empty cell) alone. Without a frozen
++// cell there is one group of everything and the split is what it always was. Use: construct before the split loop,
++// and when a split comes back empty go on with next_group() until it returns false.
++struct llama_rs_frozen_split {
++    llama_rs_frozen_split(const llama_memory_recurrent * recr, llama_batch_allocr & balloc);
++    ~llama_rs_frozen_split();
++
++    bool next_group();
++
++private:
++    llama_batch_allocr & balloc;
++    std::vector<std::vector<bool>> groups;
++    size_t cur = 0;
++};
++
+ class llama_memory_recurrent_context : public llama_memory_context_i {
+ public:
+     // used for errors
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 38e2d2b..32e29cd 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -1139,6 +1139,11 @@ private:
+     int64_t       pp_turn_count = 0;      // patch 0065: prompt ubatches started, for the turns
+     bool          pp_step_lower = false;  // the decode step pre_decode built has lower-class sequences next to a higher one
+     double        pp_solo_us    = 0;      // moving average of a decode step with the higher class only
++    int           pp_hi_last    = INT_MIN; // patch 0069: the generating class the accounts belong to
++    int64_t       pp_lo_pp_us   = 0;      // patch 0069: the lower classes' share, split between their prompt pieces
++    int64_t       pp_lo_dec_us  = 0;      //             and their decode steps
++    int           pp_step_n_lower = 0;    // patch 0069: lower-class sequences and all sequences of the decode step built
++    int           pp_step_n_all   = 0;
+     std::vector<server_slot *> generating_scratch, drafting_scratch;
+     std::vector<const server_slot *> batch_allowed_scratch; // patch 0055
+ 
+@@ -3497,12 +3502,62 @@ private:
+         return false;
+     }
+ 
++    // kimi-k3-spark patch 0069: the accounts belong to one generating class. When the top generating class changes (the
++    // higher class's answer ends, or it starts), they start again: before, a prompt held to 12 % while the higher class
++    // generated then ran alone until it had caught up to the same-class share (50 %) of that whole time, and the
++    // answers of its own class stopped for seconds after the higher class was done.
++    void pp_regime(int hi) {
++        if (hi != pp_hi_last) {
++            pp_hi_last = hi;
++            pp_t_pp_us = pp_t_dec_us = 0;
++            pp_lo_pp_us = pp_lo_dec_us = 0;
++            pp_solo_us = 0;
++        }
++    }
++
++    // is a prompt of a class lower than `hi` waiting or pending?
++    bool pp_lower_class_prompt(int hi) const {
++        for (const auto & slot : slots) {
++            if (slot.task && (slot.pp_pending || slot.state == SLOT_STATE_STARTED || slot.state == SLOT_STATE_PROCESSING_PROMPT) &&
++                    (int) slot.task->params.client_priority < hi) {
++                return true;
++            }
++        }
++        return false;
++    }
++
++    // kimi-k3-spark patch 0069: while a higher class generates (with the decode share), the lower classes' share of
++    // the time is split between their prompt pieces and their decode steps by LLAMA_PREFILL_SLICE_SHARE_SAME, as it
++    // is between them when the higher class is not there. Before, the prompt pieces took the share whenever it was
++    // free and the lower classes' answers stopped until the higher class was done. true: the prompt goes next;
++    // false: the lower classes' decode steps do (they join the higher class's next steps).
++    bool pp_lower_prompt_turn(int prio) {
++        const int hi = pp_top_generating();
++        const double s = pp_share_same();
++        if (s <= 0.0 || !pp_decode_share() || hi == INT_MIN || prio >= hi) {
++            return true;
++        }
++        bool gen = false;
++        for (const auto & slot : slots) {
++            if (slot.task && slot.state == SLOT_STATE_GENERATING && (int) slot.task->params.client_priority < hi) {
++                gen = true;
++                break;
++            }
++        }
++        if (!gen) {
++            pp_lo_pp_us = pp_lo_dec_us = 0; // nobody to share with: nothing to account
++            return true;
++        }
++        return (double) pp_lo_pp_us <= s/(1.0 - s)*(double) pp_lo_dec_us;
++    }
++
+     // may a prompt of class `prio` use the GPU now? Yes unless a higher class is generating and the prompt pieces
+     // already had their share of the time while it did (a higher class's own prompt never waits for this). The
+     // accounts only run while there is contention, so a share never piles up while nobody waits.
+     // Patch 0064: the same holds, with its own share, while a client of the prompt's own class is generating.
+     bool pp_budget_ok(int prio) {
+         const int hi = pp_top_generating();
++        pp_regime(hi);
+         if (!pp_contends(prio, hi)) {
+             return true;
+         }
+@@ -3530,7 +3585,7 @@ private:
+         server_slot & ps = *pp_slot;
+         const int prio = ps.task ? (int) ps.task->params.client_priority : INT_MAX;
+         const bool must = !ps.task || pp_top_generating() == INT_MIN || pp_higher_prompt_waiting(prio);
+-        if (!must && !pp_budget_ok(prio)) {
++        if (!must && (!pp_budget_ok(prio) || !pp_lower_prompt_turn(prio))) {
+             return false; // a decode step for the generating slots first
+         }
+         const int64_t t0 = ggml_time_us();
+@@ -3538,8 +3593,16 @@ private:
+         queue_tasks.yield_to_queue([&]() {
+             ret = llama_decode_resume(ctx_tgt);
+         });
+-        if (pp_contends(prio, pp_top_generating())) {
+-            pp_t_pp_us += ggml_time_us() - t0;
++        {
++            const int hi = pp_top_generating();
++            pp_regime(hi);
++            if (pp_contends(prio, hi)) {
++                const int64_t dt = ggml_time_us() - t0;
++                pp_t_pp_us += dt;
++                if (prio < hi) {
++                    pp_lo_pp_us += dt; // patch 0069
++                }
++            }
+         }
+         pp_n_pieces++;
+         if (ret == 3) {
+@@ -3666,6 +3729,9 @@ private:
+                 const int64_t t_dec0 = ggml_time_us();
+                 const int hi_gen = pp_slicing_enabled() ? pp_top_generating() : INT_MIN;
+                 bool ok = decode(n_batch, off);
++                if (pp_slicing_enabled()) {
++                    pp_regime(hi_gen); // patch 0069
++                }
+                 if (pp_slicing_enabled() && hi_gen != INT_MIN && !pp_lower_prompt(hi_gen) && !pp_pended) {
+                     pp_t_pp_us = pp_t_dec_us = 0; // no contention: nothing to account
+                 } else if (pp_slicing_enabled() && hi_gen != INT_MIN) {
+@@ -3675,12 +3741,23 @@ private:
+                         pp_contends((int) pp_cur_prompt->task->params.client_priority, hi_gen);
+                     if (is_prompt) {
+                         pp_t_pp_us += dt;
++                        if ((int) pp_cur_prompt->task->params.client_priority < hi_gen) {
++                            pp_lo_pp_us += dt; // patch 0069
++                        }
+                     } else if (pp_cur_prompt == nullptr) {
+                         if (pp_step_lower && pp_solo_us > 0) {
+                             // a joint step: what it took beyond the higher class's own step is the others' time
+-                            const int64_t others = std::max<int64_t>(0, dt - (int64_t) pp_solo_us);
++                            // (patch 0069: at least half their sequences' part of it, so an overestimated solo step
++                            // cannot let them join for free)
++                            const int64_t others = std::max<int64_t>(pp_step_n_all > 0 ? dt*pp_step_n_lower/(2*pp_step_n_all) : 0,
++                                                                     dt - (int64_t) pp_solo_us);
+                             pp_t_pp_us  += others;
+                             pp_t_dec_us += dt - others;
++                            if (pp_lower_class_prompt(hi_gen)) {
++                                pp_lo_dec_us += others; // patch 0069: the lower classes' answers' part of their share
++                            } else {
++                                pp_lo_pp_us = pp_lo_dec_us = 0;
++                            }
+                         } else {
+                             pp_t_dec_us += dt;
+                             if (!pp_step_lower) {
+@@ -3890,8 +3967,9 @@ private:
+         if (pp_slicing_enabled() && slot_prefill != nullptr) {
+             if (pp_slot != nullptr) {
+                 slot_prefill = nullptr;
+-            } else if (slot_prefill->task && !pp_budget_ok((int) slot_prefill->task->params.client_priority)) {
+-                slot_prefill = nullptr;
++            } else if (slot_prefill->task && (!pp_budget_ok((int) slot_prefill->task->params.client_priority) ||
++                                              !pp_lower_prompt_turn((int) slot_prefill->task->params.client_priority))) {
++                slot_prefill = nullptr; // patch 0069: or it is the lower classes' answers' turn within their share
+             }
+         }
+ 
+@@ -3920,8 +3998,11 @@ private:
+         }
+         pp_cur_prompt = slot_prefill; // patch 0061
+         pp_step_lower = false;
++        pp_step_n_lower = pp_step_n_all = 0;
+         const int  pp_hi_now      = pp_slicing_enabled() ? pp_top_generating() : INT_MIN;
+-        const bool pp_lower_ok_now = pp_slicing_enabled() && pp_decode_share() && pp_budget_ok(INT_MIN + 1);
++        // patch 0069: the lower classes join only once a step of the higher class alone has been timed (pp_solo_us):
++        // without it a joint step cannot be split, the share is never used up and they would join every step
++        const bool pp_lower_ok_now = pp_slicing_enabled() && pp_decode_share() && pp_budget_ok(INT_MIN + 1) && pp_solo_us > 0;
+ 
+         auto & generating = generating_scratch;
+         auto & drafting = drafting_scratch;
+@@ -3963,11 +4044,12 @@ private:
+             if (slot_batch_max > 0 && std::find(batch_allowed.begin(), batch_allowed.end(), &slot) == batch_allowed.end()) {
+                 return; // patch 0055: not this step
+             }
++            bool pp_is_lower = false;
+             if (pp_slicing_enabled() && pp_decode_share() && slot.task && (int) slot.task->params.client_priority < pp_hi_now) {
+                 if (!pp_lower_ok_now) {
+                     return; // patch 0061: a higher class is generating and the lower classes had their share
+                 }
+-                pp_step_lower = true;
++                pp_is_lower = true;
+             }
+ 
+             // check if we can batch this slot with the previous one
+@@ -3977,6 +4059,11 @@ private:
+                 return;
+             }
+ 
++            if (pp_is_lower) {
++                pp_step_lower = true;
++                pp_step_n_lower++;
++            }
++            pp_step_n_all++;
+             generating.push_back(&slot);
+             slot.n_steps_served++;
+ 

@@ -1487,3 +1487,53 @@ the NUC tier, two processes each. Aggregate tok/s production / split columns / +
 (35-37 W to 44-46 W by `nvidia-smi`).
 
 Not in production until its acceptance on the CI image is done (see docs/experiments.md). The NUC tier stays off.
+
+## 0069-prompt-pieces-recurrent-cell
+
+Two fixes for prompt ubatches computed in pieces (0061), both found in GH200 window nc3.
+
+**The recurrent state of a pending prompt stays in place (a byte-invariance fix).** GLM-5.3 keeps, next to the
+attention KV, a small recurrent state per conversation: one cell (a row in every layer's state tensors) per slot. A
+ubatch takes the contiguous cell range from its lowest to its highest cell, and `find_slot` swaps cells to make the
+range of the batch's sequences contiguous; the graph then reads and rewrites every row of the range, layer by layer.
+A prompt ubatch that is between two pieces has the row of its cell built into its graph, with some layers already
+written and the others not. A decode step of two clients whose cells lie on both sides of that cell had it in its
+range and could move it: the prompt's later layers then read and wrote another client's row. Seen once the lower
+classes' answers joined Juno's steps while a prompt was pending (below): Juno's bytes changed, while the answer to
+the long prompt itself stayed gold (a 128-token answer to 64k random words barely depends on that state, so the md5
+of the long prompt is a weak detector).
+
+- *Prompt side:* a prompt ubatch is only cut if its recurrent state stays in its own cell
+  (`llama_memory_recurrent::state_in_place()`: one cell in the range, source row = own row). One that copies its state
+  from another cell (a slot that shares a cell after a sequence copy: `n_cmpl`) runs whole; the ubatches after it are
+  cut again.
+- *Decode side:* while a prompt is pending its cell is frozen (`llama_memory_recurrent::frozen`). The batch split of
+  the hybrid and recurrent memories goes group by group (`llama_rs_frozen_split`, `llama_batch_allocr::split_allow`):
+  the sequences that own a cell below the frozen one, those above it, and every sequence without a cell of its own
+  alone, so no ubatch range contains the frozen cell. A decode step that straddles the cell is computed as two
+  ubatches; every other step is what it was.
+- *Fail closed:* `find_slot` refuses a range that contains the frozen cell before it swaps anything (an error and a
+  failed decode instead of a moved cell), and a sequence copy from the frozen cell asserts.
+
+**The lower classes' share is split between their prompts and their answers.** With `LLAMA_PREFILL_SLICE_DECODE_SHARE=1`
+the classes below the generating one get `LLAMA_PREFILL_SLICE_SHARE` of the time, for prompt pieces and for joining
+decode steps alike. The prompt pieces took that share whenever it was free, so with a long prompt of a low client
+being read, the other low clients' answers stopped until Juno was done (10.4 s without a token in window nc3). Now
+that share is split between the lower classes' prompt pieces and their decode steps by
+`LLAMA_PREFILL_SLICE_SHARE_SAME` (as it is when the higher class is not there); the accounts start again when the
+top generating class changes (before, a prompt held to 12 % then ran alone until it had caught up to 50 % of the
+whole time); a joint step is charged to the lower classes with at least half their sequences' part of it, and they
+only join once a step of the higher class alone has been timed.
+
+Debug only, off unless set: `LLAMA_RS_LOG=1` logs the cell layout after every ubatch (`RSLOG ... fz=<frozen cell>
+seqs=... cells: [sequences:source row:pos]`), `LLAMA_RS_SUM=N` logs a hash of a sequence's recurrent rows after every
+ubatch with at least N tokens per sequence (`RSSUM seq= pos= n= sum=`): the same prompt must give the same lines
+alone and between other clients' steps. That is the strong detector the md5 of a long prompt is not.
+
+Checked on a small hybrid model on CPU (LFM2-350M Q8, recurrent cells like GLM-5.3's, five slots, pieces of two
+layers; `docs/evidence/glm-windows-2026-10-30/nc/tiny69/`): a 6.4k-token prompt read in pieces with answering
+clients below its cell, on both sides of it (steps split 3 + 1) and starting while it is pending gives the same state
+hash after every ubatch and the same answer as alone; no range contained the frozen cell; after a sequence copy the
+first ubatch runs whole and the next ones are cut.
+
+Not in production until its acceptance windows are done (see docs/experiments.md).

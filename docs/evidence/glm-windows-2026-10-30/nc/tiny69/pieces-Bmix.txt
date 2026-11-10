@@ -1,0 +1,6 @@
+0.00.396.985 I sched_reserve:        CPU compute buffer size =   276.07 MiB (prompt scheduler, pieces of 2 layers)
+0.03.589.339 I decode_resume: prompt ubatch of 1950 tokens done in 8 pieces, 2509.8 ms of GPU time
+0.08.973.551 I decode_resume: prompt ubatch of 2044 tokens done in 8 pieces, 5376.6 ms of GPU time
+0.10.007.220 I process_ubatch: prompt ubatch of 2048 tokens runs whole: its recurrent state is not in place
+0.47.696.915 I decode_resume: prompt ubatch of 2048 tokens done in 8 pieces, 11087.0 ms of GPU time
+1.14.876.127 I decode_resume: prompt ubatch of 2044 tokens done in 8 pieces, 14167.5 ms of GPU time

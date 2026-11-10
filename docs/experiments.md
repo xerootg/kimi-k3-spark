@@ -1773,3 +1773,36 @@ something else dominated at the time. Re-test them after any change that shifts 
 - **Dead end: pinning a cuttable prompt ubatch to cell 0 (`LLAMA_RS_PIN_MIN=512`, build `out-d90`, legs XEP and XEQ).** Gold in 5 of 5 "mixed" runs (16k three times: Juno 42.2-44.8 tok/s, first token 2.0-2.06 s, lows 9.2-9.9 tok/s, gap 2.4-2.55 s, the 16k prompt 21.4-21.6 s; 64k twice: Juno 43.3-44.8, lows 8.05-8.61, gap 2.57-2.64 s, the prompt 61.3-62.0 s, wall 32.9-34.8 s). Not shipped: the sequence displaced from cell 0 is moved layer by layer by the pinned prompt's own pieces, so if it decodes between those pieces it reads rows that are half moved. The legs did not exercise that (the first prompt ubatch ran its 13 pieces with no decode step in between); it is the same class of bug.
 - **Fix to build next (patch 0069):** (A) a prompt ubatch may be cut into pieces only if its recurrent state stays in place (one cell in the range, the source row is its own row); otherwise it runs whole. (B) while a prompt ubatch is pending, a decode batch is split so that no ubatch's cell range contains the pending prompt's cell, and `find_slot` asserts it. Expected cost: only steps whose sequences lie on both sides of the pending cell become two forward passes (about 62 ms instead of 54 ms for four sequences on the GH200).
 - **Open:** validation of 0069 in a GH200 window (the D2 scenarios, "mixed" at 16k and 64k several times, a scenario with decode steps between the pieces of a prompt whose cell lies between the decoders' cells, one with a low client decoding during the first prompt ubatch), then acceptance on the CI image.
+
+**2026-11-10, patch 0069: the recurrent cell of a pending prompt stays in place (fix for the wrong md5 of window nc3), small-model check.**
+
+- Design (replaces the "pin the prompt to cell 0" candidate of the nc3 entry, which was unsafe: the sequence displaced
+  from cell 0 would have been moved layer by layer by the pinned prompt's pieces). Rule A, prompt side: a prompt
+  ubatch is cut into pieces only if its recurrent state stays in its own cell; otherwise it runs whole. Rule B,
+  decode side: the cell of a pending prompt is frozen; the batch split goes group by group (sequences owning a cell
+  below the frozen one, above it, each sequence without its own cell alone) so no ubatch range contains it;
+  `find_slot` refuses such a range before swapping (fail closed). Share accounting of the nc3 draft (the lower
+  classes' share split between prompts and answers) is in the same patch.
+- Expected cost: only decode steps whose sequences lie on both sides of the pending prompt's cell become two
+  ubatches (on the GH200 an estimated 62 ms instead of 54 ms for a four-sequence step); steps on one side and all
+  steps without a pending prompt are unchanged.
+- New detectors: `LLAMA_RS_SUM=N` (hash of a sequence's recurrent rows after each ubatch of at least N tokens) and
+  `LLAMA_RS_LOG=1` (cell layout per ubatch with the frozen cell). The md5 of a long random-word prompt's answer
+  stayed gold with a corrupted state in nc3; the state hash cannot.
+- Small-model check, no production window (GH200 CPU only, docker, LFM2-350M Q8: hybrid memory with recurrent
+  cells, 16 layers, five slots, pieces of two layers, share 0.12 / same-class share 0.5 / turns on; evidence
+  `docs/evidence/glm-windows-2026-10-30/nc/tiny69/`):
+  - A 6383-token prompt (ubatches of 2048, 2048, 239, 2044; the three long ones in 8 pieces each) alone, with
+    answering clients on cells 0 and 1 below its cell 2, with three below and one above its cell 3 (2906 steps of
+    three sequences plus 1152 one-sequence steps on the other side: the split), and with two clients starting while
+    it is pending on cell 0: the state hash after every ubatch is the same in all four runs
+    (`4f32ca6ce7b0ff01` at the end) and so is the answer (`b47e0ba76b`). No range contained the frozen cell, the
+    guard never fired.
+  - Rule A: after `n_cmpl` 3 with `LLAMA_SLOT_KEEP_CHILD=1` (three slots share one cell), a child's request with
+    4000 more words while two other slots answer: its first ubatch "runs whole: its recurrent state is not in
+    place", the next two long ones are cut in 8 pieces; state hashes and answer equal to the same request with
+    nobody else answering.
+  - The answering clients' own bytes differ between alone and batched on this CPU build (no batch-invariant
+    kernels on CPU); that part is what the GH200 window measures.
+- Open: GH200 validation with production flags (all md5 gold, state hash of the 64k prompt equal alone and mixed,
+  Juno's and the low clients' speeds), then acceptance on the CI image.

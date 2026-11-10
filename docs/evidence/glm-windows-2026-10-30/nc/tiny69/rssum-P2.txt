@@ -1,0 +1,16 @@
+RSSUM seq=2 pos=2047 n=2048 sum=a931bc39d2176c63
+RSSUM seq=2 pos=4095 n=2048 sum=6f36adcd65333a45
+RSSUM seq=2 pos=4334 n=239 sum=d3a5ffc882e5e56b
+RSSUM seq=2 pos=6378 n=2044 sum=4f32ca6ce7b0ff01
+RSSUM seq=2 pos=2047 n=2048 sum=a931bc39d2176c63
+RSSUM seq=2 pos=4095 n=2048 sum=6f36adcd65333a45
+RSSUM seq=2 pos=4334 n=239 sum=d3a5ffc882e5e56b
+RSSUM seq=2 pos=6378 n=2044 sum=4f32ca6ce7b0ff01
+RSSUM seq=3 pos=2047 n=2048 sum=a931bc39d2176c63
+RSSUM seq=3 pos=4095 n=2048 sum=6f36adcd65333a45
+RSSUM seq=3 pos=4334 n=239 sum=d3a5ffc882e5e56b
+RSSUM seq=3 pos=6378 n=2044 sum=4f32ca6ce7b0ff01
+RSSUM seq=0 pos=2047 n=2048 sum=a931bc39d2176c63
+RSSUM seq=0 pos=4095 n=2048 sum=6f36adcd65333a45
+RSSUM seq=0 pos=4334 n=239 sum=d3a5ffc882e5e56b
+RSSUM seq=0 pos=6378 n=2044 sum=4f32ca6ce7b0ff01

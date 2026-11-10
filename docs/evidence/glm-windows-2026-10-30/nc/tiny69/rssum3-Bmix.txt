@@ -1,0 +1,6 @@
+RSSUM seq=0 pos=1949 n=1950 sum=e5638f498c6afce4
+RSSUM seq=0 pos=3993 n=2044 sum=3f6d6f6567eef86a
+RSSUM seq=2 pos=6045 n=2048 sum=01b89c0b20dcfbd3
+RSSUM seq=2 pos=8093 n=2048 sum=40e6281f823dbfbe
+RSSUM seq=2 pos=8324 n=231 sum=0dd4815a3b7f4b6a
+RSSUM seq=2 pos=10368 n=2044 sum=a64cfd10a632152a
