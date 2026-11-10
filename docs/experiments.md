@@ -1806,3 +1806,25 @@ something else dominated at the time. Re-test them after any change that shifts 
     kernels on CPU); that part is what the GH200 window measures.
 - Open: GH200 validation with production flags (all md5 gold, state hash of the 64k prompt equal alone and mixed,
   Juno's and the low clients' speeds), then acceptance on the CI image.
+
+**Column split from three columns (patch 0067): acceptance on the CI image (2026-11-10, Spark window sc67, 04:25-04:59 UTC).** The second half of Haley's #2: the NUC tier is off (above), the split-column layout it needed is worth shipping without it. Evidence: [sc67/](evidence/glm-windows-2026-10-30/sc67/) (`sc67-win.sh`, `mkcanary67.py`, `acc67.py`, `sc67-phase.sh`, `sc67-wd.sh`, `sc67sum.py`; outputs in `acc/`: `results.jsonl`, `phase-*.log`, `power-*.txt`, `server-*.log`, `sc67-win.log`). Method: glm53-spark at 0, the production manifest (argo-things main d649b51) rendered as the Deployment `glm53-spark-canary` with its own snapshot directory, API key and client classes as in production. Leg A = image `547208dca250-g08d176f` (stack through 0067) with production's env; leg B = the same plus `LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3`; A2 and B2 = a second process of each (shorter list). Both start from the same snapshot copy.
+
+- **Bytes: every request gold in all four legs** (A 44, B 44, A2 20, B2 20 requests: p0-p4 alone, two to five clients in two rounds, Juno's class alone, with four others and arriving first, the 16k prompt with three short ones). The new image with the flags off is production's bytes; the flags on are production's bytes. Without a key and with a wrong key: 401 in both.
+
+| Scenario (tok/s; aggregate from two clients on) | A: off | B: on | A2: off | B2: on |
+|---|---|---|---|---|
+| gold request alone (shared class / Juno) | 17.05 / 17.04 | 16.95 / 17.54 | 17.00 | 16.96 |
+| p1, p2, p3, p4 alone | 15.53, 15.08, 14.16, 15.24 | 15.47, 14.95, 14.05, 15.09 | | |
+| two clients | 19.82, 20.92 | 19.78, 20.89 | 20.64 | 20.52 |
+| three clients | 22.91, 23.45 | 23.64, 23.98 | 22.83 | 23.57 |
+| four clients | 23.25, 23.67 | 25.23, 25.73 | 23.08 | 25.10 |
+| five clients (Juno + four), per stream: Juno / others | 4.76-4.84 / 4.57-4.65 | 5.28-5.31 / 5.06-5.08 | 4.77 / 4.58 | 5.26 / 5.04 |
+| 16k prompt + three short | 10.01 | 10.56 | 10.23 | 10.58 |
+| Juno arriving first: Juno tok/s, first token | 15.31, 0.44 s | 15.16, 0.42 s | | |
+
+- **Speed:** nothing at one and two clients (the gate keeps the old layout there: within 1 %), about +3 % at three, **+9 % at four, +10 % at five**, +4-5 % on the 16k mix. Repeats in the second process.
+- **Cost 1, first token:** the first token of a request alone comes about 0.08 s later with the split on (0.39-0.42 s against 0.31-0.35 s, both processes); with five clients Juno's first token 0.48-0.49 s against 0.41-0.46 s.
+- **Cost 2, power:** GPU power is the same at one and two clients (32-35 W) and higher from three on: three 43 W against 36 W, four 44-45 W against 35-36 W, five 45-46 W against 36-37 W, the mix 49-50 W against 45 W. At four clients that is about 0.58 tok/s per GPU watt against 0.66: the split buys 9 % more tokens with 25 % more GPU power (the GPU was idle part of each step before; the one-column launches fill it).
+- **Memory:** lowest MemAvailable in the canary legs 21.9 GiB, the same as production's steady state; no watchdog action.
+- **Trap:** a canary leaves its snapshot root-owned in `snapshot-canary/`; the next leg's `cp` of the seed fails with "Permission denied" unless the old file is removed first (the directory is ours, so `rm -f` works). `sc67-win.sh` does that now; the first start of the window lost two minutes to it.
+- **Decision: ship.** Identical bytes in every composition, a repeatable gain exactly where the Spark is short (four and five clients), no loss alone. argo-things PR: image `547208dca250-g08d176f` plus the two variables.

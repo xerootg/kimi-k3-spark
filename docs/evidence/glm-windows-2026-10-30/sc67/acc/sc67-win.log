@@ -1,0 +1,17 @@
+=== LEG A 04:25:05
+deployment "glm53-spark-canary" successfully rolled out
+READY A pod IP 10.42.10.5 04:27:43
+END A 04:37:39
+=== LEG B 04:37:39
+deployment "glm53-spark-canary" successfully rolled out
+READY B pod IP 10.42.10.6 04:38:48
+END B 04:48:23
+=== LEG A2 04:48:23
+deployment "glm53-spark-canary" successfully rolled out
+READY A2 pod IP 10.42.10.7 04:49:01
+END A2 04:53:57
+=== LEG B2 04:53:57
+deployment "glm53-spark-canary" successfully rolled out
+READY B2 pod IP 10.42.10.8 04:54:35
+END B2 04:59:13
+SC67-WIN-DONE 04:59:13

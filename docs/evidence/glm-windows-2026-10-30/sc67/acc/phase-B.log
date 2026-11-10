@@ -1,0 +1,65 @@
+=== PHASE B 04:38:49
+--- gold --n 1 04:38:49 1794285529
+{"tag": "shared", "spec": "qs128", "t_send": 0.0, "ttft_s": 0.416, "wall_s": 7.91, "prompt_n": 10, "cache_n": 0, "prefill_tps": 24.9, "decode_n": 128, "decode_tps": 16.95, "md5": "ee079496a4", "scenario": "gold", "run": "B"}
+{"tag": "shared", "spec": "p0", "t_send": 7.91, "ttft_s": 0.415, "wall_s": 15.96, "prompt_n": 10, "cache_n": 0, "prefill_tps": 24.1, "decode_n": 256, "decode_tps": 16.4, "md5": "ce2fc95752", "scenario": "gold", "run": "B"}
+--- gold --n 1 --who juno 04:39:13 1794285553
+{"tag": "juno", "spec": "qs128", "t_send": 0.0, "ttft_s": 0.387, "wall_s": 7.63, "prompt_n": 10, "cache_n": 0, "prefill_tps": 26.8, "decode_n": 128, "decode_tps": 17.54, "md5": "ee079496a4", "scenario": "gold", "run": "B"}
+{"tag": "juno", "spec": "p0", "t_send": 7.63, "ttft_s": 0.39, "wall_s": 15.44, "prompt_n": 10, "cache_n": 0, "prefill_tps": 25.7, "decode_n": 256, "decode_tps": 16.95, "md5": "ce2fc95752", "scenario": "gold", "run": "B"}
+--- auth 04:39:36 1794285576
+{"tag": "nokey", "spec": "p0", "t_send": 0.0, "error": 401, "body": "{\"error\":{\"message\":\"Invalid API Key\",\"type\":\"authentication_error\",\"code\":401}}", "scenario": "auth", "run": "B"}
+{"tag": "wrongkey", "spec": "p0", "t_send": 0.01, "error": 401, "body": "{\"error\":{\"message\":\"Invalid API Key\",\"type\":\"authentication_error\",\"code\":401}}", "scenario": "auth", "run": "B"}
+--- solo p1 p2 p3 p4 04:39:36 1794285576
+{"tag": "solo", "spec": "p1", "t_send": 0.0, "ttft_s": 0.629, "wall_s": 17.11, "prompt_n": 19, "cache_n": 0, "prefill_tps": 30.9, "decode_n": 256, "decode_tps": 15.47, "md5": "bb64203d71", "scenario": "solo", "run": "B"}
+{"tag": "solo", "spec": "p2", "t_send": 17.11, "ttft_s": 0.636, "wall_s": 17.7, "prompt_n": 18, "cache_n": 0, "prefill_tps": 28.3, "decode_n": 256, "decode_tps": 14.95, "md5": "2d592efcb6", "scenario": "solo", "run": "B"}
+{"tag": "solo", "spec": "p3", "t_send": 34.81, "ttft_s": 0.802, "wall_s": 18.95, "prompt_n": 21, "cache_n": 0, "prefill_tps": 26.2, "decode_n": 256, "decode_tps": 14.05, "md5": "1aab74269d", "scenario": "solo", "run": "B"}
+{"tag": "solo", "spec": "p4", "t_send": 53.76, "ttft_s": 0.631, "wall_s": 17.53, "prompt_n": 21, "cache_n": 0, "prefill_tps": 33.3, "decode_n": 256, "decode_tps": 15.09, "md5": "0c3f28294b", "scenario": "solo", "run": "B"}
+--- multi p0 p1 --rounds 2 04:40:47 1794285647
+{"tag": "multi", "spec": "p0", "t_send": 0.0, "ttft_s": 0.929, "wall_s": 25.88, "prompt_n": 10, "cache_n": 0, "prefill_tps": 25.8, "decode_n": 256, "decode_tps": 10.22, "md5": "ce2fc95752", "scenario": "multi", "run": "B", "round": 1, "n": 2}
+{"tag": "multi", "spec": "p1", "t_send": 0.0, "ttft_s": 0.542, "wall_s": 25.88, "prompt_n": 19, "cache_n": 0, "prefill_tps": 37.1, "decode_n": 256, "decode_tps": 10.06, "md5": "bb64203d71", "scenario": "multi", "run": "B", "round": 1, "n": 2}
+{"scenario": "multi-agg", "run": "B", "round": 1, "n": 2, "agg_tps": 19.78, "md5": ["ce2fc95752", "bb64203d71"]}
+{"tag": "multi", "spec": "p0", "t_send": 25.88, "ttft_s": 0.895, "wall_s": 24.51, "prompt_n": 10, "cache_n": 0, "prefill_tps": 25.7, "decode_n": 256, "decode_tps": 10.8, "md5": "ce2fc95752", "scenario": "multi", "run": "B", "round": 2, "n": 2}
+{"tag": "multi", "spec": "p1", "t_send": 25.88, "ttft_s": 0.505, "wall_s": 24.51, "prompt_n": 19, "cache_n": 0, "prefill_tps": 37.7, "decode_n": 256, "decode_tps": 10.62, "md5": "bb64203d71", "scenario": "multi", "run": "B", "round": 2, "n": 2}
+{"scenario": "multi-agg", "run": "B", "round": 2, "n": 2, "agg_tps": 20.89, "md5": ["ce2fc95752", "bb64203d71"]}
+--- multi p0 p1 p2 --rounds 2 04:41:38 1794285698
+{"tag": "multi", "spec": "p2", "t_send": 0.0, "ttft_s": 0.654, "wall_s": 32.49, "prompt_n": 18, "cache_n": 0, "prefill_tps": 30.8, "decode_n": 256, "decode_tps": 8.01, "md5": "2d592efcb6", "scenario": "multi", "run": "B", "round": 1, "n": 3}
+{"tag": "multi", "spec": "p1", "t_send": 0.0, "ttft_s": 1.531, "wall_s": 32.49, "prompt_n": 19, "cache_n": 0, "prefill_tps": 38.6, "decode_n": 256, "decode_tps": 8.24, "md5": "bb64203d71", "scenario": "multi", "run": "B", "round": 1, "n": 3}
+{"tag": "multi", "spec": "p0", "t_send": 0.0, "ttft_s": 1.039, "wall_s": 32.49, "prompt_n": 10, "cache_n": 0, "prefill_tps": 26.0, "decode_n": 256, "decode_tps": 8.11, "md5": "ce2fc95752", "scenario": "multi", "run": "B", "round": 1, "n": 3}
+{"scenario": "multi-agg", "run": "B", "round": 1, "n": 3, "agg_tps": 23.64, "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"]}
+{"tag": "multi", "spec": "p0", "t_send": 32.49, "ttft_s": 0.394, "wall_s": 32.03, "prompt_n": 10, "cache_n": 0, "prefill_tps": 25.4, "decode_n": 256, "decode_tps": 8.06, "md5": "ce2fc95752", "scenario": "multi", "run": "B", "round": 2, "n": 3}
+{"tag": "multi", "spec": "p2", "t_send": 32.49, "ttft_s": 1.377, "wall_s": 32.03, "prompt_n": 18, "cache_n": 0, "prefill_tps": 37.0, "decode_n": 256, "decode_tps": 8.32, "md5": "2d592efcb6", "scenario": "multi", "run": "B", "round": 2, "n": 3}
+{"tag": "multi", "spec": "p1", "t_send": 32.49, "ttft_s": 0.89, "wall_s": 32.03, "prompt_n": 19, "cache_n": 0, "prefill_tps": 38.3, "decode_n": 256, "decode_tps": 8.19, "md5": "bb64203d71", "scenario": "multi", "run": "B", "round": 2, "n": 3}
+{"scenario": "multi-agg", "run": "B", "round": 2, "n": 3, "agg_tps": 23.98, "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"]}
+--- multi p0 p1 p2 p3 --rounds 2 04:42:42 1794285762
+{"tag": "multi", "spec": "p1", "t_send": 0.0, "ttft_s": 2.065, "wall_s": 40.59, "prompt_n": 19, "cache_n": 0, "prefill_tps": 39.1, "decode_n": 256, "decode_tps": 6.62, "md5": "bb64203d71", "scenario": "multi", "run": "B", "round": 1, "n": 4}
+{"tag": "multi", "spec": "p2", "t_send": 0.0, "ttft_s": 0.565, "wall_s": 40.59, "prompt_n": 18, "cache_n": 0, "prefill_tps": 36.3, "decode_n": 256, "decode_tps": 6.37, "md5": "2d592efcb6", "scenario": "multi", "run": "B", "round": 1, "n": 4}
+{"tag": "multi", "spec": "p0", "t_send": 0.0, "ttft_s": 0.952, "wall_s": 40.59, "prompt_n": 10, "cache_n": 0, "prefill_tps": 25.9, "decode_n": 256, "decode_tps": 6.43, "md5": "ce2fc95752", "scenario": "multi", "run": "B", "round": 1, "n": 4}
+{"tag": "multi", "spec": "p3", "t_send": 0.0, "ttft_s": 1.579, "wall_s": 40.59, "prompt_n": 21, "cache_n": 0, "prefill_tps": 33.4, "decode_n": 256, "decode_tps": 6.54, "md5": "1aab74269d", "scenario": "multi", "run": "B", "round": 1, "n": 4}
+{"scenario": "multi-agg", "run": "B", "round": 1, "n": 4, "agg_tps": 25.23, "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"]}
+{"tag": "multi", "spec": "p2", "t_send": 40.59, "ttft_s": 1.386, "wall_s": 39.79, "prompt_n": 18, "cache_n": 0, "prefill_tps": 37.3, "decode_n": 256, "decode_tps": 6.64, "md5": "2d592efcb6", "scenario": "multi", "run": "B", "round": 2, "n": 4}
+{"tag": "multi", "spec": "p1", "t_send": 40.59, "ttft_s": 0.903, "wall_s": 39.79, "prompt_n": 19, "cache_n": 0, "prefill_tps": 37.5, "decode_n": 256, "decode_tps": 6.56, "md5": "bb64203d71", "scenario": "multi", "run": "B", "round": 2, "n": 4}
+{"tag": "multi", "spec": "p3", "t_send": 40.59, "ttft_s": 1.971, "wall_s": 39.79, "prompt_n": 21, "cache_n": 0, "prefill_tps": 35.9, "decode_n": 256, "decode_tps": 6.74, "md5": "1aab74269d", "scenario": "multi", "run": "B", "round": 2, "n": 4}
+{"tag": "multi", "spec": "p0", "t_send": 40.59, "ttft_s": 0.397, "wall_s": 39.8, "prompt_n": 10, "cache_n": 0, "prefill_tps": 25.3, "decode_n": 256, "decode_tps": 6.47, "md5": "ce2fc95752", "scenario": "multi", "run": "B", "round": 2, "n": 4}
+{"scenario": "multi-agg", "run": "B", "round": 2, "n": 4, "agg_tps": 25.73, "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"]}
+--- five --rounds 2 04:44:03 1794285843
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 2.29, "wall_s": 51.89, "prompt_n": 18, "cache_n": 0, "prefill_tps": 37.3, "decode_n": 256, "decode_tps": 5.14, "md5": "2d592efcb6", "scenario": "five", "run": "B", "round": 1, "n": 5}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 1.808, "wall_s": 51.89, "prompt_n": 19, "cache_n": 0, "prefill_tps": 37.5, "decode_n": 256, "decode_tps": 5.09, "md5": "bb64203d71", "scenario": "five", "run": "B", "round": 1, "n": 5}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.3, "wall_s": 51.89, "prompt_n": 21, "cache_n": 0, "prefill_tps": 35.4, "decode_n": 256, "decode_tps": 5.04, "md5": "1aab74269d", "scenario": "five", "run": "B", "round": 1, "n": 5}
+{"tag": "low", "spec": "p4", "t_send": 0.0, "ttft_s": 0.707, "wall_s": 51.89, "prompt_n": 21, "cache_n": 0, "prefill_tps": 32.8, "decode_n": 256, "decode_tps": 4.98, "md5": "0c3f28294b", "scenario": "five", "run": "B", "round": 1, "n": 5}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 0.493, "wall_s": 48.75, "prompt_n": 10, "cache_n": 0, "prefill_tps": 25.4, "decode_n": 256, "decode_tps": 5.28, "md5": "ce2fc95752", "scenario": "five", "run": "B", "round": 1, "n": 5}
+{"tag": "low", "spec": "p2", "t_send": 52.76, "ttft_s": 2.185, "wall_s": 51.58, "prompt_n": 18, "cache_n": 0, "prefill_tps": 37.1, "decode_n": 256, "decode_tps": 5.16, "md5": "2d592efcb6", "scenario": "five", "run": "B", "round": 2, "n": 5}
+{"tag": "low", "spec": "p1", "t_send": 52.76, "ttft_s": 0.518, "wall_s": 51.58, "prompt_n": 19, "cache_n": 0, "prefill_tps": 36.7, "decode_n": 256, "decode_tps": 4.99, "md5": "bb64203d71", "scenario": "five", "run": "B", "round": 2, "n": 5}
+{"tag": "low", "spec": "p4", "t_send": 52.76, "ttft_s": 1.7, "wall_s": 51.58, "prompt_n": 21, "cache_n": 0, "prefill_tps": 36.1, "decode_n": 256, "decode_tps": 5.11, "md5": "0c3f28294b", "scenario": "five", "run": "B", "round": 2, "n": 5}
+{"tag": "low", "spec": "p3", "t_send": 52.76, "ttft_s": 1.118, "wall_s": 51.58, "prompt_n": 21, "cache_n": 0, "prefill_tps": 35.0, "decode_n": 256, "decode_tps": 5.05, "md5": "1aab74269d", "scenario": "five", "run": "B", "round": 2, "n": 5}
+{"tag": "juno", "spec": "p0", "t_send": 56.76, "ttft_s": 0.491, "wall_s": 48.52, "prompt_n": 10, "cache_n": 0, "prefill_tps": 25.5, "decode_n": 256, "decode_tps": 5.31, "md5": "ce2fc95752", "scenario": "five", "run": "B", "round": 2, "n": 5}
+--- multi L16384 p0 p1 p2 --rounds 1 04:45:48 1794285948
+{"tag": "multi", "spec": "L16384", "t_send": 0.0, "ttft_s": 48.723, "wall_s": 68.87, "prompt_n": 16414, "cache_n": 0, "prefill_tps": 347.8, "decode_n": 128, "decode_tps": 6.3, "md5": "145c14aa8b", "scenario": "multi", "run": "B", "round": 1, "n": 4}
+{"tag": "multi", "spec": "p2", "t_send": 0.0, "ttft_s": 1.532, "wall_s": 84.83, "prompt_n": 18, "cache_n": 0, "prefill_tps": 36.5, "decode_n": 256, "decode_tps": 3.06, "md5": "2d592efcb6", "scenario": "multi", "run": "B", "round": 1, "n": 4}
+{"tag": "multi", "spec": "p1", "t_send": 0.0, "ttft_s": 1.039, "wall_s": 84.83, "prompt_n": 19, "cache_n": 0, "prefill_tps": 36.9, "decode_n": 256, "decode_tps": 3.04, "md5": "bb64203d71", "scenario": "multi", "run": "B", "round": 1, "n": 4}
+{"tag": "multi", "spec": "p0", "t_send": 0.0, "ttft_s": 0.524, "wall_s": 84.83, "prompt_n": 10, "cache_n": 0, "prefill_tps": 22.5, "decode_n": 256, "decode_tps": 3.02, "md5": "ce2fc95752", "scenario": "multi", "run": "B", "round": 1, "n": 4}
+{"scenario": "multi-agg", "run": "B", "round": 1, "n": 4, "agg_tps": 10.56, "md5": ["145c14aa8b", "ce2fc95752", "bb64203d71", "2d592efcb6"]}
+--- junofirst 04:47:13 1794286033
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.42, "wall_s": 17.24, "prompt_n": 10, "cache_n": 0, "prefill_tps": 24.7, "decode_n": 256, "decode_tps": 15.16, "md5": "ce2fc95752", "scenario": "junofirst", "run": "B"}
+{"tag": "low", "spec": "p2", "t_send": 1.0, "ttft_s": 17.864, "wall_s": 49.12, "prompt_n": 18, "cache_n": 0, "prefill_tps": 37.3, "decode_n": 256, "decode_tps": 8.16, "md5": "2d592efcb6", "scenario": "junofirst", "run": "B"}
+{"tag": "low", "spec": "p1", "t_send": 1.0, "ttft_s": 16.762, "wall_s": 49.12, "prompt_n": 19, "cache_n": 0, "prefill_tps": 36.4, "decode_n": 256, "decode_tps": 7.88, "md5": "bb64203d71", "scenario": "junofirst", "run": "B"}
+{"tag": "low", "spec": "p3", "t_send": 1.0, "ttft_s": 17.381, "wall_s": 49.12, "prompt_n": 21, "cache_n": 0, "prefill_tps": 33.9, "decode_n": 256, "decode_tps": 8.03, "md5": "1aab74269d", "scenario": "junofirst", "run": "B"}
+PHASE-DONE B 04:48:03

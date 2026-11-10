@@ -11,7 +11,7 @@ for leg in "$@"; do
   case $leg in A*) Y=$W/canary-A.yaml ;; B*) Y=$W/canary-B.yaml ;; *) echo "unknown leg $leg"; continue ;; esac
   echo "=== LEG $leg $(date -u +%T)"
   [ -n "$($K get pods -l kimi-k3/spark-server=true -o name)" ] && { echo "ABORT: a production pod exists"; exit 1; }
-  ssh $SP "cp /srv/glm-5.3-flash/snapshot-canary/seed67.k3sn /srv/glm-5.3-flash/snapshot-canary/glm53flash-q2.k3sn && rm -f $D/phase-$leg.done" || exit 1
+  ssh $SP "rm -f /srv/glm-5.3-flash/snapshot-canary/glm53flash-q2.k3sn /srv/glm-5.3-flash/snapshot-canary/glm53flash-q2.k3sn.tmp; cp /srv/glm-5.3-flash/snapshot-canary/seed67.k3sn /srv/glm-5.3-flash/snapshot-canary/glm53flash-q2.k3sn && rm -f $D/phase-$leg.done" || exit 1
   $K apply -f $Y >/dev/null || exit 1
   $K rollout status deployment/glm53-spark-canary --timeout=900s | tail -1 || { echo "LEG-FAIL $leg not ready"; $K delete deployment glm53-spark-canary --wait=true; exit 1; }
   IP=$($K get pods -l app.kubernetes.io/name=glm53-spark-canary -o jsonpath='{.items[0].status.podIP}')
