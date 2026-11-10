@@ -1,0 +1,57 @@
+--- /home/ubuntu/nt/llama-moe-cache.cpp.pre-plancheck	2026-11-10 05:39:58.503303528 +0000
++++ src/llama-moe-cache.cpp	2026-11-10 05:39:58.526303767 +0000
+@@ -7,6 +7,7 @@
+ #include "ggml-cpp.h"
+ #include "ggml-cpu.h"
+ 
++#include <execinfo.h>
+ #include <algorithm>
+ #include <atomic>
+ #include <chrono>
+@@ -4716,6 +4717,16 @@
+         const expert_store_entry * e = store.find(il);
+         GGML_ASSERT(e != nullptr && g.region != nullptr);
+         spec_reclaim();
++        static const bool plan_check = [] { const char * value = getenv("LLAMA_EXPERT_STORE_PLAN_CHECK"); return value && strcmp(value, "1") == 0; }();
++        static std::atomic<int> plan_depth{0};
++        static std::vector<int32_t> ids_copy;
++        struct plan_guard { std::atomic<int> * d; ~plan_guard() { if (d) { d->fetch_sub(1); } } } guard{ plan_check ? &plan_depth : nullptr };
++        if (plan_check) {
++            if (plan_depth.fetch_add(1) != 0) {
++                LLAMA_LOG_ERROR("%s: PLAN_CHECK concurrent fill_plan, layer %d, %zu ids\n", __func__, il, n_ids);
++            }
++            ids_copy.assign(ids_data, ids_data + n_ids);
++        }
+         if (!g.lru.plan(il, ids_data, n_ids, fills, n_hit, promote)) {
+             static const bool stats = [] { const char * value = getenv("LLAMA_EXPERT_STORE_HOOK_STATS"); return value && strcmp(value, "1") == 0; }();
+             if (g.lru.lfu && stats) {
+@@ -4750,6 +4761,29 @@
+         for (size_t i = 0; i < n_ids; ++i) {
+             const int32_t s = g.lru.slot_map[il][ids_data[i]];
+             if (s < 0 || s >= g.n_slots) {
++                if (plan_check) {
++                    size_t changed = 0, holders = 0, in_uniq = 0;
++                    for (size_t j = 0; j < n_ids; ++j) {
++                        changed += ids_copy[j] != ids_data[j];
++                    }
++                    for (int32_t sl = 0; sl < g.lru.n_slots; ++sl) {
++                        holders += g.lru.key_of[sl] == il*g.lru.n_expert + ids_data[i];
++                    }
++                    for (int32_t ex : g.lru.uniq) {
++                        in_uniq += ex == ids_data[i];
++                    }
++                    LLAMA_LOG_ERROR("%s: PLAN_CHECK layer %d id %zu of %zu: expert %d slot %d; ids changed since the plan %zu; slots holding the key %zu; in uniq %zu (uniq %zu, fills %zu); seen %u gen %u; filled %d parked %d; depth %d; thread %zu\n",
++                        __func__, il, i, n_ids, ids_data[i], s, changed, holders, in_uniq, g.lru.uniq.size(), fills.size(),
++                        g.lru.seen[ids_data[i]], g.lru.seen_gen, g.lru.n_filled, g.lru.n_parked, plan_depth.load(),
++                        std::hash<std::thread::id>()(std::this_thread::get_id()));
++                    for (size_t j = 0; j < n_ids && j < 64; ++j) {
++                        LLAMA_LOG_ERROR("%s: PLAN_CHECK id %zu before %d now %d slot %d\n", __func__, j, ids_copy[j], ids_data[j],
++                            ids_data[j] >= 0 && ids_data[j] < g.lru.n_expert ? g.lru.slot_map[il][ids_data[j]] : -2);
++                    }
++                    void * frames[48];
++                    const int n_frames = backtrace(frames, 48);
++                    backtrace_symbols_fd(frames, n_frames, 2);
++                }
+                 GGML_ABORT("expert store: layer %d expert %d has slot %d after the plan (n_slots %d, %zu ids, promote %d)", il, ids_data[i], s, g.n_slots, n_ids, (int) promote);
+             }
+         }

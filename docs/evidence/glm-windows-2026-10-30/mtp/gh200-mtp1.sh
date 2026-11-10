@@ -1,5 +1,5 @@
 #!/bin/bash
-# GH200 window mtp-g1 (patch 0068 with coupled drafting): the same two questions as spark-mtp2.sh on the GH200, where
+# GH200 window mtp-g1 (patch 0070, exact speculation with coupled drafting; 0068 was its working number): the same two questions as spark-mtp2.sh on the GH200, where
 # extra columns in a decode batch are much cheaper than on the Spark.
 #  G0 : plain decoding (no MTP), production env, traced: the reference bytes and logits rows
 #  G3 : exact speculation, 4 columns (3 drafts alone, 1 each at two clients, none at three or more), coupled drafting,
@@ -9,6 +9,11 @@
 #  G9 : G4 with 20 columns (3 drafts per client up to five clients), traced on the FULL list first (G9T, T09)
 #  G6 : G4 with p_min 0.4                 G7 : G4 with the drafter's own greedy pick (LLAMA_SPEC_EXACT_COUPLED=0)
 #  DIAG (run by "auto" only when T03 differs): G1 = MTP loaded, one column (no drafts); T01
+#  RACE (the draft context's unsynchronized catch-up decode against the target's next decode, the cause of the Spark's
+#  "has slot -1 after the plan" abort in mtp2/S3), forced with a 50 ms sleep in the hook of layer 45 (the MTP block):
+#   R0 : the server's fix off and the backend's tripwire off: expected to abort in the expert store or to give other
+#        bytes than G0      R1 : fix off, tripwire on: expected to abort with the tripwire's message
+#   R2 : fix on (the default), the sleep still there: expected clean; TR2 = tracecmp --subset G0 / R2
 # Usage: gh200-mtp1.sh auto | LEG...
 G=/srv/glm-5.3-flash/mtp; cd $G
 exec 9>/srv/glm-5.3-flash/window.lock; flock -n 9 || { echo "ABORT: window.lock is held"; exit 1; }
@@ -29,6 +34,9 @@ SPEED=("specbench.py solo p0 p0 p1 p2 p3 p4" "specbench.py solo p0 p2 p5 $T1 --s
        "specbench.py multi p0 p1 p2 p3 p4 --rounds 2" "specbench.py multi p0 p1 p2 p3 p4 --rounds 1 $T1 --seed 21")
 QUICK=("specbench.py solo p0 p0 p1 p2" "specbench.py solo p0 p2 p5 $T1 --seed 42" "specbench.py solo p1 p3 p6 $T1 --seed 9"
        "specbench.py multi p0 p1 --rounds 1")
+D="LLAMA_EXPERT_STORE_TEST_HOOK_DELAY=45:50"
+# five clients (no drafts: every step is followed by an unsynchronized catch-up decode), one, two; all part of FULL
+RACE=("specbench.py multi p0 p1 p2 p3 p4 --rounds 0" "specbench.py solo p0 --n-predict 128" "specbench.py multi p0 p1 --rounds 0")
 MS=${MTPSEED:-mtp-seed.k3sn}
 [ -s snap/$MS ] && MS3=$MS || MS3=none
 leg() {
@@ -42,6 +50,11 @@ leg() {
     G7) SEED=$MS XARGS="$(mtp 0.7)" bash gmtp-leg.sh G7 5 "$X LLAMA_SPEC_EXACT_COUPLED=0" "${QUICK[@]}" ;;
     G9T) SEED=$MS XARGS="$(mtp 0.7)" bash gmtp-leg.sh G9T 5 "$T $X LLAMA_SPEC_EXACT_COLS=20" "${FULL[@]}" ;;
     G9) SEED=$MS XARGS="$(mtp 0.7)" bash gmtp-leg.sh G9 5 "$X LLAMA_SPEC_EXACT_COLS=20" "${SPEED[@]}" ;;
+    R0) SEED=$MS XARGS="$(mtp 0.7)" STOPWAIT=20 CMDTIMEOUT=300 bash gmtp-leg.sh R0 5 "$T $X $D LLAMA_SPEC_DFT_SYNC=0 GGML_CUDA_HOST_BANK_OWNER_CHECK=0" "${RACE[@]}" ;;
+    R1) SEED=$MS XARGS="$(mtp 0.7)" STOPWAIT=20 CMDTIMEOUT=300 bash gmtp-leg.sh R1 5 "$T $X $D LLAMA_SPEC_DFT_SYNC=0" "${RACE[@]}" ;;
+    R2) SEED=$MS XARGS="$(mtp 0.7)" CMDTIMEOUT=600 bash gmtp-leg.sh R2 5 "$T $X $D" "${RACE[@]}" ;;
+    TR0) python3 -I tracecmp.py --subset legs/trace-G0.txt legs/trace-R0.txt | tee legs/tr0.txt | tail -8 ;;
+    TR2) python3 -I tracecmp.py --subset legs/trace-G0.txt legs/trace-R2.txt | tee legs/tr2.txt | tail -8 ;;
     T01) python3 -I tracecmp.py --subset legs/trace-G0.txt legs/trace-G1.txt | tail -8 ;;
     T03) python3 -I tracecmp.py legs/trace-G0.txt legs/trace-G3.txt | tee legs/t03.txt | tail -12 ;;
     T09) python3 -I tracecmp.py legs/trace-G0.txt legs/trace-G9T.txt | tee legs/t09.txt | tail -12 ;;
@@ -51,7 +64,7 @@ leg() {
 if [ "${1:-}" = auto ]; then
   leg G0; leg G3; leg T03
   if grep -a -q "^TRACE-IDENTICAL" legs/t03.txt; then
-    for l in G5 G4 G9T T09 G9 G6; do leg $l; done
+    for l in G5 G4 R1 R0 TR0 R2 TR2 G9T T09 G9 G6; do leg $l; done
   else
     echo "T03 differs: diagnosis leg instead of speed"
     for l in G1 T01; do leg $l; done

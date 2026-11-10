@@ -1,13 +1,14 @@
 #!/bin/bash
-# GH200 legs for patch 0068 (exact speculative decoding with the MTP head). From nc/nc-leg.sh. One leg = one test server
+# GH200 legs for patch 0070 (exact speculative decoding with the MTP head; 0068 was its working number). From nc/nc-leg.sh. One leg = one test server
 # in docker: the production image with a dev build mounted over /opt/llama (OPT, default ~/nt/out-c90: stack through
-# 0067 + 0068), production env and args (argo-things configs/glm53-gh200/llama-server.yaml at g68d4166) without the
+# 0069 + 0070), production env and args (argo-things configs/glm53-gh200/llama-server.yaml at g68d4166) without the
 # client classes, the slot reserve, the hold rule and the API key. glm53-gh200 must be at 0 replicas and the caller
 # holds /srv/glm-5.3-flash/window.lock (gh200-mtp1.sh).
 # Usage: gmtp-leg.sh TAG PARALLEL "EXTRA_ENV" "client cmd" ["client cmd" ...]   (clients in this directory)
 # Env: XARGS = extra server arguments (the MTP flags); SEED = snapshot to start from: "prod" (a copy of production's,
 #      the default), "none" (cold), or a name under snap/ (an MTP server and a plain one do not share snapshots);
-#      SAVE = keep the leg's snapshot under this name in snap/.
+#      SAVE = keep the leg's snapshot under this name in snap/; CMDTIMEOUT = seconds allowed per client command (legs
+#      that are expected to hang or die); STOPWAIT = seconds to wait for the server to exit after SIGINT (default 90).
 set -u
 G=/srv/glm-5.3-flash/mtp; cd $G; OUT=$G/legs; mkdir -p $OUT $G/snap
 IMG=${IMG:-ghcr.io/xerootg/llamacpp-spark:547208dca250-g68d4166}
@@ -56,7 +57,7 @@ grep -a -i -E "snapshot|n_slots|n_rs_seq|speculative|mtp|BATCH_INVARIANT|PREFILL
 grep -a -m1 -i "device_info\|CUDA0" $OUT/server-$TAG.log | cut -c1-200
 echo "GPU after load: $(nvidia-smi --query-gpu=memory.used --format=csv,noheader)"
 for cmd in "$@"; do
-  python3 -I $G/$cmd --url http://127.0.0.1:18104 --tag $TAG | tee -a $R | cut -c1-420
+  ${CMDTIMEOUT:+timeout $CMDTIMEOUT} python3 -I $G/$cmd --url http://127.0.0.1:18104 --tag $TAG | tee -a $R | cut -c1-420
   [ -d /proc/$DPID ] || { echo "SERVER DIED during [$cmd]"; grep -a -i -E "GGML_ASSERT|abort|error" $OUT/server-$TAG.log | grep -a -v SPEC_TRACE | tail -5 | cut -c1-300; break; }
 done
 stop
