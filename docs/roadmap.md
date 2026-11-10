@@ -378,7 +378,8 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   multi-block top-k for rows past ~256k pools (250 us per row at 1M on the Spark); 0052's reserve/shrink churn on
   prompts with more than 64k tokens left (~16 % of a 255k prompt's prefill on the Spark); parking idle slots' KV on
   NVMe when the pool is full (instead of refusing); root-cause the GDN fusion crash.
-- **Found 2026-11-10 (GH200 window nc4), fixed in patch 0071 (window nc5), rollout pending:** the base code lists
+- **Found 2026-11-10 (GH200 window nc4), fixed in patch 0071 (window nc5), rollout pending (argo-things #177 and
+  #178):** the base code lists
   the pools of every slot's conversation in each ubatch, so a prompt read and every decode step slow down with what
   the other slots hold. On the production image a 16k prompt reads at 1630 tok/s fresh, 1341 next to a 16k and a 64k
   conversation, 966 after a 200k one as well, and a short answer decodes at 44-46 tok/s instead of 53.7. With
@@ -388,6 +389,21 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   her speed alone in five scenarios (the hold rule: 92-100 % in four and 36 % when other clients are already
   decoding), and other clients' prompts no longer wait for her whole answer. A long prompt of another client gains
   nothing from it. The Spark decision and "guaranteed floor + burst" are measured in window nc-s2.
+- **State 2026-11-10 evening: both boxes accepted, neither rolled out.** GH200: image `gb5ee55a` (patches through
+  0074) passed acceptance in window nc7; argo-things #177. Spark: image `gfbb8831` (through 0076) passed the gate
+  and acceptance in window nc-s5 and the full-scale burst leg in window nc-s6 (a 500k conversation next to four
+  190k clients, 39 of 39 answers unchanged, growth to 1M refused with a 503 and the conversation kept);
+  argo-things #178, which also restores the `scripts/claude-k3` budget. Both PRs change what clients see (a long
+  prompt's first token comes later next to generating clients of its class; a new request waits for the ubatch in
+  flight, up to 17.5 s next to a 500k prompt; a burst's memory comes out of the expert cache), so they wait for
+  the owner's yes instead of the standing merge approval.
+- **Open after that:** (1) GH200 acceptance on `gfbb8831` to pick up 0076 (production there allocates and zeroes
+  20 MiB per decode step today); (2) 1M does not fit next to four clients near their floors on the Spark (about
+  0.9M by the admission's arithmetic): the compute buffers grow by 16.7 KiB per cell past the floor, nearly as much
+  as the KV itself (19.2 KiB), so shrinking them is the lever; about 4.4 GB more was in use in leg FB9 than KV and
+  compute buffers explain (context checkpoints of 145.6 MiB each among them); (3) no burst deeper than 500k has
+  been read, and the class scenarios were not rerun next to a burst; (4) the wait for the ubatch in flight grows
+  with depth: cutting a deep ubatch into pieces for a waiting first token as well would bound it.
 
 ## Cluster layout for this work
 

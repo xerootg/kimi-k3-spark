@@ -1657,8 +1657,11 @@ conversation in two other slots the production image reads it at 1341 tok/s and 
 there as well, with the variable set it stays at 1661 and 1670. Decode of a short prompt next to those conversations:
 47.8 and 44.0-46.4 tok/s on production (53.7 alone), 51.2 and 50.0-53.0 with the variable. The detector gate and two
 acceptance processes (per-client md5 against solo at one to five clients, long-prompt mixes, gold) passed with it.
-Not in production yet: the rollout waits for the image that also has 0072. Ledger: docs/experiments.md, window nc5;
-evidence: docs/evidence/glm-windows-2026-10-30/nc/.
+Ledger: docs/experiments.md, window nc5; evidence: docs/evidence/glm-windows-2026-10-30/nc/.
+
+Status 2026-11-10: accepted on CI images on both boxes (GH200 window nc7 on `gb5ee55a`, Spark window nc-s5 on
+`gfbb8831`); not in production, the rollouts are argo-things #177 (GH200) and #178 (Spark), which wait for the
+owner's decision.
 
 ## 0072-prompt-short-first
 
@@ -1693,8 +1696,11 @@ Measured in Spark window nc-s2 (2026-11-10, dev build, pieces config with client
 token after 0.6-3.1 s (7.6-21.2 s without the variable) and in "stagger" after 0.6-1.4 s (15.6-34.4 s); Juno kept
 88-95 % of her speed alone, her own first token moved from 3.1-3.9 s to 5.4-5.6 s because the short tails now go before
 her prompt's turn. The classless acceptance run on that build aborted for a reason that is not this patch (see 0073;
-the order this patch produces only exposed it). Not in production; acceptance is repeated on a build with 0073.
-Ledger: docs/experiments.md, window nc-s2.
+the order this patch produces only exposed it). Ledger: docs/experiments.md, window nc-s2.
+
+Status 2026-11-10: accepted on CI images on both boxes (GH200 window nc7 on `gb5ee55a`, Spark window nc-s5 on
+`gfbb8831`); not in production, the rollouts are argo-things #177 (GH200) and #178 (Spark), which wait for the
+owner's decision.
 
 ## 0073-pieces-split-boundary
 
@@ -1755,8 +1761,12 @@ Measured in GH200 window nc6 on a dev build mounted over image g76c2c21, one ser
 unset the build repeats the image (69.0-70.0 tok/s at four clients, 66.6-67.0 at five); with 512 it reaches the
 production image's numbers (two clients 60.9/62.8 against 60.4/62.3, three 67.4/68.7 against 67.2/68.3, four
 70.6/71.2 against 70.9/71.5, five 68.3/68.8 against 68.2/68.6, four short prompts and a 16k prompt 41.6-41.7
-against 41.5-41.8), every md5 equal to solo and gold, six of six staggered pairs equal to solo. Not in production;
-acceptance on the CI image is owed on both boxes. Ledger: docs/experiments.md, window nc6.
+against 41.5-41.8), every md5 equal to solo and gold, six of six staggered pairs equal to solo. Ledger:
+docs/experiments.md, window nc6.
+
+Status 2026-11-10: accepted on CI images on both boxes (GH200 window nc7 on `gb5ee55a`, Spark window nc-s5 on
+`gfbb8831`); not in production, the rollouts are argo-things #177 (GH200) and #178 (Spark), which wait for the
+owner's decision.
 
 ## 0075-refused-burst-keeps-conversation
 
@@ -1782,7 +1792,11 @@ computed byte: the patch only changes what a refused slot keeps.
 Verified in Spark window nc-s4 on the binaries of the CI image `547208dca250-g0fa9510` (leg G8): the refused growth
 to 1M answers 503 in 0.2 s, the log line above appears, and the conversation's next request finds 79906 tokens cached
 and answers in 4.3 s with the same bytes; the gate (SV8) and two acceptance processes (SA8, SA9) passed on the same
-binaries. Not in production yet. Ledger: docs/experiments.md, windows nc-s3 and nc-s4.
+binaries. Ledger: docs/experiments.md, windows nc-s3 and nc-s4.
+
+Status 2026-11-10: seen again at full scale in Spark window nc-s6 on `gfbb8831` (leg FB9: a 499609-token conversation
+whose growth to 1M was refused next to four 190k clients was served again from its cache with the same bytes). Not
+in production; the rollout is argo-things #178, which waits for the owner's decision.
 
 ## 0076-kpool-marks-kept
 
@@ -1803,5 +1817,9 @@ move to `llama_memory_hybrid_idx` (`kpool_marks`), shared by all batch contexts 
 generation of the call that built it for the reader (`is_new[i] == generation`). The pool list of a step is the same
 as before.
 
-Compiled for sm_121. Not in production; the measurement and the acceptance on the CI image are owed (Spark window
-nc-s5). Ledger: docs/experiments.md, windows nc-s4 and nc-s5.
+Measured in Spark window nc-s5 on the CI image `gfbb8831`: five 1M slots with the floor decode like five 200k slots
+(one client 15.50-15.53 against 15.46 tok/s on the production binaries and config, two 21.48-21.64 against
+21.47-21.61, three 24.16-24.30 against 24.21-24.29); the detector gate and two acceptance processes passed. Not in
+production; the Spark rollout is argo-things #178 (waits for the owner's decision). The GH200 serves five 1M slots
+on an image without this patch (#177 proposes `gb5ee55a`, which does not have it either); its acceptance on
+`gfbb8831` is owed. Ledger: docs/experiments.md, windows nc-s4 and nc-s5.

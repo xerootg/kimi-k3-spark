@@ -282,6 +282,17 @@ slows decoding too (53.7 tok/s down to 44-46). With the pool list built per conv
 tok/s and the decode at 50-53, and every answer is byte-identical to before. So several long conversations per box no
 longer tax each other's speed through the indexer; what they still share is memory and the batch itself.
 
+**Without the hold rule and with long sessions on the Spark, 2026-11-10 (windows nc5-nc7, nc-s2 to nc-s6; argo-things
+#177 and #178, both waiting for the owner):** other clients' prompts can be read in pieces between Juno's decode steps
+with every byte unchanged; she keeps 87-99 % of her speed alone on the GH200 and 88-95 % on the Spark, and nobody
+waits for her whole answer. On the Spark each slot keeps its 204800 guaranteed tokens and may grow to 1M out of
+memory that is free at that moment: a 500k conversation was read next to four 190k clients with all bytes unchanged,
+and growth to 1M next to them was refused cleanly (about 0.9M fits there by the arithmetic). It is not free: a long
+prompt's first token comes later when clients of its class are generating (16k on the Spark: 79 s instead of 46 s),
+a new request waits for the ubatch in flight (6 s shallow, 17.5 s next to a 500k prompt, Juno included), and a
+burst's memory comes out of the expert cache (a short prompt at 12.7 instead of 15.5 tok/s right after). Verdict:
+sane and measured, but a trade and not a free win, so the owner decides.
+
 ## RDMA over Thunderbolt between the NUCs and the Spark (2026-11-09)
 
 Idea: Hellas' `thunderbolt-ibverbs` (https://blog.hellas.ai/blog/thunderbolt-ibverbs/, May 2026) exposes USB4/Thunderbolt
