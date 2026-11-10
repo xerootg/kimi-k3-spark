@@ -1,0 +1,77 @@
+== SA4 (24 rows)
+  solo p0      ce2fc95752 gold dec  15.46 pre     23.9 n 256
+  solo p1      bb64203d71 gold dec  15.89 pre     29.5 n 256
+  solo p2      2d592efcb6 gold dec  15.36 pre     27.6 n 256
+  solo p3      1aab74269d gold dec  14.53 pre     27.0 n 256
+  solo p4      0c3f28294b gold dec  15.26 pre     32.8 n 256
+  solo p0      ee079496a4  dec  14.83 pre     25.0 n 128
+  solo L16384  145c14aa8b gold dec  13.75 pre    349.2 n 128
+  multi n=2 round=warm agg  19.50 per [10.03, 10.25] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=1 agg  20.07 per [10.28, 10.5] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=2 agg  20.29 per [10.4, 10.62] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=3 round=warm agg  23.42 per [8.12, 8.41, 8.22] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=1 agg  23.89 per [8.3, 8.48, 8.23] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=2 agg  23.90 per [8.25, 8.53, 8.34] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=4 round=warm agg  24.85 per [6.51, 6.6, 6.49, 6.75] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=1 agg  25.35 per [6.61, 6.74, 6.64, 6.9] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=2 agg  25.41 per [6.62, 6.76, 6.66, 6.91] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=5 round=warm agg  24.24 per [5.08, 5.08, 5.12, 5.28, 5.19] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=1 agg  24.36 per [5.1, 5.15, 5.11, 5.32, 5.23] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=2 agg  24.38 per [5.09, 5.15, 5.1, 5.31, 5.22] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=warm agg  11.83 per [3.41, 3.4, 3.43, 3.43, 13.41] OK ['p1', 'p2', 'p3', 'p4', 'L16384'] ['bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b', '145c14aa8b']
+  multi n=5 round=1 agg  12.01 per [3.41, 3.45, 3.41, 3.42, 14.66] OK ['p1', 'p2', 'p3', 'p4', 'L16384'] ['bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b', '145c14aa8b']
+  multi n=2 round=warm agg   5.25 per [6.82, 15.43] OK ['p0', 'L16384'] ['ce2fc95752', '145c14aa8b']
+  multi n=2 round=1 agg   5.34 per [7.28, 15.77] OK ['p0', 'L16384'] ['ce2fc95752', '145c14aa8b']
+  solo p0      ee079496a4  dec  15.53 pre     24.9 n 128
+  SOLO-DIFF p0 {'ee079496a4', 'ce2fc95752'} gold ce2fc95752
+  multi rounds differing from solo/gold: 0
+== SA5 (19 rows)
+  solo p0      ce2fc95752 gold dec  15.40 pre     23.8 n 256
+  solo p1      bb64203d71 gold dec  15.90 pre     29.7 n 256
+  solo p2      2d592efcb6 gold dec  15.38 pre     27.8 n 256
+  solo p3      1aab74269d gold dec  14.49 pre     27.0 n 256
+  solo p4      0c3f28294b gold dec  15.25 pre     32.8 n 256
+  solo p0      ee079496a4  dec  14.85 pre     25.1 n 128
+  solo L16384  145c14aa8b gold dec  13.80 pre    346.7 n 128
+  multi n=2 round=warm agg  19.46 per [10.01, 10.23] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=1 agg  20.08 per [10.29, 10.51] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=2 round=2 agg  20.30 per [10.4, 10.62] OK ['p0', 'p1'] ['ce2fc95752', 'bb64203d71']
+  multi n=3 round=warm agg  23.48 per [8.13, 8.42, 8.22] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=1 agg  23.85 per [8.23, 8.5, 8.31] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=3 round=2 agg  23.92 per [8.25, 8.53, 8.34] OK ['p0', 'p1', 'p2'] ['ce2fc95752', 'bb64203d71', '2d592efcb6']
+  multi n=4 round=warm agg  24.84 per [6.51, 6.73, 6.59, 6.47] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=1 agg  25.32 per [6.6, 6.73, 6.64, 6.88] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=4 round=2 agg  25.37 per [6.62, 6.75, 6.65, 6.9] OK ['p0', 'p1', 'p2', 'p3'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d']
+  multi n=5 round=warm agg  24.14 per [5.06, 5.11, 5.07, 5.29, 5.19] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=1 agg  24.30 per [5.08, 5.18, 5.12, 5.27, 5.08] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  multi n=5 round=2 agg  24.29 per [5.08, 5.18, 5.12, 5.27, 5.07] OK ['p0', 'p1', 'p2', 'p3', 'p4'] ['ce2fc95752', 'bb64203d71', '2d592efcb6', '1aab74269d', '0c3f28294b']
+  SOLO-DIFF p0 {'ee079496a4', 'ce2fc95752'} gold ce2fc95752
+  multi rounds differing from solo/gold: 0
+
+== RF1 stag rows
+{'kind': 'stag-solo', 'tag': 'RF1', 'spec': 'p1', 'md5': '08815159c3', 'decode_tps': 14.73, 'error': None}
+{'kind': 'stag-solo', 'tag': 'RF1', 'spec': 'p0', 'md5': '3c0baad848', 'decode_tps': 16.02, 'error': None}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 1.0, 'rep': 0, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.89, 11.89]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 1.0, 'rep': 1, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.92, 11.9]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 1.0, 'rep': 2, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.92, 11.91]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 1.0, 'rep': 3, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.89, 11.86]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 0.01, 'rep': 0, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.19, 11.13]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 0.01, 'rep': 1, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.18, 11.08]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 0.01, 'rep': 2, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.17, 11.07]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 0.01, 'rep': 3, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.16, 11.06]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 0.3, 'rep': 0, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.13, 11.03]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 0.3, 'rep': 1, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.13, 11.05]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 0.3, 'rep': 2, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.14, 11.04]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p1', 'b': 'p0', 'delay': 0.3, 'rep': 3, 'ok': True, 'md5': ['08815159c3', '3c0baad848'], 'ref': ['08815159c3', '3c0baad848'], 'decode_tps': [10.16, 11.05]}
+{'kind': 'stag-solo', 'tag': 'RF1', 'spec': 'p0', 'md5': '3c0baad848', 'decode_tps': 17.53, 'error': None}
+{'kind': 'stag-solo', 'tag': 'RF1', 'spec': 'p1', 'md5': '08815159c3', 'decode_tps': 16.63, 'error': None}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p0', 'b': 'p1', 'delay': 1.0, 'rep': 0, 'ok': True, 'md5': ['3c0baad848', '08815159c3'], 'ref': ['3c0baad848', '08815159c3'], 'decode_tps': [11.05, 12.09]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p0', 'b': 'p1', 'delay': 1.0, 'rep': 1, 'ok': True, 'md5': ['3c0baad848', '08815159c3'], 'ref': ['3c0baad848', '08815159c3'], 'decode_tps': [10.93, 12.02]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p0', 'b': 'p1', 'delay': 1.0, 'rep': 2, 'ok': True, 'md5': ['3c0baad848', '08815159c3'], 'ref': ['3c0baad848', '08815159c3'], 'decode_tps': [10.88, 11.98]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p0', 'b': 'p1', 'delay': 0.01, 'rep': 0, 'ok': True, 'md5': ['3c0baad848', '08815159c3'], 'ref': ['3c0baad848', '08815159c3'], 'decode_tps': [9.97, 10.98]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p0', 'b': 'p1', 'delay': 0.01, 'rep': 1, 'ok': True, 'md5': ['3c0baad848', '08815159c3'], 'ref': ['3c0baad848', '08815159c3'], 'decode_tps': [10.06, 11.11]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p0', 'b': 'p1', 'delay': 0.01, 'rep': 2, 'ok': True, 'md5': ['3c0baad848', '08815159c3'], 'ref': ['3c0baad848', '08815159c3'], 'decode_tps': [10.3, 11.3]}
+{'kind': 'stag-solo', 'tag': 'RF1', 'spec': 'p2', 'md5': '2d592efcb6', 'decode_tps': 15.9, 'error': None}
+{'kind': 'stag-solo', 'tag': 'RF1', 'spec': 'p0', 'md5': 'ce2fc95752', 'decode_tps': 14.49, 'error': None}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p2', 'b': 'p0', 'delay': 2.0, 'rep': 0, 'ok': True, 'md5': ['2d592efcb6', 'ce2fc95752'], 'ref': ['2d592efcb6', 'ce2fc95752'], 'decode_tps': [10.62, 10.74]}
+{'kind': 'stag', 'tag': 'RF1', 'a': 'p2', 'b': 'p0', 'delay': 2.0, 'rep': 1, 'ok': True, 'md5': ['2d592efcb6', 'ce2fc95752'], 'ref': ['2d592efcb6', 'ce2fc95752'], 'decode_tps': [10.78, 10.89]}

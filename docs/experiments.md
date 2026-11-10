@@ -2211,7 +2211,35 @@ LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PREFILL_SLICE_TG_
   + 0072): abort on the first pair (layer 14). RB (the same without `LLAMA_PREFILL_SHORT_FIRST`): abort on the first
   pair, so 0072 only produced the order by chance. RD (production config, no pieces): 15 of 15 pairs equal to solo
   at gaps of 0.01, 0.3 and 1 s in both orders. Production runs no pieces on either box, so neither deployment is
-  exposed. The GH200 graphs have no column split (no expert store), but the cut at a split boundary ignored
-  `can_stop` there as well.
+  exposed. The GH200 graphs have no column split, but they do have one split boundary and the cut there ignored
+  `can_stop` as well: the detector logs of windows nc4 and nc5 show "prompt ubatch of 6 tokens done in 2 pieces" (and
+  13 pieces for a 4096-token ubatch). Nothing aborted there because that one boundary does not sit between an early
+  lookup and its real lookup, but a short ubatch was not running whole on the GH200 either.
 - **Fix: patch 0073** (one condition: the end of a split is a place to stop only where `can_stop` agrees, as inside a
   split). Built as `a121i` (only `libggml-base.so` differs from `a121h`); legs RF1 and SA4 on it follow below.
+- **Leg RF1 (FIN + 0072 on the fixed build `a121i`, `LLAMA_PREFILL_SLICE_LOG=1`): 20 of 20 staggered pairs equal to
+  solo.** p1 then p0 at gaps of 1.0, 0.01 and 0.3 s, four times each (the pair that aborted on the first try in RA and
+  RB); p0 then p1 at 1.0 and 0.01 s, three times each; p2 then p0 after 2 s with 256 tokens, twice. Decode 10.0-12.0
+  tok/s per stream. The server log has no "done in N pieces" line for a short ubatch any more (it finishes in its
+  first call). Lowest MemAvailable 19036 MiB.
+- **Legs SA4 and SA5 (acceptance on FIN with 0071 + 0072 + 0073, two server processes on `a121i`): 0 multi rounds
+  differing from solo or gold in either.** Solo p0-p4 `ce2fc95752` `bb64203d71` `2d592efcb6` `1aab74269d`
+  `0c3f28294b` at 14.5-15.9 tok/s, the 16k prompt `145c14aa8b` read at 347-349 tok/s, quicksort-128 `ee079496a4`.
+  Aggregate decode, rounds 1 and 2: two clients 20.1-20.3 tok/s in both processes, three 23.9, four 25.3-25.4, five
+  24.3-24.4; four short clients next to a 16k prompt 3.4 tok/s each (aggregate 12.0, SA4; SA5's run of this command
+  was cut by the window's own deadline at 12:08 UTC and wrote no row); p0 next to the 16k prompt 6.8-7.3 tok/s
+  (SA4 only). Lowest MemAvailable 17689 and 17857 MiB. SA5 therefore covers N=1..5 with two rounds but not the 16k
+  mixes; a second process with the 16k mixes is still owed (SA1 on `a121g` and SA4 on `a121i` both have them).
+- **Cost against the production config, as measured in this window (not yet an adjacent A/B).** SP0 (production
+  config, `a121h`): 20.8 / 24.3 / 25.9-26.0 / 24.7 tok/s at two to five clients. SA1 (FIN, `a121g`, no 0072):
+  20.3-20.5 / 24.2-24.3 / 25.8 / 24.6-24.7. SA4 and SA5 (FIN + 0072 + 0073, `a121i`): 20.1-20.3 / 23.9 / 25.3-25.4 /
+  24.3-24.4, that is 1.3 to 3 % under SP0 and 1 to 2 % under SA1 at three to five clients, with equal solo speeds.
+  Neither 0072 nor 0073 touches a decode step (0073 changes only where a prompt in pieces may stop), and the legs ran
+  an hour apart on a box that had been loaded throughout, so this is not yet attributed. Owed for the next Spark
+  window: SP0, SA on `a121g` and SA on `a121i` back to back, the multi commands only.
+- **Window closed 12:11 UTC.** glm53-spark back at one replica on image `547208dca250-g08d176f`, quicksort gold
+  `ee079496a4` three times through the Service (17.1 tok/s); no test server, runner or key file left; the laptop
+  deadman disarmed at 12:11:57. Not run in this window: the full-scale burst leg FB (a 500k session next to four
+  ~190k clients, about 100 minutes) and the mechanics leg G1 on the final build. Image with the whole stack incl.
+  0073: `547208dca250-g76c2c21` (CI green 12:01 UTC). Evidence added: `spark-nc6b.log`, `digest-SA4-SA5-RF1.txt`,
+  `legs-nc2/lowmem-{RF1,SA4,SA5}.txt`, the final `legs-nc2/results.jsonl`.
