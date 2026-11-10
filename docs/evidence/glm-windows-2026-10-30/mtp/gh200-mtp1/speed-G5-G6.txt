@@ -1,0 +1,18 @@
+G5 24 rows, G6 12 rows
+paired 12 rows; without a partner: 12 of G5, 0 of G6
+solo p0          t=0   seed 1    52.22 ->  33.76 tok/s  -35.4 %  drafts 169/218  279 W -> 208 W, 0.187 -> 0.162 tok/s/W  same bytes
+solo p0          t=0   seed 1    52.68 ->  41.43 tok/s  -21.4 %  drafts 169/219  322 W -> 248 W, 0.164 -> 0.167 tok/s/W  same bytes
+solo p1          t=0   seed 1    47.81 ->  33.31 tok/s  -30.3 %  drafts 153/252  301 W -> 239 W, 0.159 -> 0.139 tok/s/W  same bytes
+solo p2          t=0   seed 1    45.19 ->  31.22 tok/s  -30.9 %  drafts 150/239  295 W -> 237 W, 0.153 -> 0.132 tok/s/W  same bytes
+solo p0          t=1.0 seed 42   48.43 ->  33.69 tok/s  -30.4 %  drafts 150/236  317 W -> 243 W, 0.153 -> 0.139 tok/s/W  same bytes
+solo p2          t=1.0 seed 42   48.63 ->  39.77 tok/s  -18.2 %  drafts 172/218  313 W -> 246 W, 0.156 -> 0.162 tok/s/W  same bytes
+solo p5          t=1.0 seed 42   45.50 ->  24.20 tok/s  -46.8 %  drafts 117/300  294 W -> 241 W, 0.155 -> 0.101 tok/s/W  same bytes
+solo p1          t=1.0 seed 9    46.31 ->  28.73 tok/s  -38.0 %  drafts 137/285  297 W -> 248 W, 0.156 -> 0.116 tok/s/W  same bytes
+solo p3          t=1.0 seed 9    47.62 ->  26.99 tok/s  -43.3 %  drafts 135/266  310 W -> 239 W, 0.154 -> 0.113 tok/s/W  same bytes
+solo p6          t=1.0 seed 9    46.41 ->  31.65 tok/s  -31.8 %  drafts 153/254  312 W -> 241 W, 0.149 -> 0.132 tok/s/W  same bytes
+2 clients warm   t=0   seed 1    57.54 ->  46.25 tok/s  -19.6 %  drafts 225/268  304 W -> 260 W, 0.189 -> 0.178 tok/s/W  same bytes
+2 clients 1      t=0   seed 1    61.74 ->  47.57 tok/s  -23.0 %  drafts 226/269  305 W -> 243 W, 0.202 -> 0.196 tok/s/W  same bytes
+means (rounds marked warm left out):
+  solo, temperature 0           4 rows   49.48 ->  34.93 tok/s  -29.4 %, 0.166 -> 0.150 tok/s/W
+  solo, temperature 1.0         6 rows   47.15 ->  30.84 tok/s  -34.6 %, 0.154 -> 0.127 tok/s/W
+  2 clients, temperature 0      1 rows   61.74 ->  47.57 tok/s  -23.0 %, 0.202 -> 0.196 tok/s/W

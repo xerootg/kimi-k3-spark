@@ -1,0 +1,37 @@
+=== LEG R0 parallel=5 ctx=5242880 img=547208dca250-g68d4166 opt=/home/ubuntu/nt/out-c90 seed=mtp-seed.k3sn extra=[LLAMA_SPEC_EXACT_TRACE=1 LLAMA_SPEC_EXACT=1 LLAMA_RS_KEEP_TAIL=0 LLAMA_EXPERT_STORE_TEST_HOOK_DELAY=45:50 LLAMA_SPEC_DFT_SYNC=0 GGML_CUDA_HOST_BANK_OWNER_CHECK=0] xargs=[--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.7 --spec-draft-n-ubatch 512] 08:38:59
+READY R0 after 45s
+GPU after load: 86755 MiB
+{"kind": "multi", "tag": "R0", "temp": 0, "seed": 1, "n": 5, "round": "warm", "agg_tps": 54.78, "wall_s": 23.37, "gen": 1280, "per_stream_tps": [12.16, 12.46, 11.87, 12.34, 12.06], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "draft_n": [null, null, null, null, null], "draft_ok": [null, null, null, null, null], "prefill_tps": [56.19, 89.82, 10
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.15, "prefill_tps": 64.82, "decode_n": 128, "decode_tps": 36.85, "md5": "bc32ecab82", "draft_n": 84, "draft_ok": 72, "stop": "limit", "t0": 1794300009.4207602, "t1": 1794300013.0466034, "kind": "solo", "tag": "R0", "temp": 0, "seed": 1}
+{"kind": "multi", "tag": "R0", "temp": 0, "seed": 1, "n": 2, "round": "warm", "agg_tps": 43.87, "wall_s": 11.67, "gen": 512, "per_stream_tps": [22.71, 22.74], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "draft_n": [95, 101], "draft_ok": [92, 89], "prefill_tps": [64.1, 85.83], "t0": 1794300013.091206, "t1": 1794300024.7617397}
+trace lines: 1920; PEAK GPU 87003 MiB, LOWEST MemAvailable 125605 MiB; END R0 08:40:26
+GMTP-LEG-DONE R0 08:40:26
+GH200-MTP1-DONE 08:40:26
+requests 55 / 8, tokens 10817 / 1920, identical requests 8
+TRACE-IDENTICAL
+RUN 2 R0: aborts 0
+1.13.556.783 I slot print_timing: id  2 | task 270 | draft acceptance = 0.85714 (   72 accepted /    84 generated), mean len =  2.67
+1.25.065.210 I slot print_timing: id  2 | task 329 | draft acceptance = 0.96842 (   92 accepted /    95 generated), mean len =  1.97
+1.25.271.971 I slot print_timing: id  4 | task 328 | draft acceptance = 0.88119 (   89 accepted /   101 generated), mean len =  1.91
+ABORT: window.lock is held
+requests 55 / 8, tokens 10817 / 1920, identical requests 8
+TRACE-IDENTICAL
+RUN 2 R1: aborts 0
+1.13.167.795 I slot print_timing: id  1 | task 270 | draft acceptance = 0.85714 (   72 accepted /    84 generated), mean len =  2.67
+1.24.561.276 I slot print_timing: id  1 | task 328 | draft acceptance = 0.96842 (   92 accepted /    95 generated), mean len =  1.97
+1.24.764.583 I slot print_timing: id  0 | task 329 | draft acceptance = 0.88119 (   89 accepted /   101 generated), mean len =  1.91
+ABORT: window.lock is held
+requests 55 / 8, tokens 10817 / 1920, identical requests 8
+TRACE-IDENTICAL
+RUN 3 R0: aborts 0
+1.13.556.783 I slot print_timing: id  2 | task 270 | draft acceptance = 0.85714 (   72 accepted /    84 generated), mean len =  2.67
+1.25.065.210 I slot print_timing: id  2 | task 329 | draft acceptance = 0.96842 (   92 accepted /    95 generated), mean len =  1.97
+1.25.271.971 I slot print_timing: id  4 | task 328 | draft acceptance = 0.88119 (   89 accepted /   101 generated), mean len =  1.91
+ABORT: window.lock is held
+requests 55 / 8, tokens 10817 / 1920, identical requests 8
+TRACE-IDENTICAL
+RUN 3 R1: aborts 0
+1.13.167.795 I slot print_timing: id  1 | task 270 | draft acceptance = 0.85714 (   72 accepted /    84 generated), mean len =  2.67
+1.24.561.276 I slot print_timing: id  1 | task 328 | draft acceptance = 0.96842 (   92 accepted /    95 generated), mean len =  1.97
+1.24.764.583 I slot print_timing: id  0 | task 329 | draft acceptance = 0.88119 (   89 accepted /   101 generated), mean len =  1.91
+RACE-REPEAT-DONE 08:40:26

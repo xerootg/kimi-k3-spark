@@ -1,0 +1,203 @@
+requests 55 / 55, tokens 10817 / 10820, identical requests 54
+  TAIL: B samples 3 tokens after the end of A's request of 95 tokens (the first 95 lines identical)
+TRACE-IDENTICAL (1 requests with a sampled tail after a stop)
+G0 rows 35, G3 rows 35, compared 35, different 0
+RESULTS-IDENTICAL
+=== LEG G5 parallel=5 ctx=5242880 img=547208dca250-g68d4166 opt=/home/ubuntu/nt/out-c90 seed=prod extra=[] xargs=[] 07:54:11
+READY G5 after 45s
+0.00.392.640 I llama_model_loader: - kv  72: glm5-next.attention.indexer.index_share_mtp bool             = true
+0.10.948.929 I llama_context: n_rs_seq              = 0
+0.42.764.409 I snapshot_restore: expert store: cache snapshot restored: 12096 experts, 185.5 GB read in 19.9 s (9.3 GB/s)
+0.42.790.489 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.664.864 I srv    load_model: speculative decoding will use checkpoints
+0.44.664.884 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+0.44.664.929 I spec common_specu: no implementations specified for speculative decoding
+0.00.204.078 I cmn  common_param: device_info:
+GPU after load: 79968 MiB
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 75.55, "decode_n": 256, "decode_tps": 52.22, "md5": "8e312d7bdd", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297297.4480968, "t1": 1794297302.4871283, "kind": "solo", "tag": "G5", "temp": 0, "seed": 1}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.12, "prefill_tps": 84.9, "decode_n": 256, "decode_tps": 52.68, "md5": "8e312d7bdd", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297302.4872625, "t1": 1794297307.446927, "kind": "solo", "tag": "G5", "temp": 0, "seed": 1}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.22, "prefill_tps": 88.31, "decode_n": 256, "decode_tps": 47.81, "md5": "74fb633e8e", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297307.4470181, "t1": 1794297312.9974496, "kind": "solo", "tag": "G5", "temp": 0, "seed": 1}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 78.88, "decode_n": 256, "decode_tps": 45.19, "md5": "f8531a5f07", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297312.9975436, "t1": 1794297318.8694792, "kind": "solo", "tag": "G5", "temp": 0, "seed": 1}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.26, "prefill_tps": 80.94, "decode_n": 256, "decode_tps": 47.15, "md5": "4d6338450b", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297318.8695729, "t1": 1794297324.5393212, "kind": "solo", "tag": "G5", "temp": 0, "seed": 1}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 90.56, "decode_n": 256, "decode_tps": 44.41, "md5": "e7851c4b56", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297324.539414, "t1": 1794297330.514911, "kind": "solo", "tag": "G5", "temp": 0, "seed": 1}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 76.18, "decode_n": 256, "decode_tps": 48.43, "md5": "7dfaf4ab46", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297330.559107, "t1": 1794297335.9797497, "kind": "solo", "tag": "G5", "temp": 1.0, "seed": 42}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.22, "prefill_tps": 83.63, "decode_n": 256, "decode_tps": 48.63, "md5": "9d91318123", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297335.979867, "t1": 1794297341.4403293, "kind": "solo", "tag": "G5", "temp": 1.0, "seed": 42}
+{"spec": "p5", "prompt_n": 15, "cache_n": 0, "prefill_s": 0.19, "prefill_tps": 78.31, "decode_n": 256, "decode_tps": 45.5, "md5": "fe9b78782f", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297341.4404268, "t1": 1794297347.237599, "kind": "solo", "tag": "G5", "temp": 1.0, "seed": 42}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.22, "prefill_tps": 87.7, "decode_n": 256, "decode_tps": 46.31, "md5": "93fa19d1a2", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297347.2825265, "t1": 1794297353.029279, "kind": "solo", "tag": "G5", "temp": 1.0, "seed": 9}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.24, "prefill_tps": 89.33, "decode_n": 256, "decode_tps": 47.62, "md5": "1d97223b67", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297353.0293984, "t1": 1794297358.6207356, "kind": "solo", "tag": "G5", "temp": 1.0, "seed": 9}
+{"spec": "p6", "prompt_n": 15, "cache_n": 0, "prefill_s": 0.2, "prefill_tps": 75.68, "decode_n": 256, "decode_tps": 46.41, "md5": "a18a451d46", "draft_n": null, "draft_ok": null, "stop": "limit", "t0": 1794297358.6208324, "t1": 1794297364.3150551, "kind": "solo", "tag": "G5", "temp": 1.0, "seed": 9}
+{"kind": "multi", "tag": "G5", "temp": 0, "seed": 1, "n": 2, "round": "warm", "agg_tps": 57.54, "wall_s": 8.9, "gen": 512, "per_stream_tps": [29.34, 30.03], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "draft_n": [null, null], "draft_ok": [null, null], "prefill_tps": [74.92, 95.55], "t0": 1794297364.3589702, "t1": 1794297373.2571487}
+{"kind": "multi", "tag": "G5", "temp": 0, "seed": 1, "n": 2, "round": 1, "agg_tps": 61.74, "wall_s": 8.29, "gen": 512, "per_stream_tps": [31.23, 31.97], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "draft_n": [null, null], "draft_ok": [null, null], "prefill_tps": [80.22, 100.34], "t0": 1794297373.2576592, "t1": 1794297381.5502195}
+{"kind": "multi", "tag": "G5", "temp": 0, "seed": 1, "n": 2, "round": 2, "agg_tps": 64.17, "wall_s": 7.98, "gen": 512, "per_stream_tps": [32.48, 33.28], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "draft_n": [null, null], "draft_ok": [null, null], "prefill_tps": [79.13, 100.08], "t0": 1794297381.5507252, "t1": 1794297389.529807}
+{"kind": "multi", "tag": "G5", "temp": 1.0, "seed": 7, "n": 2, "round": "warm", "agg_tps": 51.79, "wall_s": 9.89, "gen": 512, "per_stream_tps": [26.59, 27.16], "md5": ["63501ca3a2", "07b7db8897"], "specs": ["p2", "p5"], "draft_n": [null, null], "draft_ok": [null, null], "prefill_tps": [78.95, 73.65], "t0": 1794297389.5764186, "t1": 1794297399.4627166}
+{"kind": "multi", "tag": "G5", "temp": 1.0, "seed": 7, "n": 2, "round": 1, "agg_tps": 60.22, "wall_s": 8.5, "gen": 512, "per_stream_tps": [30.7, 31.4], "md5": ["63501ca3a2", "07b7db8897"], "specs": ["p2", "p5"], "draft_n": [null, null], "draft_ok": [null, null], "prefill_tps": [93.07, 80.76], "t0": 1794297399.463244, "t1": 1794297407.9654465}
+{"kind": "multi", "tag": "G5", "temp": 0, "seed": 1, "n": 3, "round": "warm", "agg_tps": 65.1, "wall_s": 11.8, "gen": 768, "per_stream_tps": [22.08, 22.47, 22.83], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "draft_n": [null, null, null], "draft_ok": [null, null, null], "prefill_tps": [74.23, 93.38, 100.12], "t0": 1794297408.0097973, "t1": 1794297419.8066473}
+{"kind": "multi", "tag": "G5", "temp": 0, "seed": 1, "n": 3, "round": 1, "agg_tps": 68.3, "wall_s": 11.25, "gen": 768, "per_stream_tps": [22.96, 23.4, 23.79], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07"], "specs": ["p0", "p1", "p2"], "draft_n": [null, null, null], "draft_ok": [null, null, null], "prefill_tps": [72.78, 92.13, 100.46], "t0": 1794297419.8072805, "t1": 1794297431.0524569}
+{"kind": "multi", "tag": "G5", "temp": 0, "seed": 1, "n": 5, "round": "warm", "agg_tps": 67.79, "wall_s": 18.88, "gen": 1280, "per_stream_tps": [13.72, 13.87, 14.38, 14.05, 14.24], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "draft_n": [null, null, null, null, null], "draft_ok": [null, null, null, null, null], "prefill_tps": [75.69, 94.35, 10
+{"kind": "multi", "tag": "G5", "temp": 0, "seed": 1, "n": 5, "round": 1, "agg_tps": 69.94, "wall_s": 18.3, "gen": 1280, "per_stream_tps": [14.04, 14.2, 14.72, 14.38, 14.57], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "draft_n": [null, null, null, null, null], "draft_ok": [null, null, null, null, null], "prefill_tps": [75.51, 93.82, 100.17, 9
+{"kind": "multi", "tag": "G5", "temp": 0, "seed": 1, "n": 5, "round": 2, "agg_tps": 70.67, "wall_s": 18.11, "gen": 1280, "per_stream_tps": [14.37, 14.53, 14.88, 14.72, 14.26], "md5": ["8e312d7bdd", "74fb633e8e", "f8531a5f07", "4d6338450b", "e7851c4b56"], "specs": ["p0", "p1", "p2", "p3", "p4"], "draft_n": [null, null, null, null, null], "draft_ok": [null, null, null, null, null], "prefill_tps": [76.88, 93.89, 99.03, 
+{"kind": "multi", "tag": "G5", "temp": 1.0, "seed": 21, "n": 5, "round": "warm", "agg_tps": 67.89, "wall_s": 18.85, "gen": 1280, "per_stream_tps": [13.87, 14.02, 13.77, 14.2, 14.38], "md5": ["68c9a7bf19", "109516e6ce", "4d2eb0d2cb", "fb8d1090b3", "1e28b4f6dc"], "specs": ["p0", "p1", "p2", "p3", "p4"], "draft_n": [null, null, null, null, null], "draft_ok": [null, null, null, null, null], "prefill_tps": [75.19, 93.32, 
+{"kind": "multi", "tag": "G5", "temp": 1.0, "seed": 21, "n": 5, "round": 1, "agg_tps": 69.83, "wall_s": 18.33, "gen": 1280, "per_stream_tps": [14.16, 14.32, 14.06, 14.5, 14.69], "md5": ["68c9a7bf19", "109516e6ce", "4d2eb0d2cb", "fb8d1090b3", "1e28b4f6dc"], "specs": ["p0", "p1", "p2", "p3", "p4"], "draft_n": [null, null, null, null, null], "draft_ok": [null, null, null, null, null], "prefill_tps": [76.59, 94.11, 94.56
+4.20.058.860 I fill_decode: expert store: 4225243 lookups, hit rate 100.0%, 0.0 GB read for decode, 0.0 GB for prefill
+4.26.718.964 I fill_decode: expert store: 4377943 lookups, hit rate 100.0%, 0.0 GB read for decode, 0.0 GB for prefill
+4.32.607.513 I llama_moe_cache: ubatch <= 8: hits = 4406954, misses = 0, hit rate = 100.00%, uploaded = 0.00 MiB
+4.32.607.521 I llama_moe_cache: ubatch  > 8: hits = 100172, misses = 0, hit rate = 100.00%, uploaded = 0.00 MiB
+trace lines: 0; PEAK GPU 80091 MiB, LOWEST MemAvailable 136271 MiB; END G5 07:58:45
+GMTP-LEG-DONE G5 07:58:45
+=== LEG G4 parallel=5 ctx=5242880 img=547208dca250-g68d4166 opt=/home/ubuntu/nt/out-c90 seed=mtp-seed.k3sn extra=[LLAMA_SPEC_EXACT=1 LLAMA_RS_KEEP_TAIL=0] xargs=[--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.7] 07:58:45
+LEG-FAIL G4 died
+0.10.961.191 W load_tensors: madvise(MADV_PAGEOUT) failed for 6 of 6 mappings: Cannot allocate memory
+0.43.838.715 E ggml_backend_cuda_buffer_type_alloc_buffer: allocating 18623.69 MiB on device 0: cudaMalloc failed: out of memory
+0.43.838.726 E ggml_gallocr_reserve_n_impl: failed to allocate CUDA0 buffer of size 19528353408
+0.43.838.727 E graph_reserve: failed to allocate compute buffers
+0.43.846.305 E llama_init_from_model: failed to initialize the context: failed to allocate compute pp buffers
+0.43.846.323 E common_speculative_init_result: failed to create MTP context
+0.43.846.331 E srv    load_model: failed to create MTP context
+0.43.851.389 E srv  llama_server: exiting due to model loading error
+LEG-FAIL G4 not ready
+trace lines: 0; PEAK GPU 53166 MiB, LOWEST MemAvailable 186047 MiB; END G4 07:59:32
+=== LEG R1 parallel=5 ctx=5242880 img=547208dca250-g68d4166 opt=/home/ubuntu/nt/out-c90 seed=mtp-seed.k3sn extra=[LLAMA_SPEC_EXACT_TRACE=1 LLAMA_SPEC_EXACT=1 LLAMA_RS_KEEP_TAIL=0 LLAMA_EXPERT_STORE_TEST_HOOK_DELAY=45:50 LLAMA_SPEC_DFT_SYNC=0] xargs=[--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.7] 07:59:32
+LEG-FAIL R1 died
+0.11.039.108 W load_tensors: madvise(MADV_PAGEOUT) failed for 6 of 6 mappings: Cannot allocate memory
+0.44.171.214 E ggml_backend_cuda_buffer_type_alloc_buffer: allocating 18623.69 MiB on device 0: cudaMalloc failed: out of memory
+0.44.171.227 E ggml_gallocr_reserve_n_impl: failed to allocate CUDA0 buffer of size 19528353408
+0.44.171.228 E graph_reserve: failed to allocate compute buffers
+0.44.179.110 E llama_init_from_model: failed to initialize the context: failed to allocate compute pp buffers
+0.44.179.129 E common_speculative_init_result: failed to create MTP context
+0.44.179.137 E srv    load_model: failed to create MTP context
+0.44.184.280 E srv  llama_server: exiting due to model loading error
+LEG-FAIL R1 not ready
+trace lines: 0; PEAK GPU 53166 MiB, LOWEST MemAvailable 176683 MiB; END R1 08:00:18
+=== LEG R0 parallel=5 ctx=5242880 img=547208dca250-g68d4166 opt=/home/ubuntu/nt/out-c90 seed=mtp-seed.k3sn extra=[LLAMA_SPEC_EXACT_TRACE=1 LLAMA_SPEC_EXACT=1 LLAMA_RS_KEEP_TAIL=0 LLAMA_EXPERT_STORE_TEST_HOOK_DELAY=45:50 LLAMA_SPEC_DFT_SYNC=0 GGML_CUDA_HOST_BANK_OWNER_CHECK=0] xargs=[--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.7] 08:00:18
+LEG-FAIL R0 died
+0.11.192.603 W load_tensors: madvise(MADV_PAGEOUT) failed for 6 of 6 mappings: Cannot allocate memory
+0.44.360.270 E ggml_backend_cuda_buffer_type_alloc_buffer: allocating 18623.69 MiB on device 0: cudaMalloc failed: out of memory
+0.44.360.284 E ggml_gallocr_reserve_n_impl: failed to allocate CUDA0 buffer of size 19528353408
+0.44.360.285 E graph_reserve: failed to allocate compute buffers
+0.44.367.857 E llama_init_from_model: failed to initialize the context: failed to allocate compute pp buffers
+0.44.367.875 E common_speculative_init_result: failed to create MTP context
+0.44.367.883 E srv    load_model: failed to create MTP context
+0.44.372.758 E srv  llama_server: exiting due to model loading error
+LEG-FAIL R0 not ready
+trace lines: 0; PEAK GPU 81174 MiB, LOWEST MemAvailable 137432 MiB; END R0 08:01:05
+requests 55 / 0, tokens 10817 / 0, identical requests 0
+TRACE-IDENTICAL
+=== LEG R2 parallel=5 ctx=5242880 img=547208dca250-g68d4166 opt=/home/ubuntu/nt/out-c90 seed=mtp-seed.k3sn extra=[LLAMA_SPEC_EXACT_TRACE=1 LLAMA_SPEC_EXACT=1 LLAMA_RS_KEEP_TAIL=0 LLAMA_EXPERT_STORE_TEST_HOOK_DELAY=45:50] xargs=[--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.7] 08:01:05
+LEG-FAIL R2 died
+0.11.011.637 W load_tensors: madvise(MADV_PAGEOUT) failed for 6 of 6 mappings: Cannot allocate memory
+0.43.857.474 E ggml_backend_cuda_buffer_type_alloc_buffer: allocating 18623.69 MiB on device 0: cudaMalloc failed: out of memory
+0.43.857.490 E ggml_gallocr_reserve_n_impl: failed to allocate CUDA0 buffer of size 19528353408
+0.43.857.491 E graph_reserve: failed to allocate compute buffers
+0.43.865.210 E llama_init_from_model: failed to initialize the context: failed to allocate compute pp buffers
+0.43.865.228 E common_speculative_init_result: failed to create MTP context
+0.43.865.236 E srv    load_model: failed to create MTP context
+0.43.870.287 E srv  llama_server: exiting due to model loading error
+LEG-FAIL R2 not ready
+trace lines: 0; PEAK GPU 53166 MiB, LOWEST MemAvailable 185448 MiB; END R2 08:01:51
+requests 55 / 0, tokens 10817 / 0, identical requests 0
+TRACE-IDENTICAL
+=== LEG G9T parallel=5 ctx=5242880 img=547208dca250-g68d4166 opt=/home/ubuntu/nt/out-c90 seed=mtp-seed.k3sn extra=[LLAMA_SPEC_EXACT_TRACE=1 LLAMA_SPEC_EXACT=1 LLAMA_RS_KEEP_TAIL=0 LLAMA_SPEC_EXACT_COLS=20] xargs=[--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.7] 08:01:52
+LEG-FAIL G9T died
+0.10.853.285 W load_tensors: madvise(MADV_PAGEOUT) failed for 6 of 6 mappings: Cannot allocate memory
+0.43.947.121 E ggml_backend_cuda_buffer_type_alloc_buffer: allocating 18623.69 MiB on device 0: cudaMalloc failed: out of memory
+0.43.947.135 E ggml_gallocr_reserve_n_impl: failed to allocate CUDA0 buffer of size 19528353408
+0.43.947.137 E graph_reserve: failed to allocate compute buffers
+0.43.954.448 E llama_init_from_model: failed to initialize the context: failed to allocate compute pp buffers
+0.43.954.466 E common_speculative_init_result: failed to create MTP context
+0.43.954.474 E srv    load_model: failed to create MTP context
+0.43.959.568 E srv  llama_server: exiting due to model loading error
+LEG-FAIL G9T not ready
+trace lines: 0; PEAK GPU 53165 MiB, LOWEST MemAvailable 186440 MiB; END G9T 08:02:37
+  only in A: 96 tokens, first token 576
+  only in A: 400 tokens, first token 576
+  only in A: 37 tokens, first token 760
+  only in A: 400 tokens, first token 23176
+  only in A: 37 tokens, first token 23176
+  only in A: 96 tokens, first token 8884
+  only in A: 90 tokens, first token 23176
+  only in A: 48 tokens, first token 760
+  only in A: 37 tokens, first token 31679
+  only in A: 128 tokens, first token 1392
+  only in A: 37 tokens, first token 576
+TRACE-DIFFERENT
+G0 rows 35, G9T rows 0, compared 0, different 0
+RESULTS-DIFFERENT
+=== LEG G9 parallel=5 ctx=5242880 img=547208dca250-g68d4166 opt=/home/ubuntu/nt/out-c90 seed=mtp-seed.k3sn extra=[LLAMA_SPEC_EXACT=1 LLAMA_RS_KEEP_TAIL=0 LLAMA_SPEC_EXACT_COLS=20] xargs=[--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.7] 08:02:37
+READY G9 after 45s
+0.00.301.849 I llama_model_loader: - kv  72: glm5-next.attention.indexer.index_share_mtp bool             = true
+0.10.934.285 I llama_context: n_rs_seq              = 3
+0.43.138.436 I snapshot_restore: expert store: cache snapshot restored: 12089 experts, 185.4 GB read in 20.0 s (9.3 GB/s)
+0.43.166.984 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.43.625.716 I common_speculative_init_result: creating MTP draft context against the target model '/models/GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf'
+0.43.625.748 I llama_context: n_rs_seq              = 0
+0.44.073.206 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.686.391 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+0.44.686.426 I spec common_specu: adding speculative implementation 'draft-mtp'
+0.44.867.178 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.45.423.886 I srv    load_model: speculative decoding context initialized
+0.00.118.687 I cmn  common_param: device_info:
+GPU after load: 86877 MiB
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 1.73, "prefill_tps": 5.79, "decode_n": 256, "decode_tps": 31.53, "md5": "8e312d7bdd", "draft_n": 175, "draft_ok": 159, "stop": "limit", "t0": 1794297804.9759734, "t1": 1794297814.8135066, "kind": "solo", "tag": "G9", "temp": 0, "seed": 1}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 61.24, "decode_n": 256, "decode_tps": 37.71, "md5": "8e312d7bdd", "draft_n": 179, "draft_ok": 158, "stop": "limit", "t0": 1794297814.8136327, "t1": 1794297821.7415483, "kind": "solo", "tag": "G9", "temp": 0, "seed": 1}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.29, "prefill_tps": 65.27, "decode_n": 256, "decode_tps": 31.16, "md5": "74fb633e8e", "draft_n": 178, "draft_ok": 132, "stop": "limit", "t0": 1794297821.7416399, "t1": 1794297830.217842, "kind": "solo", "tag": "G9", "temp": 0, "seed": 1}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.33, "prefill_tps": 54.03, "decode_n": 256, "decode_tps": 31.02, "md5": "f8531a5f07", "draft_n": 157, "draft_ok": 131, "stop": "limit", "t0": 1794297830.2179291, "t1": 1794297838.7759914, "kind": "solo", "tag": "G9", "temp": 0, "seed": 1}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.3, "prefill_tps": 71.02, "decode_n": 256, "decode_tps": 31.16, "md5": "4d6338450b", "draft_n": 173, "draft_ok": 138, "stop": "limit", "t0": 1794297838.776081, "t1": 1794297847.2566383, "kind": "solo", "tag": "G9", "temp": 0, "seed": 1}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.28, "prefill_tps": 76.3, "decode_n": 256, "decode_tps": 35.07, "md5": "e7851c4b56", "draft_n": 176, "draft_ok": 156, "stop": "limit", "t0": 1794297847.2567239, "t1": 1794297854.8058376, "kind": "solo", "tag": "G9", "temp": 0, "seed": 1}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.17, "prefill_tps": 58.26, "decode_n": 256, "decode_tps": 33.63, "md5": "7dfaf4ab46", "draft_n": 161, "draft_ok": 134, "stop": "limit", "t0": 1794297854.8500376, "t1": 1794297862.6309948, "kind": "solo", "tag": "G9", "temp": 1.0, "seed": 42}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.24, "prefill_tps": 76.06, "decode_n": 256, "decode_tps": 39.32, "md5": "9d91318123", "draft_n": 186, "draft_ok": 165, "stop": "limit", "t0": 1794297862.6311128, "t1": 1794297869.3561106, "kind": "solo", "tag": "G9", "temp": 1.0, "seed": 42}
+{"spec": "p5", "prompt_n": 15, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 65.91, "decode_n": 256, "decode_tps": 26.38, "md5": "fe9b78782f", "draft_n": 143, "draft_ok": 96, "stop": "limit", "t0": 1794297869.3562012, "t1": 1794297879.253276, "kind": "solo", "tag": "G9", "temp": 1.0, "seed": 42}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.25, "prefill_tps": 76.57, "decode_n": 256, "decode_tps": 27.79, "md5": "93fa19d1a2", "draft_n": 190, "draft_ok": 123, "stop": "limit", "t0": 1794297879.297325, "t1": 1794297888.746114, "kind": "solo", "tag": "G9", "temp": 1.0, "seed": 9}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.28, "prefill_tps": 76.33, "decode_n": 256, "decode_tps": 29.01, "md5": "1d97223b67", "draft_n": 162, "draft_ok": 118, "stop": "limit", "t0": 1794297888.7462502, "t1": 1794297897.8141296, "kind": "solo", "tag": "G9", "temp": 1.0, "seed": 9}
+{"spec": "p6", "prompt_n": 15, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 64.1, "decode_n": 256, "decode_tps": 29.3, "md5": "a18a451d46", "draft_n": 195, "draft_ok": 136, "stop": "limit", "t0": 1794297897.8142202, "t1": 1794297906.7544863, "kind": "solo", "tag": "G9", "temp": 1.0, "seed": 9}
+{"kind": "multi", "tag": "G9", "temp": 0, "seed": 1, "n": 2, "round": "warm", "agg_tps": 38.35, "wall_s": 13.35, "gen": 512, "per_stream_tps": [20.52, 19.85], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "draft_n": [133, 148], "draft_ok": [122, 112], "prefill_tps": [57.91, 76.78], "t0": 1794297906.7996948, "t1": 1794297920.1509104}
+{"kind": "multi", "tag": "G9", "temp": 0, "seed": 1, "n": 2, "round": 1, "agg_tps": 40.89, "wall_s": 12.52, "gen": 512, "per_stream_tps": [21.31, 21.05], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "draft_n": [131, 142], "draft_ok": [119, 114], "prefill_tps": [60.39, 79.18], "t0": 1794297920.1514783, "t1": 1794297932.6728828}
+{"kind": "multi", "tag": "G9", "temp": 0, "seed": 1, "n": 2, "round": 2, "agg_tps": 41.45, "wall_s": 12.35, "gen": 512, "per_stream_tps": [21.61, 21.35], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "draft_n": [131, 142], "draft_ok": [119, 114], "prefill_tps": [60.49, 80.01], "t0": 1794297932.6733837, "t1": 1794297945.0249925}
+{"kind": "multi", "tag": "G9", "temp": 1.0, "seed": 7, "n": 2, "round": "warm", "agg_tps": 34.19, "wall_s": 14.98, "gen": 512, "per_stream_tps": [18.01, 17.38], "md5": ["63501ca3a2", "07b7db8897"], "specs": ["p2", "p5"], "draft_n": [104, 109], "draft_ok": [89, 85], "prefill_tps": [70.9, 63.74], "t0": 1794297945.0696223, "t1": 1794297960.0449657}
+{"kind": "multi", "tag": "G9", "temp": 1.0, "seed": 7, "n": 2, "round": 1, "agg_tps": 36.69, "wall_s": 13.95, "gen": 512, "per_stream_tps": [19.06, 18.58], "md5": ["63501ca3a2", "07b7db8897"], "specs": ["p2", "p5"], "draft_n": [113, 113], "draft_ok": [91, 89], "prefill_tps": [73.97, 65.32], "t0": 1794297960.0455005, "t1": 1794297973.998966}
+{"kind": "multi", "tag": "G9", "temp": 0, "seed": 1, "n": 3, "round": "warm", "agg_tps": 41.71, "wall_s": 18.41, "gen": 768, "per_stream_tps": [14.42, 14.25, 14.54], "md5": ["65a7ff47bd", "38c4a280f2", "53336553da"], "specs": ["p0", "p1", "p2"], "draft_n": [91, 96, 93], "draft_ok": [86, 80, 82], "prefill_tps": [59.07, 78.28, 77.6], "t0": 1794297974.0442977, "t1": 1794297992.4569201}
+{"kind": "multi", "tag": "G9", "temp": 0, "seed": 1, "n": 3, "round": 1, "agg_tps": 42.21, "wall_s": 18.19, "gen": 768, "per_stream_tps": [14.49, 14.48, 14.53], "md5": ["e6731f6afe", "66e9ccb604", "527d64eac0"], "specs": ["p0", "p1", "p2"], "draft_n": [86, 88, 92], "draft_ok": [81, 78, 76], "prefill_tps": [58.23, 77.61, 79.89], "t0": 1794297992.4575903, "t1": 1794298010.6516418}
+{"kind": "multi", "tag": "G9", "temp": 0, "seed": 1, "n": 5, "round": "warm", "agg_tps": 42.66, "wall_s": 30.01, "gen": 1280, "per_stream_tps": [8.78, 8.75, 9.05, 8.87, 8.83], "md5": ["15ea8f2c90", "66e9ccb604", "7d309ff6a2", "8c4fd0ade1", "a2bc1cdd5d"], "specs": ["p0", "p1", "p2", "p3", "p4"], "draft_n": [40, 40, 40, 40, 45], "draft_ok": [36, 37, 37, 36, 30], "prefill_tps": [58.99, 76.72, 79.6, 75.69, 75.62], "t0": 
+{"kind": "multi", "tag": "G9", "temp": 0, "seed": 1, "n": 5, "round": 1, "agg_tps": 43.23, "wall_s": 29.61, "gen": 1280, "per_stream_tps": [8.83, 8.84, 9.09, 9.04, 8.91], "md5": ["8e312d7bdd", "e20f48e256", "b559903c57", "be8b690a37", "0951cab58c"], "specs": ["p0", "p1", "p2", "p3", "p4"], "draft_n": [57, 58, 58, 56, 65], "draft_ok": [55, 53, 53, 56, 48], "prefill_tps": [57.47, 76.65, 78.55, 76.13, 76.65], "t0": 1794
+{"kind": "multi", "tag": "G9", "temp": 0, "seed": 1, "n": 5, "round": 2, "agg_tps": 39.96, "wall_s": 32.03, "gen": 1280, "per_stream_tps": [8.09, 8.03, 8.27, 8.16, 8.33], "md5": ["cd6061d52b", "7a0b4d0ff8", "7c9672100a", "37b4f1a3ba", "4f789e4453"], "specs": ["p0", "p1", "p2", "p3", "p4"], "draft_n": [69, 69, 69, 69, 69], "draft_ok": [63, 62, 61, 63, 67], "prefill_tps": [57.67, 75.68, 77.5, 76.67, 77.32], "t0": 17942
+{"kind": "multi", "tag": "G9", "temp": 1.0, "seed": 21, "n": 5, "round": "warm", "agg_tps": 43.43, "wall_s": 29.47, "gen": 1280, "per_stream_tps": [8.95, 8.9, 8.95, 9.05, 9.24], "md5": ["428c334552", "3a33a00f6f", "e8708495b1", "2b39f64001", "2b5badd663"], "specs": ["p0", "p1", "p2", "p3", "p4"], "draft_n": [71, 73, 71, 73, 71], "draft_ok": [66, 58, 68, 64, 67], "prefill_tps": [57.18, 75.74, 76.37, 76.4, 77.76], "t0"
+{"kind": "multi", "tag": "G9", "temp": 1.0, "seed": 21, "n": 5, "round": 1, "agg_tps": 42.83, "wall_s": 29.89, "gen": 1280, "per_stream_tps": [8.86, 8.75, 8.93, 8.82, 8.71], "md5": ["efa9d9e9bd", "c234ec75ba", "ab210ff665", "b83714b994", "7cf0f4402e"], "specs": ["p0", "p1", "p2", "p3", "p4"], "draft_n": [50, 54, 53, 54, 50], "draft_ok": [49, 44, 45, 43, 46], "prefill_tps": [57.28, 75.57, 76.49, 76.94, 77.42], "t0": 1
+6.44.334.396 I slot print_timing: id  1 | task 3499 | draft acceptance = 0.81481 (   44 accepted /    54 generated), mean len =  2.02
+6.44.374.928 I slot print_timing: id  2 | task 3500 | draft acceptance = 0.79630 (   43 accepted /    54 generated), mean len =  2.00
+6.44.621.976 I llama_moe_cache: ubatch <= 8: hits = 3321236, misses = 953, hit rate = 99.97%, uploaded = 13818.50 MiB
+6.44.621.986 I llama_moe_cache: ubatch  > 8: hits = 827988, misses = 61, hit rate = 99.99%, uploaded = 884.50 MiB
+trace lines: 0; PEAK GPU 89786 MiB, LOWEST MemAvailable 106235 MiB; END G9 08:09:23
+GMTP-LEG-DONE G9 08:09:23
+=== LEG G6 parallel=5 ctx=5242880 img=547208dca250-g68d4166 opt=/home/ubuntu/nt/out-c90 seed=mtp-seed.k3sn extra=[LLAMA_SPEC_EXACT=1 LLAMA_RS_KEEP_TAIL=0] xargs=[--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.4] 08:09:23
+READY G6 after 45s
+0.00.306.182 I llama_model_loader: - kv  72: glm5-next.attention.indexer.index_share_mtp bool             = true
+0.10.938.037 I llama_context: n_rs_seq              = 3
+0.42.746.482 I snapshot_restore: expert store: cache snapshot restored: 12089 experts, 185.4 GB read in 19.8 s (9.4 GB/s)
+0.42.772.797 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.43.221.012 I common_speculative_init_result: creating MTP draft context against the target model '/models/GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf'
+0.43.221.042 I llama_context: n_rs_seq              = 0
+0.43.656.579 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.306.318 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+0.44.306.356 I spec common_specu: adding speculative implementation 'draft-mtp'
+0.44.486.103 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.45.037.453 I srv    load_model: speculative decoding context initialized
+0.00.116.238 I cmn  common_param: device_info:
+GPU after load: 86400 MiB
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 1.72, "prefill_tps": 5.81, "decode_n": 256, "decode_tps": 33.76, "md5": "8e312d7bdd", "draft_n": 218, "draft_ok": 169, "stop": "limit", "t0": 1794298212.062902, "t1": 1794298221.3616433, "kind": "solo", "tag": "G6", "temp": 0, "seed": 1}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 61.79, "decode_n": 256, "decode_tps": 41.43, "md5": "8e312d7bdd", "draft_n": 219, "draft_ok": 169, "stop": "limit", "t0": 1794298221.3617554, "t1": 1794298227.679531, "kind": "solo", "tag": "G6", "temp": 0, "seed": 1}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.28, "prefill_tps": 67.46, "decode_n": 256, "decode_tps": 33.31, "md5": "74fb633e8e", "draft_n": 252, "draft_ok": 153, "stop": "limit", "t0": 1794298227.6796196, "t1": 1794298235.619563, "kind": "solo", "tag": "G6", "temp": 0, "seed": 1}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.32, "prefill_tps": 56.12, "decode_n": 256, "decode_tps": 31.22, "md5": "f8531a5f07", "draft_n": 239, "draft_ok": 150, "stop": "limit", "t0": 1794298235.6196485, "t1": 1794298244.112492, "kind": "solo", "tag": "G6", "temp": 0, "seed": 1}
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 62.02, "decode_n": 256, "decode_tps": 33.69, "md5": "7dfaf4ab46", "draft_n": 236, "draft_ok": 150, "stop": "limit", "t0": 1794298244.156103, "t1": 1794298251.9124815, "kind": "solo", "tag": "G6", "temp": 1.0, "seed": 42}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 78.26, "decode_n": 256, "decode_tps": 39.77, "md5": "9d91318123", "draft_n": 218, "draft_ok": 172, "stop": "limit", "t0": 1794298251.9125977, "t1": 1794298258.558621, "kind": "solo", "tag": "G6", "temp": 1.0, "seed": 42}
+{"spec": "p5", "prompt_n": 15, "cache_n": 0, "prefill_s": 0.22, "prefill_tps": 67.02, "decode_n": 256, "decode_tps": 24.2, "md5": "fe9b78782f", "draft_n": 300, "draft_ok": 117, "stop": "limit", "t0": 1794298258.558716, "t1": 1794298269.32175, "kind": "solo", "tag": "G6", "temp": 1.0, "seed": 42}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.24, "prefill_tps": 78.11, "decode_n": 256, "decode_tps": 28.73, "md5": "93fa19d1a2", "draft_n": 285, "draft_ok": 137, "stop": "limit", "t0": 1794298269.365724, "t1": 1794298278.508024, "kind": "solo", "tag": "G6", "temp": 1.0, "seed": 9}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.3, "prefill_tps": 70.75, "decode_n": 256, "decode_tps": 26.99, "md5": "1d97223b67", "draft_n": 266, "draft_ok": 135, "stop": "limit", "t0": 1794298278.5081382, "t1": 1794298288.256295, "kind": "solo", "tag": "G6", "temp": 1.0, "seed": 9}
+{"spec": "p6", "prompt_n": 15, "cache_n": 0, "prefill_s": 0.23, "prefill_tps": 64.13, "decode_n": 256, "decode_tps": 31.65, "md5": "a18a451d46", "draft_n": 254, "draft_ok": 153, "stop": "limit", "t0": 1794298288.2563899, "t1": 1794298296.5503054, "kind": "solo", "tag": "G6", "temp": 1.0, "seed": 9}
+{"kind": "multi", "tag": "G6", "temp": 0, "seed": 1, "n": 2, "round": "warm", "agg_tps": 46.25, "wall_s": 11.07, "gen": 512, "per_stream_tps": [24.85, 24.08], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "draft_n": [125, 143], "draft_ok": [116, 109], "prefill_tps": [59.6, 78.17], "t0": 1794298296.5968645, "t1": 1794298307.6665914}
+{"kind": "multi", "tag": "G6", "temp": 0, "seed": 1, "n": 2, "round": 1, "agg_tps": 47.57, "wall_s": 10.76, "gen": 512, "per_stream_tps": [25.6, 24.63], "md5": ["8e312d7bdd", "74fb633e8e"], "specs": ["p0", "p1"], "draft_n": [124, 145], "draft_ok": [117, 109], "prefill_tps": [59.79, 78.98], "t0": 1794298307.667129, "t1": 1794298318.43097}
+2.33.743.965 I slot print_timing: id  0 | task 1227 | draft acceptance = 0.94355 (  117 accepted /   124 generated), mean len =  1.94
+2.34.376.296 I slot print_timing: id  1 | task 1228 | draft acceptance = 0.75172 (  109 accepted /   145 generated), mean len =  1.83
+2.34.621.016 I llama_moe_cache: ubatch <= 8: hits = 1209526, misses = 960, hit rate = 99.92%, uploaded = 13920.00 MiB
+2.34.621.025 I llama_moe_cache: ubatch  > 8: hits = 21933, misses = 53, hit rate = 99.76%, uploaded = 768.50 MiB
+trace lines: 0; PEAK GPU 90932 MiB, LOWEST MemAvailable 118043 MiB; END G6 08:12:00
+GMTP-LEG-DONE G6 08:12:00
+GH200-MTP1-DONE 08:12:00

@@ -1,0 +1,5 @@
+requests 55 / 55, tokens 10817 / 10820, identical requests 54
+  TAIL: B samples 3 tokens after the end of A's request of 95 tokens (the first 95 lines identical)
+TRACE-IDENTICAL (1 requests with a sampled tail after a stop)
+G0 rows 35, G3 rows 35, compared 35, different 0
+RESULTS-IDENTICAL

@@ -4,9 +4,14 @@
 #  G0 : plain decoding (no MTP), production env, traced: the reference bytes and logits rows
 #  G3 : exact speculation, 4 columns (3 drafts alone, 1 each at two clients, none at three or more), coupled drafting,
 #       p_min 0.7, traced; the first MTP server on this box starts without a snapshot and saves one (mtp-seed.k3sn).
-#       T03 = tracecmp G0 / G3
+#       T03 = tracecmp G0 / G3 (--tail 3: the accepted draft tokens that were sampled after a stop word and never
+#       emitted are in G3's trace only) plus rescmp (md5, token count and stop reason of every answer)
+#  G3U: G3 from the snapshot with the draft context's batch at 512 (DUB), traced; T03U = tracecmp/rescmp G0 / G3U
 #  G5 : plain, no trace: speed            G4 : G3 without the trace: speed
 #  G9 : G4 with 20 columns (3 drafts per client up to five clients), traced on the FULL list first (G9T, T09)
+#  G8 : G4 with 8 columns (3 drafts each at two clients, 1 each at three and four, none at five), traced on the FULL
+#       list first (G8T, T08). 8 is the widest batch the CUDA backend computes with the same kernel as one column;
+#       G9 (20 columns) gave other bytes at three and five clients, different from run to run.
 #  G6 : G4 with p_min 0.4                 G7 : G4 with the drafter's own greedy pick (LLAMA_SPEC_EXACT_COUPLED=0)
 #  DIAG (run by "auto" only when T03 differs): G1 = MTP loaded, one column (no drafts); T01
 #  RACE (the draft context's unsynchronized catch-up decode against the target's next decode, the cause of the Spark's
@@ -19,7 +24,10 @@ G=/srv/glm-5.3-flash/mtp; cd $G
 exec 9>/srv/glm-5.3-flash/window.lock; flock -n 9 || { echo "ABORT: window.lock is held"; exit 1; }
 T="LLAMA_SPEC_EXACT_TRACE=1"
 X="LLAMA_SPEC_EXACT=1 LLAMA_RS_KEEP_TAIL=0"
-mtp() { echo "--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min $1"; }
+# DUB: the draft context's physical batch. At the target's 4096 the MTP context reserves 18.6 GiB of compute buffers
+# on top of the target's 28 GiB, which only fits while the expert store has not filled its HBM bank (G3, cold); from a
+# snapshot the load dies with cudaMalloc out of memory (first run of G4, R1, R0, R2). 512 is the setting that can ship.
+mtp() { echo "--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min $1${DUB:+ --spec-draft-n-ubatch $DUB}"; }
 T1="--temperature 1 --top-p 0.95"
 SHORT=("specbench.py solo p0 p1 p2 p3 p4" "specbench.py solo p0 --n-predict 128"
        "specbench.py multi p0 p1 --rounds 0" "specbench.py multi p0 p1 p2 p3 p4 --rounds 0")
@@ -44,10 +52,13 @@ leg() {
     G0) bash gmtp-leg.sh G0 5 "$T" "${FULL[@]}" ;;
     G1) SEED=$MS3 XARGS="$(mtp 0.7)" bash gmtp-leg.sh G1 5 "$T LLAMA_SPEC_EXACT=1 LLAMA_SPEC_EXACT_COLS=1 LLAMA_RS_KEEP_TAIL=0" "${SHORT[@]}" ;;
     G3) SEED=$MS3 SAVE=mtp-seed.k3sn XARGS="$(mtp 0.7)" bash gmtp-leg.sh G3 5 "$T $X" "${FULL[@]}" ;;
+    G3U) SEED=$MS XARGS="$(mtp 0.7)" bash gmtp-leg.sh G3U 5 "$T $X" "${FULL[@]}" ;;
     G4) SEED=$MS XARGS="$(mtp 0.7)" bash gmtp-leg.sh G4 5 "$X" "${SPEED[@]}" ;;
     G5) bash gmtp-leg.sh G5 5 "" "${SPEED[@]}" ;;
     G6) SEED=$MS XARGS="$(mtp 0.4)" bash gmtp-leg.sh G6 5 "$X" "${QUICK[@]}" ;;
     G7) SEED=$MS XARGS="$(mtp 0.7)" bash gmtp-leg.sh G7 5 "$X LLAMA_SPEC_EXACT_COUPLED=0" "${QUICK[@]}" ;;
+    G8T) SEED=$MS XARGS="$(mtp 0.7)" bash gmtp-leg.sh G8T 5 "$T $X LLAMA_SPEC_EXACT_COLS=8" "${FULL[@]}" ;;
+    G8) SEED=$MS XARGS="$(mtp 0.7)" bash gmtp-leg.sh G8 5 "$X LLAMA_SPEC_EXACT_COLS=8" "${SPEED[@]}" ;;
     G9T) SEED=$MS XARGS="$(mtp 0.7)" bash gmtp-leg.sh G9T 5 "$T $X LLAMA_SPEC_EXACT_COLS=20" "${FULL[@]}" ;;
     G9) SEED=$MS XARGS="$(mtp 0.7)" bash gmtp-leg.sh G9 5 "$X LLAMA_SPEC_EXACT_COLS=20" "${SPEED[@]}" ;;
     R0) SEED=$MS XARGS="$(mtp 0.7)" STOPWAIT=20 CMDTIMEOUT=300 bash gmtp-leg.sh R0 5 "$T $X $D LLAMA_SPEC_DFT_SYNC=0 GGML_CUDA_HOST_BANK_OWNER_CHECK=0" "${RACE[@]}" ;;
@@ -56,14 +67,20 @@ leg() {
     TR0) python3 -I tracecmp.py --subset legs/trace-G0.txt legs/trace-R0.txt | tee legs/tr0.txt | tail -8 ;;
     TR2) python3 -I tracecmp.py --subset legs/trace-G0.txt legs/trace-R2.txt | tee legs/tr2.txt | tail -8 ;;
     T01) python3 -I tracecmp.py --subset legs/trace-G0.txt legs/trace-G1.txt | tail -8 ;;
-    T03) python3 -I tracecmp.py legs/trace-G0.txt legs/trace-G3.txt | tee legs/t03.txt | tail -12 ;;
-    T09) python3 -I tracecmp.py legs/trace-G0.txt legs/trace-G9T.txt | tee legs/t09.txt | tail -12 ;;
+    T03) python3 -I tracecmp.py --tail 3 legs/trace-G0.txt legs/trace-G3.txt | tee legs/t03.txt | tail -12
+         python3 -I rescmp.py legs/results.jsonl G0 G3 | tee -a legs/t03.txt | tail -6 ;;
+    T03U) python3 -I tracecmp.py --tail 3 legs/trace-G0.txt legs/trace-G3U.txt | tee legs/t03u.txt | tail -12
+         python3 -I rescmp.py legs/results.jsonl G0 G3U | tee -a legs/t03u.txt | tail -6 ;;
+    T08) python3 -I tracecmp.py --tail 3 legs/trace-G0.txt legs/trace-G8T.txt | tee legs/t08.txt | tail -12
+         python3 -I rescmp.py legs/results.jsonl G0 G8T | tee -a legs/t08.txt | tail -6 ;;
+    T09) python3 -I tracecmp.py --tail 3 legs/trace-G0.txt legs/trace-G9T.txt | tee legs/t09.txt | tail -12
+         python3 -I rescmp.py legs/results.jsonl G0 G9T | tee -a legs/t09.txt | tail -6 ;;
     *) echo "unknown leg $1" ;;
   esac
 }
 if [ "${1:-}" = auto ]; then
   leg G0; leg G3; leg T03
-  if grep -a -q "^TRACE-IDENTICAL" legs/t03.txt; then
+  if grep -a -q "^TRACE-IDENTICAL" legs/t03.txt && grep -a -q "^RESULTS-IDENTICAL" legs/t03.txt; then
     for l in G5 G4 R1 R0 TR0 R2 TR2 G9T T09 G9 G6; do leg $l; done
   else
     echo "T03 differs: diagnosis leg instead of speed"
