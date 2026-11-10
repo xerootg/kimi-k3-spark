@@ -1783,3 +1783,25 @@ Verified in Spark window nc-s4 on the binaries of the CI image `547208dca250-g0f
 to 1M answers 503 in 0.2 s, the log line above appears, and the conversation's next request finds 79906 tokens cached
 and answers in 4.3 s with the same bytes; the gate (SV8) and two acceptance processes (SA8, SA9) passed on the same
 binaries. Not in production yet. Ledger: docs/experiments.md, windows nc-s3 and nc-s4.
+
+## 0076-kpool-marks-kept
+
+The per-cell marks that `kpool_build_state` uses to list a pool once per ubatch are kept in the memory object and
+allocated once, instead of once per `llama_decode` call. No new variable; no effect on any computed byte.
+
+The marks are one 4-byte stamp per cell of every stream of the indexer cache. They were a member of the k-pool state,
+which belongs to the batch context, and the batch context is made anew for every `llama_decode` call. So every decode
+step allocated and zeroed 4 bytes times the size of the whole cache: 20 MiB with five slots of 1M cells, 3.9 MiB with
+five slots of 204800. Alone on one core this costs 1.35 ms against 0.26 ms per call on the Spark and 1.61 ms against
+0.31 ms on the GH200 (`repgen.cpp` in the evidence of window nc-s5). It is the reason five 1M slots decoded 0.3-0.5 %
+slower than five 200k slots on the Spark with every other setting equal (window nc-s4, legs SF8/SF9/SH9/SJ9 against
+SP8/SP9/SI9/SK9), and the GH200 has paid the larger array since it serves five 1M slots.
+
+A stamp only means something within the call that wrote it: the generation is bumped at the start of every call, and a
+pool is marked when its cell's stamp differs from that generation. The array and the generation counter therefore
+move to `llama_memory_hybrid_idx` (`kpool_marks`), shared by all batch contexts of that memory; the state keeps the
+generation of the call that built it for the reader (`is_new[i] == generation`). The pool list of a step is the same
+as before.
+
+Compiled for sm_121. Not in production; the measurement and the acceptance on the CI image are owed (Spark window
+nc-s5). Ledger: docs/experiments.md, windows nc-s4 and nc-s5.

@@ -1,0 +1,84 @@
+diff --git a/src/llama-memory-hybrid-idx.cpp b/src/llama-memory-hybrid-idx.cpp
+index 4481ab4..813f757 100644
+--- a/src/llama-memory-hybrid-idx.cpp
++++ b/src/llama-memory-hybrid-idx.cpp
+@@ -370,8 +370,7 @@ struct llama_memory_hybrid_idx::kpool_layout {
+ // Which pools of the layout the current ubatch must re-pool, in the layout's pool order.
+ struct llama_memory_hybrid_idx_context::kpool_state {
+     std::vector<uint32_t> is_new;
+-    std::vector<uint32_t> rep_gen; // per global cell, the generation that last marked a pool with that rep
+-    uint32_t generation = 0;
++    uint32_t generation = 0; // the stamp of the call that built this state (patch 0076: counted in kpool_marks)
+ 
+     uint32_t n_pool_real = 0;
+     uint32_t n_new       = 0;
+@@ -700,15 +699,21 @@ void llama_memory_hybrid_idx_context::kpool_build_state(const llama_ubatch & uba
+     }
+     GGML_ASSERT(st.own || n_pool_list == lay.n_pool_real);
+ 
++    // patch 0076: the per-cell stamps live in the memory object, allocated once (see kpool_marks)
++    auto & mk = mem->kpool_marks_get();
++
+     st.n_pool_real = n_pool_list;
+     st.n_new       = 0;
+-    if (++st.generation == 0) {
++    if (++mk.generation == 0) {
+         std::fill(st.is_new.begin(),  st.is_new.end(),  0);
+-        std::fill(st.rep_gen.begin(), st.rep_gen.end(), 0);
+-        st.generation = 1;
++        std::fill(mk.rep_gen.begin(), mk.rep_gen.end(), 0);
++        mk.generation = 1;
+     }
++    st.generation = mk.generation;
+     st.is_new.resize(n_pool_list, 0);
+-    st.rep_gen.resize((size_t) kv_size*idx->get_n_stream(), 0);
++    if (mk.rep_gen.size() != (size_t) kv_size*idx->get_n_stream()) {
++        mk.rep_gen.assign((size_t) kv_size*idx->get_n_stream(), 0);
++    }
+ 
+     std::array<uint32_t, LLAMA_MAX_SEQ> pool_start;
+ 
+@@ -717,8 +722,8 @@ void llama_memory_hybrid_idx_context::kpool_build_state(const llama_ubatch & uba
+     auto mark = [&](llama_seq_id s, size_t k) {
+         const auto & sq  = lay.seqs[s];
+         const size_t rep = (size_t) sq.strm*kv_size + sq.cells[sq.pools[k] + kpool - 1].second;
+-        if (st.rep_gen[rep] != st.generation) {
+-            st.rep_gen[rep] = st.generation;
++        if (mk.rep_gen[rep] != st.generation) {
++            mk.rep_gen[rep] = st.generation;
+             st.is_new[pool_start[s] + k] = st.generation;
+             ++st.n_new;
+         }
+diff --git a/src/llama-memory-hybrid-idx.h b/src/llama-memory-hybrid-idx.h
+index 0ac4265..c66f387 100644
+--- a/src/llama-memory-hybrid-idx.h
++++ b/src/llama-memory-hybrid-idx.h
+@@ -92,6 +92,19 @@ public:
+     const kpool_layout & kpool_layout_update();
+     const kpool_layout & kpool_layout_get() const;
+ 
++    // patch 0076: the scratch of kpool_build_state that is sized by the whole cache (one stamp of 4 bytes per cell of
++    // every stream). It is kept here because the batch context, and with it the k-pool state, is made anew for every
++    // llama_decode call: as a member of that state the array was allocated and zeroed once per decode step, 20 MiB
++    // with five slots of 1M cells (1.3-1.6 ms per step measured alone on the Spark and the GH200) against 3.9 MiB with
++    // five slots of 204800. A stamp only means something within the call that wrote it (the generation is bumped at
++    // the start of every call), so sharing the array between contexts of this memory changes nothing.
++    struct kpool_marks {
++        std::vector<uint32_t> rep_gen; // per global cell, the generation that last marked a pool with that rep
++        uint32_t generation = 0;
++    };
++
++    kpool_marks & kpool_marks_get() { return kpool_mk; }
++
+     // The pooled keys persist in the idx cache across batches. A sequence edit can regroup the pools
+     // from some position on, which stales every pooled key at or after it. POS_CLEAN means none.
+     using stale_pos_t = std::array<llama_pos, LLAMA_MAX_SEQ>;
+@@ -121,6 +134,8 @@ private:
+     // unique_ptr because kpool_layout is incomplete here
+     std::unique_ptr<kpool_layout> kpool_lay;
+ 
++    kpool_marks kpool_mk; // patch 0076
++
+     // seq_id < 0 stales every sequence, p0 < 0 stales the sequence from its first position
+     void mem_idx_stale_set(llama_seq_id seq_id, llama_pos p0);
+ 
