@@ -1,0 +1,9 @@
+SF0 lowest MemAvailable 19265 MiB
+SP0 lowest MemAvailable 23112 MiB
+SO0 lowest MemAvailable 19266 MiB
+SV9 lowest MemAvailable 17757 MiB
+SA0 lowest MemAvailable 17803 MiB
+SA1 lowest MemAvailable 17795 MiB
+SP1 lowest MemAvailable 23106 MiB
+SF1 lowest MemAvailable 19241 MiB
+SQ1 lowest MemAvailable 23090 MiB

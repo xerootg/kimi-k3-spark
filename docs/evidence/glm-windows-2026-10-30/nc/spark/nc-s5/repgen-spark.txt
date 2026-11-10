@@ -1,0 +1,6 @@
+n=5242880 (20.0 MiB) round 0: 1.373 ms per call
+n=5242880 (20.0 MiB) round 1: 1.349 ms per call
+n=5242880 (20.0 MiB) round 2: 1.349 ms per call
+n=1024000 (3.9 MiB) round 0: 0.269 ms per call
+n=1024000 (3.9 MiB) round 1: 0.264 ms per call
+n=1024000 (3.9 MiB) round 2: 0.264 ms per call

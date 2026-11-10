@@ -2533,3 +2533,65 @@ five 1M slots.** `/opt/llama` of the image copied to `~/nc/ci-0fa9510`, bare ser
   `ee079496a4` three times through the Service (17.1-17.5 tok/s); no test server, runner, key file or test snapshot
   left; the laptop deadman disarmed. Not run: the full-scale burst leg FB8 (a 500k session next to four ~190k
   clients, about 105 minutes).
+
+**2026-11-10, Spark window nc-s5 (19:58-21:07 UTC): the cost of five 1M slots was 20 MiB allocated and zeroed in
+every decode step; patch 0076 removes it, and the proposed Spark config passes the gate and two acceptance processes
+on the binaries of the CI image `547208dca250-gfbb8831`.** `/opt/llama` of the image copied to `~/nc/ci-fbb8831`
+(the old binaries of `g0fa9510` next to it for the controls), bare servers on 127.0.0.1:18080 under `window.lock`,
+glm53-spark at 0, glm53-gh200 serving throughout. "FIN" as in windows nc-s3 and nc-s4. Evidence:
+`docs/evidence/glm-windows-2026-10-30/nc/spark/nc-s5/` (runner `spark-nc9.sh`, its log `spark-nc9a.log`,
+`legs-nc2/results.jsonl`, `legs-nc2/lowmem.txt`, `digest-short-legs-SA0-SA1-SV9.txt`, the microbench `repgen.cpp`
+with `repgen-spark.txt` and `repgen-gh200.txt`).
+- **Cause (found between the windows, on paper and with a microbench; no production box touched beyond one CPU core
+  for a second).** The k-pool state of the indexer (`kpool_state`) lives in the batch context, which
+  `llama_decode` creates anew for every call. Its `rep_gen` vector holds one 4-byte stamp per cell of every stream of
+  the indexer cache and was `resize(kv_size*n_stream, 0)` in every call: 20 MiB allocated and zeroed per decode step
+  with five 1M slots, 3.9 MiB with five 200k slots. `repgen.cpp` does only that, on one core: 1.35 ms against
+  0.26 ms per call on the Spark, 1.62 ms against 0.32 ms on the GH200. In the server the difference was smaller
+  (about 0.3-0.5 ms per step from the legs of window nc-s4); not explained, not chased: the patch removes the
+  allocation either way.
+- **Patch 0076** keeps the stamps and their generation counter in the memory object
+  (`llama_memory_hybrid_idx::kpool_marks`), so a decode step allocates nothing that is sized by the cache. A stamp
+  only means something within the call that wrote it (the generation is bumped at every call), so sharing the array
+  between calls changes no pool list. The GH200 pays the same 20 MiB per step in production today (five 1M slots).
+- **The same short sequence as in window nc-s4** (solo p0, two clients with three rounds, three clients with two
+  rounds), one fresh server process each, decode aggregate in tok/s. "new" is `gfbb8831` (with 0076), "old" is
+  `g0fa9510`:
+
+  | leg | binaries | config | solo | two clients r1 / r2 / r3 | three clients r1 / r2 |
+  |---|---|---|---|---|---|
+  | SF0 | new | FIN (1M slots, floor, pieces) | 15.53 | 21.48 / 21.62 / 21.64 | 24.16 / 24.23 |
+  | SP0 | new | production config (200k slots) | 15.46 | 21.53 / 21.63 / 21.66 | 24.24 / 24.31 |
+  | SO0 | old | FIN | 15.40 | 21.37 / 21.51 / 21.55 | 24.17 / 24.26 |
+  | SP1 | new | production config | 15.50 | 21.51 / 21.62 / 21.62 | 24.24 / 24.33 |
+  | SF1 | new | FIN | 15.50 | 21.50 / 21.61 / 21.64 | 24.22 / 24.30 |
+  | SQ1 | old | production config (what serves today) | 15.46 | 21.47 / 21.60 / 21.61 | 24.21 / 24.29 |
+
+  - One client: FIN went from 15.36-15.42 (five legs on the old binaries, windows nc-s4 and nc-s5) to 15.50-15.53,
+    level with the 200k slots (15.46-15.50). Two clients: 21.37-21.43 in round 1 before, 21.48-21.50 now, against
+    21.47-21.53 with 200k slots.
+  - Three clients: FIN 24.16-24.22 / 24.23-24.30 against 24.21-24.24 / 24.29-24.33 with 200k slots. The ranges now
+    touch; the largest difference between two legs (SF0 against SP0) is 0.08 tok/s, 0.3 %, which is 0.1 s on a
+    round of 31.7 s, and the two FIN legs differ by nearly as much from each other. The per-stream decode speeds in
+    those rounds are within 0.05 tok/s of each other in every leg, and the short prompts of a round are read a
+    little slower with 1M slots (37.2-37.7 against 37.5-38.4 tok/s for a ten-token prompt, old binaries on FIN
+    37.3-37.5): if anything is left it is a few milliseconds per request, not per token. A read of the code found
+    no work per decode step that is sized by the slot any more; `seq_rm` still scans all cells of a stream once per
+    request. Not chased further.
+  - Against what serves today (SQ1), the proposed config on the new image (SF1, the adjacent leg) is level or
+    ahead in every column.
+- **Leg SV9 (FIN, client classes, detectors): gate PASS.** 21 of 21 answers gold, 8 distinct long ubatches and none
+  with more than one result hash, 40 ubatches read in pieces, 3968 ubatches while a recurrent cell was frozen and
+  none that contained it, no guard refusal, no test key in the log.
+- **Legs SA0 and SA1 (acceptance on FIN, two server processes): 0 multi rounds differing from solo or gold in
+  either.** Decode aggregate, tok/s, rounds 1 / 2: two clients 20.88 / 21.33 and 20.83 / 21.31; three 24.28 / 24.32
+  and 24.24 / 24.29; four 25.85 / 25.91 and 25.85 / 25.94; five 24.70 / 24.73 and 24.69 / 24.75; four short clients
+  next to a 16k prompt 12.09 and 12.08; p0 next to a 16k prompt 5.33 in both. The 16k prompt alone is read at 347
+  and 349 tok/s. The production config with the same sequence on this box (leg SP0 of window nc-s2): three
+  24.30 / 24.31, four 25.92 / 25.98, five 24.70 / 24.71, four short clients next to a 16k prompt 12.40 (the 2.5 %
+  there is the read in pieces, as recorded for windows nc-s2 and nc-s3; it is not from the slot size). Lowest MemAvailable 17803 and 17795 MiB (short legs: 19241-19266 MiB with FIN,
+  23090-23112 MiB with the production config).
+- **Window closed 21:07 UTC.** glm53-spark back at one replica on image `547208dca250-g08d176f`, quicksort gold
+  `ee079496a4` three times through the Service (17.1 tok/s); no test server, runner, key file or test snapshot
+  left; the laptop deadman disarmed. Not run yet: the full-scale burst leg FB9 (a 500k session next to four ~190k
+  clients, about 105 minutes), window nc-s6.
