@@ -1,0 +1,9 @@
+== T1 [LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1]
+{"name": "A", "t_send": 0.0, "ttft_s": 0.03, "t_done": 28.93, "n": 6000, "max_gap_s": 0.01, "prompt_n": 8, "decode_tps": 207.6, "md5": "5441629f6b", "mode": "solo"}
+{"name": "B", "t_send": 28.93, "ttft_s": 46.55, "t_done": 75.61, "n": 16, "max_gap_s": 0.01, "prompt_n": 6484, "decode_tps": 115.3, "md5": "f539940cbc", "mode": "solo"}
+{"name": "C", "t_send": 75.61, "ttft_s": 0.02, "t_done": 75.67, "n": 16, "max_gap_s": 0.0, "prompt_n": 4, "decode_tps": 404.4, "md5": "be4ebc72c7", "mode": "solo"}
+{"name": "A", "t_send": 0.0, "ttft_s": 0.03, "t_done": 55.05, "n": 6000, "max_gap_s": 2.86, "prompt_n": 8, "decode_tps": 109.0, "md5": "5441629f6b", "mode": "share"}
+{"name": "B", "t_send": 1.0, "ttft_s": 72.96, "t_done": 74.08, "n": 16, "max_gap_s": 0.01, "prompt_n": 6484, "decode_tps": 126.8, "md5": "f539940cbc", "mode": "share"}
+{"name": "B", "t_send": 0.0, "ttft_s": 46.58, "t_done": 46.72, "n": 16, "max_gap_s": 0.01, "prompt_n": 6484, "decode_tps": 114.6, "md5": "f539940cbc", "mode": "turns"}
+{"name": "C", "t_send": 0.5, "ttft_s": 4.84, "t_done": 7.21, "n": 16, "max_gap_s": 1.83, "prompt_n": 4, "decode_tps": 8.0, "md5": "be4ebc72c7", "mode": "turns"}
+2

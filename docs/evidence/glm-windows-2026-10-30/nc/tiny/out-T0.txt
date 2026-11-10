@@ -1,0 +1,9 @@
+== T0 []
+{"name": "A", "t_send": 0.0, "ttft_s": 0.03, "t_done": 27.34, "n": 6000, "max_gap_s": 0.01, "prompt_n": 8, "decode_tps": 219.7, "md5": "5441629f6b", "mode": "solo"}
+{"name": "B", "t_send": 27.34, "ttft_s": 46.61, "t_done": 74.07, "n": 16, "max_gap_s": 0.01, "prompt_n": 6484, "decode_tps": 126.7, "md5": "f539940cbc", "mode": "solo"}
+{"name": "C", "t_send": 74.07, "ttft_s": 0.02, "t_done": 74.12, "n": 16, "max_gap_s": 0.0, "prompt_n": 4, "decode_tps": 453.2, "md5": "be4ebc72c7", "mode": "solo"}
+{"name": "A", "t_send": 0.0, "ttft_s": 0.03, "t_done": 74.17, "n": 6000, "max_gap_s": 46.5, "prompt_n": 8, "decode_tps": 80.9, "md5": "5441629f6b", "mode": "share"}
+{"name": "B", "t_send": 1.0, "ttft_s": 46.5, "t_done": 47.68, "n": 16, "max_gap_s": 0.01, "prompt_n": 6484, "decode_tps": 83.6, "md5": "f539940cbc", "mode": "share"}
+{"name": "B", "t_send": 0.0, "ttft_s": 46.78, "t_done": 46.97, "n": 16, "max_gap_s": 0.02, "prompt_n": 6484, "decode_tps": 81.7, "md5": "f539940cbc", "mode": "turns"}
+{"name": "C", "t_send": 0.5, "ttft_s": 46.28, "t_done": 46.97, "n": 16, "max_gap_s": 0.01, "prompt_n": 4, "decode_tps": 83.2, "md5": "be4ebc72c7", "mode": "turns"}
+1
