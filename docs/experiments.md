@@ -1965,3 +1965,105 @@ something else dominated at the time. Re-test them after any change that shifts 
 - **Next:** in the next GH200 window, a control leg on the production image `g68d4166` with the `nc4d.sh` sequence
   (expect about 1340 tok/s for 16k after the mix). If it matches, image `gc93c6d9` has no regression and its two
   acceptance processes from nc4 stand; the share decision (W08 against W12) is then the only gate left for the GH200.
+
+**2026-11-10, GH200 window mtp-g1 (07:40-08:52 UTC): exact speculation with the MTP head (patch 0070) is byte-exact on the GH200 at 4 and at 8 decode columns, and slower than plain decoding at every client count (alone 48 to 36 tok/s, two clients 63 to 46, three to five clients about 9 % slower). Not shipped. With the Spark result (window mtp2) speculation is closed on both boxes; 0070 stays in the stack as a candidate that is off by default.**
+
+- Setup: dev build of the stack through 0069 + 0070 (`~/nt/out-c90`; the committed
+  `patches/0070-exact-mtp-speculation.patch` on top of the stack gives the same tree) mounted over the production image `547208dca250-g68d4166`, production
+  env and arguments, five slots, docker test servers (`mtp/gmtp-leg.sh`, legs in `mtp/gh200-mtp1.sh`). Speculation
+  legs: `--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.7`, `LLAMA_SPEC_EXACT=1`,
+  `LLAMA_RS_KEEP_TAIL=0`. Evidence: `docs/evidence/glm-windows-2026-10-30/mtp/gh200-mtp1/`.
+- **Exactness: pass at 4 and 8 columns.** Leg G0 is plain decoding with the trace on (every sampled token and the
+  FNV-1a of every logits row; 55 requests, 10817 rows: alone and two to five clients, temperature 0 and temperature
+  1.0 / top-p 0.95 with seeds, follow-up turns, stop words, uneven lengths, a 16k prompt next to two decoding
+  clients). Against it, `tracecmp.py` and `rescmp.py` (md5, token count and stop reason of all 35 answer rows):
+
+  | leg | what | trace | answers |
+  |---|---|---|---|
+  | G3 | 4 columns, cold start, draft batch 4096 | identical | identical |
+  | G3U | 4 columns, from the snapshot, draft batch 512 | identical | identical |
+  | G8T | 8 columns (3 drafts each at two clients, 1 each at three and four) | identical | identical |
+  | G1 | MTP loaded, one column (no drafts), 8 requests | identical (subset) | same md5 |
+
+  One request in each speculation trace is 3 rows longer than plain decoding's: a stop word ended the answer in the
+  middle of a step, and the accepted draft tokens after it were sampled and traced but never emitted
+  (`tracecmp.py --tail 3` lists it; the first 95 rows are identical and so is the answer). The gold request gave
+  `bc32ecab82` in every leg.
+- **20 columns is not exact (dead end).** Leg G9 (`LLAMA_SPEC_EXACT_COLS=20`, three drafts per client up to five
+  clients) gave other bytes at three and at five clients, and different ones from round to round; alone and at two
+  clients (4 and 8 columns in use) the bytes held. The CUDA backend computes batches wider than 8 columns with
+  another kernel, which the batch-invariant mode (0054) does not cover. So 8 is the widest exact batch today, and at
+  8 the fifth client gets no drafts.
+- **Speed: it loses everywhere.** Untraced legs, the same client list, plain (G5) against exact speculation. Means
+  per kind of row (`gh200-mtp1/speed-G5-*.txt` has every row, GPU watts from `nvidia-smi` every 2 s):
+
+  | clients, temperature | plain G5 (tok/s) | 4 columns G4 | 8 columns G8 | plain tok/s/W | G4 tok/s/W |
+  |---|---|---|---|---|---|
+  | one, 0 | 48.24 | 36.36 (-24.6 %) | 36.53 (-24.3 %) | 0.161 | 0.154 |
+  | one, 1.0 | 47.15 | 33.27 (-29.4 %) | 33.38 (-29.2 %) | 0.154 | 0.138 |
+  | two, 0 | 62.95 | 45.80 (-27.3 %) | 44.12 (-29.9 %) | 0.207 | 0.181 |
+  | two, 1.0 | 60.22 | 40.81 (-32.2 %) | 39.39 (-34.6 %) | 0.202 | 0.167 |
+  | three, 0 | 68.30 | 61.96 (-9.3 %, no drafts) | 48.84 (-28.5 %) | 0.225 | 0.209 |
+  | five, 0 | 70.31 | 63.47 (-9.7 %, no drafts) | 63.50 (-9.7 %, no drafts) | 0.223 | 0.213 |
+  | five, 1.0 | 69.83 | 63.38 (-9.2 %, no drafts) | 63.47 (-9.1 %, no drafts) | 0.218 | 0.209 |
+
+  Every row of G4 and G8 has the md5 of the plain row. Other legs: p_min 0.4 instead of 0.7 (G6) is worse (alone
+  -29 % and -35 %: more drafts, 69 % and 55 % accepted); 20 columns (G9) -32 to -41 % and not exact; MTP loaded
+  without drafts (G1, traced, draft batch 4096) 22-38 % slower alone. Leg G7 (the drafter's greedy pick instead of
+  coupled drafting) was not run: coupled drafting already accepts 84 % alone and it cannot fix the cost below. The
+  GPU draws less with speculation (mean over the leg 250 W against 279 W) because it waits more, but tokens per
+  second per watt still fall in every row group.
+- **Why it loses (the cost model).** The drafts are good: alone, 84 % of the draft tokens are accepted at temperature
+  0 and 74 % at temperature 1.0 (2.3 and 2.0 tokens per step); at two clients 92 % and 88 %. The step is what costs.
+  Plain decoding scales from 48 tok/s alone to 70 tok/s at five clients, so a step is 20.7 ms alone and 71 ms with
+  five columns: every extra column costs about 12.6 ms, 61 % of a whole solo step (the expert lookups and matmuls of
+  a column do not get cheaper next to other columns, and the per-token attention of the exact verify is one call
+  per token by design). A step with three draft columns therefore costs about 2.8 solo steps before any drafting
+  work, and the draft context adds its own: its catch-up decode after every target step is what the 9 % at three to
+  five clients measures (no drafts there), and its compute buffers take HBM from the expert store (HBM-tier share of
+  decode lookups 50.5 % plain, 44.4 % with the draft batch at 512, 36-39 % at 4096). Measured: about 64 ms per step
+  for 2.3 tokens, 27.5 ms per token against 20.7 plain. Even with every draft accepted, four tokens for about 3.1
+  solo steps would be +29 % at best alone and nothing at five clients. Speculation pays when extra columns are
+  nearly free; here the batch already sells its columns to other clients at 61 % each.
+- **Memory finding.** The MTP draft context reserves its own CUDA compute buffers: 18624 MiB at the target's batch of
+  4096 (on top of the target's 28008 MiB), about 9.1 GiB fixed plus 2.3 MiB per token of its batch. Cold (G3) that
+  fits; from a snapshot with the HBM bank full the load died five times (`cudaMalloc failed: out of memory`, "failed
+  to create MTP context"; `server-*-oom.log`) unless the memory valve happened to sample between the two reserves.
+  With upstream's `--spec-draft-n-ubatch 512` the context takes 10320 MiB, the valve releases 420 HBM slots
+  (6.39 GiB) and every load worked. GPU memory after load: 79.97 GiB plain, 86.8 GiB with MTP.
+- **Race legs: the draft context is damaged without the synchronize; the tripwire did not catch it.** R0 =
+  `LLAMA_SPEC_DFT_SYNC=0` and the backend's owner check off, R1 = synchronize off, owner check on, R2 = synchronize
+  on; three requests each (five clients, one, two), four runs of R0 and R1, one of R2 (`race-repeat.sh`).
+  - No run aborted, and the target's trace was identical to G0's in all nine (8 requests, 1920 rows). The target's
+    bytes held.
+  - In four of the eight runs without the synchronize (R0 runs 1 and 3, R1 runs 3 and 4) one of the two clients of
+    the last request had a damaged draft stream: 51 of 157 or 58 of 159 draft tokens accepted (32-36 %) instead of
+    92 of 95 and 89 of 101. The counts repeat exactly when the same client is hit, so it is one wrong state entered
+    at one point, not random damage. With the synchronize on, the counts were the expected ones (give or take one
+    with the server's history) in R2 and in every other leg with that request (G3, G3U, G4: nine rows).
+  - **The owner check did not fire in the two damaged R1 runs.** Whatever goes wrong there is not seen by a
+    `cudaStreamQuery` on the previous owner's stream at the next lookup. The tripwire stays in the patch (it costs a
+    pointer compare) but nothing here shows it working; the Spark's abort was not re-run with it.
+  - The forced collision never engaged: `LLAMA_EXPERT_STORE_TEST_HOOK_DELAY=45:50` sleeps in the host hook of the
+    MTP block, and with `LLAMA_EXPERT_STORE_GPU_SLOTS=1` the lookups run on the GPU and the host hook is only called
+    on a miss (no delay line in any log). So the Spark's "has slot -1 after the plan" abort was not reproduced on
+    the GH200; its explanation (previous entry) still rests on the code and on the one Spark abort.
+  - What stands: an unsynchronized draft context is unsafe on both boxes (abort on the Spark, wrong drafts on the
+    GH200), the server-side synchronize removes both symptoms as far as tested, and production is not exposed (one
+    context).
+- Mistakes in the window, fixed: the first comparisons of the race legs printed "identical" for two empty traces
+  (the servers had died at load; `tracecmp.py` now prints `TRACE-EMPTY`, the outputs are kept as `*-empty.txt`), and
+  the first `race-repeat.sh` started legs while the previous leg's monitor still held `window.lock` and filed stale
+  logs under new run numbers (deleted; `race-repeat-a.log` keeps the one real run). The other agent's CPU-only
+  builds ran on the box 07:55-08:12 UTC (announced in the coordination file), overlapping G5, G9 and G6; G5's solo
+  speeds agree with G0's from before the builds.
+- **Decision: do not ship on the GH200; ledger and stop.** Acceptance asked for the same bytes and more speed; the
+  bytes pass and the speed fails on both boxes. Patch 0070 is committed off by default (the exact verify, the exact
+  acceptance, coupled drafting, the recurrent rollback guard and the synchronize are the parts a later attempt would
+  need). Revisit only if one of these changes: extra decode columns get much cheaper than 61 % of a solo step (a
+  verify path that shares the expert lookups of consecutive tokens of one sequence would be the lever), the
+  batch-invariant path covers more than 8 columns, or a drafter that does not need its own 10 GiB context and
+  catch-up decode appears.
+- Restored at 08:52 UTC: glm53-gh200 at 1 replica on `g68d4166`, quicksort gold `bc32ecab82` twice through the
+  Service (59.8-60.0 tok/s), `workbench-queue` unsuspended, no test container or key file left, `window.lock` free.
+  The Spark stayed up throughout.

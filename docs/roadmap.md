@@ -279,6 +279,13 @@ standard greedy md5 gates and measured A/Bs before adoption.
 Haley asked to park these until token cost does not matter. Reproducibility is a hard requirement for anything served:
 the same request must give the same bytes across runs and restarts.
 
+- **Closed 2026-11-10: exact MTP speculation (patch 0070) is byte-exact and slower on both boxes.** Spark window
+  mtp2 and GH200 window mtp-g1 (docs/experiments.md): every token and logits row equals plain decoding's, alone and
+  batched, at temperature 0 and at production sampling; the GH200 loses 25-32 % at one and two clients and 9 % at
+  three to five, the Spark does not pay either. A decode column costs about 61 % of a solo step on the GH200, so
+  verifying drafts costs more than the tokens it saves. 0070 stays in the stack, off by default. Revisit only with a
+  verify path that makes extra columns of one sequence much cheaper, or a drafter without its own context. The
+  original item, kept for the record:
 - **Make MTP reproducible on the Spark (Flash).** MTP measured +15-22 % decode (window fl), but three identical requests
   in one server gave three different outputs (`8e00c9eb75`, `f06371d4c6`, `f2c99a7d44`), and the six exact-columns
   knobs did not fix it (and made it slower than no MTP). Find the nondeterministic step in the verify pass (tensor
@@ -287,6 +294,8 @@ the same request must give the same bytes across runs and restarts.
   server restarts while short requests stayed identical (2026-11-05 ledger). Flash Q4 matched at 24k and 200k between
   two legs with different ubatch sizes, but a restart test (same config, two processes, 100k+) is still owed.
 - **Cheap verify kernel for MTP windows (Strata's interleaved small-batch matvec)**: only after MTP is reproducible.
+  (2026-11-10: it is reproducible now with 0070; this kernel is the lever that would have to cut the column cost
+  before speculation can pay.)
 
 ## Stashed 2026-11-05 (pending Haley's answers, resume here)
 
@@ -314,7 +323,7 @@ State after window nd (2026-11-07 night, on the existing 2.5 GbE; details in doc
 - Done: design 1 (batch across streams) as patch 0049 (`LLAMA_EXPERT_STORE_REMOTE_COLS=1`, default off): one request per box per MoE layer per decode step for all N streams, so critical-path round trips per generated token fall from 43 to 43/N (10.75 at N=4, 5.4 at N=8). Both NUCs serve (nuc2 experts 0-103, nuc3 104-149 of each regular layer; `f53s` CPU server, CUDA-exact, 0.42 ms per expert-token pair, 0 page faults in steady state), each computing ~4-5 % of all routed rows (~10 % together). Byte-identical tier on/off at N=2/4/8 with prompt isolation; +1.3-2.5 % at N=4, +4.0-4.2 % at N=8, neutral at N=2, N=1 stays local.
 - Production: keep off. Production serves one 1M slot (`--parallel 1`), where the tier does nothing; multi-slot serving first needs elastic KV per slot (`--parallel 4` disables it today, and 1M context then costs the cache 12.8 GB through the valve) and `LLAMA_PREFILL_ISOLATE=1` (without it, multi-stream bytes are not reproducible run to run, tier or not). The two knobs the tier needs (`GGML_CUDA_MMVQ_EXACT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS=1`) also change the standard short request's md5 (`d8b2a26bf6`); the 16k gold holds.
 - Box kernel v2 (window nd9) cut the NUC's time per pair 15-28 % (0.30 ms for one pair) and the boxes took more rows, but throughput did not move: at N>=4 the routed experts are only ~25-30 % of the Spark's step, so offloading ~10 % of the pairs is worth ~2-4 %. Next levers, in order: (a) the Spark's own spine at N>=4 (the larger share, kernel-fusion work); (b) the faster link: ~0.3-0.4 ms of each single-pair round trip is transport, so more pairs fit the window; (c) design 2 (k tokens per pass) once speculative decoding is reproducible, which multiplies N for a single stream; (d) more boxes, if the experts' share grows (bigger models, larger N).
-- State after window nuc5 (2026-11-10, five batch-invariant slots, the production configuration; docs/experiments.md "NUC expert tier on five batch-invariant slots"): the tier is byte-exact there with patch 0067 (every client gold at one to five clients, tier on and off) and stays **off**: the boxes add +2.0-3.3 % at four clients and +3.3-3.5 % at five, nothing at one and two, for about 50-60 W of NUC package power and a network hop in every decode step. Most of what earlier tier legs gained was the column split the tier needs, which works without the boxes: `LLAMA_EXPERT_STORE_SPLIT_COLS=1` from three columns (`LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3`) is +2.9 % at three clients, +9 % at four and five, same bytes, for about +10 W on the Spark's GPU. Next: acceptance of the split on the CI image, then production. The tier comes back for a faster link or a model whose experts do not fit the Spark; the Thunderbolt link does not help it (NUC-to-NUC only).
+- State after window nuc5 (2026-11-10, five batch-invariant slots, the production configuration; docs/experiments.md "NUC expert tier on five batch-invariant slots"): the tier is byte-exact there with patch 0067 (every client gold at one to five clients, tier on and off) and stays **off**: the boxes add +2.0-3.3 % at four clients and +3.3-3.5 % at five, nothing at one and two, for about 50-60 W of NUC package power and a network hop in every decode step. Most of what earlier tier legs gained was the column split the tier needs, which works without the boxes: `LLAMA_EXPERT_STORE_SPLIT_COLS=1` from three columns (`LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3`) is +2.9 % at three clients, +9 % at four and five, same bytes, for about +10 W on the Spark's GPU. **Shipped 2026-11-10** (window sc67 on the CI image, argo-things #176, image `547208dca250-g08d176f`; live gold `ee079496a4`). The tier comes back for a faster link or a model whose experts do not fit the Spark; the Thunderbolt link does not help it (NUC-to-NUC only).
 
 ## Multi-slot serving and long context (2026-11-08)
 
@@ -414,3 +423,5 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
 - 2026-10-31: fix the stack: GH200-only 0004b CPU-slot-map guard entered patches/ in aa52f22, was included in ge4e4290 and subsequent production images/window stack checks, and shifted prefill-bank context. Move to tools/gh200/ in 72518b8; Spark GPU slot maps are unaffected, measurements stand.
 - 2026-10-31: the host-bank plan outcome supersedes the earlier queued-lever ranking: Spark GLM-5.3 Q2 is near its architectural floor at ~5.8 tok/s warm for this workload. Material changes need a smaller quant per expert, read parallelism, or GH200; none has a quantified gain here.
 - 2026-11-05: Spark Flash: SPLIT_LATE=1 adopted (+7 %, same bytes, argo-things #135). MTP (+15-22 %) rejected for now: not reproducible; parked with the GH200 restart check in the Backlog section.
+- 2026-11-10: Spark Flash: column split from three clients adopted (0067, +2.9 % at three clients, +9 % at four and five, same bytes, argo-things #176); NUC expert tier stays off (+2-3.5 % for 50-60 W).
+- 2026-11-10: exact MTP speculation (0070) closed on both boxes: byte-exact at up to 8 columns, but 25-32 % slower at one and two clients and 9 % slower at three to five on the GH200, and no gain on the Spark. Kept in the stack off by default.

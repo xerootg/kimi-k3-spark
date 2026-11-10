@@ -11,7 +11,7 @@ measurement), **partly** (right direction, smaller payoff than hoped), **no** (n
 
 | date | idea | verdict | next |
 |---|---|---|---|
-| 2026-11-06 | NUCs make too many network round trips; we are using them wrong | sane | built (0049 + 0067), measured on five slots 2026-11-10: +2-3.5 % at four and five clients for 50-60 W, stays off; the column split it needs pays alone (+9 %) |
+| 2026-11-06 | NUCs make too many network round trips; we are using them wrong | sane | built (0049 + 0067), measured on five slots 2026-11-10: +2-3.5 % at four and five clients for 50-60 W, stays off; the column split it needs pays alone (+9 %) and is in production since 2026-11-10 (#176) |
 | 2026-11-06 | Distribute inference to the NUCs once the faster links exist | partly | re-check when the links land |
 | 2026-11-08 | KV cache that resizes per conversation | sane, built (0052) | decided 2026-11-09: fixed share per slot (Spark), three slots |
 | 2026-11-08 | Keep each conversation's KV contiguous | sane | part of the per-conversation design |
@@ -39,8 +39,8 @@ Measured on multi-slot serving (window nuc5, 2026-11-10, five batch-invariant sl
 and off at one to five clients (after patch 0067), and the boxes add +2.0-3.3 % at four clients, +3.3-3.5 % at five,
 nothing at one and two, for about 50-60 W of NUC package power. Not worth two more machines and the network in every
 decode step, so the tier stays off. The column split the tier is built on is what pays: without any box it gives
-+9 % at four and five clients for about +10 W, and goes to production from three clients after acceptance on the CI
-image.
++9 % at four and five clients for about +10 W, and is in production from three clients since 2026-11-10 (acceptance
+on the CI image in window sc67, argo-things #176).
 
 ## NUCs over faster links (2026-11-06)
 

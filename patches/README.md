@@ -1486,7 +1486,9 @@ the NUC tier, two processes each. Aggregate tok/s production / split columns / +
 0066) two clients stay at the production number. The split draws about 10 W more GPU power at three to five clients
 (35-37 W to 44-46 W by `nvidia-smi`).
 
-Not in production until its acceptance on the CI image is done (see docs/experiments.md). The NUC tier stays off.
+In production on the Spark since 2026-11-10 (argo-things #176, image `547208dca250-g08d176f`,
+`LLAMA_EXPERT_STORE_SPLIT_COLS=1` with `LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3`) after its acceptance on the CI image
+(window sc67, docs/experiments.md). The NUC tier stays off.
 
 ## 0069-prompt-pieces-recurrent-cell
 
@@ -1541,6 +1543,89 @@ image `547208dca250-gc93c6d9`. That window also saw a long prompt read 5-18 % sl
 conversations, also with the hold rule and none of the pieces variables set. It was first booked against 0060-0069;
 the per-ubatch times point at the pooled indexer of the base code instead (its pool list covers every slot), which
 production has too. A control leg on the production image is pending (see the correction in docs/experiments.md).
+
+
+## 0070-exact-mtp-speculation
+
+Speculative decoding with GLM-5.3-Flash's own MTP head (`--spec-type draft-mtp`) whose output is byte for byte the
+output of plain decoding, alone and batched, at temperature 0 and at production sampling (temperature 1.0, top-p
+0.95). Upstream's MTP speculation changed a client's bytes (the verify pass computes several tokens of a sequence in
+one attention call, whose arithmetic follows the number of queries, and the rejection sampler consumes other random
+draws). Off unless `LLAMA_SPEC_EXACT=1`. Five parts:
+
+- **Exact verification in the engine** (`llama_set_exact_verify`, `cparams.exact_verify`, glm5-next
+  `build_dsa_layer`). While set, a ubatch with several tokens per sequence runs one attention call per token index,
+  each with one query per viewed stream: token t reads the same query, the same selection and the same cells in the
+  same order as the decode step that would have produced it alone (its causal mask hides the later tokens' cells).
+  With `GGML_CUDA_BATCH_INVARIANT=1` (0054) every other operator is already independent of the number of columns, so
+  every logits row has the bits of the single-token step it replaces. The flag is part of the graph key.
+- **Exact acceptance in the server** (`LLAMA_SPEC_EXACT=1`, requires `LLAMA_PREFILL_ISOLATE=1`). The draft is
+  verified with the slot's own sampler, one sample and one accept per emitted token, so the sampler (random state
+  included) advances exactly as without drafts; a draft token is kept only if it is the token that was sampled. The
+  slot's token list, context and stop checks advance one emitted token at a time. A batch with draft tokens holds no
+  prompt tokens, is decoded in one piece, and every sequence in it gets the same number of draft tokens (one ubatch,
+  so every rollback finds its recurrent snapshot). A request with `n_probs` decodes plainly.
+  `LLAMA_SPEC_EXACT_COLS` (default 4) is the number of columns (sequences x tokens) of such a batch: with G slots
+  generating each gets floor(cols / G) - 1 draft tokens, so drafting stops by itself when the step is full of clients.
+- **Coupled drafting** (`LLAMA_SPEC_EXACT_COUPLED`, default 1; `common_speculative_draft_params::smpl_cpl`). The
+  drafter samples every draft token with a copy of the slot's sampler, standing where the target will sample that
+  position: the target's chain and the random draws the target will use. A draft token is then accepted whenever
+  both distributions put the same draw on the same token, instead of only when the drafter's greedy pick happens to
+  be the sampled one. It changes which tokens are drafted, never what is emitted.
+- **Recurrent rollback made safe** (`llama_memory_recurrent::rs_valid`, `LLAMA_RS_KEEP_TAIL=0`). Upstream keeps the
+  last `n_rs_seq + 1` tokens of a sequence in one ubatch so a rollback finds its snapshot planes; that changes how a
+  prompt is cut, and so its bytes, as soon as speculation is configured. `LLAMA_RS_KEEP_TAIL=0` cuts batches as
+  without snapshots; the memory now counts, per sequence, the planes its last ubatch wrote, and a rollback into a
+  plane that was not written is refused instead of restoring a stale state.
+- **One context at a time behind the expert store** (the cause of the Spark's "has slot -1 after the plan" abort in
+  window mtp2). The MTP draft context shares the expert store and the CUDA backend's host-bank mailbox (indexed by
+  stream number; every context uses number 0) with the target context, and upstream launches the draft context's
+  catch-up decode after every target batch without waiting for it. If it is still on the GPU when the target's next
+  decode reaches its first expert lookup, the two requests collide: ids overwritten, one `done` flag releasing both
+  waits, a lookup reading a slot map that was not filled for it. The server now synchronizes the draft context before
+  every target decode (`LLAMA_SPEC_DFT_SYNC=0` turns that off, for demonstrations only), and the backend carries a
+  tripwire for any other such caller: a context that starts sending lookups while the stream of the context that sent
+  the previous ones still has work pending aborts with a message that names the cause
+  (`GGML_CUDA_HOST_BANK_OWNER_CHECK=0` turns it off). One pointer compare per lookup in a single-context server such
+  as production. `LLAMA_EXPERT_STORE_TEST_HOOK_DELAY=<layer>:<ms>` (tests only) makes the hook of one layer sleep, to
+  force the collision.
+
+Debug: `LLAMA_SPEC_EXACT_TRACE=1` logs `SPEC_TRACE <slot> <index> <token> <FNV-1a of the logits row>` for every
+sampled token; `docs/evidence/glm-windows-2026-10-30/mtp/tracecmp.py` compares two servers' traces.
+
+**Status: candidate, off by default, not in production on either box. It is exact and it is slower.** With the
+variables unset the server and the engine take their old paths; the one thing that runs in every build is the
+tripwire's pointer compare per lookup node (plain decoding on the 0070 build gave the gold bytes and the md5 of every
+plain answer in GH200 legs G0 and G5). The tripwire has not run on the Spark's sm_121 build yet (it was written
+after window mtp2): the first image built with 0070 goes through the usual acceptance there before it serves, and
+`GGML_CUDA_HOST_BANK_OWNER_CHECK=0` takes the check out.
+
+- **Exactness.** Spark window mtp2 and GH200 window mtp-g1 (2026-11-10): every sampled token and every logits row of
+  the exact speculation equal plain decoding's (GH200: 55 requests, 10817 rows, one to five clients, temperature 0
+  and temperature 1.0 / top-p 0.95, follow-ups, stop words, a 16k prompt next to two decoding clients), at 4 and at
+  8 columns, and every answer's md5, token count and stop reason. More than 8 columns is **not** exact on the GH200:
+  20 columns gave other bytes at three and five clients, different from run to run (the CUDA backend changes
+  kernels above 8 columns), so `LLAMA_SPEC_EXACT_COLS` must stay at 8 or below.
+- **Speed.** It loses at every client count on both boxes. GH200, plain to exact with 4 columns: alone 48.2 to
+  36.4 tok/s at temperature 0 and 47.2 to 33.3 at temperature 1; two clients 63.0 to 45.8 and 60.2 to 40.8; three
+  to five clients (no drafts) about 9 % slower from the draft context's catch-up decode alone. Tokens per second per
+  watt fall as well (alone 0.161 to 0.154). The drafts are good (80 to 97 % accepted, 2.6 tokens per step alone);
+  the columns are not free: a step with three draft columns takes about 72 ms against 20 ms for a plain token, since
+  the expert lookups and the per-token attention grow with the columns.
+- **Memory.** The MTP draft context reserves its own compute buffers on the GPU: 18.6 GiB at the target's batch of
+  4096 on the GH200 (the load then dies with `cudaMalloc failed: out of memory` once the expert store has filled its
+  HBM bank), 10.3 GiB with upstream's `--spec-draft-n-ubatch 512`. That memory comes out of the expert store's HBM
+  tier (its share of decode lookups fell from 50 % to 44 %).
+- **The tripwire is unproven.** On the GH200 with the synchronize turned off, one client's draft stream was damaged
+  in four of eight runs (acceptance 32 to 36 % instead of 88 to 97 %); the tripwire was on in two of those four and
+  did not fire, no run aborted, and the target's tokens and logits rows stayed exact in all of them. With the
+  synchronize on, the draft counts were the expected ones in every leg. So the synchronize is the fix as far as it
+  was tested, and the owner check does not catch what happens on the GH200. The forced collision
+  (`LLAMA_EXPERT_STORE_TEST_HOOK_DELAY`) never engaged there either: with `LLAMA_EXPERT_STORE_GPU_SLOTS=1` the host
+  hook only runs on a miss.
+
+Ledger: docs/experiments.md, entries of 2026-11-10 (Spark window mtp2, GH200 window mtp-g1). Evidence and the leg
+scripts: docs/evidence/glm-windows-2026-10-30/mtp/.
 
 ## 0071-kpool-own-seqs
 
