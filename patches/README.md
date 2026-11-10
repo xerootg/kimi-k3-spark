@@ -1541,3 +1541,31 @@ image `547208dca250-gc93c6d9`. That window also saw a long prompt read 5-18 % sl
 conversations, also with the hold rule and none of the pieces variables set. It was first booked against 0060-0069;
 the per-ubatch times point at the pooled indexer of the base code instead (its pool list covers every slot), which
 production has too. A control leg on the production image is pending (see the correction in docs/experiments.md).
+
+## 0071-kpool-own-seqs
+
+`LLAMA_KPOOL_OWN_SEQS=1` (off unless set): a ubatch's pool list holds the pools of its own sequences only.
+
+GLM-5.3's indexer picks, for every token, the best pools (groups of `kpool` cells) of its conversation before the
+attention reads them. The graph input for that is one pool list per ubatch, and the base code puts the pools of
+**every** sequence of the cache into it: `pool_cells`, `pool_idxs` and `pool_mask` (one mask row per pool and token)
+grow with the cells all slots hold, and every indexer layer gathers, scores and masks the pools of idle conversations
+that the mask then hides. GH200 window nc4 measured the cost: about 2 ns per prompt token for each cell held by
+**other** slots (a 4096-token ubatch takes 2.3 s alone, about 0.7 s more next to 80k foreign cells), so a prompt read
+slows down with what the other conversations hold, also on the production image.
+
+With the variable set, `kpool_build_state` lists the sequences that have a token in the ubatch, plus, in the first
+ubatch of a batch, the sequences an edit left stale (they are re-pooled there as before, also when absent). The pool
+count of the graph (`get_n_kpool`), the list in `set_input_kpool` and the padded re-pool entries follow that list; the
+pad cells stay inside the stream of the ubatch's first sequence, since only the listed sequences' pooled rows are
+known to the pad search.
+
+Why the bytes do not change: a token only ever selects visible pools of its own sequence (the mask row of every other
+pool is -inf and dead selections are masked again by `sel_mask`), pools keep their order within a sequence, and the
+list is exactly what a server holding only those sequences builds. Solo and mixed answers already agree today with
+different list sizes. It needs one stream per sequence (the non-unified cache every multi-slot server here runs); with
+a unified cache the variable does nothing.
+
+Candidate, not in production and not measured yet (written 2026-11-10 between windows nc4 and nc5). Acceptance is the
+usual one (per-client md5 against solo, two processes, gold) plus the speed of a long prompt after other slots hold
+long conversations; the result goes into docs/experiments.md either way.

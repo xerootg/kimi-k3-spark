@@ -1,0 +1,116 @@
+diff --git a/src/llama-memory-hybrid-idx.cpp b/src/llama-memory-hybrid-idx.cpp
+index ea042e2..4481ab4 100644
+--- a/src/llama-memory-hybrid-idx.cpp
++++ b/src/llama-memory-hybrid-idx.cpp
+@@ -376,6 +376,14 @@ struct llama_memory_hybrid_idx_context::kpool_state {
+     uint32_t n_pool_real = 0;
+     uint32_t n_new       = 0;
+     uint32_t n_new_g     = 1; // graph size of the new pool list, stable across decode steps
++
++    // patch 0071 (LLAMA_KPOOL_OWN_SEQS=1): the sequences whose pools are in this ubatch's pool list. Without the
++    // patch every sequence of the cache is listed, so a ubatch gathers, scores and masks the pools of idle
++    // conversations in every layer (about 2 ns per token and foreign cell on the GH200).
++    std::array<uint8_t, LLAMA_MAX_SEQ> seq_on;
++    bool own = false;
++
++    kpool_state() { seq_on.fill(1); }
+ };
+ 
+ namespace {
+@@ -654,14 +662,52 @@ void llama_memory_hybrid_idx_context::kpool_build_state(const llama_ubatch & uba
+     const uint32_t kv_size = idx->get_size();
+     const uint32_t kpool   = mem->get_kpool();
+ 
+-    st.n_pool_real = lay.n_pool_real;
++    // patch 0071: list only the pools of the sequences this ubatch decodes, plus those of sequences an edit staled
++    // (the first ubatch of a batch re-pools them, as before). A token only ever selects visible pools of its own
++    // sequence, and pools keep their order within a sequence, so the selection is the same; the list is what a
++    // server holding only these sequences would build. Needs one stream per sequence: with a unified cache the
++    // padded re-pool entries below could not be kept off the pooled rows of unlisted sequences.
++    static const bool own_seqs = [] {
++        const char * e = getenv("LLAMA_KPOOL_OWN_SEQS");
++        const bool on = e != nullptr && atoi(e) != 0;
++        if (on) {
++            LLAMA_LOG_INFO("%s: LLAMA_KPOOL_OWN_SEQS=1: a ubatch's pool list holds its own sequences only (patch 0071)\n", "kpool_build_state");
++        }
++        return on;
++    }();
++    st.own = own_seqs && idx->get_n_stream() > 1;
++    st.seq_on.fill(st.own ? 0 : 1);
++    if (st.own) {
++        for (uint32_t i = 0; i < ubatch.n_tokens; ++i) {
++            for (int32_t k = 0; k < ubatch.n_seq_id[i]; ++k) {
++                st.seq_on[ubatch.seq_id[i][k]] = 1;
++            }
++        }
++        if (i_cur == 0) {
++            for (llama_seq_id s = 0; s < LLAMA_MAX_SEQ; ++s) {
++                if (mem_idx_stale_batch[s] != llama_memory_hybrid_idx::POS_CLEAN) {
++                    st.seq_on[s] = 1;
++                }
++            }
++        }
++    }
++
++    uint32_t n_pool_list = 0;
++    for (llama_seq_id s = 0; s < LLAMA_MAX_SEQ; ++s) {
++        if (st.seq_on[s]) {
++            n_pool_list += (uint32_t) lay.seqs[s].pools.size();
++        }
++    }
++    GGML_ASSERT(st.own || n_pool_list == lay.n_pool_real);
++
++    st.n_pool_real = n_pool_list;
+     st.n_new       = 0;
+     if (++st.generation == 0) {
+         std::fill(st.is_new.begin(),  st.is_new.end(),  0);
+         std::fill(st.rep_gen.begin(), st.rep_gen.end(), 0);
+         st.generation = 1;
+     }
+-    st.is_new.resize(lay.n_pool_real, 0);
++    st.is_new.resize(n_pool_list, 0);
+     st.rep_gen.resize((size_t) kv_size*idx->get_n_stream(), 0);
+ 
+     std::array<uint32_t, LLAMA_MAX_SEQ> pool_start;
+@@ -682,6 +728,9 @@ void llama_memory_hybrid_idx_context::kpool_build_state(const llama_ubatch & uba
+     for (llama_seq_id s = 0; s < LLAMA_MAX_SEQ; ++s) {
+         const auto & sq = lay.seqs[s];
+         pool_start[s] = ip;
++        if (!st.seq_on[s]) {
++            continue; // patch 0071: not listed (and not stale, see above)
++        }
+         ip += (uint32_t) sq.pools.size();
+ 
+         // A sequence edit invalidates only pools ending after the edited position.
+@@ -863,6 +912,11 @@ void llama_memory_hybrid_idx_context::set_input_kpool(ggml_tensor * pool_cells,
+         const auto & sq = lay.seqs[s];
+         seq_pool_start[s] = (uint32_t) pool_end.size();
+ 
++        if (!st.seq_on[s]) {
++            GGML_ASSERT(!seq_in_ub[s]);
++            continue; // patch 0071
++        }
++
+         const bool inert = n_stream_kv > 1 && !seq_in_ub[s];
+ 
+         for (size_t pi = 0; pi < sq.pools.size(); ++pi) {
+@@ -907,12 +961,17 @@ void llama_memory_hybrid_idx_context::set_input_kpool(ggml_tensor * pool_cells,
+         std::vector<int64_t> reps(pcell, pcell + pool_end.size());
+         std::sort(reps.begin(), reps.end());
+ 
+-        int64_t pad_cell = 0;
++        // patch 0071: `reps` holds the listed sequences' reps only, so the padded entries stay inside the stream of
++        // the ubatch's first sequence (one sequence per stream: every rep of that stream is listed)
++        const int64_t pad_strm = st.own ? (int64_t) lay.seqs[ubatch->seq_id[0][0]].strm : 0;
++        const int64_t pad_end  = st.own ? (pad_strm + 1)*kv_size : (int64_t) kv_size*n_stream_kv;
++
++        int64_t pad_cell = pad_strm*kv_size;
+         for (uint32_t i = n_new; i < n_new_g; ++i, ++pad_cell) {
+             while (std::binary_search(reps.begin(), reps.end(), pad_cell)) {
+                 ++pad_cell;
+             }
+-            GGML_ASSERT(pad_cell < (int64_t) kv_size*n_stream_kv);
++            GGML_ASSERT(pad_cell < pad_end);
+             for (uint32_t k = 0; k < kpool; ++k) {
+                 nidx[(size_t) i*kpool + k] = (int32_t) pad_cell;
+             }
