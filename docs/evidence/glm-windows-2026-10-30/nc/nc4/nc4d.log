@@ -1,0 +1,71 @@
+=== LEG DH parallel=5 ctx=5242880 img=547208dca250-gc93c6d9 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.12 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_PREFILL_SLICE_LOG=1] xargs=[] cache_ram=65536 07:22:06
+READY DH after 42s
+0.10.934.820 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.013.359 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.013.401 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.013.402 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.208.906 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.078.024 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.078.056 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.078.057 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.564.960 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.324.143 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80616 MiB
+--- ekbench.py solo p0 L16384 07:22:51
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 70.02, "decode_n": 256, "decode_tps": 51.59, "md5": "8e312d7bdd", "t0": 1794295371.7117665, "t1": 1794295376.821675, "kind": "solo", "tag": "DH"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.12, "prefill_tps": 1622.0, "decode_n": 128, "decode_tps": 39.06, "md5": "145c14aa8b", "t0": 1794295376.8217824, "t1": 1794295390.2427292, "kind": "solo", "tag": "DH"}
+--- ekbench.py multi p1 p2 L16384 L65536 --rounds 1 07:23:10
+{"kind": "multi", "tag": "DH", "n": 4, "round": "warm", "agg_tps": 10.6, "wall_s": 72.46, "gen": 768, "per_stream_tps": [13.56, 13.52, 22.26, 42.63], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [3.85, 3.57, 497.24, 980.81], "t0": 1794295390.2893245, "t1": 1794295462.7468596}
+{"kind": "multi", "tag": "DH", "n": 4, "round": 1, "agg_tps": 10.77, "wall_s": 71.3, "gen": 768, "per_stream_tps": [14.91, 14.97, 24.87, 48.57], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [3.52, 3.39, 504.77, 1000.95], "t0": 1794295462.7477007, "t1": 1794295534.0472143}
+--- ekbench.py solo p0 L16384 L65536 07:25:34
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.16, "prefill_tps": 63.25, "decode_n": 256, "decode_tps": 45.18, "md5": "8e312d7bdd", "t0": 1794295534.0956407, "t1": 1794295539.9516263, "kind": "solo", "tag": "DH"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 12.26, "prefill_tps": 1338.32, "decode_n": 128, "decode_tps": 52.68, "md5": "145c14aa8b", "t0": 1794295539.95173, "t1": 1794295554.6662161, "kind": "solo", "tag": "DH"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 46.21, "prefill_tps": 1412.03, "decode_n": 128, "decode_tps": 51.99, "md5": "8acec1b966", "t0": 1794295554.6663268, "t1": 1794295603.3922813, "kind": "solo", "tag": "DH"}
+PEAK GPU 80870 MiB, LOWEST MemAvailable 144016 MiB; END DH 07:26:45
+NC-LEG-DONE DH 07:26:45
+=== LEG DJ parallel=5 ctx=5242880 img=547208dca250-gc93c6d9 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_PRIORITY_HOLD_PROMPTS=1] xargs=[] cache_ram=65536 07:26:46
+READY DJ after 42s
+0.10.796.219 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.901.944 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.901.985 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.11.901.987 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.097.390 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.991.137 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.991.168 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.12.991.170 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.763.967 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.483.742 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 79968 MiB
+--- ekbench.py solo p0 L16384 07:27:31
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 73.05, "decode_n": 256, "decode_tps": 51.58, "md5": "8e312d7bdd", "t0": 1794295651.6511807, "t1": 1794295656.7563462, "kind": "solo", "tag": "DJ"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.05, "prefill_tps": 1633.28, "decode_n": 128, "decode_tps": 39.12, "md5": "145c14aa8b", "t0": 1794295656.7564812, "t1": 1794295670.103808, "kind": "solo", "tag": "DJ"}
+--- ekbench.py multi p1 p2 L16384 L65536 --rounds 1 07:27:50
+{"kind": "multi", "tag": "DJ", "n": 4, "round": "warm", "agg_tps": 10.85, "wall_s": 70.76, "gen": 768, "per_stream_tps": [4.29, 3.63, 2.31, 14.73], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [88.97, 75.17, 1555.53, 1414.94], "t0": 1794295670.150103, "t1": 1794295740.9135134}
+{"kind": "multi", "tag": "DJ", "n": 4, "round": 1, "agg_tps": 10.85, "wall_s": 70.79, "gen": 768, "per_stream_tps": [4.42, 3.63, 2.37, 17.16], "md5": ["74fb633e8e", "f8531a5f07", "145c14aa8b", "8acec1b966"], "specs": ["p1", "p2", "L16384", "L65536"], "prefill_tps": [88.03, 83.57, 1340.49, 1420.82], "t0": 1794295740.9142828, "t1": 1794295811.7014678}
+--- ekbench.py solo p0 L16384 L65536 07:30:11
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 69.55, "decode_n": 256, "decode_tps": 46.11, "md5": "8e312d7bdd", "t0": 1794295811.7493727, "t1": 1794295817.4767363, "kind": "solo", "tag": "DJ"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 12.23, "prefill_tps": 1341.9, "decode_n": 128, "decode_tps": 50.25, "md5": "145c14aa8b", "t0": 1794295817.4768426, "t1": 1794295832.2747464, "kind": "solo", "tag": "DJ"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 45.88, "prefill_tps": 1422.17, "decode_n": 128, "decode_tps": 49.2, "md5": "8acec1b966", "t0": 1794295832.274832, "t1": 1794295880.81006, "kind": "solo", "tag": "DJ"}
+PEAK GPU 80219 MiB, LOWEST MemAvailable 145297 MiB; END DJ 07:31:22
+NC-LEG-DONE DJ 07:31:22
+=== LEG DI parallel=5 ctx=5242880 img=547208dca250-gc93c6d9 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.12 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_PREFILL_SLICE_LOG=1 LLAMA_PREFILL_SLICE_MIN_TOKENS=1000000] xargs=[] cache_ram=65536 07:31:24
+READY DI after 42s
+0.10.889.184 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.037.397 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.037.435 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.037.437 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.232.437 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.089.615 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.089.649 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.089.650 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.385.150 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.128.186 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80613 MiB
+--- ekbench.py solo p0 L16384 07:32:09
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 70.52, "decode_n": 256, "decode_tps": 51.61, "md5": "8e312d7bdd", "t0": 1794295929.785578, "t1": 1794295934.8922155, "kind": "solo", "tag": "DI"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.1, "prefill_tps": 1625.28, "decode_n": 128, "decode_tps": 39.13, "md5": "145c14aa8b", "t0": 1794295934.8923426, "t1": 1794295948.288481, "kind": "solo", "tag": "DI"}
+--- ekbench.py multi p1 p2 L16384 L65536 --rounds 1 07:32:28
+DEADLINE: [ekbench.py solo p0 L16384 L65536] not started
+PEAK GPU 80869 MiB, LOWEST MemAvailable 146940 MiB; END DI 07:33:07
+NC-LEG-DONE DI 07:33:07
+NC4D-DONE 07:33:07

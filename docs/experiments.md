@@ -1860,3 +1860,63 @@ something else dominated at the time. Re-test them after any change that shifts 
 - **Production is not exposed**: it runs one context. The exposure comes with any second context that uses the expert store (MTP today).
 - **Fix (dev tree, to be patch 0070 with the exact speculation):** the server synchronizes the draft context right before every target decode (`LLAMA_SPEC_DFT_SYNC=0` turns that off, for the demonstration only), and the backend gets a tripwire: when a context starts sending lookups while the stream of the context that sent the previous ones still has work pending (`cudaStreamQuery`), it aborts with a message naming the cause (`GGML_CUDA_HOST_BANK_OWNER_CHECK=0` turns it off). Separate mailboxes per context would not be enough: the expert store's plan protects only the layer being looked up, so two contexts' lookups must not interleave at all. `LLAMA_EXPERT_STORE_TEST_HOOK_DELAY=<layer>:<ms>` (tests only) makes the hook of one layer sleep, which forces the overlap. The `PLAN_CHECK` diagnostic is dropped from the tree ([mtp/plancheck.diff](evidence/glm-windows-2026-10-30/mtp/plancheck.diff)).
 - **Test plan (GH200 window mtp-g1, `mtp/gh200-mtp1.sh`):** with a 50 ms sleep in the hook of layer 45: R1 = fix off, tripwire on (expected: the tripwire's abort), R0 = both off (expected: the expert store's abort, a hang, or other bytes than the plain leg G0), R2 = fix on (expected: clean and trace-identical to G0).
+
+**2026-11-10, GH200 window nc4 (06:11:57-07:35 UTC): patch 0069 on the CI image `547208dca250-gc93c6d9` with production flags. Detectors and two acceptance processes pass; Juno keeps 78-84 % of solo at share 0.12; a long prompt read alone is 5-18 % slower once other slots hold long conversations. Nothing shipped.**
+
+- Evidence: `docs/evidence/glm-windows-2026-10-30/nc/nc4/` (`results.jsonl` with 240 rows, logs `nc4.log`, `nc4c.log`,
+  `nc4d.log`, scripts `nc4.sh`, `nc4c.sh`, `nc4d.sh`, `prio_nc_e.py`, `v1digest.py`, state hashes `rssum-V1.txt`,
+  piece and timing lines `pieces-DG-DH-DI.txt`, `timing-DJ.txt`). Flags: the production set (prefill isolate, batch
+  invariant, KV in Grace host memory staged per layer, fused kernels) plus `LLAMA_PREFILL_SLICE_LAYERS=4`,
+  `LLAMA_PREFILL_SLICE_SHARE=0.12`, `LLAMA_PREFILL_SLICE_DECODE_SHARE=1`, `LLAMA_PREFILL_SLICE_SHARE_SAME=0.5`,
+  `LLAMA_PREFILL_TURNS=1`, `LLAMA_PRIORITY_HOLD_PROMPTS=0`, five slots of 1M.
+- **V1, detectors (`LLAMA_RS_SUM=512`, `LLAMA_RS_LOG=1`): pass.** 44 of 44 answers gold. 17 long ubatches were each
+  seen at least twice (alone and in a mix) with one state hash each. 154 prompt ubatches ran in pieces, none ran
+  whole. 7230 ubatches ran with a frozen cell; no range contained it and the guard in `find_slot` never refused.
+- **V2, speeds (all md5 gold):** junolong Juno 45.04 tok/s; prefill 44.42; junofirst 43.68 (256 tokens) and 40.78
+  (1024 tokens); Juno 40.74-42.75 tok/s with four low clients arriving; mixed 43.15 and 38.05 with the low decoders' longest gap 2.46-2.68 s; two long
+  prompts of the same class 24.20 tok/s each side; three of them 10.9; a short prompt behind long ones gets its
+  first token after 5.27 s; two long prompts together read at 1005 tok/s combined.
+- **A1t and A2t, acceptance in two processes:** every md5 gold, no multi round differs. quicksort 57.0-57.5 tok/s;
+  N=2 62.2-63.9, N=3 68.3-69.6, N=4 72.1-72.7, N=5 69.1-69.6 tok/s total (production image in #174: 63.2-63.4,
+  69.2-69.4, 72.5-74.2, 69.2-70.0); long-prompt mixes gold.
+- **W12, Juno against her own solo speed in the same process (share 0.12):** alone 51.5-54.1 tok/s (256 tokens),
+  52.75-55.05 (512), 52.6-52.9 (1024). Contended: junolong 45.36, prefill 44.33 (others' first token 2.83 s),
+  junofirst-256 44.3, junofirst-1024 40.98, mixed 42.3 (first token 2.09 s). That is 78-84 % of solo, below the
+  85-90 % target. The low clients' first tokens come after 3.9-5.9 s instead of after Juno's whole answer; a fourth
+  low client waits 24.7 s because one slot stays reserved for Juno. Share 0.08 (leg W08) was not measured: the
+  window went to the regression below.
+- **Regression against the production image `g68d4166` (real cost, blocks shipping).** A long prompt read alone
+  after a mix has left long conversations in other slots:
+
+  | read alone | production (#174 legs) | gc93c6d9 | change |
+  |---|---|---|---|
+  | 16k, others hold 64k | 1642 tok/s | 1334-1342 | about 18 % slower |
+  | 64k, others hold 16k | 1488 | 1408-1422 | about 5 % slower |
+  | 100k depth | 1441-1443 | 1358 | about 6 % slower |
+
+  On a fresh server the same image is not slower (legs DG and DW: 1623-1638 for 16k, 1481 for 64k).
+- **It is not the pieces.** First hypothesis (cutting a prompt into pieces costs speed when alone) was wrong: leg DW
+  with `LLAMA_PREFILL_SLICE_MIN_TOKENS=1000000` (no ubatch is cut) equals DG with pieces. Leg DH (pieces; solo, a
+  four-client mix with 16k and 64k prompts, solo again) reproduces it: 16k 1622 before the mix, 1338 after; 64k 1412
+  after. **Leg DJ, the same sequence with the hold rule and none of the pieces variables, shows the same numbers
+  (16k 1633 before, 1341.9 after; 64k 1422.2), and inside the mix the 16k prompt reads at 1555 when no other slot
+  holds a long conversation yet and at 1340 in the next round.** So the cost comes from code in patches 0060-0069
+  that runs without any of their switches. The control leg DI (pieces, nothing cut) was cut short by the window
+  deadline after two rows.
+- Size of the cost (GPU time per ubatch from leg DH): about 565 ms more per 4096-token ubatch for the 16k read while
+  another slot holds 64k, about 135 ms more for the 64k read while another slot holds 16k. That is about 8.5 µs per
+  cell held by other slots per ubatch, roughly the cost of copying the other slots' KV once per ubatch. Suspects:
+  the per-layer KV stage of patch 0057 now sees a view that spans other streams, or exceeds its 1024 MiB limit and
+  falls back to host reads; candidates 0060-0062 and 0066 (view width and reserve caps), 0069 (batch split), 0067
+  (ggml-cuda.cu). The Spark does not keep the KV in host memory, so it may not be affected (not verified).
+- Not a regression: the solo short prompt right after the mixes decodes at 44-46 tok/s and returns to about 50.5 over
+  the next requests; the production image does the same (46.5 to 50.6 in the #174 legs).
+- **Operator mistake at 06:04 UTC:** the dead-man guard for this window was armed with an absolute deadline
+  (`date -d "07:45 UTC"`) on a laptop whose local date was a day behind; the guard fired at once and restarted the
+  production pod. glm53-gh200 was away for about 100 s (the Spark stayed up), gold verified after. Deadlines are now
+  computed relative to now and printed before arming.
+- Restored at 07:35 UTC: glm53-gh200 on `g68d4166`, quicksort gold `bc32ecab82` three times at 57.0-58.2 tok/s,
+  `workbench-queue` unsuspended, no test container or key file left.
+- **Open:** find and fix the long-prompt regression, new image, then a window with the V1 gate, acceptance including
+  solo long prompts after mixes against the #174 numbers, and the share decision (0.12 against 0.08) with solo
+  references in the same process. Patch 0069 stays out of production until then.

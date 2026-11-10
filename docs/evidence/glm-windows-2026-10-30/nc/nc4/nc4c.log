@@ -1,0 +1,102 @@
+=== LEG DG parallel=5 ctx=5242880 img=547208dca250-gc93c6d9 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.12 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_PREFILL_SLICE_LOG=1] xargs=[] cache_ram=65536 07:10:45
+READY DG after 42s
+0.10.934.804 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.038.209 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.038.251 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.038.252 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.231.857 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.116.036 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.116.069 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.116.070 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.956.418 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.695.211 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80616 MiB
+--- ekbench.py solo p0 L16384 07:11:30
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 69.51, "decode_n": 256, "decode_tps": 51.55, "md5": "8e312d7bdd", "t0": 1794294690.9238791, "t1": 1794294696.0384185, "kind": "solo", "tag": "DG"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.11, "prefill_tps": 1622.91, "decode_n": 128, "decode_tps": 39.05, "md5": "145c14aa8b", "t0": 1794294696.0385377, "t1": 1794294709.4559438, "kind": "solo", "tag": "DG"}
+--- ekbench.py solo p0 L16384 L65536 07:11:49
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 76.33, "decode_n": 256, "decode_tps": 50.76, "md5": "8e312d7bdd", "t0": 1794294709.501849, "t1": 1794294714.7721155, "kind": "solo", "tag": "DG"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.02, "prefill_tps": 1637.89, "decode_n": 128, "decode_tps": 46.7, "md5": "145c14aa8b", "t0": 1794294714.7722452, "t1": 1794294727.5355585, "kind": "solo", "tag": "DG"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 44.05, "prefill_tps": 1481.15, "decode_n": 128, "decode_tps": 44.14, "md5": "8acec1b966", "t0": 1794294727.5356455, "t1": 1794294774.5261953, "kind": "solo", "tag": "DG"}
+PEAK GPU 80865 MiB, LOWEST MemAvailable 146847 MiB; END DG 07:12:56
+NC-LEG-DONE DG 07:12:56
+=== LEG DW parallel=5 ctx=5242880 img=547208dca250-gc93c6d9 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.12 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_PREFILL_SLICE_LOG=1 LLAMA_PREFILL_SLICE_MIN_TOKENS=1000000] xargs=[] cache_ram=65536 07:12:56
+READY DW after 42s
+0.10.920.535 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.072.593 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.072.635 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.12.072.637 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.265.510 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.13.179.883 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.13.179.914 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.13.179.916 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.43.119.898 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.863.599 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80617 MiB
+--- ekbench.py solo p0 L16384 07:13:41
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.14, "prefill_tps": 70.06, "decode_n": 256, "decode_tps": 51.54, "md5": "8e312d7bdd", "t0": 1794294821.924688, "t1": 1794294827.0391693, "kind": "solo", "tag": "DW"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.11, "prefill_tps": 1624.18, "decode_n": 128, "decode_tps": 39.06, "md5": "145c14aa8b", "t0": 1794294827.0392983, "t1": 1794294840.447094, "kind": "solo", "tag": "DW"}
+--- ekbench.py solo p0 L16384 L65536 07:14:00
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.13, "prefill_tps": 76.54, "decode_n": 256, "decode_tps": 50.73, "md5": "8e312d7bdd", "t0": 1794294840.4921577, "t1": 1794294845.7645576, "kind": "solo", "tag": "DW"}
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 10.02, "prefill_tps": 1638.52, "decode_n": 128, "decode_tps": 46.69, "md5": "145c14aa8b", "t0": 1794294845.764663, "t1": 1794294858.524807, "kind": "solo", "tag": "DW"}
+{"spec": "L65536", "prompt_n": 65243, "cache_n": 0, "prefill_s": 44.05, "prefill_tps": 1481.17, "decode_n": 128, "decode_tps": 44.11, "md5": "8acec1b966", "t0": 1794294858.524892, "t1": 1794294905.5165825, "kind": "solo", "tag": "DW"}
+PEAK GPU 80866 MiB, LOWEST MemAvailable 146814 MiB; END DW 07:15:07
+NC-LEG-DONE DW 07:15:07
+=== LEG W12 parallel=5 ctx=5242880 img=547208dca250-gc93c6d9 opt=image extra=[LLAMA_PREFILL_ISOLATE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_KV_HOST=1 LLAMA_KV_HOST_THP=1 GGML_CUDA_KV_STAGE=1 GGML_CUDA_Q8_REUSE=1 GGML_CUDA_FUSE_HC=1 GGML_CUDA_FUSE_GDN_STATE=1 GGML_CUDA_FUSE_KDA=1 GGML_CUDA_FUSE_CONV_STATE=1 LLAMA_CLIENT_CLASSES=/keys/classes.txt LLAMA_SLOT_RESERVE=1 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.12 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0] xargs=[] cache_ram=65536 07:15:07
+READY W12 after 42s
+0.00.207.288 I srv  server_clien: client classes: 5 keys loaded, top priority 10 (keys not logged)
+0.10.784.984 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.11.887.167 I ggml_backend_cuda_host_kv_buffer_alloc: 56320.00 MiB of host memory for device 0: THP advised (100% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.11.887.216 I operator(): LLAMA_KV_HOST: attention KV cache, 56320.00 MiB in host memory, read by CUDA0 directly
+0.11.887.228 I llama_kv_cache:      CUDA0 KV buffer size = 56320.00 MiB
+0.12.081.078 W llama_kv_cache: LLAMA_KV_HOST=1: elastic KV off for this cache, the whole context goes to host memory
+0.12.904.877 I ggml_backend_cuda_host_kv_buffer_alloc: 42240.00 MiB of host memory for device 0: THP advised (99% huge), NUMA bound (cpu node mask 0x1 of 9 nodes), device address == host address
+0.12.904.911 I operator(): LLAMA_KV_HOST: idx_ KV cache, 42240.00 MiB in host memory, read by CUDA0 directly
+0.12.904.913 I llama_kv_cache:      CUDA0 KV buffer size = 42240.00 MiB
+0.42.351.358 I sched_reserve: LLAMA_PREFILL_ISOLATE=1: the prompt graph is reserved for one sequence (5 slots)
+0.44.104.762 I srv    load_model: initializing, n_slots = 5, n_ctx_slot = 1048576, kv_unified = 'false'
+GPU after load: 80617 MiB
+--- prio_nc.py warm --classes /srv/glm-5.3-flash/nc/keys/classes.txt 07:15:52
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.166, "wall_s": 5.12, "max_gap_s": 0.04, "decode_tps": 51.48, "prompt_n": 10, "prefill_tps": 69.9, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "W12"}
+{"tag": "warm", "spec": "p0", "t_send": 5.12, "ttft_s": 0.172, "wall_s": 5.01, "max_gap_s": 0.04, "decode_tps": 52.76, "prompt_n": 10, "prefill_tps": 73.1, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "W12"}
+{"tag": "warm", "spec": "p0", "t_send": 10.12, "ttft_s": 0.124, "wall_s": 4.84, "max_gap_s": 0.04, "decode_tps": 54.08, "prompt_n": 10, "prefill_tps": 86.0, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "W12"}
+--- prio_nc.py warm --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 512 07:16:07
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.142, "wall_s": 9.83, "max_gap_s": 0.04, "decode_tps": 52.75, "prompt_n": 10, "prefill_tps": 88.2, "md5": "22da3a7294", "scenario": "warm", "kind": "prio", "leg": "W12"}
+{"tag": "warm", "spec": "p0", "t_send": 9.83, "ttft_s": 0.153, "wall_s": 9.54, "max_gap_s": 0.04, "decode_tps": 54.42, "prompt_n": 10, "prefill_tps": 86.8, "md5": "22da3a7294", "scenario": "warm", "kind": "prio", "leg": "W12"}
+{"tag": "warm", "spec": "p0", "t_send": 19.37, "ttft_s": 0.129, "wall_s": 9.41, "max_gap_s": 0.04, "decode_tps": 55.05, "prompt_n": 10, "prefill_tps": 82.1, "md5": "22da3a7294", "scenario": "warm", "kind": "prio", "leg": "W12"}
+--- prio_nc.py warm --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 1024 07:16:36
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.153, "wall_s": 19.6, "max_gap_s": 0.04, "decode_tps": 52.61, "prompt_n": 10, "prefill_tps": 80.5, "md5": "168f9c9c04", "scenario": "warm", "kind": "prio", "leg": "W12"}
+{"tag": "warm", "spec": "p0", "t_send": 19.6, "ttft_s": 0.182, "wall_s": 19.52, "max_gap_s": 0.04, "decode_tps": 52.89, "prompt_n": 10, "prefill_tps": 70.5, "md5": "168f9c9c04", "scenario": "warm", "kind": "prio", "leg": "W12"}
+{"tag": "warm", "spec": "p0", "t_send": 39.12, "ttft_s": 0.155, "wall_s": 19.5, "max_gap_s": 0.04, "decode_tps": 52.88, "prompt_n": 10, "prefill_tps": 67.9, "md5": "168f9c9c04", "scenario": "warm", "kind": "prio", "leg": "W12"}
+--- prio_nc.py junolong --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 512 --delay 1 07:17:35
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.181, "wall_s": 11.45, "max_gap_s": 0.23, "decode_tps": 45.36, "prompt_n": 10, "prefill_tps": 65.6, "md5": "22da3a7294", "scenario": "junolong", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "L65536", "t_send": 1.01, "ttft_s": 53.414, "wall_s": 56.55, "max_gap_s": 0.04, "decode_tps": 40.58, "prompt_n": 65243, "prefill_tps": 1222.5, "md5": "8acec1b966", "scenario": "junolong", "kind": "prio", "leg": "W12"}
+--- prio_nc.py prefill --classes /srv/glm-5.3-flash/nc/keys/classes.txt --delay 10 07:18:32
+{"tag": "low", "spec": "L65536", "t_send": 0.01, "ttft_s": 49.148, "wall_s": 51.81, "max_gap_s": 0.04, "decode_tps": 47.72, "prompt_n": 65243, "prefill_tps": 1329.4, "md5": "8acec1b966", "scenario": "prefill", "kind": "prio", "leg": "W12"}
+{"tag": "juno", "spec": "p0", "t_send": 10.01, "ttft_s": 2.825, "wall_s": 8.58, "max_gap_s": 0.31, "decode_tps": 44.33, "prompt_n": 10, "prefill_tps": 56.3, "md5": "8e312d7bdd", "scenario": "prefill", "kind": "prio", "leg": "W12"}
+--- prio_nc.py junofirst --classes /srv/glm-5.3-flash/nc/keys/classes.txt 07:19:24
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.382, "wall_s": 6.14, "max_gap_s": 0.21, "decode_tps": 44.3, "prompt_n": 10, "prefill_tps": 65.2, "md5": "8e312d7bdd", "scenario": "junofirst", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "p4", "t_send": 1.0, "ttft_s": 4.421, "wall_s": 20.86, "max_gap_s": 0.58, "decode_tps": 15.52, "prompt_n": 21, "prefill_tps": 4.8, "md5": "e7851c4b56", "scenario": "junofirst", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "p2", "t_send": 1.0, "ttft_s": 5.613, "wall_s": 21.27, "max_gap_s": 0.15, "decode_tps": 16.28, "prompt_n": 18, "prefill_tps": 4.5, "md5": "f8531a5f07", "scenario": "junofirst", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "p1", "t_send": 1.0, "ttft_s": 5.779, "wall_s": 21.36, "max_gap_s": 0.15, "decode_tps": 16.36, "prompt_n": 19, "prefill_tps": 6.7, "md5": "74fb633e8e", "scenario": "junofirst", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "p3", "t_send": 1.0, "ttft_s": 5.916, "wall_s": 21.39, "max_gap_s": 0.09, "decode_tps": 16.48, "prompt_n": 21, "prefill_tps": 27.5, "md5": "4d6338450b", "scenario": "junofirst", "kind": "prio", "leg": "W12"}
+--- prio_nc.py junofirst --classes /srv/glm-5.3-flash/nc/keys/classes.txt --jn 1024 07:19:47
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.309, "wall_s": 25.27, "max_gap_s": 0.18, "decode_tps": 40.98, "prompt_n": 10, "prefill_tps": 70.1, "md5": "168f9c9c04", "scenario": "junofirst", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "p1", "t_send": 1.0, "ttft_s": 3.894, "wall_s": 36.24, "max_gap_s": 0.81, "decode_tps": 7.88, "prompt_n": 19, "prefill_tps": 5.0, "md5": "74fb633e8e", "scenario": "junofirst", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "p3", "t_send": 1.0, "ttft_s": 4.797, "wall_s": 36.37, "max_gap_s": 0.81, "decode_tps": 8.08, "prompt_n": 21, "prefill_tps": 6.1, "md5": "4d6338450b", "scenario": "junofirst", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "p2", "t_send": 1.0, "ttft_s": 5.901, "wall_s": 36.48, "max_gap_s": 0.49, "decode_tps": 8.34, "prompt_n": 18, "prefill_tps": 5.6, "md5": "f8531a5f07", "scenario": "junofirst", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "p4", "t_send": 1.0, "ttft_s": 24.713, "wall_s": 37.66, "max_gap_s": 0.09, "decode_tps": 19.7, "prompt_n": 21, "prefill_tps": 49.1, "md5": "e7851c4b56", "scenario": "junofirst", "kind": "prio", "leg": "W12"}
+--- prio_nc.py mixed --classes /srv/glm-5.3-flash/nc/keys/classes.txt 07:20:25
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 3.137, "wall_s": 33.04, "max_gap_s": 2.43, "decode_tps": 8.53, "prompt_n": 21, "prefill_tps": 7.5, "md5": "4d6338450b", "scenario": "mixed", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 3.074, "wall_s": 33.04, "max_gap_s": 2.43, "decode_tps": 8.51, "prompt_n": 19, "prefill_tps": 6.6, "md5": "74fb633e8e", "scenario": "mixed", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 3.286, "wall_s": 33.37, "max_gap_s": 2.43, "decode_tps": 8.48, "prompt_n": 18, "prefill_tps": 6.4, "md5": "f8531a5f07", "scenario": "mixed", "kind": "prio", "leg": "W12"}
+{"tag": "low", "spec": "L65536", "t_send": 0.51, "ttft_s": 61.491, "wall_s": 64.67, "max_gap_s": 0.04, "decode_tps": 39.95, "prompt_n": 65243, "prefill_tps": 1065.5, "md5": "8acec1b966", "scenario": "mixed", "kind": "prio", "leg": "W12"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 2.089, "wall_s": 8.12, "max_gap_s": 0.26, "decode_tps": 42.3, "prompt_n": 10, "prefill_tps": 67.6, "md5": "8e312d7bdd", "scenario": "mixed", "kind": "prio", "leg": "W12"}
+--- prio_nc.py warm --classes /srv/glm-5.3-flash/nc/keys/classes.txt 07:21:31
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.396, "wall_s": 5.69, "max_gap_s": 0.04, "decode_tps": 48.14, "prompt_n": 10, "prefill_tps": 65.7, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "W12"}
+{"tag": "warm", "spec": "p0", "t_send": 5.69, "ttft_s": 0.195, "wall_s": 5.35, "max_gap_s": 0.04, "decode_tps": 49.47, "prompt_n": 10, "prefill_tps": 63.2, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "W12"}
+{"tag": "warm", "spec": "p0", "t_send": 11.04, "ttft_s": 0.167, "wall_s": 5.2, "max_gap_s": 0.04, "decode_tps": 50.63, "prompt_n": 10, "prefill_tps": 76.6, "md5": "8e312d7bdd", "scenario": "warm", "kind": "prio", "leg": "W12"}
+PEAK GPU 80877 MiB, LOWEST MemAvailable 144041 MiB; END W12 07:21:49
+NC-LEG-DONE W12 07:21:49
+server-W12.log no key in log
+NC4C-DONE 07:21:49

@@ -1536,4 +1536,7 @@ clients below its cell, on both sides of it (steps split 3 + 1) and starting whi
 hash after every ubatch and the same answer as alone; no range contained the frozen cell; after a sequence copy the
 first ubatch runs whole and the next ones are cut.
 
-Not in production until its acceptance windows are done (see docs/experiments.md).
+Not in production. GH200 window nc4 (2026-11-10): detectors and two acceptance processes pass byte-identical on the CI
+image `547208dca250-gc93c6d9`, but that image reads a long prompt 5-18 % slower than production once other slots hold
+long conversations, also with the hold rule and none of the pieces variables set. The cause is somewhere in 0060-0069
+and is open (see docs/experiments.md).

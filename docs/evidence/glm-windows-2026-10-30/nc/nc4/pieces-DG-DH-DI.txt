@@ -1,0 +1,170 @@
+== server-DG.log
+0.45.022.016 I slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+0.45.110.719 I decode_resume: prompt ubatch of 6 tokens done in 2 pieces, 69.8 ms of GPU time
+0.50.112.845 I slot print_timing: id  0 | task 0 | prompt eval time =     143.86 ms /    10 tokens (   14.39 ms per token,    69.51 tokens per second)
+0.50.163.032 I slot   operator(): id  1 | task 259 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 16414
+0.52.413.660 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2218.6 ms of GPU time
+0.54.733.448 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2285.1 ms of GPU time
+0.57.240.404 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2471.4 ms of GPU time
+0.57.469.794 I decode_resume: prompt ubatch of 30 tokens done in 2 pieces, 221.9 ms of GPU time
+1.00.175.983 I decode_resume: prompt ubatch of 4092 tokens done in 13 pieces, 2662.8 ms of GPU time
+1.03.529.611 I slot print_timing: id  1 | task 259 | prompt eval time =   10113.95 ms / 16414 tokens (    0.62 ms per token,  1622.91 tokens per second)
+1.03.692.257 I slot   operator(): id  0 | task 442 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+1.03.767.469 I decode_resume: prompt ubatch of 6 tokens done in 2 pieces, 67.2 ms of GPU time
+1.08.846.600 I slot print_timing: id  0 | task 442 | prompt eval time =     131.01 ms /    10 tokens (   13.10 ms per token,    76.33 tokens per second)
+1.08.868.533 I slot   operator(): id  1 | task 701 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 16414
+1.11.080.594 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2176.1 ms of GPU time
+1.13.386.910 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2273.6 ms of GPU time
+1.15.880.539 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2459.5 ms of GPU time
+1.16.098.817 I decode_resume: prompt ubatch of 30 tokens done in 2 pieces, 210.4 ms of GPU time
+1.18.793.577 I decode_resume: prompt ubatch of 4092 tokens done in 13 pieces, 2651.9 ms of GPU time
+1.21.609.212 I slot print_timing: id  1 | task 701 | prompt eval time =   10021.40 ms / 16414 tokens (    0.61 ms per token,  1637.89 tokens per second)
+1.21.671.117 I slot   operator(): id  1 | task 884 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 65243
+1.23.873.037 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2166.5 ms of GPU time
+1.26.168.349 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2262.5 ms of GPU time
+1.28.651.567 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2449.1 ms of GPU time
+1.31.320.946 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2634.1 ms of GPU time
+1.34.173.019 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2815.5 ms of GPU time
+1.37.223.321 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3012.1 ms of GPU time
+1.40.463.779 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3201.2 ms of GPU time
+1.43.906.280 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3401.3 ms of GPU time
+1.46.489.790 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2541.2 ms of GPU time
+1.49.120.523 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2588.1 ms of GPU time
+1.51.788.183 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2623.7 ms of GPU time
+1.54.496.190 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2662.6 ms of GPU time
+1.57.252.481 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2709.9 ms of GPU time
+2.00.045.672 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2745.6 ms of GPU time
+2.02.703.711 I decode_resume: prompt ubatch of 3803 tokens done in 13 pieces, 2612.5 ms of GPU time
+2.05.591.516 I decode_resume: prompt ubatch of 4092 tokens done in 13 pieces, 2829.6 ms of GPU time
+2.08.597.374 I slot print_timing: id  1 | task 884 | prompt eval time =   44048.99 ms / 65243 tokens (    0.68 ms per token,  1481.15 tokens per second)
+== server-DH.log
+0.45.020.753 I slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+0.45.108.821 I decode_resume: prompt ubatch of 6 tokens done in 2 pieces, 69.8 ms of GPU time
+0.50.106.511 I slot print_timing: id  0 | task 0 | prompt eval time =     142.81 ms /    10 tokens (   14.28 ms per token,    70.02 tokens per second)
+0.50.156.039 I slot   operator(): id  1 | task 259 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 16414
+0.52.408.307 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2220.5 ms of GPU time
+0.54.729.708 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2287.0 ms of GPU time
+0.57.237.753 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2471.9 ms of GPU time
+0.57.467.317 I decode_resume: prompt ubatch of 30 tokens done in 2 pieces, 222.1 ms of GPU time
+1.00.174.883 I decode_resume: prompt ubatch of 4092 tokens done in 13 pieces, 2664.5 ms of GPU time
+1.03.526.871 I slot print_timing: id  1 | task 259 | prompt eval time =   10119.59 ms / 16414 tokens (    0.62 ms per token,  1622.00 tokens per second)
+1.03.834.759 I slot   operator(): id  0 | task 442 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 18
+1.03.996.124 I decode_resume: prompt ubatch of 14 tokens done in 2 pieces, 153.3 ms of GPU time
+1.03.996.211 I slot   operator(): id  2 | task 443 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 19
+1.04.158.059 I decode_resume: prompt ubatch of 15 tokens done in 2 pieces, 155.2 ms of GPU time
+1.04.158.145 I slot   operator(): id  1 | task 444 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 16414
+1.06.529.394 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2334.6 ms of GPU time
+1.06.529.499 I slot   operator(): id  3 | task 445 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 65243
+1.08.785.029 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2218.9 ms of GPU time
+1.13.649.281 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2308.3 ms of GPU time
+1.18.448.389 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2344.2 ms of GPU time
+1.23.589.617 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2529.7 ms of GPU time
+1.27.733.349 I slot print_timing: id  0 | task 442 | prompt eval time =    5036.38 ms /    18 tokens (  279.80 ms per token,     3.57 tokens per second)
+1.27.733.561 I slot print_timing: id  2 | task 443 | prompt eval time =    4935.15 ms /    19 tokens (  259.74 ms per token,     3.85 tokens per second)
+1.28.217.923 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2568.0 ms of GPU time
+1.28.431.282 I decode_resume: prompt ubatch of 30 tokens done in 2 pieces, 205.8 ms of GPU time
+1.31.220.259 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2753.5 ms of GPU time
+1.34.062.139 I decode_resume: prompt ubatch of 4092 tokens done in 13 pieces, 2797.8 ms of GPU time
+1.37.073.836 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2974.5 ms of GPU time
+1.42.874.107 I slot print_timing: id  1 | task 444 | prompt eval time =   33010.07 ms / 16414 tokens (    2.01 ms per token,   497.24 tokens per second)
+1.43.182.112 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3161.8 ms of GPU time
+1.46.565.090 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3343.6 ms of GPU time
+1.50.151.579 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3545.7 ms of GPU time
+1.52.874.132 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2680.8 ms of GPU time
+1.55.638.459 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2720.1 ms of GPU time
+1.58.445.093 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2761.2 ms of GPU time
+2.01.292.670 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2802.0 ms of GPU time
+2.04.188.541 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2849.3 ms of GPU time
+2.07.116.798 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2880.2 ms of GPU time
+2.09.900.660 I decode_resume: prompt ubatch of 3803 tokens done in 13 pieces, 2738.2 ms of GPU time
+2.12.933.656 I decode_resume: prompt ubatch of 4092 tokens done in 13 pieces, 2975.1 ms of GPU time
+2.16.028.556 I slot print_timing: id  3 | task 445 | prompt eval time =   66519.83 ms / 65243 tokens (    1.02 ms per token,   980.81 tokens per second)
+2.16.447.977 I slot   operator(): id  2 | task 1225 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 19
+2.16.604.731 I decode_resume: prompt ubatch of 15 tokens done in 2 pieces, 148.6 ms of GPU time
+2.16.604.972 I slot   operator(): id  0 | task 1226 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 18
+2.16.748.820 I decode_resume: prompt ubatch of 14 tokens done in 2 pieces, 136.5 ms of GPU time
+2.16.749.014 I slot   operator(): id  1 | task 1227 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 16414
+2.19.532.980 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2745.9 ms of GPU time
+2.19.533.097 I slot   operator(): id  3 | task 1228 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 65243
+2.21.779.952 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2202.0 ms of GPU time
+2.26.629.614 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2299.9 ms of GPU time
+2.31.404.739 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2336.1 ms of GPU time
+2.36.551.689 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2522.4 ms of GPU time
+2.38.955.481 I slot print_timing: id  0 | task 1226 | prompt eval time =    5311.19 ms /    18 tokens (  295.07 ms per token,     3.39 tokens per second)
+2.38.955.689 I slot print_timing: id  2 | task 1225 | prompt eval time =    5401.30 ms /    19 tokens (  284.28 ms per token,     3.52 tokens per second)
+2.40.370.256 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2559.9 ms of GPU time
+2.40.568.800 I decode_resume: prompt ubatch of 30 tokens done in 2 pieces, 191.0 ms of GPU time
+2.43.346.694 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2742.3 ms of GPU time
+2.46.176.931 I decode_resume: prompt ubatch of 4092 tokens done in 13 pieces, 2786.0 ms of GPU time
+2.49.177.455 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2962.9 ms of GPU time
+2.54.373.376 I slot print_timing: id  1 | task 1227 | prompt eval time =   32517.61 ms / 16414 tokens (    1.98 ms per token,   504.77 tokens per second)
+2.54.962.539 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3148.4 ms of GPU time
+2.58.334.134 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3331.8 ms of GPU time
+3.01.909.309 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3534.1 ms of GPU time
+3.04.620.296 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2668.7 ms of GPU time
+3.07.373.051 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2709.3 ms of GPU time
+3.10.166.792 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2747.7 ms of GPU time
+3.13.006.418 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2792.5 ms of GPU time
+3.15.890.852 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2836.4 ms of GPU time
+3.18.808.834 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2869.0 ms of GPU time
+3.21.587.344 I decode_resume: prompt ubatch of 3803 tokens done in 13 pieces, 2732.6 ms of GPU time
+3.24.602.842 I decode_resume: prompt ubatch of 4092 tokens done in 13 pieces, 2957.4 ms of GPU time
+3.27.328.868 I slot print_timing: id  3 | task 1228 | prompt eval time =   65181.09 ms / 65243 tokens (    1.00 ms per token,  1000.95 tokens per second)
+3.27.433.789 I slot   operator(): id  0 | task 2008 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+3.27.525.018 I decode_resume: prompt ubatch of 6 tokens done in 2 pieces, 83.1 ms of GPU time
+3.33.236.563 I slot print_timing: id  0 | task 2008 | prompt eval time =     158.09 ms /    10 tokens (   15.81 ms per token,    63.25 tokens per second)
+3.33.274.955 I slot   operator(): id  1 | task 2267 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 16414
+3.36.059.740 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2745.3 ms of GPU time
+3.38.933.433 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2837.4 ms of GPU time
+3.41.991.997 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3021.2 ms of GPU time
+3.42.194.643 I decode_resume: prompt ubatch of 30 tokens done in 2 pieces, 194.6 ms of GPU time
+3.45.454.149 I decode_resume: prompt ubatch of 4092 tokens done in 13 pieces, 3213.2 ms of GPU time
+3.47.950.359 I slot print_timing: id  1 | task 2267 | prompt eval time =   12264.63 ms / 16414 tokens (    0.75 ms per token,  1338.32 tokens per second)
+3.48.025.837 I slot   operator(): id  3 | task 2450 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 65243
+3.50.378.584 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2308.0 ms of GPU time
+3.52.812.713 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2399.6 ms of GPU time
+3.55.431.505 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2583.3 ms of GPU time
+3.58.236.823 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2769.1 ms of GPU time
+4.01.226.029 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2951.4 ms of GPU time
+4.04.414.482 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3149.1 ms of GPU time
+4.07.791.072 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3336.3 ms of GPU time
+4.11.369.618 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 3536.8 ms of GPU time
+4.14.089.462 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2676.4 ms of GPU time
+4.16.845.969 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2712.5 ms of GPU time
+4.19.647.424 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2756.4 ms of GPU time
+4.22.489.924 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2796.5 ms of GPU time
+4.25.381.297 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2844.0 ms of GPU time
+4.28.308.178 I decode_resume: prompt ubatch of 4096 tokens done in 13 pieces, 2877.6 ms of GPU time
+4.31.087.474 I decode_resume: prompt ubatch of 3803 tokens done in 13 pieces, 2733.4 ms of GPU time
+4.34.110.656 I decode_resume: prompt ubatch of 4092 tokens done in 13 pieces, 2965.0 ms of GPU time
+4.36.673.956 I slot print_timing: id  3 | task 2450 | prompt eval time =   46205.20 ms / 65243 tokens (    0.71 ms per token,  1412.03 tokens per second)
+== server-DI.log
+0.44.991.746 I slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+0.45.079.105 I decode_resume: prompt ubatch of 6 tokens done in 2 pieces, 69.3 ms of GPU time
+0.50.074.647 I slot print_timing: id  0 | task 0 | prompt eval time =     141.81 ms /    10 tokens (   14.18 ms per token,    70.52 tokens per second)
+0.50.125.006 I slot   operator(): id  1 | task 259 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 16414
+0.52.372.137 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 2217.0 ms of GPU time
+0.54.689.280 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 2283.7 ms of GPU time
+0.57.190.717 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 2468.6 ms of GPU time
+0.57.420.492 I decode_resume: prompt ubatch of 30 tokens done in 2 pieces, 222.0 ms of GPU time
+1.00.123.442 I decode_resume: prompt ubatch of 4092 tokens done in 2 pieces, 2659.8 ms of GPU time
+1.03.470.181 I slot print_timing: id  1 | task 259 | prompt eval time =   10099.18 ms / 16414 tokens (    0.62 ms per token,  1625.28 tokens per second)
+1.03.783.782 I slot   operator(): id  0 | task 398 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 18
+1.03.944.440 I decode_resume: prompt ubatch of 14 tokens done in 2 pieces, 152.6 ms of GPU time
+1.03.944.524 I slot   operator(): id  2 | task 399 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 19
+1.04.105.985 I decode_resume: prompt ubatch of 15 tokens done in 2 pieces, 154.9 ms of GPU time
+1.04.106.061 I slot   operator(): id  1 | task 400 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 16414
+1.06.473.429 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 2331.2 ms of GPU time
+1.06.473.605 I slot   operator(): id  3 | task 401 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 65243
+1.08.723.487 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 2215.1 ms of GPU time
+1.11.296.382 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 2306.1 ms of GPU time
+1.16.028.278 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 2340.0 ms of GPU time
+1.21.007.497 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 2525.9 ms of GPU time
+1.26.178.381 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 2563.9 ms of GPU time
+1.28.118.665 I slot print_timing: id  0 | task 398 | prompt eval time =    5025.46 ms /    18 tokens (  279.19 ms per token,     3.58 tokens per second)
+1.28.118.886 I slot print_timing: id  2 | task 399 | prompt eval time =    4924.78 ms /    19 tokens (  259.20 ms per token,     3.86 tokens per second)
+1.28.331.311 I decode_resume: prompt ubatch of 30 tokens done in 2 pieces, 205.1 ms of GPU time
+1.31.117.728 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 2751.7 ms of GPU time
+1.33.955.369 I decode_resume: prompt ubatch of 4092 tokens done in 2 pieces, 2794.8 ms of GPU time
+1.36.963.670 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 2972.1 ms of GPU time
+1.40.332.069 I decode_resume: prompt ubatch of 4096 tokens done in 2 pieces, 3165.2 ms of GPU time
