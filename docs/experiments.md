@@ -2243,3 +2243,74 @@ LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PREFILL_SLICE_TG_
   ~190k clients, about 100 minutes) and the mechanics leg G1 on the final build. Image with the whole stack incl.
   0073: `547208dca250-g76c2c21` (CI green 12:01 UTC). Evidence added: `spark-nc6b.log`, `digest-SA4-SA5-RF1.txt`,
   `legs-nc2/lowmem-{RF1,SA4,SA5}.txt`, the final `legs-nc2/results.jsonl`.
+
+**2026-11-10, GH200 window nc6 (12:14-13:43 UTC): the pieces with patches 0071 + 0072 + 0073 pass acceptance on the CI
+image `547208dca250-g76c2c21` (gate, 25 of 25 staggered pairs, two processes, every md5 gold); a 1.2 to 2.6 % lower
+aggregate when three to five clients arrive together is traced to the same-class share and removed by candidate
+patch 0074 on a dev build. Nothing shipped from the window; the GH200 rollout waits for the image with 0074.**
+glm53-gh200 at 0 for 89 minutes, CronJob `re-lab/workbench-queue` suspended, the Spark served. Config of the legs
+unless noted: production flags, pieces of 4 layers at share 0.05 (`LLAMA_PREFILL_SLICE_SHARE_SAME=0.5`,
+`LLAMA_PREFILL_TURNS=1`, hold rule off), `LLAMA_KPOOL_OWN_SEQS=1`, `LLAMA_PREFILL_SHORT_FIRST=1`, five slots of 1M.
+Evidence: `docs/evidence/glm-windows-2026-10-30/nc/nc6/`.
+- **Leg KV6 (detector gate, client classes, `LLAMA_RS_LOG=1 LLAMA_RS_SUM=512`): PASS.** 37 of 37 answers gold, 17
+  distinct long ubatches and none with more than one result hash, 96 prompt ubatches computed in pieces, 5628 ubatches
+  while a recurrent cell was frozen and none whose range contained the frozen cell, no guard refusal, no key in the
+  server log.
+- **Leg ST (staggered pairs, the repro of the Spark abort, `LLAMA_PREFILL_SLICE_LOG=1`): 25 of 25 pairs equal to
+  solo**, including a short prompt arriving during a 16k prompt and the reverse. With 0073 the log has a piece count
+  only for long ubatches: 44 lines, all "4096 (or 4092) tokens done in 12 pieces". Before 0073 a 4096-token ubatch
+  took 13 pieces on this box and a short ubatch was cut once, at the graph's single split boundary.
+- **Legs KA16 and KA26 (acceptance, two server processes, the full sequence of nc4/nc5): 0 multi rounds differing
+  from solo or gold in either.** Solo p0-p4 `8e312d7bdd` `74fb633e8e` `f8531a5f07` `4d6338450b` `e7851c4b56`, 16k
+  `145c14aa8b`, 64k `8acec1b966`, 100k depth `9c80718286`, quicksort `bc32ecab82`; N=2..5 two rounds; p0 + 16k, four
+  short + 16k (two rounds), four short + 64k, two short + 16k + 64k, three short + 100k. Peak GPU memory 80879 MiB.
+- **Leg PB6 (the production image `g68d4166` with the production config, the throughput part of the same sequence,
+  adjacent): every md5 gold.** Aggregate (tokens over the wall time of the round, rounds 1 and 2), KA16 / KA26
+  against PB6: two clients 60.5/62.3 and 60.6/62.5 against 60.4/62.3; three 66.3/67.5 and 66.4/67.6 against
+  67.2/68.3 (1.2 % lower); four 69.1/69.5 and 69.2/69.6 against 70.9/71.5 (2.6 % lower); five 66.6/67.1 twice
+  against 68.2/68.6 (2.3 % lower). Each stream's own decode speed is equal or higher on the new image (five clients:
+  14.1-14.8 against 13.8-14.5 tok/s), so the loss sits before the answers: the rounds are 0.3 to 0.5 s longer. Mixes:
+  p0 + 16k 21.0 against 21.3; four short + 16k 41.0-41.4 against 41.5-41.8; four short + 64k 18.4 against 18.6; two
+  short + 16k + 64k 11.2-11.3 against 11.1. The 16k prompt read after other slots held conversations: 1652 tok/s
+  against 1335 on the production image (the k-pool list of window nc5; 0071 is in the new config).
+- **Cause of the lower aggregate: the same-class share applied to short prompts.** With 0072 the first short prompt
+  of a burst finishes both of its ubatches and starts to generate. From then on the remaining prompts of its class are
+  held to `LLAMA_PREFILL_SLICE_SHARE_SAME` (as much prompt time as decode time), and the clients that already generate
+  run in smaller batches until the last one has joined. Production reads all the prompts first. This is the cost
+  window nc-s2 saw on the Spark and could not attribute.
+- **Candidate patch 0074 (`LLAMA_PREFILL_SLICE_SAME_FREE=<tokens>`, default off): a prompt with at most that many
+  tokens left is not held to the same-class share.** Legs on a dev build (`out-j90`, the dev tree at 0074) mounted
+  over the image. KJ0, variable unset (control for the build): 58.8/61.5, 65.9/67.1, 69.0/70.0, 66.6/67.0 at two to
+  five clients, the image's numbers. KJ1, variable 512: 60.9/62.8, 67.4/68.7, 70.6/71.2, 68.3/68.8, which is PB6
+  within 0.4 % at every count; p0 + 16k 20.9; four short + 16k 41.6-41.7; every md5 gold, 0 multi rounds differing,
+  six of six staggered pairs equal to solo, quicksort gold three times. One process on a dev build is not
+  acceptance; the patch went to CI (`b5ee55a`) and the image is accepted in the next window.
+- **Legs XK (the new config) and XH (the production image and config, hold rule on): Juno's class and the order of
+  prompts.** Juno alone in XK: 50.1 tok/s (256 tokens), 52.6 (512), 51.7 (1024).
+  - "mixed" (three short low prompts, a 64k low prompt half a second later, Juno after 4 s), twice each: Juno keeps
+    91-93 % of her speed alone against 33-35 % on production, first token after 1.0 s against 1.5-1.8 s. The short
+    clients' first tokens come after 0.4-1.4 s (production 0.35-1.1 s; nc5 without 0072: 3.1-3.3 s). Their answers
+    are complete after 29.4-30.7 s against 20.1-20.9 s on production: there the hold rule keeps the 64k prompt
+    waiting during Juno's answer and the three short clients generate next to her; here they are held to 5 % while she
+    generates and then share the time with the 64k prompt. The 64k client's first token: 61.7-61.9 s against
+    59.1-60.0 s.
+  - "junolong" (a 64k low prompt one second into Juno's 512-token answer): Juno 92 %. "prefill" (Juno arriving ten
+    seconds into a 64k low prompt): first token after 2.8 s, 98 %.
+  - "junofirst" (four short low prompts one second into Juno's answer): with a 256-token answer Juno keeps 100 % and
+    the low clients' first tokens come 3.5-5.9 s after sending. With a 1024-token answer (22.8 s) she keeps 88 % and
+    the four first tokens come after 2.9, 11.6, 20.4 and 22.3 s: at share 0.05 a queue of short low prompts drains at
+    about one per nine seconds of her decode, so the last of four arrived as she finished. Under the hold rule all
+    four wait for the end of her answer.
+  - "shortbehind" (a short prompt five seconds into a 64k prompt of its class): first token after 2.4 s against
+    39.3 s on production. "samelong" (a 64k prompt two seconds into a 512-token answer of its class): the answer is
+    complete after 18.7 s with no gap over 0.3 s, against 57.1 s with a 44-second gap; the 64k client's first token
+    52.5 s against 44.0 s. "twolong" (64k, then 16k after 4 s, then a short prompt after 8 s): first tokens after
+    62.8 / 24.6 / 1.9 s against 52.4 / 60.7 / 56.9 s.
+  - Every md5 gold in both legs. The 512-token answer of p1 in "samelong" (`ad210f651f`) is the same in XK, in XH
+    and alone (KJ1).
+- **Not run: leg XT** (the order scenarios with 0072 off on the same image). Dropped for time in favour of KJ0/KJ1:
+  the first runner was stopped by its process group when XT began (`nc6-switch.sh`), its container and key file
+  removed. The before for 0072 on this box stays window nc5's.
+- **Window closed 13:43 UTC.** glm53-gh200 back at one replica on `547208dca250-g68d4166`, gold `bc32ecab82` three
+  times through the Service (53.5-55.0 tok/s), workbench-queue unsuspended, no test container or key file left, the
+  laptop deadman disarmed.
