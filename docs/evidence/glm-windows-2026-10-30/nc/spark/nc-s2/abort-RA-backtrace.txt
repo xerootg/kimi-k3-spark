@@ -1,0 +1,45 @@
+0.34.603.766 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+0.34.603.767 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+0.34.603.767 I slot get_availabl: id  1 | task -1 | selected slot by LCP similarity, f_sim_best = 1.000 (> 0.100 thold), f_keep = 0.175
+0.34.603.786 I slot launch_slot_: id  1 | task -1 | sampler chain: logits -> logit-bias -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+0.34.603.790 I slot launch_slot_: id  1 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.34.603.796 I slot launch_slot_: id  1 | task 200 | processing task, is_child = 0
+0.34.603.801 I slot   operator(): id  1 | task 200 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 10
+0.34.603.804 I slot   operator(): id  1 | task 200 | erased invalidated context checkpoint (pos_min = 5, pos_max = 5, n_tokens = 6, n_swa = 0, pos_next = 0, size = 145.563 MiB)
+0.34.609.105 I slot   operator(): id  1 | task 200 | cached n_tokens = 0, memory_seq_rm [0, end)
+/w/src/src/llama-moe-cache.cpp:5080: expert store: the split's real lookup of layer 14 came without its early lookup (-1)
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/aarch64-linux-gnu/libthread_db.so.1".
+0x0000f5f84313eeb4 in ?? () from /lib/aarch64-linux-gnu/libcuda.so.1
+#0  0x0000f5f84313eeb4 in ?? () from /lib/aarch64-linux-gnu/libcuda.so.1
+#1  0x0000f5f843178f64 in ?? () from /lib/aarch64-linux-gnu/libcuda.so.1
+#2  0x0000f5f843e33dac in ?? () from /lib/aarch64-linux-gnu/libcuda.so.1
+#3  0x0000f5f843e341c8 in ?? () from /lib/aarch64-linux-gnu/libcuda.so.1
+#4  0x0000f5f843149cfc in ?? () from /lib/aarch64-linux-gnu/libcuda.so.1
+#5  0x0000f5f8431fa274 in ?? () from /lib/aarch64-linux-gnu/libcuda.so.1
+#6  0x0000f5f843dfe87c in ?? () from /lib/aarch64-linux-gnu/libcuda.so.1
+#7  0x0000f5f8432965a4 in ?? () from /lib/aarch64-linux-gnu/libcuda.so.1
+#8  0x0000f5f84328f274 in cuStreamSynchronize () from /lib/aarch64-linux-gnu/libcuda.so.1
+#9  0x0000f5f8569a58d4 in ?? () from /usr/local/cuda/targets/sbsa-linux/lib/libcudart.so.13
+#10 0x0000f5f8569fd0d8 in cudaStreamSynchronize () from /usr/local/cuda/targets/sbsa-linux/lib/libcudart.so.13
+#11 0x0000f5f84c950ef4 in ggml_backend_cuda_synchronize(ggml_backend*) () from /home/xero/nc/a121h/bin/libggml-cuda.so
+#12 0x0000f5f857bfce0c in ggml_backend_sched_synchronize () from /home/xero/nc/a121h/bin/libggml-base.so.0
+#13 0x0000f5f857eddc74 in llama_context::graph_compute_piece(ggml_cgraph*, bool, bool&) () from /home/xero/nc/a121h/bin/libllama.so.0
+#14 0x0000f5f857ee6ac4 in llama_context::decode_resume() () from /home/xero/nc/a121h/bin/libllama.so.0
+#15 0x0000f5f858d2c8ac in std::_Function_handler<void (), server_context_impl::pp_step()::{lambda()#1}>::_M_invoke(std::_Any_data const&) () from /home/xero/nc/a121h/bin/libllama-server-impl.so
+#16 0x0000f5f858ceba88 in server_queue::yield_to_queue(std::function<void ()>&&) () from /home/xero/nc/a121h/bin/libllama-server-impl.so
+#17 0x0000f5f858d54150 in server_context_impl::pp_step() () from /home/xero/nc/a121h/bin/libllama-server-impl.so
+#18 0x0000f5f858d55bb8 in server_context_impl::update_slots() () from /home/xero/nc/a121h/bin/libllama-server-impl.so
+#19 0x0000f5f858cecd60 in server_queue::start_loop(long) () from /home/xero/nc/a121h/bin/libllama-server-impl.so
+#20 0x0000f5f858c971bc in llama_server(common_params&, int, char**, server_child&) () from /home/xero/nc/a121h/bin/libllama-server-impl.so
+#21 0x0000f5f858c98a98 in llama_server(int, char**) () from /home/xero/nc/a121h/bin/libllama-server-impl.so
+#22 0x0000f5f8587884c4 in __libc_start_call_main (main=main@entry=0xc728ce320f40 <main>, argc=argc@entry=40, argv=argv@entry=0xffffe60a0468) at ../sysdeps/nptl/libc_start_call_main.h:58
+warning: 58	../sysdeps/nptl/libc_start_call_main.h: No such file or directory
+#23 0x0000f5f858788598 in __libc_start_main_impl (main=0xc728ce320f40 <main>, argc=40, argv=0xffffe60a0468, init=<optimized out>, fini=<optimized out>, rtld_fini=<optimized out>, stack_end=<optimized out>) at ../csu/libc-start.c:360
+warning: 360	../csu/libc-start.c: No such file or directory
+#24 0x0000c728ce320fb0 in _start ()
+[Inferior 1 (process 192184) detached]

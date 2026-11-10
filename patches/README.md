@@ -1688,6 +1688,39 @@ whenever it runs (`LLAMA_PREFILL_ISOLATE=1`), which is what 0055 and 0065 alread
 client stay those of a solo run. The shares of 0061/0064/0069 are untouched: a short prompt's ubatches still count
 against the share while a higher class generates.
 
-Candidate, not in production and not measured yet (written 2026-11-10 during Spark window nc-s2). Acceptance: the
-detector gate, per-client md5 against solo in two processes, gold, and the "mixed" and "shortbehind" scenarios
-against the production configuration; the result goes into docs/experiments.md either way.
+Measured in Spark window nc-s2 (2026-11-10, dev build, pieces config with client classes): the detector gate passed
+(21 of 21 answers gold, no long ubatch with more than one result hash); the short clients of "mixed" got their first
+token after 0.6-3.1 s (7.6-21.2 s without the variable) and in "stagger" after 0.6-1.4 s (15.6-34.4 s); Juno kept
+88-95 % of her speed alone, her own first token moved from 3.1-3.9 s to 5.4-5.6 s because the short tails now go before
+her prompt's turn. The classless acceptance run on that build aborted for a reason that is not this patch (see 0073;
+the order this patch produces only exposed it). Not in production; acceptance is repeated on a build with 0073.
+Ledger: docs/experiments.md, window nc-s2.
+
+## 0073-pieces-split-boundary
+
+A fix to 0061, no variable. `ggml_backend_sched_graph_compute_part` (the scheduler call that computes a prompt ubatch
+in pieces) returned at the end of every scheduler split, without asking the caller's `can_stop`. Inside a split it
+asked, so a graph with one split was cut only between layers and only when the ubatch was long enough to be cut
+(`LLAMA_PREFILL_SLICE_MIN_TOKENS`, 512) and 0069 allowed it. A graph with several splits was cut at each of them
+whatever the caller wanted.
+
+On the Spark the column split of 0067 (ubatches of 3 to 8 tokens under batch-invariant mode) builds a graph with two
+splits per MoE layer. A prompt ubatch of 6 to 8 tokens (more tokens than slots, so the isolated prompt path; at most
+8, so the column split) was therefore cut in the middle of every layer: "prompt ubatch of 6 tokens done in 86 pieces"
+in the server log, where it should run whole. When another slot's decode step ran between two of those cuts, the
+expert store's split state (the early lookup of the layer the prompt had reached) was overwritten, and the server
+aborted with `expert store: the split's real lookup of layer N came without its early lookup (-1)`. Found in Spark
+window nc-s2 (2026-11-10): a 10-token prompt arriving while another slot of the same class generates, pieces config.
+Reproduced on the first try with and without 0072; the production config (no pieces) is not affected, and neither
+deployment ran the pieces at the time.
+
+With the patch the end of a split is a place to stop only where `can_stop(last node of the split, first node of the
+next)` agrees, as between two nodes inside a split. A ubatch that must run whole (`cut_ok` false) now runs whole
+across splits, and a long ubatch is cut only at layer boundaries that are a multiple of `LLAMA_PREFILL_SLICE_LAYERS`,
+also when such a boundary is a split boundary. Without a `can_stop` callback the function behaves as before. Nothing
+of what is computed changes, only where the computation may be interrupted.
+
+After the patch a short prompt ubatch finishes in its first call (the log line with a piece count, written when a
+later piece ends, no longer appears for it), and the repro (p1, then p0 one second later) returns both answers equal
+to their solo bytes. Acceptance and numbers: docs/experiments.md, window
+nc-s2.

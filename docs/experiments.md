@@ -2139,3 +2139,79 @@ something else dominated at the time. Re-test them after any change that shifts 
   or later also carry patch 0070 (off by default) and have no acceptance run; the manifest pins `gadd9f81`.
 - Restored at 10:21 UTC: glm53-gh200 at 1 replica on `g68d4166`, gold `bc32ecab82` three times through the Service,
   `workbench-queue` unsuspended, test keys deleted, `window.lock` free. The Spark stayed up throughout.
+
+**2026-11-10, Spark window nc-s2 (open 10:23 UTC): the proposed Spark config (floor 200k + burst to 1M, prompts in
+pieces, hold rule off) measured against production; turn order fixed (0072); an abort found in the pieces path and
+traced to patch 0061 (fix: 0073).** Dev builds of the stack through 0069 + 0071 (`a121g`), + 0072 (`a121h`), + 0073
+(`a121i`), sm_121, bare servers on 127.0.0.1:18080 under `window.lock`, glm53-spark at 0, glm53-gh200 serving
+throughout. "FIN" below = five slots of 1M (`--ctx-size 5242880`), `LLAMA_ELASTIC_KV_FLOOR_CELLS=204800`, pieces of
+2 layers at share 0.05 (`LLAMA_PREFILL_SLICE_LAYERS=2 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1
+LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PREFILL_SLICE_TG_CELLS=204800`), hold rule off,
+`LLAMA_KPOOL_OWN_SEQS=1`, production's column split and batch-invariant flags. Evidence:
+`docs/evidence/glm-windows-2026-10-30/nc/spark/nc-s2/` (runner logs `spark-nc4a.log`, `spark-nc5a.log`,
+`spark-nc6a.log`, `legs-nc2/results.jsonl`, digests).
+- **Leg SV1 (FIN, client classes, detectors, no 0072): gate PASS, and the turn-order cost.** With the turns of 0065
+  the tail of a short prompt waits behind the first ubatch of a long prompt that arrived after it: the short clients
+  of "mixed" got their first token after 7.6-21.2 s, in "stagger" after 15.6-34.4 s. Patch 0072
+  (`LLAMA_PREFILL_SHORT_FIRST=1`) was written for this inside the window.
+- **Leg SV2 (FIN + 0072, classes, detectors): gate PASS.** 21 of 21 answers gold, 8 distinct long ubatches by
+  content hash and none with more than one result hash, 61 ubatches read in pieces, no frozen-cell violation, no
+  guard refusal. Short clients' first token 0.59-3.07 s in "mixed" and 0.58-1.42 s in "stagger". Juno 14.3-15.4
+  tok/s = 88-95 % of alone (16.5); her first token 5.4-5.6 s against 3.1-3.9 s without 0072 (the short tails now go
+  before her). A 16k low prompt's first token 98-99 s.
+- **Leg SA1 (acceptance on FIN + 0071, classless, one process): no multi round differs from solo or gold.** Alone
+  14.6-16.0 tok/s, 16k read 324.9 tok/s. Aggregate tok/s: two clients 20.3-20.5, three 24.2-24.3, four 25.8, five
+  24.6-24.7. Four short clients next to a 16k prompt: 3.4 tok/s each; p0 next to a 16k prompt 7.35. Lowest
+  MemAvailable 18.0 GiB.
+- **Leg SP0 (production config, five 200k slots, same build `a121h`): the "before" of SA1.** Two clients 20.8, three
+  24.3, four 25.9-26.0, five 24.7; four short clients next to a 16k prompt 2.8-5.8 tok/s (aggregate 12.4 against
+  12.1). FIN costs 1-2 % aggregate at two clients and nothing measurable at three to five. All md5 gold.
+- **Leg M1 (admission at full scale, FIN): a 1M burst is admitted next to four full floors.** 999449 cells, 30.35 GB
+  past the floor: "MemAvailable 20.40 GB + releasable 40.88 GB, growth 34.39 + other slots' floors 16.15 + reserve
+  10.20 + compute buffer owed 0.00 GB". No refusal, lowest MemAvailable 6.3 GiB, p0 gold at 15.5-15.8 tok/s before
+  and after. (Admission only: the 1M prompt was not read here; the full-scale read is leg FB, still to run.)
+- **Legs SD2 (FIN + 0072, classes) against SB1 (production config with the hold rule, same build).** Juno alone 16.34
+  tok/s at 512 tokens. All md5 gold in both, no test key in any log.
+
+  | scenario | FIN + 0072 (SD2) | production, hold rule (SB1) |
+  |---|---|---|
+  | mixed: Juno's decode | 14.66 tok/s (90 %), first token 5.2 s | 6.61 tok/s (40 %), first token 4.7 s |
+  | mixed: three short low clients | first token 0.7-2.7 s, 3.0 tok/s, done after 86-88 s | first token 1.2-2.5 s, 5.5-5.7 tok/s, done after 47 s |
+  | mixed: 16k low prompt, first token | 97.1 s | 87.9 s |
+  | samelong: a client generating while a 16k prompt of its class is read | 7.59 tok/s, largest gap 0.41 s, done after 67.9 s | stalls 46.4 s, done after 84.6 s |
+  | samelong: the 16k prompt's first token | 79.2 s | 46.3 s |
+  | shortbehind: short prompt 5 s behind a 16k prompt | first token 1.1 s (the long one 63.1 s) | first token 41.8 s (the long one 46.2 s) |
+
+  SD2 only: junolong (16k low prompt one second into her answer) Juno 15.70 tok/s (96 %), the prompt's first token
+  77.9 s; prefill (she arrives ten seconds into a 16k low prompt) her first token 1.43 s, 15.41 tok/s, the prompt's
+  first token 62.8 s; junofirst (four low clients one second into her answer) Juno 15.44 tok/s, their first tokens
+  after 9.2, 17.0, 18.3 and 19.5 s.
+- **Reading of SD2 against SB1.** The pieces keep Juno at 88-96 % where the hold rule lets three decoders pull her to
+  40 %; a short prompt behind a long one starts after one second instead of 42; a generating client no longer stalls
+  for 46 s. The costs: a 16k prompt of another client reaches its first token after 63-97 s instead of 46-88 s, and
+  in "mixed" the short clients' answers take 86-88 s instead of 47 s. The second is the same-class share: after Juno
+  ends, the 16k prompt and the three decoders split the time half and half (`LLAMA_PREFILL_SLICE_SHARE_SAME=0.5`:
+  prompt 173 tok/s = 53 % of alone, decoders 9 tok/s together = 37 % of the 24 they reach alone, about a tenth lost
+  to switching), where the hold rule had let the short answers finish first by accident. A lower same-class share
+  (0.2-0.25) is the untested knob for that.
+- **Leg SA3 (acceptance on FIN + 0072, `a121h`): the server aborted**, `llama-moe-cache.cpp:5080: expert store: the
+  split's real lookup of layer 16 came without its early lookup (-1)`, in round 2 of `multi p0 p1` (solo, warm and
+  round 1 gold). No acceptance from this leg. In that round p1 was launched 8 ms before p0, and with 0072 p1's tail
+  went before p0's first ubatch, so p0's 6-token first ubatch ran while slot 1 was generating.
+- **Cause: patch 0061, not 0072 and not the column split.** `ggml_backend_sched_graph_compute_part` returned at
+  every scheduler split boundary without asking the caller's `can_stop`. On the Spark the column-split graph of 0067
+  (ubatches of 3-8 tokens) has two splits per MoE layer, so a prompt ubatch of 6-8 tokens (more tokens than slots, so
+  a prompt ubatch; at most 8, so the column split) was cut in the middle of every layer although a ubatch under 512
+  tokens is meant to run whole: leg SV2's log has "prompt ubatch of 6 tokens done in 86 pieces" seven times (and 2
+  pieces for 14-17 tokens, 4 for 30). When another slot's decode step ran between an early lookup and its real
+  lookup, the split state was gone. gdb's backtrace of the repro: abort under `decode_resume` /
+  `graph_compute_piece` / `pp_step`. Until now nothing decoded between those pieces: p0 (the only test prompt with a
+  first ubatch of 6-8 tokens) always went first or belonged to the top class.
+- **Repro legs (`stag.py`: p1, then p0 one second later, so p0 arrives while p1 generates; 48 tokens each).** RA (FIN
+  + 0072): abort on the first pair (layer 14). RB (the same without `LLAMA_PREFILL_SHORT_FIRST`): abort on the first
+  pair, so 0072 only produced the order by chance. RD (production config, no pieces): 15 of 15 pairs equal to solo
+  at gaps of 0.01, 0.3 and 1 s in both orders. Production runs no pieces on either box, so neither deployment is
+  exposed. The GH200 graphs have no column split (no expert store), but the cut at a split boundary ignored
+  `can_stop` there as well.
+- **Fix: patch 0073** (one condition: the end of a split is a place to stop only where `can_stop` agrees, as inside a
+  split). Built as `a121i` (only `libggml-base.so` differs from `a121h`); legs RF1 and SA4 on it follow below.

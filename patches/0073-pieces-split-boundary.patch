@@ -1,0 +1,20 @@
+diff --git a/ggml/src/ggml-backend.cpp b/ggml/src/ggml-backend.cpp
+index 965937e..d203015 100644
+--- a/ggml/src/ggml-backend.cpp
++++ b/ggml/src/ggml-backend.cpp
+@@ -2205,7 +2205,14 @@ enum ggml_status ggml_backend_sched_graph_compute_part(ggml_backend_sched_t sche
+         part->split++;
+         part->node = 0;
+         if (n_done >= min_nodes && part->split < sched->n_splits) {
+-            return GGML_STATUS_SUCCESS;
++            // patch 0073: the end of a split is a place to stop only if the caller agrees, as inside a split. A graph
++            // with several splits (the expert store's column split has two per MoE layer) was cut at every one of
++            // them, in the middle of a layer and also when the caller wanted the graph whole.
++            const struct ggml_backend_sched_split * next = &sched->splits[part->split];
++            if (can_stop == NULL || n_nodes == 0 || next->graph.n_nodes == 0 ||
++                    can_stop(split->graph.nodes[n_nodes - 1], next->graph.nodes[0], ud)) {
++                return GGML_STATUS_SUCCESS;
++            }
+         }
+     }
+     *done = true;

@@ -1,0 +1,89 @@
+=== LEG RA parallel=5 ctx=5242880 bd=/home/xero/nc/a121h extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_PREFILL_SLICE_LAYERS=2 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_ELASTIC_KV_FLOOR_CELLS=204800 LLAMA_PREFILL_SLICE_TG_CELLS=204800 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_LOG=1] 11:33:26
+READY RA after 26s
+0.13.485.942 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 55.00 GiB of address space on one 2048 KiB zero chunk (854.6 ms)
+0.13.485.998 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.13.486.000 I llama_kv_cache: elastic KV: floor 204800 cells per stream (2.19 GiB), 5 streams of 1048576 cells
+0.13.491.459 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.4 ms)
+0.13.496.589 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.1 ms)
+0.13.501.818 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.2 ms)
+0.13.506.937 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.1 ms)
+0.13.512.025 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 1048576 cells, 330.0 MiB mapped in all streams (5.1 ms)
+0.14.245.337 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 41.25 GiB of address space on one 2048 KiB zero chunk (630.2 ms)
+0.14.245.371 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.14.245.372 I llama_kv_cache: elastic KV idx_: floor 204800 cells per stream (1.65 GiB), 5 streams of 1048576 cells
+0.14.249.096 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (3.7 ms)
+0.14.252.550 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (3.4 ms)
+0.14.256.003 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (3.4 ms)
+--- stag.py p1 p0 --delays 1.0 0.01 --reps 3 11:33:52
+{"kind": "stag-solo", "tag": "RA", "spec": "p1", "md5": "08815159c3", "decode_tps": 14.68, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "RA", "spec": "p0", "md5": "3c0baad848", "decode_tps": 15.97, "error": null, "body": null}
+{"kind": "stag", "tag": "RA", "a": "p1", "b": "p0", "delay": 1.0, "rep": 0, "ok": false, "md5": ["ERRexc", "ERRexc"], "ref": ["08815159c3", "3c0baad848"], "decode_tps": [null, null], "body": ["RemoteDisconnected('Remote end closed connection without response')", "RemoteDisconnected('Remote end closed connection without response')"]}
+nc2-leg.sh: line 41: 192184 Aborted                 (core dumped) env $PROD_ENV LLAMA_EXPERT_STORE_SNAPSHOT=$PWD/snapshot/nc-$TAG.k3sn $EXTRA $BIN $(base_args $3 $4) ${XARGS:-} > $OUT/server-$TAG.log 2>&1
+elastic lines: 15; refused: 0; bursts: 0
+lowest MemAvailable 19154 MiB; now 120262 MiB; END RA 11:34:06
+NC2-LEG-DONE RA 11:34:06
+=== LEG RB parallel=5 ctx=5242880 bd=/home/xero/nc/a121h extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_PREFILL_SLICE_LAYERS=2 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_ELASTIC_KV_FLOOR_CELLS=204800 LLAMA_PREFILL_SLICE_TG_CELLS=204800 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SLICE_LOG=1] 11:34:06
+READY RB after 26s
+0.13.478.784 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 55.00 GiB of address space on one 2048 KiB zero chunk (853.8 ms)
+0.13.478.841 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.13.478.842 I llama_kv_cache: elastic KV: floor 204800 cells per stream (2.19 GiB), 5 streams of 1048576 cells
+0.13.484.876 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (6.0 ms)
+0.13.489.954 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.1 ms)
+0.13.494.989 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.0 ms)
+0.13.500.681 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.7 ms)
+0.13.505.680 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 1048576 cells, 330.0 MiB mapped in all streams (5.0 ms)
+0.14.243.765 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 41.25 GiB of address space on one 2048 KiB zero chunk (632.4 ms)
+0.14.243.796 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.14.243.797 I llama_kv_cache: elastic KV idx_: floor 204800 cells per stream (1.65 GiB), 5 streams of 1048576 cells
+0.14.247.538 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (3.7 ms)
+0.14.251.003 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (3.5 ms)
+0.14.254.455 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (3.4 ms)
+--- stag.py p1 p0 --delays 1.0 0.01 --reps 3 11:34:33
+{"kind": "stag-solo", "tag": "RB", "spec": "p1", "md5": "08815159c3", "decode_tps": 14.7, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "RB", "spec": "p0", "md5": "3c0baad848", "decode_tps": 16.03, "error": null, "body": null}
+{"kind": "stag", "tag": "RB", "a": "p1", "b": "p0", "delay": 1.0, "rep": 0, "ok": false, "md5": ["ERRexc", "ERRexc"], "ref": ["08815159c3", "3c0baad848"], "decode_tps": [null, null], "body": ["RemoteDisconnected('Remote end closed connection without response')", "RemoteDisconnected('Remote end closed connection without response')"]}
+nc2-leg.sh: line 41: 193037 Aborted                 (core dumped) env $PROD_ENV LLAMA_EXPERT_STORE_SNAPSHOT=$PWD/snapshot/nc-$TAG.k3sn $EXTRA $BIN $(base_args $3 $4) ${XARGS:-} > $OUT/server-$TAG.log 2>&1
+elastic lines: 15; refused: 0; bursts: 0
+lowest MemAvailable 19298 MiB; now 120347 MiB; END RB 11:34:47
+NC2-LEG-DONE RB 11:34:47
+=== LEG RD parallel=5 ctx=1024000 bd=/home/xero/nc/a121h extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1] 11:34:47
+READY RD after 26s
+0.12.758.031 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 10.74 GiB of address space on one 2048 KiB zero chunk (176.0 ms)
+0.12.758.083 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 204800 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.12.763.630 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 204800 cells, 66.0 MiB mapped in all streams (5.5 ms)
+0.12.768.788 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (5.1 ms)
+0.12.773.878 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 204800 cells, 198.0 MiB mapped in all streams (5.1 ms)
+0.12.778.989 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 204800 cells, 264.0 MiB mapped in all streams (5.1 ms)
+0.12.784.093 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 204800 cells, 330.0 MiB mapped in all streams (5.1 ms)
+0.12.959.651 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 8.06 GiB of address space on one 2048 KiB zero chunk (133.4 ms)
+0.12.959.682 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 204800 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.12.963.903 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 204800 cells, 44.0 MiB mapped in all streams (4.2 ms)
+0.12.967.328 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 204800 cells, 88.0 MiB mapped in all streams (3.4 ms)
+0.12.970.750 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (3.4 ms)
+0.12.974.185 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 204800 cells, 176.0 MiB mapped in all streams (3.4 ms)
+0.12.977.606 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 204800 cells, 220.0 MiB mapped in all streams (3.4 ms)
+--- stag.py p1 p0 --delays 1.0 0.01 0.3 --reps 3 11:35:12
+{"kind": "stag-solo", "tag": "RD", "spec": "p1", "md5": "08815159c3", "decode_tps": 14.79, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "RD", "spec": "p0", "md5": "3c0baad848", "decode_tps": 16.07, "error": null, "body": null}
+{"kind": "stag", "tag": "RD", "a": "p1", "b": "p0", "delay": 1.0, "rep": 0, "ok": true, "md5": ["08815159c3", "3c0baad848"], "ref": ["08815159c3", "3c0baad848"], "decode_tps": [10.55, 11.51], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p1", "b": "p0", "delay": 1.0, "rep": 1, "ok": true, "md5": ["08815159c3", "3c0baad848"], "ref": ["08815159c3", "3c0baad848"], "decode_tps": [10.73, 11.67], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p1", "b": "p0", "delay": 1.0, "rep": 2, "ok": true, "md5": ["08815159c3", "3c0baad848"], "ref": ["08815159c3", "3c0baad848"], "decode_tps": [10.67, 11.62], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p1", "b": "p0", "delay": 0.01, "rep": 0, "ok": true, "md5": ["08815159c3", "3c0baad848"], "ref": ["08815159c3", "3c0baad848"], "decode_tps": [9.87, 10.72], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p1", "b": "p0", "delay": 0.01, "rep": 1, "ok": true, "md5": ["08815159c3", "3c0baad848"], "ref": ["08815159c3", "3c0baad848"], "decode_tps": [9.91, 10.75], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p1", "b": "p0", "delay": 0.01, "rep": 2, "ok": true, "md5": ["08815159c3", "3c0baad848"], "ref": ["08815159c3", "3c0baad848"], "decode_tps": [9.91, 10.76], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p1", "b": "p0", "delay": 0.3, "rep": 0, "ok": true, "md5": ["08815159c3", "3c0baad848"], "ref": ["08815159c3", "3c0baad848"], "decode_tps": [9.89, 10.73], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p1", "b": "p0", "delay": 0.3, "rep": 1, "ok": true, "md5": ["08815159c3", "3c0baad848"], "ref": ["08815159c3", "3c0baad848"], "decode_tps": [9.88, 10.72], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p1", "b": "p0", "delay": 0.3, "rep": 2, "ok": true, "md5": ["08815159c3", "3c0baad848"], "ref": ["08815159c3", "3c0baad848"], "decode_tps": [9.86, 10.7], "body": []}
+--- stag.py p0 p1 --delays 1.0 0.01 --reps 3 11:36:07
+{"kind": "stag-solo", "tag": "RD", "spec": "p0", "md5": "3c0baad848", "decode_tps": 17.55, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "RD", "spec": "p1", "md5": "08815159c3", "decode_tps": 16.72, "error": null, "body": null}
+{"kind": "stag", "tag": "RD", "a": "p0", "b": "p1", "delay": 1.0, "rep": 0, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [10.58, 11.6], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p0", "b": "p1", "delay": 1.0, "rep": 1, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [10.58, 11.63], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p0", "b": "p1", "delay": 1.0, "rep": 2, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [10.54, 11.59], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p0", "b": "p1", "delay": 0.01, "rep": 0, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [9.79, 10.71], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p0", "b": "p1", "delay": 0.01, "rep": 1, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [9.8, 10.72], "body": []}
+{"kind": "stag", "tag": "RD", "a": "p0", "b": "p1", "delay": 0.01, "rep": 2, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [9.79, 10.7], "body": []}
+elastic lines: 12; refused: 0; bursts: 0
+lowest MemAvailable 23033 MiB; now 120411 MiB; END RD 11:36:48
+NC2-LEG-DONE RD 11:36:48
+SPARK-NC6-DONE 11:36:48
