@@ -2474,3 +2474,62 @@ copied to `~/nc/ci-b5ee55a` (the server library byte-identical to the image's), 
   `ee079496a4` three times through the Service (16.5-17.1 tok/s); no test server, runner, key file or test snapshot
   left; the laptop deadman disarmed at 17:20:14. Not run: the full-scale burst leg FB7 (a 500k session next to four
   ~190k clients, about 100 minutes); it waits for the fix above.
+
+**2026-11-10, Spark window nc-s4 (17:55-19:24 UTC): patch 0075 verified on the GPU, the proposed Spark config passes
+the gate and two acceptance processes on the binaries of the CI image `547208dca250-g0fa9510`; the 1.0-1.9 % at two
+clients of window nc-s3 was command order, and what remains is 0.3-0.5 % at two and three clients that follows the
+five 1M slots.** `/opt/llama` of the image copied to `~/nc/ci-0fa9510`, bare servers on 127.0.0.1:18080 under
+`window.lock`, glm53-spark at 0, glm53-gh200 serving throughout. "FIN" as in window nc-s3. Evidence:
+`docs/evidence/glm-windows-2026-10-30/nc/spark/nc-s4/` (runner `spark-nc8.sh`, its logs `spark-nc8a.log` to
+`spark-nc8c.log`, `legs-nc2/results.jsonl`, `legs-nc2/lowmem.txt`, `digest-SA8-SA9-short-legs.txt`,
+`server-G8-mechanics.txt`, the harness `fb3.py`).
+- **Leg G8 (the mechanics leg of G7 again, floor 20480 cells, a burst of 80k next to four 19k clients): the fault of
+  window nc-s3 is fixed.** A growth to 1M is refused with a 503 after 0.2 s ("elastic KV refused 999430 cells") and
+  the server logs "the refused request leaves the slot's conversation as it was (79973 tokens)". The next request of
+  that conversation finds 79906 tokens cached and answers in 4.3 s with the same bytes (`3a3224351a`) instead of
+  reading the prompt again for 259 s. A growth to 120k cancelled by the client after 20 s leaves 79891 tokens
+  cached. The four floor clients gave the same bytes during the burst (five rounds), alone and together; nothing
+  under the floor was refused; lowest MemAvailable 16181 MiB.
+  - Seen again, not new: one floor client that the slot selection moved to another slot read its 19k prompt fresh
+    and answered `3a12a492fc` instead of `b8fc999a72` after the cached prefix; the dependence of prompt bytes on the
+    ubatch boundaries (window nc1), each reproducible, the same in production.
+- **Leg SV8 (FIN, client classes, detectors): gate PASS.** 21 of 21 answers gold, 8 distinct long ubatches and none
+  with more than one result hash, 40 ubatches read in pieces, 3970 ubatches while a recurrent cell was frozen and
+  none that contained it, no guard refusal, no test key in the log.
+- **Legs SA8 and SA9 (acceptance on FIN, two server processes): 0 multi rounds differing from solo or gold in
+  either.** Decode aggregate, tok/s, rounds 1 / 2: two clients 20.80 / 20.88 and 20.81 / 21.25; three 24.19 / 24.25
+  and 24.17 / 24.24; four 25.78 / 25.87 and 25.77 / 25.85; five 24.66 / 24.64 and 24.64 / 24.65; four short clients
+  next to a 16k prompt 12.09 in both; p0 next to a 16k prompt 5.33 and 5.32. The 16k prompt alone is read at 347
+  tok/s. Lowest MemAvailable 17593 and 17569 MiB. p1 with 512 tokens alone is `4d4058c69f`, the "samelong" answer of
+  the class scenarios.
+- **Where the two-client difference of window nc-s3 came from.** The same short sequence in every leg (solo p0, two
+  clients with three rounds, three clients with two rounds), one fresh server process each, decode aggregate in
+  tok/s:
+
+  | leg | slots | pieces flags | floor | solo | two clients r1 / r2 / r3 | three clients r1 / r2 |
+  |---|---|---|---|---|---|---|
+  | SP8 (production config) | 200k | no | no | 15.48 | 21.50 / 21.62 / 21.65 | 24.23 / 24.32 |
+  | SP9 (the same again) | 200k | no | no | 15.50 | 21.51 / 21.57 / 21.63 | 24.24 / 24.34 |
+  | SI9 | 200k | yes | no | 15.48 | 21.46 / 21.58 / 21.65 | 24.24 / 24.31 |
+  | SK9 | 200k | no | set | 15.40 | 21.48 / 21.27 / 21.34 | 24.24 / 24.31 |
+  | SF8 (FIN) | 1M | yes | 204800 | 15.40 | 21.40 / 21.50 / 21.54 | 24.15 / 24.20 |
+  | SF9 (FIN again) | 1M | yes | 204800 | 15.41 | 21.43 / 21.53 / 21.56 | 24.20 / 24.26 |
+  | SH9 | 1M | no | 204800 | 15.42 | 21.42 / 21.50 / 21.57 | 24.16 / 24.22 |
+  | SJ9 | 1M | no | no | 15.36 | 21.44 / 21.54 / 21.56 | 24.11 / 24.18 |
+
+  - The acceptance sequence (SA8, SA9) runs its two-client command after six solo requests and gives 20.8-21.3; the
+    short sequence gives 21.4-21.6 on the same config. Window nc-s3 compared an acceptance leg with a short leg, so
+    its "1.0-1.9 % at two clients" was the order of the commands, not the config. Retracted.
+  - What remains follows the slot size (`--ctx-size 5242880` against `1024000`), not the pieces flags (SI9 equals
+    production) and not the floor (SK9 equals production at three clients; SJ9 without the floor is as low as FIN):
+    0.3-0.5 % at two and three clients (three clients 24.11-24.26 with 1M slots, 24.23-24.34 with 200k slots; the
+    ranges do not overlap), about 0.5 % solo (15.36-15.42 against 15.48-15.50). Cause not found yet.
+  - The wobble inside one process reaches 1 % (SK9, two clients: 21.48 then 21.27 and 21.34), so the two-client
+    column alone would not carry the conclusion; the three-client column and the solo column do.
+- **Five 1M slots without the floor are not an option on this box (leg SJ9):** lowest MemAvailable 6535 MiB with
+  three short clients, against 19002-21400 MiB with the floor (SF9, SH9): without the floor the prompt graph is
+  reserved for the full depth.
+- **Window closed 19:24 UTC.** glm53-spark back at one replica on image `547208dca250-g08d176f`, quicksort gold
+  `ee079496a4` three times through the Service (17.1-17.5 tok/s); no test server, runner, key file or test snapshot
+  left; the laptop deadman disarmed. Not run: the full-scale burst leg FB8 (a 500k session next to four ~190k
+  clients, about 105 minutes).

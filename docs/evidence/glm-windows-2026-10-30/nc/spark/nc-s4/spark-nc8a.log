@@ -1,0 +1,304 @@
+=== LEG G8 parallel=5 ctx=5242880 bd=/home/xero/nc/ci-0fa9510 extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_PREFILL_SLICE_LAYERS=2 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_ELASTIC_KV_FLOOR_CELLS=20480 LLAMA_PREFILL_SLICE_TG_CELLS=20480 LLAMA_ELASTIC_KV_FLOOR_MIB=30000 LLAMA_SLOT_KEEP_CHILD=1 LLAMA_PREFILL_SLICE_LOG=1 LLAMA_RS_LOG=1 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_SAME_FREE=512] 17:55:40
+READY G8 after 26s
+0.13.412.648 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 55.00 GiB of address space on one 2048 KiB zero chunk (864.5 ms)
+0.13.412.712 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.13.412.715 I llama_kv_cache: elastic KV: floor 20480 cells per stream (0.26 GiB), 5 streams of 1048576 cells
+0.13.418.610 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.8 ms)
+0.13.424.197 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.6 ms)
+0.13.429.728 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.5 ms)
+0.13.435.224 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.5 ms)
+0.13.440.710 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 1048576 cells, 330.0 MiB mapped in all streams (5.5 ms)
+0.14.179.331 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 41.25 GiB of address space on one 2048 KiB zero chunk (636.1 ms)
+0.14.179.365 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.14.179.367 I llama_kv_cache: elastic KV idx_: floor 20480 cells per stream (0.20 GiB), 5 streams of 1048576 cells
+0.14.183.430 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (4.1 ms)
+0.14.187.229 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (3.8 ms)
+0.14.191.023 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (3.8 ms)
+--- ekbench.py solo p0 17:56:06
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.86, "decode_n": 256, "decode_tps": 15.46, "md5": "ce2fc95752", "t0": 1794333366.966521, "t1": 1794333383.8938951, "kind": "solo", "tag": "G8"}
+--- fb3.py bfirst 80000 4 10 30 --ptok 19000 --state-dir /srv/glm-5.3-flash/legs-nc2 17:56:23
+{"kind": "fill-during-burst", "tag": "G8", "label": "P x4", "n_tok": 18980, "id_slot": 2, "prompt_n": 18980, "cache_n": 0, "prefill_s": 108.2, "prefill_tps": 175.4, "decode_n": 1, "decode_tps": 0.0, "wall_s": 109.5, "md5": "bbfd0eef44", "t0": 1794333394.0363486, "t1": 1794333503.509242}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S3", "n_tok": 19000, "round": 0, "id_slot": 0, "prompt_n": 20, "cache_n": 18980, "prefill_s": 0.7, "prefill_tps": 27.3, "decode_n": 64, "decode_tps": 3.37, "wall_s": 27.3, "md5": "b8fc999a72", "t0": 1794333503.510169, "t1": 1794333530.8545613}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S0", "n_tok": 19000, "round": 0, "id_slot": 2, "prompt_n": 20, "cache_n": 18980, "prefill_s": 0.5, "prefill_tps": 40.3, "decode_n": 64, "decode_tps": 3.46, "wall_s": 27.3, "md5": "2a0f08f093", "t0": 1794333503.5116813, "t1": 1794333530.8549588}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S2", "n_tok": 19000, "round": 0, "id_slot": 3, "prompt_n": 20, "cache_n": 18980, "prefill_s": 0.5, "prefill_tps": 43.8, "decode_n": 64, "decode_tps": 3.41, "wall_s": 28.6, "md5": "a146549ea2", "t0": 1794333503.513174, "t1": 1794333532.1292152}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S1", "n_tok": 19000, "round": 0, "id_slot": 4, "prompt_n": 20, "cache_n": 18980, "prefill_s": 0.5, "prefill_tps": 43.9, "decode_n": 64, "decode_tps": 3.54, "wall_s": 28.8, "md5": "91f44f357f", "t0": 1794333503.5147219, "t1": 1794333532.3459423}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S3", "n_tok": 19000, "round": 1, "id_slot": 0, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 19.7, "decode_n": 64, "decode_tps": 3.32, "wall_s": 23.4, "md5": "b8fc999a72", "t0": 1794333562.347055, "t1": 1794333585.7416384}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S1", "n_tok": 19000, "round": 1, "id_slot": 4, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.7, "decode_n": 64, "decode_tps": 3.36, "wall_s": 23.4, "md5": "91f44f357f", "t0": 1794333562.3506627, "t1": 1794333585.742413}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S0", "n_tok": 19000, "round": 1, "id_slot": 2, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 20.8, "decode_n": 64, "decode_tps": 3.39, "wall_s": 23.6, "md5": "2a0f08f093", "t0": 1794333562.3492491, "t1": 1794333585.934036}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S2", "n_tok": 19000, "round": 1, "id_slot": 3, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 20.2, "decode_n": 64, "decode_tps": 3.39, "wall_s": 23.9, "md5": "a146549ea2", "t0": 1794333562.3484828, "t1": 1794333586.252955}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S3", "n_tok": 19000, "round": 2, "id_slot": 0, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.8, "decode_n": 64, "decode_tps": 3.41, "wall_s": 19.7, "md5": "b8fc999a72", "t0": 1794333616.2539434, "t1": 1794333635.976691}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S2", "n_tok": 19000, "round": 2, "id_slot": 3, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 20.5, "decode_n": 64, "decode_tps": 3.37, "wall_s": 19.7, "md5": "a146549ea2", "t0": 1794333616.2570581, "t1": 1794333635.9771907}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S0", "n_tok": 19000, "round": 2, "id_slot": 2, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.5, "decode_n": 64, "decode_tps": 3.39, "wall_s": 20.2, "md5": "2a0f08f093", "t0": 1794333616.2551143, "t1": 1794333636.4332209}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S1", "n_tok": 19000, "round": 2, "id_slot": 4, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.6, "decode_n": 64, "decode_tps": 3.36, "wall_s": 20.7, "md5": "91f44f357f", "t0": 1794333616.2560914, "t1": 1794333636.9106786}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S3", "n_tok": 19000, "round": 3, "id_slot": 0, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.9, "decode_n": 64, "decode_tps": 3.29, "wall_s": 22.1, "md5": "b8fc999a72", "t0": 1794333666.911929, "t1": 1794333689.0314937}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S1", "n_tok": 19000, "round": 3, "id_slot": 4, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 19.7, "decode_n": 64, "decode_tps": 3.26, "wall_s": 22.1, "md5": "91f44f357f", "t0": 1794333666.916817, "t1": 1794333689.0325868}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S2", "n_tok": 19000, "round": 3, "id_slot": 3, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.4, "decode_n": 64, "decode_tps": 3.32, "wall_s": 22.3, "md5": "a146549ea2", "t0": 1794333666.9154425, "t1": 1794333689.2167046}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S0", "n_tok": 19000, "round": 3, "id_slot": 2, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.3, "decode_n": 64, "decode_tps": 3.32, "wall_s": 22.6, "md5": "2a0f08f093", "t0": 1794333666.913487, "t1": 1794333689.5461357}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S2", "n_tok": 19000, "round": 4, "id_slot": 3, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 19.7, "decode_n": 64, "decode_tps": 3.26, "wall_s": 23.4, "md5": "a146549ea2", "t0": 1794333719.5506997, "t1": 1794333742.999491}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S1", "n_tok": 19000, "round": 4, "id_slot": 4, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.5, "decode_n": 64, "decode_tps": 3.29, "wall_s": 23.5, "md5": "91f44f357f", "t0": 1794333719.549312, "t1": 1794333743.000302}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S0", "n_tok": 19000, "round": 4, "id_slot": 2, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.8, "decode_n": 64, "decode_tps": 3.32, "wall_s": 23.7, "md5": "2a0f08f093", "t0": 1794333719.5478868, "t1": 1794333743.198024}
+{"kind": "floor-during-burst", "tag": "G8", "label": "P+S3", "n_tok": 19000, "round": 4, "id_slot": 0, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 22.0, "decode_n": 64, "decode_tps": 3.28, "wall_s": 24.2, "md5": "b8fc999a72", "t0": 1794333719.5470648, "t1": 1794333743.7267}
+{"kind": "burst-fill", "tag": "G8", "label": "B", "n_tok": 79891, "id_slot": 1, "prompt_n": 79891, "cache_n": 0, "prefill_s": 380.5, "prefill_tps": 209.9, "decode_n": 1, "decode_tps": 0.0, "wall_s": 380.7, "md5": "c4b8d24f39", "t0": 1794333384.0329983, "t1": 1794333764.6982136}
+--- fb3.py floor 4 --ptok 19000 --state-dir /srv/glm-5.3-flash/legs-nc2 18:02:44
+{"kind": "floor-solo", "tag": "G8", "label": "P+S0", "n_tok": 19000, "id_slot": 2, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.7, "decode_n": 64, "decode_tps": 16.55, "wall_s": 4.0, "md5": "2a0f08f093", "t0": 1794333764.7659888, "t1": 1794333768.764609}
+{"kind": "floor-solo", "tag": "G8", "label": "P+S1", "n_tok": 19000, "id_slot": 4, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.5, "decode_n": 64, "decode_tps": 16.52, "wall_s": 4.0, "md5": "91f44f357f", "t0": 1794333768.764927, "t1": 1794333772.7722304}
+{"kind": "floor-solo", "tag": "G8", "label": "P+S2", "n_tok": 19000, "id_slot": 3, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 20.7, "decode_n": 64, "decode_tps": 16.24, "wall_s": 4.1, "md5": "a146549ea2", "t0": 1794333772.7725158, "t1": 1794333776.8527153}
+{"kind": "floor-solo", "tag": "G8", "label": "P+S3", "n_tok": 19000, "id_slot": 0, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.2, "decode_n": 64, "decode_tps": 16.59, "wall_s": 4.0, "md5": "b8fc999a72", "t0": 1794333776.8530462, "t1": 1794333780.843724}
+--- fb3.py bsolo 80000 --state-dir /srv/glm-5.3-flash/legs-nc2 18:03:00
+{"kind": "burst-solo", "tag": "G8", "label": "B+T", "n_tok": 79910, "id_slot": 1, "prompt_n": 19, "cache_n": 79891, "prefill_s": 0.5, "prefill_tps": 36.8, "decode_n": 64, "decode_tps": 14.27, "wall_s": 5.0, "md5": "3a3224351a", "t0": 1794333780.9779644, "t1": 1794333785.9355617}
+--- fb3.py conc 4 80000 --ptok 19000 --state-dir /srv/glm-5.3-flash/legs-nc2 18:03:05
+{"kind": "conc", "tag": "G8", "label": "P+S3", "n_tok": 19000, "id_slot": 0, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.0, "decode_n": 64, "decode_tps": 4.79, "wall_s": 13.4, "md5": "b8fc999a72", "t0": 1794333786.093984, "t1": 1794333799.447554}
+{"kind": "conc", "tag": "G8", "label": "P+S2", "n_tok": 19000, "id_slot": 3, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.0, "decode_n": 64, "decode_tps": 4.86, "wall_s": 13.4, "md5": "a146549ea2", "t0": 1794333786.0922704, "t1": 1794333799.4488688}
+{"kind": "conc", "tag": "G8", "label": "P+S1", "n_tok": 19000, "id_slot": 4, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.2, "decode_n": 64, "decode_tps": 4.9, "wall_s": 13.6, "md5": "91f44f357f", "t0": 1794333786.0931041, "t1": 1794333799.718956}
+{"kind": "conc", "tag": "G8", "label": "P+S0", "n_tok": 19000, "id_slot": 2, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.0, "decode_n": 64, "decode_tps": 4.98, "wall_s": 13.7, "md5": "2a0f08f093", "t0": 1794333786.0914545, "t1": 1794333799.8243213}
+{"kind": "conc", "tag": "G8", "label": "B+T", "n_tok": 79910, "id_slot": 1, "prompt_n": 4, "cache_n": 79906, "prefill_s": 0.2, "prefill_tps": 19.5, "decode_n": 64, "decode_tps": 5.1, "wall_s": 13.8, "md5": "3a3224351a", "t0": 1794333786.0884962, "t1": 1794333799.902694}
+--- fb3.py grow 1000000 30 --slot-of B+T --state-dir /srv/glm-5.3-flash/legs-nc2 18:03:19
+{"kind": "grow", "tag": "G8", "label": "G1000000", "n_tok": 999428, "error": 503, "body": "{\"error\":{\"code\":503,\"message\":\"out of KV cache memory: the server cannot hold this conversation now (elastic KV refused 999430 cells)\",\"type\":\"unavailable_error\"}}", "wall_s": 0.2, "t0": 1794333800.7397847, "t1": 1794333800.9513323}
+--- fb3.py bsolo 80000 --slot-of B+T --state-dir /srv/glm-5.3-flash/legs-nc2 18:03:20
+{"kind": "burst-solo", "tag": "G8", "label": "B+T", "n_tok": 79910, "id_slot": 1, "prompt_n": 4, "cache_n": 79906, "prefill_s": 0.2, "prefill_tps": 19.2, "decode_n": 64, "decode_tps": 15.52, "wall_s": 4.3, "md5": "3a3224351a", "t0": 1794333801.0946515, "t1": 1794333805.3786354}
+--- fb3.py grow 120000 20 --slot-of B+T --state-dir /srv/glm-5.3-flash/legs-nc2 18:03:25
+{"kind": "grow", "tag": "G8", "label": "G120000", "n_tok": 119790, "error": "client", "body": "TimeoutError: timed out", "wall_s": 20.0, "t0": 1794333805.5198395, "t1": 1794333825.5280056}
+--- fb3.py bsolo 80000 --slot-of B+T --state-dir /srv/glm-5.3-flash/legs-nc2 18:03:45
+{"kind": "burst-solo", "tag": "G8", "label": "B+T", "n_tok": 79910, "id_slot": 1, "prompt_n": 19, "cache_n": 79891, "prefill_s": 0.5, "prefill_tps": 37.2, "decode_n": 64, "decode_tps": 15.46, "wall_s": 7.3, "md5": "3a3224351a", "t0": 1794333825.6603456, "t1": 1794333832.9993355}
+--- fb3.py newcomer 15000 --slot-of P+S2 --state-dir /srv/glm-5.3-flash/legs-nc2 18:03:53
+{"kind": "newcomer", "tag": "G8", "label": "N15000", "n_tok": 14922, "id_slot": 3, "prompt_n": 14922, "cache_n": 0, "prefill_s": 42.5, "prefill_tps": 351.4, "decode_n": 64, "decode_tps": 15.12, "wall_s": 46.6, "md5": "9c80718286", "t0": 1794333833.0667107, "t1": 1794333879.7070339}
+--- fb3.py release --slot-of B+T --state-dir /srv/glm-5.3-flash/legs-nc2 18:04:39
+{"kind": "release", "tag": "G8", "label": "REL", "n_tok": 3, "id_slot": 1, "prompt_n": 3, "cache_n": 0, "prefill_s": 0.2, "prefill_tps": 13.6, "decode_n": 8, "decode_tps": 6.99, "wall_s": 1.2, "md5": "f9537946f2", "t0": 1794333879.757041, "t1": 1794333880.9796252}
+--- fb3.py floorc 4 2 --ptok 19000 --state-dir /srv/glm-5.3-flash/legs-nc2 18:04:40
+{"kind": "floor-conc", "tag": "G8", "label": "P+S0", "n_tok": 19000, "round": 0, "id_slot": 2, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.9, "decode_n": 64, "decode_tps": 4.04, "wall_s": 16.1, "md5": "2a0f08f093", "t0": 1794333881.0465474, "t1": 1794333897.1377861}
+{"kind": "floor-conc", "tag": "G8", "label": "P+S1", "n_tok": 19000, "round": 0, "id_slot": 4, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.3, "prefill_tps": 13.4, "decode_n": 64, "decode_tps": 3.99, "wall_s": 16.1, "md5": "91f44f357f", "t0": 1794333881.0496354, "t1": 1794333897.1388571}
+{"kind": "floor-conc", "tag": "G8", "label": "P+S2", "n_tok": 19000, "round": 0, "id_slot": 0, "prompt_n": 20, "cache_n": 18980, "prefill_s": 0.5, "prefill_tps": 37.9, "decode_n": 64, "decode_tps": 4.11, "wall_s": 16.5, "md5": "a146549ea2", "t0": 1794333881.0480728, "t1": 1794333897.551295}
+{"kind": "floor-conc", "tag": "G8", "label": "P+S3", "n_tok": 19000, "round": 0, "id_slot": 3, "prompt_n": 19000, "cache_n": 0, "prefill_s": 62.2, "prefill_tps": 305.4, "decode_n": 64, "decode_tps": 15.81, "wall_s": 67.9, "md5": "3a12a492fc", "t0": 1794333881.045071, "t1": 1794333948.965433}
+{"kind": "floor-conc", "tag": "G8", "label": "P+S0", "n_tok": 19000, "round": 1, "id_slot": 2, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.5, "decode_n": 64, "decode_tps": 6.4, "wall_s": 10.2, "md5": "2a0f08f093", "t0": 1794333948.9681873, "t1": 1794333959.191456}
+{"kind": "floor-conc", "tag": "G8", "label": "P+S3", "n_tok": 19000, "round": 1, "id_slot": 3, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 20.7, "decode_n": 64, "decode_tps": 6.28, "wall_s": 10.2, "md5": "3a12a492fc", "t0": 1794333948.9663558, "t1": 1794333959.192164}
+{"kind": "floor-conc", "tag": "G8", "label": "P+S1", "n_tok": 19000, "round": 1, "id_slot": 4, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 21.2, "decode_n": 64, "decode_tps": 6.54, "wall_s": 10.4, "md5": "91f44f357f", "t0": 1794333948.9674067, "t1": 1794333959.3878942}
+{"kind": "floor-conc", "tag": "G8", "label": "P+S2", "n_tok": 19000, "round": 1, "id_slot": 0, "prompt_n": 4, "cache_n": 18996, "prefill_s": 0.2, "prefill_tps": 20.2, "decode_n": 64, "decode_tps": 6.73, "wall_s": 10.5, "md5": "a146549ea2", "t0": 1794333948.9696553, "t1": 1794333959.4565418}
+--- ekbench.py solo p0 18:05:59
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.41, "prefill_tps": 24.1, "decode_n": 256, "decode_tps": 14.41, "md5": "ce2fc95752", "t0": 1794333959.4944584, "t1": 1794333977.6228359, "kind": "solo", "tag": "G8"}
+elastic lines: 38; refused: 1; bursts: 5
+lowest MemAvailable 16181 MiB; now 120325 MiB; END G8 18:06:21
+NC2-LEG-DONE G8 18:06:21
+=== LEG SV8 parallel=5 ctx=5242880 bd=/home/xero/nc/ci-0fa9510 extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_PREFILL_SLICE_LAYERS=2 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_ELASTIC_KV_FLOOR_CELLS=204800 LLAMA_PREFILL_SLICE_TG_CELLS=204800 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_SAME_FREE=512 LLAMA_CLIENT_CLASSES=/srv/glm-5.3-flash/keys-nc/classes.txt LLAMA_SLOT_RESERVE=1 LLAMA_PREFILL_SLICE_LOG=1 LLAMA_RS_LOG=1 LLAMA_RS_SUM=512] 18:06:21
+READY SV8 after 26s
+0.00.273.422 I srv  server_clien: client classes: 5 keys loaded, top priority 10 (keys not logged)
+0.13.619.510 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 55.00 GiB of address space on one 2048 KiB zero chunk (903.5 ms)
+0.13.619.572 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.13.619.574 I llama_kv_cache: elastic KV: floor 204800 cells per stream (2.19 GiB), 5 streams of 1048576 cells
+0.13.625.503 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.9 ms)
+0.13.630.713 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.2 ms)
+0.13.635.952 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.2 ms)
+0.13.641.120 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.2 ms)
+0.13.646.303 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 1048576 cells, 330.0 MiB mapped in all streams (5.2 ms)
+0.14.417.226 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 41.25 GiB of address space on one 2048 KiB zero chunk (667.0 ms)
+0.14.417.259 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.14.417.260 I llama_kv_cache: elastic KV idx_: floor 204800 cells per stream (1.65 GiB), 5 streams of 1048576 cells
+0.14.421.062 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (3.8 ms)
+0.14.424.604 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (3.5 ms)
+--- prio_spark_e.py warm --classes /srv/glm-5.3-flash/keys-nc/classes.txt 18:06:47
+{"tag": "warm", "spec": "p0", "t_send": 0.0, "ttft_s": 0.438, "wall_s": 17.0, "max_gap_s": 0.09, "decode_tps": 15.39, "prompt_n": 10, "prefill_tps": 23.6, "md5": "ce2fc95752", "scenario": "warm", "kind": "prio", "leg": "SV8"}
+{"tag": "warm", "spec": "p0", "t_send": 17.0, "ttft_s": 0.38, "wall_s": 15.76, "max_gap_s": 0.08, "decode_tps": 16.58, "prompt_n": 10, "prefill_tps": 26.4, "md5": "ce2fc95752", "scenario": "warm", "kind": "prio", "leg": "SV8"}
+{"tag": "warm", "spec": "p0", "t_send": 32.76, "ttft_s": 0.381, "wall_s": 15.74, "max_gap_s": 0.08, "decode_tps": 16.6, "prompt_n": 10, "prefill_tps": 26.3, "md5": "ce2fc95752", "scenario": "warm", "kind": "prio", "leg": "SV8"}
+--- prio_spark_e.py sololong --classes /srv/glm-5.3-flash/keys-nc/classes.txt --long L16384 18:07:36
+{"tag": "low", "spec": "L16384", "t_send": 0.0, "ttft_s": 48.918, "wall_s": 57.84, "max_gap_s": 0.11, "decode_tps": 14.24, "prompt_n": 16414, "prefill_tps": 335.9, "md5": "145c14aa8b", "scenario": "sololong", "kind": "prio", "leg": "SV8"}
+--- prio_spark_e.py mixed --classes /srv/glm-5.3-flash/keys-nc/classes.txt --long L16384 18:08:34
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.77, "wall_s": 90.25, "max_gap_s": 8.65, "decode_tps": 2.85, "prompt_n": 18, "prefill_tps": 25.6, "md5": "2d592efcb6", "scenario": "mixed", "kind": "prio", "leg": "SV8"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 2.008, "wall_s": 90.25, "max_gap_s": 8.65, "decode_tps": 2.89, "prompt_n": 21, "prefill_tps": 33.2, "md5": "1aab74269d", "scenario": "mixed", "kind": "prio", "leg": "SV8"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 1.377, "wall_s": 90.25, "max_gap_s": 8.65, "decode_tps": 2.87, "prompt_n": 19, "prefill_tps": 31.3, "md5": "bb64203d71", "scenario": "mixed", "kind": "prio", "leg": "SV8"}
+{"tag": "low", "spec": "L16384", "t_send": 0.51, "ttft_s": 98.878, "wall_s": 107.41, "max_gap_s": 0.09, "decode_tps": 14.89, "prompt_n": 16414, "prefill_tps": 170.8, "md5": "145c14aa8b", "scenario": "mixed", "kind": "prio", "leg": "SV8"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 5.698, "wall_s": 22.28, "max_gap_s": 0.29, "decode_tps": 15.37, "prompt_n": 10, "prefill_tps": 26.2, "md5": "ce2fc95752", "scenario": "mixed", "kind": "prio", "leg": "SV8"}
+--- prio_spark_e.py stagger --classes /srv/glm-5.3-flash/keys-nc/classes.txt --long L16384 18:10:22
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.544, "wall_s": 86.5, "max_gap_s": 8.34, "decode_tps": 2.97, "prompt_n": 18, "prefill_tps": 35.0, "md5": "2d592efcb6", "scenario": "stagger", "kind": "prio", "leg": "SV8"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 1.086, "wall_s": 86.5, "max_gap_s": 8.34, "decode_tps": 2.99, "prompt_n": 19, "prefill_tps": 35.1, "md5": "bb64203d71", "scenario": "stagger", "kind": "prio", "leg": "SV8"}
+{"tag": "low", "spec": "L16384", "t_send": 0.5, "ttft_s": 97.655, "wall_s": 106.11, "max_gap_s": 0.09, "decode_tps": 15.02, "prompt_n": 16414, "prefill_tps": 172.2, "md5": "145c14aa8b", "scenario": "stagger", "kind": "prio", "leg": "SV8"}
+{"tag": "low", "spec": "p3", "t_send": 1.5, "ttft_s": 0.724, "wall_s": 85.92, "max_gap_s": 8.34, "decode_tps": 2.99, "prompt_n": 21, "prefill_tps": 34.2, "md5": "1aab74269d", "scenario": "stagger", "kind": "prio", "leg": "SV8"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 5.416, "wall_s": 22.89, "max_gap_s": 0.29, "decode_tps": 14.59, "prompt_n": 10, "prefill_tps": 25.0, "md5": "ce2fc95752", "scenario": "stagger", "kind": "prio", "leg": "SV8"}
+--- prio_spark_e.py mixed --classes /srv/glm-5.3-flash/keys-nc/classes.txt --long L16384 18:12:08
+{"tag": "low", "spec": "p2", "t_send": 0.0, "ttft_s": 0.584, "wall_s": 86.67, "max_gap_s": 8.37, "decode_tps": 2.96, "prompt_n": 18, "prefill_tps": 34.7, "md5": "2d592efcb6", "scenario": "mixed", "kind": "prio", "leg": "SV8"}
+{"tag": "low", "spec": "p3", "t_send": 0.0, "ttft_s": 1.713, "wall_s": 86.66, "max_gap_s": 8.37, "decode_tps": 3.0, "prompt_n": 21, "prefill_tps": 35.2, "md5": "1aab74269d", "scenario": "mixed", "kind": "prio", "leg": "SV8"}
+{"tag": "low", "spec": "p1", "t_send": 0.0, "ttft_s": 1.117, "wall_s": 86.67, "max_gap_s": 8.37, "decode_tps": 2.98, "prompt_n": 19, "prefill_tps": 35.7, "md5": "bb64203d71", "scenario": "mixed", "kind": "prio", "leg": "SV8"}
+{"tag": "low", "spec": "L16384", "t_send": 0.5, "ttft_s": 97.448, "wall_s": 105.87, "max_gap_s": 0.09, "decode_tps": 15.08, "prompt_n": 16414, "prefill_tps": 172.5, "md5": "145c14aa8b", "scenario": "mixed", "kind": "prio", "leg": "SV8"}
+{"tag": "juno", "spec": "p0", "t_send": 4.0, "ttft_s": 5.472, "wall_s": 23.32, "max_gap_s": 0.29, "decode_tps": 14.28, "prompt_n": 10, "prefill_tps": 24.6, "md5": "ce2fc95752", "scenario": "mixed", "kind": "prio", "leg": "SV8"}
+--- prio_spark_e.py junolong --classes /srv/glm-5.3-flash/keys-nc/classes.txt --long L16384 --jn 512 --delay 1 18:13:55
+{"tag": "juno", "spec": "p0", "t_send": 0.0, "ttft_s": 0.421, "wall_s": 36.52, "max_gap_s": 0.36, "decode_tps": 14.16, "prompt_n": 10, "prefill_tps": 24.6, "md5": "cfa6c68a74", "scenario": "junolong", "kind": "prio", "leg": "SV8"}
+{"tag": "low", "spec": "L16384", "t_send": 1.0, "ttft_s": 81.132, "wall_s": 89.37, "max_gap_s": 0.09, "decode_tps": 15.42, "prompt_n": 16414, "prefill_tps": 202.5, "md5": "145c14aa8b", "scenario": "junolong", "kind": "prio", "leg": "SV8"}
+elastic lines: 19; refused: 0; bursts: 0
+lowest MemAvailable 17589 MiB; now 120311 MiB; END SV8 18:15:29
+NC2-LEG-DONE SV8 18:15:29
+server-SV8.log no key in log
+requests with gold md5: 21 of 21
+state hashes: 8 distinct long ubatches (end position, length), 0 seen once only, 0 with MORE THAN ONE hash
+prompt ubatches done in pieces: 40, run whole (state not in place): 0
+ubatches while a cell was frozen: 3970; range contains the frozen cell: 0; guard refusals: 0
+  frozen cell 3:   2534 ubatches above it with 1 sequence(s)
+  frozen cell 3:     10 ubatches below it with 1 sequence(s)
+  frozen cell 3:   1426 ubatches below it with 3 sequence(s)
+V1-DIGEST SV8 PASS
+=== LEG SA8 parallel=5 ctx=5242880 bd=/home/xero/nc/ci-0fa9510 extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_PREFILL_SLICE_LAYERS=2 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_ELASTIC_KV_FLOOR_CELLS=204800 LLAMA_PREFILL_SLICE_TG_CELLS=204800 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_SAME_FREE=512] 18:15:30
+READY SA8 after 26s
+0.13.509.509 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 55.00 GiB of address space on one 2048 KiB zero chunk (877.1 ms)
+0.13.509.570 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.13.509.573 I llama_kv_cache: elastic KV: floor 204800 cells per stream (2.19 GiB), 5 streams of 1048576 cells
+0.13.515.887 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (6.3 ms)
+0.13.521.599 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.7 ms)
+0.13.527.230 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.6 ms)
+0.13.532.862 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.6 ms)
+0.13.538.489 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 1048576 cells, 330.0 MiB mapped in all streams (5.6 ms)
+0.14.295.753 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 41.25 GiB of address space on one 2048 KiB zero chunk (646.1 ms)
+0.14.295.790 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.14.295.791 I llama_kv_cache: elastic KV idx_: floor 204800 cells per stream (1.65 GiB), 5 streams of 1048576 cells
+0.14.299.881 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (4.1 ms)
+0.14.303.697 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (3.8 ms)
+0.14.307.495 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (3.8 ms)
+--- ekbench.py solo p0 p1 p2 p3 p4 18:15:56
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.69, "decode_n": 256, "decode_tps": 15.41, "md5": "ce2fc95752", "t0": 1794334556.6851835, "t1": 1794334573.668996, "kind": "solo", "tag": "SA8"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.64, "prefill_tps": 29.8, "decode_n": 256, "decode_tps": 15.85, "md5": "bb64203d71", "t0": 1794334573.6690748, "t1": 1794334590.393074, "kind": "solo", "tag": "SA8"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.65, "prefill_tps": 27.83, "decode_n": 256, "decode_tps": 15.35, "md5": "2d592efcb6", "t0": 1794334590.3931243, "t1": 1794334607.6551652, "kind": "solo", "tag": "SA8"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.78, "prefill_tps": 26.91, "decode_n": 256, "decode_tps": 14.54, "md5": "1aab74269d", "t0": 1794334607.6552267, "t1": 1794334625.974861, "kind": "solo", "tag": "SA8"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.64, "prefill_tps": 32.74, "decode_n": 256, "decode_tps": 15.3, "md5": "0c3f28294b", "t0": 1794334625.9749107, "t1": 1794334643.2861814, "kind": "solo", "tag": "SA8"}
+--- ekbench.py solo p0 --n-predict 128 18:17:23
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.41, "prefill_tps": 24.61, "decode_n": 128, "decode_tps": 14.86, "md5": "ee079496a4", "t0": 1794334643.3320706, "t1": 1794334652.297864, "kind": "solo", "tag": "SA8"}
+--- ekbench.py solo L16384 18:17:32
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 47.23, "prefill_tps": 347.53, "decode_n": 128, "decode_tps": 13.7, "md5": "145c14aa8b", "t0": 1794334652.32976, "t1": 1794334708.8866527, "kind": "solo", "tag": "SA8"}
+--- ekbench.py multi p0 p1 --rounds 2 18:18:28
+{"kind": "multi", "tag": "SA8", "n": 2, "round": "warm", "agg_tps": 19.42, "wall_s": 26.37, "gen": 512, "per_stream_tps": [9.83, 10.04], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [24.82, 35.81], "t0": 1794334708.9182458, "t1": 1794334735.28821}
+{"kind": "multi", "tag": "SA8", "n": 2, "round": 1, "agg_tps": 20.8, "wall_s": 24.62, "gen": 512, "per_stream_tps": [10.76, 10.58], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [25.57, 36.62], "t0": 1794334735.288564, "t1": 1794334759.9065723}
+{"kind": "multi", "tag": "SA8", "n": 2, "round": 2, "agg_tps": 20.88, "wall_s": 24.52, "gen": 512, "per_stream_tps": [10.57, 10.8], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [25.26, 37.52], "t0": 1794334759.9069157, "t1": 1794334784.427783}
+--- ekbench.py multi p0 p1 p2 --rounds 2 18:19:44
+{"kind": "multi", "tag": "SA8", "n": 3, "round": "warm", "agg_tps": 23.4, "wall_s": 32.82, "gen": 768, "per_stream_tps": [7.88, 8.16, 8.03], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [24.31, 37.72, 29.22], "t0": 1794334784.461125, "t1": 1794334817.2848215}
+{"kind": "multi", "tag": "SA8", "n": 3, "round": 1, "agg_tps": 24.19, "wall_s": 31.75, "gen": 768, "per_stream_tps": [8.13, 8.4, 8.26], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [25.16, 37.34, 36.26], "t0": 1794334817.2852116, "t1": 1794334849.0337596}
+{"kind": "multi", "tag": "SA8", "n": 3, "round": 2, "agg_tps": 24.25, "wall_s": 31.67, "gen": 768, "per_stream_tps": [8.16, 8.42, 8.29], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [25.19, 37.49, 36.75], "t0": 1794334849.0341094, "t1": 1794334880.7016003}
+--- ekbench.py multi p0 p1 p2 p3 --rounds 2 18:21:20
+{"kind": "multi", "tag": "SA8", "n": 4, "round": "warm", "agg_tps": 25.21, "wall_s": 40.62, "gen": 1024, "per_stream_tps": [6.35, 6.51, 6.43, 6.62], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.58, 37.71, 37.18, 31.86], "t0": 1794334880.7346814, "t1": 1794334921.3512874}
+{"kind": "multi", "tag": "SA8", "n": 4, "round": 1, "agg_tps": 25.78, "wall_s": 39.72, "gen": 1024, "per_stream_tps": [6.49, 6.66, 6.57, 6.76], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.71, 36.44, 36.77, 34.91], "t0": 1794334921.35183, "t1": 1794334961.0749347}
+{"kind": "multi", "tag": "SA8", "n": 4, "round": 2, "agg_tps": 25.87, "wall_s": 39.59, "gen": 1024, "per_stream_tps": [6.51, 6.68, 6.59, 6.79], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.49, 36.24, 36.92, 35.51], "t0": 1794334961.075341, "t1": 1794335000.6640933}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 18:23:20
+{"kind": "multi", "tag": "SA8", "n": 5, "round": "warm", "agg_tps": 24.47, "wall_s": 52.3, "gen": 1280, "per_stream_tps": [4.92, 5.02, 4.97, 5.08, 5.15], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d", "0c3f28294b"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [23.92, 35.8, 36.71, 35.4, 33.18], "t0": 1794335000.6971798, "t1": 1794335053.0020435}
+{"kind": "multi", "tag": "SA8", "n": 5, "round": 1, "agg_tps": 24.66, "wall_s": 51.91, "gen": 1280, "per_stream_tps": [5.0, 5.05, 4.96, 5.11, 5.17], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d", "0c3f28294b"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [25.19, 36.44, 35.9, 35.21, 36.21], "t0": 1794335053.00267, "t1": 1794335104.9158924}
+{"kind": "multi", "tag": "SA8", "n": 5, "round": 2, "agg_tps": 24.64, "wall_s": 51.96, "gen": 1280, "per_stream_tps": [5.0, 4.96, 5.05, 5.11, 5.17], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d", "0c3f28294b"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [24.89, 35.17, 36.72, 35.03, 37.39], "t0": 1794335104.9164975, "t1": 1794335156.8728929}
+--- ekbench.py multi p1 p2 p3 p4 L16384 --rounds 1 18:25:56
+{"kind": "multi", "tag": "SA8", "n": 5, "round": "warm", "agg_tps": 11.91, "wall_s": 96.72, "gen": 1152, "per_stream_tps": [3.4, 3.37, 3.42, 3.35, 13.42], "md5": ["bb64203d71", "2d592efcb6", "1aab74269d", "0c3f28294b", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [36.87, 35.73, 35.7, 33.83, 196.93], "t0": 1794335156.9318066, "t1": 1794335253.65609}
+{"kind": "multi", "tag": "SA8", "n": 5, "round": 1, "agg_tps": 12.09, "wall_s": 95.31, "gen": 1152, "per_stream_tps": [3.38, 3.35, 3.43, 3.4, 14.69], "md5": ["bb64203d71", "2d592efcb6", "1aab74269d", "0c3f28294b", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [36.2, 35.2, 34.24, 36.25, 198.23], "t0": 1794335253.6566958, "t1": 1794335348.9713242}
+--- ekbench.py multi p0 L16384 --rounds 1 18:29:08
+{"kind": "multi", "tag": "SA8", "n": 2, "round": "warm", "agg_tps": 5.21, "wall_s": 73.7, "gen": 384, "per_stream_tps": [6.79, 15.41], "md5": ["ce2fc95752", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [23.4, 252.57], "t0": 1794335349.0072339, "t1": 1794335422.7080734}
+{"kind": "multi", "tag": "SA8", "n": 2, "round": 1, "agg_tps": 5.33, "wall_s": 72.11, "gen": 384, "per_stream_tps": [7.27, 15.74], "md5": ["ce2fc95752", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [24.72, 257.97], "t0": 1794335422.708462, "t1": 1794335494.8157258}
+--- ekbench.py solo p0 --n-predict 128 18:31:34
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.4, "prefill_tps": 24.71, "decode_n": 128, "decode_tps": 15.56, "md5": "ee079496a4", "t0": 1794335494.86412, "t1": 1794335503.4445703, "kind": "solo", "tag": "SA8"}
+--- ekbench.py solo p1 --n-predict 512 18:31:43
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.55, "prefill_tps": 34.73, "decode_n": 512, "decode_tps": 15.15, "md5": "4d4058c69f", "t0": 1794335503.4779656, "t1": 1794335537.7585206, "kind": "solo", "tag": "SA8"}
+elastic lines: 19; refused: 0; bursts: 0
+lowest MemAvailable 17593 MiB; now 120308 MiB; END SA8 18:32:21
+NC2-LEG-DONE SA8 18:32:21
+=== LEG SA9 parallel=5 ctx=5242880 bd=/home/xero/nc/ci-0fa9510 extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_PREFILL_SLICE_LAYERS=2 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_ELASTIC_KV_FLOOR_CELLS=204800 LLAMA_PREFILL_SLICE_TG_CELLS=204800 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_SAME_FREE=512] 18:32:22
+READY SA9 after 26s
+0.13.533.867 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 55.00 GiB of address space on one 2048 KiB zero chunk (869.7 ms)
+0.13.533.927 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.13.533.930 I llama_kv_cache: elastic KV: floor 204800 cells per stream (2.19 GiB), 5 streams of 1048576 cells
+0.13.540.040 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (6.1 ms)
+0.13.545.646 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.6 ms)
+0.13.551.204 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.5 ms)
+0.13.556.731 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.5 ms)
+0.13.562.267 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 1048576 cells, 330.0 MiB mapped in all streams (5.5 ms)
+0.14.313.953 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 41.25 GiB of address space on one 2048 KiB zero chunk (640.1 ms)
+0.14.313.986 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.14.313.988 I llama_kv_cache: elastic KV idx_: floor 204800 cells per stream (1.65 GiB), 5 streams of 1048576 cells
+0.14.317.970 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (4.0 ms)
+0.14.321.701 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (3.7 ms)
+0.14.325.433 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (3.7 ms)
+--- ekbench.py solo p0 p1 p2 p3 p4 18:32:48
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.69, "decode_n": 256, "decode_tps": 15.4, "md5": "ce2fc95752", "t0": 1794335568.6071281, "t1": 1794335585.6027114, "kind": "solo", "tag": "SA9"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.64, "prefill_tps": 29.65, "decode_n": 256, "decode_tps": 15.77, "md5": "bb64203d71", "t0": 1794335585.6027946, "t1": 1794335602.4178839, "kind": "solo", "tag": "SA9"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.65, "prefill_tps": 27.64, "decode_n": 256, "decode_tps": 15.34, "md5": "2d592efcb6", "t0": 1794335602.417935, "t1": 1794335619.6900578, "kind": "solo", "tag": "SA9"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.78, "prefill_tps": 26.93, "decode_n": 256, "decode_tps": 14.52, "md5": "1aab74269d", "t0": 1794335619.6901057, "t1": 1794335638.0348787, "kind": "solo", "tag": "SA9"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.65, "prefill_tps": 32.47, "decode_n": 256, "decode_tps": 15.27, "md5": "0c3f28294b", "t0": 1794335638.0349276, "t1": 1794335655.3835866, "kind": "solo", "tag": "SA9"}
+--- ekbench.py solo p0 --n-predict 128 18:34:15
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.4, "prefill_tps": 25.06, "decode_n": 128, "decode_tps": 14.85, "md5": "ee079496a4", "t0": 1794335655.416338, "t1": 1794335664.3845499, "kind": "solo", "tag": "SA9"}
+--- ekbench.py solo L16384 18:34:24
+{"spec": "L16384", "prompt_n": 16414, "cache_n": 0, "prefill_s": 47.37, "prefill_tps": 346.49, "decode_n": 128, "decode_tps": 13.78, "md5": "145c14aa8b", "t0": 1794335664.431406, "t1": 1794335721.071871, "kind": "solo", "tag": "SA9"}
+--- ekbench.py multi p0 p1 --rounds 2 18:35:21
+{"kind": "multi", "tag": "SA9", "n": 2, "round": "warm", "agg_tps": 19.44, "wall_s": 26.34, "gen": 512, "per_stream_tps": [9.84, 10.05], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [24.95, 35.91], "t0": 1794335721.1195793, "t1": 1794335747.4579766}
+{"kind": "multi", "tag": "SA9", "n": 2, "round": 1, "agg_tps": 20.81, "wall_s": 24.61, "gen": 512, "per_stream_tps": [10.53, 10.76], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [25.01, 36.72], "t0": 1794335747.4583187, "t1": 1794335772.0653174}
+{"kind": "multi", "tag": "SA9", "n": 2, "round": 2, "agg_tps": 21.25, "wall_s": 24.09, "gen": 512, "per_stream_tps": [10.76, 11.0], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [24.87, 37.26], "t0": 1794335772.0656374, "t1": 1794335796.1579812}
+--- ekbench.py multi p0 p1 p2 --rounds 2 18:36:36
+{"kind": "multi", "tag": "SA9", "n": 3, "round": "warm", "agg_tps": 23.72, "wall_s": 32.37, "gen": 768, "per_stream_tps": [7.99, 8.28, 8.15], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [24.1, 37.37, 29.45], "t0": 1794335796.1928186, "t1": 1794335828.567169}
+{"kind": "multi", "tag": "SA9", "n": 3, "round": 1, "agg_tps": 24.17, "wall_s": 31.77, "gen": 768, "per_stream_tps": [8.26, 8.16, 8.4], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [25.44, 36.85, 36.3], "t0": 1794335828.5677028, "t1": 1794335860.3375134}
+{"kind": "multi", "tag": "SA9", "n": 3, "round": 2, "agg_tps": 24.24, "wall_s": 31.68, "gen": 768, "per_stream_tps": [8.15, 8.42, 8.28], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [24.96, 37.2, 36.59], "t0": 1794335860.3379269, "t1": 1794335892.0181015}
+--- ekbench.py multi p0 p1 p2 p3 --rounds 2 18:38:12
+{"kind": "multi", "tag": "SA9", "n": 4, "round": "warm", "agg_tps": 25.2, "wall_s": 40.64, "gen": 1024, "per_stream_tps": [6.35, 6.51, 6.43, 6.62], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.53, 37.79, 37.14, 32.25], "t0": 1794335892.0710146, "t1": 1794335932.7066252}
+{"kind": "multi", "tag": "SA9", "n": 4, "round": 1, "agg_tps": 25.77, "wall_s": 39.73, "gen": 1024, "per_stream_tps": [6.48, 6.66, 6.57, 6.76], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.96, 36.48, 36.7, 35.23], "t0": 1794335932.707059, "t1": 1794335972.4363987}
+{"kind": "multi", "tag": "SA9", "n": 4, "round": 2, "agg_tps": 25.85, "wall_s": 39.62, "gen": 1024, "per_stream_tps": [6.5, 6.68, 6.59, 6.78], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d"], "specs": ["p0", "p1", "p2", "p3"], "prefill_tps": [24.48, 36.19, 36.81, 35.55], "t0": 1794335972.436802, "t1": 1794336012.0520453}
+--- ekbench.py multi p0 p1 p2 p3 p4 --rounds 2 18:40:12
+{"kind": "multi", "tag": "SA9", "n": 5, "round": "warm", "agg_tps": 24.4, "wall_s": 52.45, "gen": 1280, "per_stream_tps": [4.95, 5.01, 4.92, 5.07, 5.13], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d", "0c3f28294b"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [24.79, 35.63, 35.85, 35.02, 32.7], "t0": 1794336012.0873263, "t1": 1794336064.537226}
+{"kind": "multi", "tag": "SA9", "n": 5, "round": 1, "agg_tps": 24.64, "wall_s": 51.95, "gen": 1280, "per_stream_tps": [5.0, 5.05, 4.96, 5.17, 5.11], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d", "0c3f28294b"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [25.18, 36.27, 35.7, 35.25, 35.41], "t0": 1794336064.537886, "t1": 1794336116.486302}
+{"kind": "multi", "tag": "SA9", "n": 5, "round": 2, "agg_tps": 24.65, "wall_s": 51.93, "gen": 1280, "per_stream_tps": [5.01, 5.11, 5.06, 4.97, 5.17], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab74269d", "0c3f28294b"], "specs": ["p0", "p1", "p2", "p3", "p4"], "prefill_tps": [24.93, 36.64, 36.79, 34.43, 37.4], "t0": 1794336116.4868386, "t1": 1794336168.4173012}
+--- ekbench.py multi p1 p2 p3 p4 L16384 --rounds 1 18:42:48
+{"kind": "multi", "tag": "SA9", "n": 5, "round": "warm", "agg_tps": 11.91, "wall_s": 96.72, "gen": 1152, "per_stream_tps": [3.35, 3.37, 3.43, 3.4, 13.39], "md5": ["bb64203d71", "2d592efcb6", "1aab74269d", "0c3f28294b", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [33.39, 35.71, 35.06, 36.33, 197.12], "t0": 1794336168.4526906, "t1": 1794336265.1691542}
+{"kind": "multi", "tag": "SA9", "n": 5, "round": 1, "agg_tps": 12.09, "wall_s": 95.28, "gen": 1152, "per_stream_tps": [3.36, 3.38, 3.41, 3.43, 14.64], "md5": ["bb64203d71", "2d592efcb6", "1aab74269d", "0c3f28294b", "145c14aa8b"], "specs": ["p1", "p2", "p3", "p4", "L16384"], "prefill_tps": [35.95, 35.6, 34.4, 36.81, 198.3], "t0": 1794336265.1697876, "t1": 1794336360.45189}
+--- ekbench.py multi p0 L16384 --rounds 1 18:46:00
+{"kind": "multi", "tag": "SA9", "n": 2, "round": "warm", "agg_tps": 5.2, "wall_s": 73.88, "gen": 384, "per_stream_tps": [6.8, 15.37], "md5": ["ce2fc95752", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [23.21, 251.91], "t0": 1794336360.4859583, "t1": 1794336434.369828}
+{"kind": "multi", "tag": "SA9", "n": 2, "round": 1, "agg_tps": 5.32, "wall_s": 72.11, "gen": 384, "per_stream_tps": [7.26, 15.7], "md5": ["ce2fc95752", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_tps": [24.66, 258.01], "t0": 1794336434.3702083, "t1": 1794336506.484933}
+--- ekbench.py solo p0 --n-predict 128 18:48:26
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.41, "prefill_tps": 24.52, "decode_n": 128, "decode_tps": 15.53, "md5": "ee079496a4", "t0": 1794336506.5334382, "t1": 1794336515.1318536, "kind": "solo", "tag": "SA9"}
+elastic lines: 19; refused: 0; bursts: 0
+lowest MemAvailable 17569 MiB; now 120305 MiB; END SA9 18:48:40
+NC2-LEG-DONE SA9 18:48:40
+=== LEG SF8 parallel=5 ctx=5242880 bd=/home/xero/nc/ci-0fa9510 extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_PREFILL_SLICE_LAYERS=2 LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_ELASTIC_KV_FLOOR_CELLS=204800 LLAMA_PREFILL_SLICE_TG_CELLS=204800 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_SAME_FREE=512] 18:48:40
+READY SF8 after 26s
+0.13.672.570 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 55.00 GiB of address space on one 2048 KiB zero chunk (883.3 ms)
+0.13.672.629 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.13.672.632 I llama_kv_cache: elastic KV: floor 204800 cells per stream (2.19 GiB), 5 streams of 1048576 cells
+0.13.678.943 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (6.3 ms)
+0.13.684.602 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.6 ms)
+0.13.690.248 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.6 ms)
+0.13.695.919 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.7 ms)
+0.13.701.566 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 1048576 cells, 330.0 MiB mapped in all streams (5.6 ms)
+0.14.472.007 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 41.25 GiB of address space on one 2048 KiB zero chunk (657.6 ms)
+0.14.472.042 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.14.472.045 I llama_kv_cache: elastic KV idx_: floor 204800 cells per stream (1.65 GiB), 5 streams of 1048576 cells
+0.14.476.156 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (4.1 ms)
+0.14.479.965 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (3.8 ms)
+0.14.483.752 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (3.8 ms)
+--- ekbench.py solo p0 18:49:06
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.71, "decode_n": 256, "decode_tps": 15.4, "md5": "ce2fc95752", "t0": 1794336546.3073084, "t1": 1794336563.3067381, "kind": "solo", "tag": "SF8"}
+--- ekbench.py multi p0 p1 --rounds 3 18:49:23
+{"kind": "multi", "tag": "SF8", "n": 2, "round": "warm", "agg_tps": 20.52, "wall_s": 24.95, "gen": 512, "per_stream_tps": [10.39, 10.67], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [26.14, 30.37], "t0": 1794336563.3399675, "t1": 1794336588.2867255}
+{"kind": "multi", "tag": "SF8", "n": 2, "round": 1, "agg_tps": 21.4, "wall_s": 23.92, "gen": 512, "per_stream_tps": [10.84, 11.08], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [25.18, 37.53], "t0": 1794336588.2871525, "t1": 1794336612.2091115}
+{"kind": "multi", "tag": "SF8", "n": 2, "round": 2, "agg_tps": 21.5, "wall_s": 23.81, "gen": 512, "per_stream_tps": [10.9, 11.14], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [24.77, 37.15], "t0": 1794336612.2094815, "t1": 1794336636.019355}
+{"kind": "multi", "tag": "SF8", "n": 2, "round": 3, "agg_tps": 21.54, "wall_s": 23.77, "gen": 512, "per_stream_tps": [10.92, 11.16], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [24.48, 37.38], "t0": 1794336636.0196838, "t1": 1794336659.7853508}
+--- ekbench.py multi p0 p1 p2 --rounds 2 18:50:59
+{"kind": "multi", "tag": "SF8", "n": 3, "round": "warm", "agg_tps": 23.5, "wall_s": 32.68, "gen": 768, "per_stream_tps": [7.92, 8.22, 8.08], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [23.9, 37.4, 27.16], "t0": 1794336659.820125, "t1": 1794336692.5025716}
+{"kind": "multi", "tag": "SF8", "n": 3, "round": 1, "agg_tps": 24.15, "wall_s": 31.81, "gen": 768, "per_stream_tps": [8.25, 8.39, 8.15], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [25.67, 37.56, 34.7], "t0": 1794336692.5030782, "t1": 1794336724.309536}
+{"kind": "multi", "tag": "SF8", "n": 3, "round": 2, "agg_tps": 24.2, "wall_s": 31.74, "gen": 768, "per_stream_tps": [8.14, 8.4, 8.27], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [25.25, 37.63, 36.35], "t0": 1794336724.3098903, "t1": 1794336756.0510907}
+elastic lines: 15; refused: 0; bursts: 0
+lowest MemAvailable 19014 MiB; now 120319 MiB; END SF8 18:52:41
+NC2-LEG-DONE SF8 18:52:41
+=== LEG SP8 parallel=5 ctx=1024000 bd=/home/xero/nc/ci-0fa9510 extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1] 18:52:41
+READY SP8 after 26s
+0.12.695.028 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 10.74 GiB of address space on one 2048 KiB zero chunk (167.8 ms)
+0.12.695.079 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 204800 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.12.700.585 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 204800 cells, 66.0 MiB mapped in all streams (5.5 ms)
+0.12.705.608 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (5.0 ms)
+0.12.710.580 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 204800 cells, 198.0 MiB mapped in all streams (5.0 ms)
+0.12.715.542 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 204800 cells, 264.0 MiB mapped in all streams (5.0 ms)
+0.12.720.471 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 204800 cells, 330.0 MiB mapped in all streams (4.9 ms)
+0.12.886.628 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 8.06 GiB of address space on one 2048 KiB zero chunk (124.9 ms)
+0.12.886.655 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 204800 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.12.890.220 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 204800 cells, 44.0 MiB mapped in all streams (3.6 ms)
+0.12.893.582 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 204800 cells, 88.0 MiB mapped in all streams (3.4 ms)
+0.12.896.892 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (3.3 ms)
+0.12.900.230 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 204800 cells, 176.0 MiB mapped in all streams (3.3 ms)
+0.12.903.552 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 204800 cells, 220.0 MiB mapped in all streams (3.3 ms)
+--- ekbench.py solo p0 18:53:06
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.72, "decode_n": 256, "decode_tps": 15.48, "md5": "ce2fc95752", "t0": 1794336786.2669847, "t1": 1794336803.1740494, "kind": "solo", "tag": "SP8"}
+--- ekbench.py multi p0 p1 --rounds 3 18:53:23
+{"kind": "multi", "tag": "SP8", "n": 2, "round": "warm", "agg_tps": 20.61, "wall_s": 24.85, "gen": 512, "per_stream_tps": [10.44, 10.7], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [26.39, 31.31], "t0": 1794336803.2073746, "t1": 1794336828.0529602}
+{"kind": "multi", "tag": "SP8", "n": 2, "round": 1, "agg_tps": 21.5, "wall_s": 23.81, "gen": 512, "per_stream_tps": [10.89, 11.12], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [25.32, 38.76], "t0": 1794336828.0533855, "t1": 1794336851.8675342}
+{"kind": "multi", "tag": "SP8", "n": 2, "round": 2, "agg_tps": 21.62, "wall_s": 23.68, "gen": 512, "per_stream_tps": [10.95, 11.19], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [24.81, 38.43], "t0": 1794336851.8679667, "t1": 1794336875.5505037}
+{"kind": "multi", "tag": "SP8", "n": 2, "round": 3, "agg_tps": 21.65, "wall_s": 23.64, "gen": 512, "per_stream_tps": [11.21, 11.02], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [25.74, 37.62], "t0": 1794336875.5508482, "t1": 1794336899.1949532}
+--- ekbench.py multi p0 p1 p2 --rounds 2 18:54:59
+{"kind": "multi", "tag": "SP8", "n": 3, "round": "warm", "agg_tps": 23.58, "wall_s": 32.57, "gen": 768, "per_stream_tps": [7.94, 8.07, 8.23], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [24.39, 37.74, 28.15], "t0": 1794336899.228288, "t1": 1794336931.803157}
+{"kind": "multi", "tag": "SP8", "n": 3, "round": 1, "agg_tps": 24.23, "wall_s": 31.7, "gen": 768, "per_stream_tps": [8.28, 8.18, 8.41], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [25.85, 37.62, 36.63], "t0": 1794336931.8037248, "t1": 1794336963.5012577}
+{"kind": "multi", "tag": "SP8", "n": 3, "round": 2, "agg_tps": 24.32, "wall_s": 31.58, "gen": 768, "per_stream_tps": [8.18, 8.31, 8.44], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [25.54, 38.48, 37.89], "t0": 1794336963.5017748, "t1": 1794336995.0783095}
+elastic lines: 12; refused: 0; bursts: 0
+lowest MemAvailable 22872 MiB; now 120295 MiB; END SP8 18:56:38
+NC2-LEG-DONE SP8 18:56:38
+SPARK-NC8-DONE gate=ok 18:56:38

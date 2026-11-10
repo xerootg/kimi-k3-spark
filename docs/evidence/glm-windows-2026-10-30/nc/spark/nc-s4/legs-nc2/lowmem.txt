@@ -1,0 +1,12 @@
+lowest MemAvailable 16181 MiB; now 120325 MiB; END G8 18:06:21
+lowest MemAvailable 17589 MiB; now 120311 MiB; END SV8 18:15:29
+lowest MemAvailable 17593 MiB; now 120308 MiB; END SA8 18:32:21
+lowest MemAvailable 17569 MiB; now 120305 MiB; END SA9 18:48:40
+lowest MemAvailable 19014 MiB; now 120319 MiB; END SF8 18:52:41
+lowest MemAvailable 22872 MiB; now 120295 MiB; END SP8 18:56:38
+lowest MemAvailable 22887 MiB; now 120314 MiB; END SP9 19:01:11
+lowest MemAvailable 19002 MiB; now 120307 MiB; END SF9 19:05:11
+lowest MemAvailable 21400 MiB; now 120291 MiB; END SH9 19:09:11
+lowest MemAvailable 20484 MiB; now 120295 MiB; END SI9 19:13:08
+lowest MemAvailable 6535 MiB; now 120572 MiB; END SJ9 19:17:45
+lowest MemAvailable 23055 MiB; now 120557 MiB; END SK9 19:21:43

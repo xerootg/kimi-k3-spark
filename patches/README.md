@@ -1779,5 +1779,7 @@ a prompt is being read or an answer generated (state `PROCESSING_PROMPT` or `GEN
 is cleared as before. A child slot of an `n_cmpl` request is still cleared by `release()` itself. No effect on any
 computed byte: the patch only changes what a refused slot keeps.
 
-Compiled for sm_121; the elastic buffer is CUDA-only, so the path itself is only exercised in a Spark window. Not in
-production; the mechanics leg and the acceptance on the CI image are owed. Ledger: docs/experiments.md, window nc-s3.
+Verified in Spark window nc-s4 on the binaries of the CI image `547208dca250-g0fa9510` (leg G8): the refused growth
+to 1M answers 503 in 0.2 s, the log line above appears, and the conversation's next request finds 79906 tokens cached
+and answers in 4.3 s with the same bytes; the gate (SV8) and two acceptance processes (SA8, SA9) passed on the same
+binaries. Not in production yet. Ledger: docs/experiments.md, windows nc-s3 and nc-s4.

@@ -1,0 +1,61 @@
+=== LEG SJ9 parallel=5 ctx=5242880 bd=/home/xero/nc/ci-0fa9510 extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1] 19:13:40
+READY SJ9 after 30s
+0.13.604.690 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 55.00 GiB of address space on one 2048 KiB zero chunk (872.5 ms)
+0.13.604.749 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 1048576 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.13.610.595 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 1048576 cells, 66.0 MiB mapped in all streams (5.8 ms)
+0.13.616.178 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (5.6 ms)
+0.13.621.758 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 1048576 cells, 198.0 MiB mapped in all streams (5.6 ms)
+0.13.627.335 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 1048576 cells, 264.0 MiB mapped in all streams (5.6 ms)
+0.13.632.868 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 1048576 cells, 330.0 MiB mapped in all streams (5.5 ms)
+0.14.381.976 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 41.25 GiB of address space on one 2048 KiB zero chunk (640.9 ms)
+0.14.382.014 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 1048576 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.14.386.036 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 1048576 cells, 44.0 MiB mapped in all streams (4.0 ms)
+0.14.389.781 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 1048576 cells, 88.0 MiB mapped in all streams (3.7 ms)
+0.14.393.495 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 1048576 cells, 132.0 MiB mapped in all streams (3.7 ms)
+0.14.397.184 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 1048576 cells, 176.0 MiB mapped in all streams (3.7 ms)
+0.14.400.894 I elastic_fit_stream: elastic KV idx_ (init) stream 4: 0 -> 4352 of 1048576 cells, 220.0 MiB mapped in all streams (3.7 ms)
+--- ekbench.py solo p0 19:14:10
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.6, "decode_n": 256, "decode_tps": 15.36, "md5": "ce2fc95752", "t0": 1794338050.4775016, "t1": 1794338067.5222483, "kind": "solo", "tag": "SJ9"}
+--- ekbench.py multi p0 p1 --rounds 3 19:14:27
+{"kind": "multi", "tag": "SJ9", "n": 2, "round": "warm", "agg_tps": 20.56, "wall_s": 24.9, "gen": 512, "per_stream_tps": [10.41, 10.69], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [25.98, 30.44], "t0": 1794338067.5541353, "t1": 1794338092.454374}
+{"kind": "multi", "tag": "SJ9", "n": 2, "round": 1, "agg_tps": 21.44, "wall_s": 23.88, "gen": 512, "per_stream_tps": [10.86, 11.09], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [24.93, 38.64], "t0": 1794338092.4546597, "t1": 1794338116.335123}
+{"kind": "multi", "tag": "SJ9", "n": 2, "round": 2, "agg_tps": 21.54, "wall_s": 23.77, "gen": 512, "per_stream_tps": [10.92, 11.16], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [24.75, 37.71], "t0": 1794338116.3354347, "t1": 1794338140.102369}
+{"kind": "multi", "tag": "SJ9", "n": 2, "round": 3, "agg_tps": 21.56, "wall_s": 23.74, "gen": 512, "per_stream_tps": [10.93, 11.17], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [24.8, 37.91], "t0": 1794338140.102681, "t1": 1794338163.8453388}
+--- ekbench.py multi p0 p1 p2 --rounds 2 19:16:03
+{"kind": "multi", "tag": "SJ9", "n": 3, "round": "warm", "agg_tps": 23.5, "wall_s": 32.69, "gen": 768, "per_stream_tps": [8.21, 8.11, 7.99], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [26.46, 38.09, 26.12], "t0": 1794338163.8939219, "t1": 1794338196.580393}
+{"kind": "multi", "tag": "SJ9", "n": 3, "round": 1, "agg_tps": 24.11, "wall_s": 31.85, "gen": 768, "per_stream_tps": [8.37, 8.27, 8.14], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [25.88, 38.05, 35.1], "t0": 1794338196.5808413, "t1": 1794338228.430213}
+{"kind": "multi", "tag": "SJ9", "n": 3, "round": 2, "agg_tps": 24.18, "wall_s": 31.76, "gen": 768, "per_stream_tps": [8.39, 8.29, 8.16], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [26.05, 38.3, 36.44], "t0": 1794338228.4306707, "t1": 1794338260.194208}
+elastic lines: 12; refused: 0; bursts: 0
+lowest MemAvailable 6535 MiB; now 120572 MiB; END SJ9 19:17:45
+NC2-LEG-DONE SJ9 19:17:45
+=== LEG SK9 parallel=5 ctx=1024000 bd=/home/xero/nc/ci-0fa9510 extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_ELASTIC_KV_FLOOR_CELLS=204800] 19:17:45
+READY SK9 after 26s
+0.12.704.583 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 10.74 GiB of address space on one 2048 KiB zero chunk (180.6 ms)
+0.12.704.638 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 204800 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.12.704.640 I llama_kv_cache: elastic KV: floor 204800 cells per stream (2.15 GiB), 5 streams of 204800 cells
+0.12.710.971 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 204800 cells, 66.0 MiB mapped in all streams (6.3 ms)
+0.12.716.663 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (5.7 ms)
+0.12.722.303 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 204800 cells, 198.0 MiB mapped in all streams (5.6 ms)
+0.12.728.297 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 204800 cells, 264.0 MiB mapped in all streams (6.0 ms)
+0.12.733.958 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 204800 cells, 330.0 MiB mapped in all streams (5.7 ms)
+0.12.914.994 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 8.06 GiB of address space on one 2048 KiB zero chunk (135.5 ms)
+0.12.915.023 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 204800 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), guaranteed floor per stream, burst past it from free memory
+0.12.915.024 I llama_kv_cache: elastic KV idx_: floor 204800 cells per stream (1.61 GiB), 5 streams of 204800 cells
+0.12.919.385 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 204800 cells, 44.0 MiB mapped in all streams (4.4 ms)
+0.12.923.153 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 204800 cells, 88.0 MiB mapped in all streams (3.8 ms)
+0.12.926.910 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (3.8 ms)
+--- ekbench.py solo p0 19:18:10
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.74, "decode_n": 256, "decode_tps": 15.4, "md5": "ce2fc95752", "t0": 1794338290.6933966, "t1": 1794338307.6869574, "kind": "solo", "tag": "SK9"}
+--- ekbench.py multi p0 p1 --rounds 3 19:18:27
+{"kind": "multi", "tag": "SK9", "n": 2, "round": "warm", "agg_tps": 20.62, "wall_s": 24.83, "gen": 512, "per_stream_tps": [10.45, 10.71], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [25.74, 31.25], "t0": 1794338307.7354274, "t1": 1794338332.5611253}
+{"kind": "multi", "tag": "SK9", "n": 2, "round": 1, "agg_tps": 21.48, "wall_s": 23.84, "gen": 512, "per_stream_tps": [10.88, 11.11], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [25.38, 38.65], "t0": 1794338332.5614238, "t1": 1794338356.399757}
+{"kind": "multi", "tag": "SK9", "n": 2, "round": 2, "agg_tps": 21.27, "wall_s": 24.07, "gen": 512, "per_stream_tps": [10.77, 11.01], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [25.02, 38.26], "t0": 1794338356.4001515, "t1": 1794338380.468758}
+{"kind": "multi", "tag": "SK9", "n": 2, "round": 3, "agg_tps": 21.34, "wall_s": 24.0, "gen": 512, "per_stream_tps": [10.81, 11.05], "md5": ["ce2fc95752", "bb64203d71"], "specs": ["p0", "p1"], "prefill_tps": [24.32, 37.18], "t0": 1794338380.469163, "t1": 1794338404.4667668}
+--- ekbench.py multi p0 p1 p2 --rounds 2 19:20:04
+{"kind": "multi", "tag": "SK9", "n": 3, "round": "warm", "agg_tps": 23.5, "wall_s": 32.67, "gen": 768, "per_stream_tps": [7.92, 8.05, 8.22], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [23.82, 35.97, 27.09], "t0": 1794338404.5199194, "t1": 1794338437.1947129}
+{"kind": "multi", "tag": "SK9", "n": 3, "round": 1, "agg_tps": 24.24, "wall_s": 31.68, "gen": 768, "per_stream_tps": [8.15, 8.28, 8.42], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [25.31, 38.04, 36.68], "t0": 1794338437.1950839, "t1": 1794338468.8734982}
+{"kind": "multi", "tag": "SK9", "n": 3, "round": 2, "agg_tps": 24.31, "wall_s": 31.59, "gen": 768, "per_stream_tps": [8.18, 8.31, 8.44], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", "p1", "p2"], "prefill_tps": [25.18, 38.26, 37.54], "t0": 1794338468.8739324, "t1": 1794338500.459973}
+elastic lines: 14; refused: 0; bursts: 0
+lowest MemAvailable 23055 MiB; now 120557 MiB; END SK9 19:21:43
+NC2-LEG-DONE SK9 19:21:43
+SPARK-NC8-DONE gate=ok 19:21:43
