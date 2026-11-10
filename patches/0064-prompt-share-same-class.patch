@@ -1,0 +1,87 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 9879b94..a42db3e 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -3424,6 +3424,24 @@ private:
+         return v;
+     }
+ 
++    // kimi-k3-spark patch 0064: LLAMA_PREFILL_SLICE_SHARE_SAME (default 0 = off): the share of the time a prompt gets
++    // while a client of its own class is generating. Off, the prompt is read first and that client's answer stops
++    // until it is done (a 64k prompt: 49 s on the GH200; a 190k prompt: 12 minutes on the Spark). With 0.5 the prompt
++    // and the answers each get half the time.
++    static double pp_share_same() {
++        static const double v = [] {
++            const char * e = std::getenv("LLAMA_PREFILL_SLICE_SHARE_SAME");
++            const double x = e ? atof(e) : 0.0;
++            return x <= 0.0 ? 0.0 : std::min(0.9, std::max(0.01, x));
++        }();
++        return v;
++    }
++
++    // does a prompt of class `prio` share the GPU with the generating class `hi` (and not simply run first)?
++    static bool pp_contends(int prio, int hi) {
++        return hi != INT_MIN && (prio < hi || (prio == hi && pp_share_same() > 0.0));
++    }
++
+     int pp_top_generating() const {
+         int hi = INT_MIN;
+         for (const auto & slot : slots) {
+@@ -3442,13 +3460,18 @@ private:
+         return on;
+     }
+ 
+-    // is a prompt of a lower class than `hi` waiting or pending, or (with the decode share) a lower class generating?
+-    // (contention: its work shares the GPU with `hi`)
++    // is a prompt that shares the GPU with `hi` waiting or pending (a lower class's; with patch 0064 also the same
++    // class's), or (with the decode share) a lower class generating? (contention)
+     bool pp_lower_prompt(int hi) const {
+         for (const auto & slot : slots) {
+-            if (slot.task && (slot.pp_pending || slot.state == SLOT_STATE_STARTED || slot.state == SLOT_STATE_PROCESSING_PROMPT ||
+-                        (pp_decode_share() && slot.state == SLOT_STATE_GENERATING)) &&
+-                    (int) slot.task->params.client_priority < hi) {
++            if (!slot.task) {
++                continue;
++            }
++            const int prio = (int) slot.task->params.client_priority;
++            if ((slot.pp_pending || slot.state == SLOT_STATE_STARTED || slot.state == SLOT_STATE_PROCESSING_PROMPT) && pp_contends(prio, hi)) {
++                return true;
++            }
++            if (pp_decode_share() && slot.state == SLOT_STATE_GENERATING && prio < hi) {
+                 return true;
+             }
+         }
+@@ -3458,12 +3481,13 @@ private:
+     // may a prompt of class `prio` use the GPU now? Yes unless a higher class is generating and the prompt pieces
+     // already had their share of the time while it did (a higher class's own prompt never waits for this). The
+     // accounts only run while there is contention, so a share never piles up while nobody waits.
++    // Patch 0064: the same holds, with its own share, while a client of the prompt's own class is generating.
+     bool pp_budget_ok(int prio) {
+         const int hi = pp_top_generating();
+-        if (hi == INT_MIN || hi <= prio) {
++        if (!pp_contends(prio, hi)) {
+             return true;
+         }
+-        const double share = pp_share();
++        const double share = prio < hi ? pp_share() : pp_share_same();
+         return (double) pp_t_pp_us <= share/(1.0 - share)*(double) pp_t_dec_us;
+     }
+ 
+@@ -3495,7 +3519,7 @@ private:
+         queue_tasks.yield_to_queue([&]() {
+             ret = llama_decode_resume(ctx_tgt);
+         });
+-        if (pp_top_generating() > prio) {
++        if (pp_contends(prio, pp_top_generating())) {
+             pp_t_pp_us += ggml_time_us() - t0;
+         }
+         pp_n_pieces++;
+@@ -3629,7 +3653,7 @@ private:
+                     // patch 0061: time of decode steps and of prompt pieces while a higher class generates
+                     const int64_t dt = ggml_time_us() - t_dec0;
+                     const bool is_prompt = pp_cur_prompt != nullptr && pp_cur_prompt->task &&
+-                        (int) pp_cur_prompt->task->params.client_priority < hi_gen;
++                        pp_contends((int) pp_cur_prompt->task->params.client_priority, hi_gen);
+                     if (is_prompt) {
+                         pp_t_pp_us += dt;
+                     } else if (pp_cur_prompt == nullptr) {

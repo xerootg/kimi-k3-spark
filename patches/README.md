@@ -1406,3 +1406,17 @@ prompt lost 65 s. Now the slots leave the released list under the lock and stay 
 their pages are populated outside it; they rejoin the LRU under the lock. A re-arm populates without the smaps reads
 and logs one line per chunk with its duration. Byte-neutral: only when slots become usable again changes.
 
+
+## 0064-prompt-share-same-class
+
+With prompts read alone (0035) a prompt always ran to its end before the generating slots took another step, so one
+client's long prompt stopped every other client's answer for as long as the prompt took: 49 s for a 64k prompt on the
+GH200, 12 minutes for a 190k prompt on the Spark, and about an hour for a 500k burst (0060). 0061 only covered a
+*higher* class's answer. `LLAMA_PREFILL_SLICE_SHARE_SAME=<share>` (default 0 = off, the old order) gives a prompt that
+share of the time while a client of its own class is generating; the generating slots take decode steps in the rest.
+With 0.5 the prompt and the answers each get half. Needs `LLAMA_PREFILL_SLICE_LAYERS` (the pieces are where the
+prompt can pause). Scheduling only: the pieces and the decode steps are computed as before, so nobody's bytes change.
+A higher class's prompt still runs first, and a lower class's prompt still gets `LLAMA_PREFILL_SLICE_SHARE` while a
+higher class generates.
+
+Not in production until its acceptance windows are done (see docs/experiments.md).
