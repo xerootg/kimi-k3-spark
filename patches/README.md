@@ -1757,3 +1757,27 @@ production image's numbers (two clients 60.9/62.8 against 60.4/62.3, three 67.4/
 70.6/71.2 against 70.9/71.5, five 68.3/68.8 against 68.2/68.6, four short prompts and a 16k prompt 41.6-41.7
 against 41.5-41.8), every md5 equal to solo and gold, six of six staggered pairs equal to solo. Not in production;
 acceptance on the CI image is owed on both boxes. Ledger: docs/experiments.md, window nc6.
+
+## 0075-refused-burst-keeps-conversation
+
+With the floor of 0060 (`LLAMA_ELASTIC_KV_FLOOR_CELLS`), a request whose growth past the floor is refused at its start
+leaves the conversation in its slot, and the cells that conversation holds, as they were. No new variable.
+
+The refusal went through the path of 0052 ("a slot whose growth is refused gets an error and gives its memory back"),
+which clears the slot. That is right for 0052's policies, where a refusal means memory is short and the slot has to
+yield, and for a refusal in the middle of a prompt or an answer. A burst of 0060 is refused by the accounting before
+anything of the request has touched the cache (slot state `STARTED`; the common prefix is taken further down in
+`update_slots`), and every other slot's floor is covered with the old conversation in place, so there is nothing to
+give back. Clearing it made the 503 expensive: Spark window nc-s3 (leg G7, one tenth scale), "elastic KV refused
+999430 cells, failing this request" was followed by "clearing prompt with 79973 tokens", and the conversation's next
+request had `cache_n` 0 and read its 79910 tokens again in 259 s. A 500k session refused on one turn would have paid
+the whole prompt again, about an hour on the Spark.
+
+Now `slot.prompt_clear()` is skipped when the floor is set and the slot is in `SLOT_STATE_STARTED`; the server logs
+"the refused request leaves the slot's conversation as it was (N tokens)". Without the floor, and for a refusal while
+a prompt is being read or an answer generated (state `PROCESSING_PROMPT` or `GENERATING`), nothing changes: the slot
+is cleared as before. A child slot of an `n_cmpl` request is still cleared by `release()` itself. No effect on any
+computed byte: the patch only changes what a refused slot keeps.
+
+Compiled for sm_121; the elastic buffer is CUDA-only, so the path itself is only exercised in a Spark window. Not in
+production; the mechanics leg and the acceptance on the CI image are owed. Ledger: docs/experiments.md, window nc-s3.

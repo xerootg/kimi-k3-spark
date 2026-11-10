@@ -1,0 +1,28 @@
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 03ad4ab..58d70a8 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -3938,8 +3938,22 @@ private:
+             if (!llama_elastic_kv_reserve(ctx_tgt, slot.id, n_need)) {
+                 SLT_WRN(slot, "elastic KV refused %d cells, failing this request\n", n_need);
+                 send_error(slot, "out of KV cache memory: the server cannot hold this conversation now (elastic KV refused " + std::to_string(n_need) + " cells)", ERROR_TYPE_UNAVAILABLE);
++                // patch 0075: with the floor (patch 0060) a request refused at its start (SLOT_STATE_STARTED: nothing of
++                // it has touched the cache yet, the common prefix is only taken further down) leaves the slot's
++                // conversation and its cells as they were. The refusal is the accounting saying "no room to grow", not
++                // "give memory back": every other slot's floor is already covered with this conversation in place. The
++                // client can come back with the same conversation (or a shorter turn) without paying its prompt again;
++                // before, the 503 threw the cache away (window nc-s3: 79910 tokens re-read in 259 s; a 500k session
++                // would pay about an hour on the Spark). Without the floor (patch 0052's policies), and for a refusal
++                // in the middle of a prompt or an answer, the slot still gives its memory back as before.
++                const bool keep = floor_cells > 0 && slot.state == SLOT_STATE_STARTED;
++                if (keep) {
++                    SLT_WRN(slot, "the refused request leaves the slot's conversation as it was (%d tokens)\n", slot.prompt.n_tokens());
++                }
+                 slot.release();
+-                slot.prompt_clear();
++                if (!keep) {
++                    slot.prompt_clear();
++                }
+             }
+         });
+ 
