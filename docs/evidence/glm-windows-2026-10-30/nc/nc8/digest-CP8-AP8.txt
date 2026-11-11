@@ -1,0 +1,28 @@
+== CP8
+  solo p0      8e312d7bdd dec  42.37 pre     49.6 cache_n 0
+  solo L16384  145c14aa8b dec  37.60 pre   1615.8 cache_n 0
+  solo p0      8e312d7bdd dec  42.30 pre     58.6 cache_n 0
+  solo L16384  145c14aa8b dec  49.56 pre   1338.8 cache_n 0
+  solo L65536  8acec1b966 dec  48.63 pre   1421.8 cache_n 0
+  solo L200000 145c14aa8b dec  42.97 pre   1206.0 cache_n 0
+  solo L16384  145c14aa8b dec  49.81 pre    965.9 cache_n 0
+  solo p0      8e312d7bdd dec  41.36 pre     58.4 cache_n 0
+  solo p0      8e312d7bdd dec  43.92 pre     58.1 cache_n 0
+  solo p0      8e312d7bdd dec  45.38 pre     70.1 cache_n 0
+  multi n=4 round=warm agg  10.77 per [4.25, 3.6, 2.29, 14.3] OK ['p1', 'p2', 'L16384', 'L65536'] ['74fb633e8e', 'f8531a5f07', '145c14aa8b', '8acec1b966']
+  multi n=4 round=1 agg  10.79 per [4.39, 3.61, 2.36, 16.78] OK ['p1', 'p2', 'L16384', 'L65536'] ['74fb633e8e', 'f8531a5f07', '145c14aa8b', '8acec1b966']
+  multi rounds differing from solo/gold: 0
+== AP8
+  solo p0      8e312d7bdd dec  43.08 pre     49.8 cache_n 0
+  solo L16384  145c14aa8b dec  38.22 pre   1620.5 cache_n 0
+  solo p0      8e312d7bdd dec  45.76 pre     60.4 cache_n 0
+  solo L16384  145c14aa8b dec  52.74 pre   1657.8 cache_n 0
+  solo L65536  8acec1b966 dec  50.65 pre   1500.0 cache_n 0
+  solo L200000 145c14aa8b dec  44.84 pre   1262.8 cache_n 0
+  solo L16384  145c14aa8b dec  56.92 pre   1666.7 cache_n 0
+  solo p0      8e312d7bdd dec  47.55 pre     61.5 cache_n 0
+  solo p0      8e312d7bdd dec  50.85 pre     61.6 cache_n 0
+  solo p0      8e312d7bdd dec  52.78 pre     74.9 cache_n 0
+  multi n=4 round=warm agg  11.27 per [4.45, 3.77, 2.4, 14.37] OK ['p1', 'p2', 'L16384', 'L65536'] ['74fb633e8e', 'f8531a5f07', '145c14aa8b', '8acec1b966']
+  multi n=4 round=1 agg  11.60 per [4.6, 3.89, 2.47, 16.88] OK ['p1', 'p2', 'L16384', 'L65536'] ['74fb633e8e', 'f8531a5f07', '145c14aa8b', '8acec1b966']
+  multi rounds differing from solo/gold: 0

@@ -2661,3 +2661,88 @@ throughout. Evidence: [nc/spark/nc-s6/](evidence/glm-windows-2026-10-30/nc/spark
 - **Window closed 22:26 UTC.** glm53-spark back at one replica on image `547208dca250-g08d176f`, quicksort gold
   `ee079496a4` three times through the Service (17.0 tok/s); no test server, runner or test snapshot left; the
   laptop deadman disarmed at 22:26:36.
+
+**2026-11-10/11, GH200 window nc8 (22:42-00:03 UTC): today's production flags plus only `LLAMA_KPOOL_OWN_SEQS=1` on
+image `547208dca250-gfbb8831` (patches 0071 and 0076) keep every byte and are not slower than production in any row;
+accepted as "config A", to ship apart from the prompt pieces of #177.** The follow-up task: ship what costs no client
+anything now, leave the two trades (#177 prompts in pieces, #178 floor and burst) for Haley's answer. Config A = the
+env of the production manifest unchanged (five 1M slots, KV in Grace memory, batch-invariant flags, client classes,
+one reserved slot, **the hold rule kept**, no `LLAMA_PREFILL_SLICE_*`) plus `LLAMA_KPOOL_OWN_SEQS=1`; patch 0076 has
+no switch. The control is the production image `547208dca250-g68d4166` with the production env, in the same window.
+Docker legs on port 18104 under `window.lock`, glm53-gh200 at 0, glm53-spark serving throughout, CronJob
+`re-lab/workbench-queue` suspended for the window. Image digests: `gfbb8831`
+sha256:87da5287…, `g68d4166` sha256:b9ce18b4…. Evidence:
+[nc/nc8/](evidence/glm-windows-2026-10-30/nc/nc8/) (`results-nc8.jsonl`, `digest-CP8-AP8.txt`, `digest-AA-PB-8.txt`,
+`digest-WH8-WA8.txt`, the runner `nc8.sh` and its log `nc8a.log`).
+
+- **Bytes (legs AA18 and AA28, config A, two server processes).** Per process: quicksort gold `bc32ecab82` three
+  times, p0-p4 and the 16k, 64k and 100k prompts alone, then two, three, four and five clients (two rounds each), a
+  short client next to a 16k prompt, four short clients next to a 16k prompt (two rounds), four next to a 64k
+  prompt, two next to a 16k and a 64k prompt, three next to a 100k prompt, the cached re-reads. **0 multi rounds
+  differ from solo or gold in either process**; the control leg PB8 the same on its 11 commands. The class legs: 36
+  of 36 answers gold in each of WH8 and WA8; no test key in a server log. The server logs of the A legs carry
+  "LLAMA_KPOOL_OWN_SEQS=1: a ubatch's pool list holds its own sequences only (patch 0071)".
+- **What the other slots hold (legs CP8 control and AP8 config A: the same five commands in the same order, one
+  process each).**
+
+  | request | control (g68d4166) | config A |
+  |---|---|---|
+  | 16k prompt read, fresh server | 1616 tok/s | 1621 |
+  | 16k prompt read next to two short clients and a 64k prompt (two rounds) | 1547 / 1336 | 1639 / 1653 |
+  | 64k prompt read in that mix | 1410 / 1417 | 1484 / 1493 |
+  | 16k prompt read alone, a 16k and a 64k conversation in other slots | 1339 | 1658 |
+  | 64k prompt read alone after that | 1422 | 1500 |
+  | 200k prompt read | 1206 | 1263 |
+  | 16k prompt read after the 200k conversation as well | **966** | **1667** |
+  | short answer decode after all of that (three in a row) | 41.4 / 43.9 / 45.4 tok/s | 47.6 / 50.9 / 52.8 |
+
+  This is the result of window nc5 (966 against 1630) again, now on `gfbb8831` and with the hold rule on.
+- **One to five clients (leg PB8 control against AA18 / AA28, rounds 1 / 2, decode aggregate in tok/s).**
+
+  | clients | control | config A, process 1 | config A, process 2 |
+  |---|---|---|---|
+  | one, fresh server (p0 / p1 / p2 / p3 / p4) | 46.8 / 46.8 / 47.7 / 47.4 / 44.7 | 47.7 / 48.0 / 48.8 / 48.6 / 46.0 | 47.6 / 47.8 / 48.7 / 48.5 / 45.9 |
+  | quicksort gold, fresh server (first / second) | 42.6 / 47.1 | 43.3 / 48.0 | 43.2 / 47.9 |
+  | two | 60.5 / 62.6 | 62.0 / 64.2 | 61.8 / 64.0 |
+  | three | 67.8 / 69.0 | 68.9 / 70.2 | 68.6 / 70.0 |
+  | four | 71.6 / 72.2 | 72.0 / 72.6 | 71.8 / 72.4 |
+  | five | 68.6 / 69.0 | 69.0 / 69.4 | 68.8 / 69.2 |
+  | four short + a 16k prompt | 41.5 / 42.0 | 41.9 / 42.3 | 41.8 / 42.2 |
+  | four short + a 64k prompt | 18.6 | 18.7 | 18.7 |
+  | two short + a 16k and a 64k prompt | 11.2 | 11.7 | 11.7 |
+  | one short + a 16k prompt | 21.5 | 21.6 | 21.6 |
+  | 16k / 64k prompt read alone after the multi rounds | 1337 / 1418 | 1657 / 1498 | 1655 / 1497 |
+
+  The two A processes differ by 0.1-0.3 tok/s from each other; A is level with or above the control in every row,
+  by 0.3-2.4 % in the decode rows and by 6-24 % where a prompt is read next to conversations in other slots. No row
+  is slower.
+- **A note on the row "one short + a 16k prompt".** The per-client decode figures of that command come in two
+  patterns that depend on which of the two requests the server picks up first: p0 at 14.3-14.5 tok/s and the 16k
+  client at 25.1-26.5 (control leg PB8), or p0 at 32.0-34.0 and the 16k client at 23.9-25.4 (control leg PB7 of
+  window nc7 on the same image and env; both A processes here). The wall time is the same in both (17.8-18.3 s).
+  The control shows both patterns on unchanged code, so the difference is arrival order, not config A.
+- **Juno under the hold rule (leg WH8 control, leg WA8 config A; client classes, Juno priority 10, four clients
+  priority 1, one slot reserved).**
+
+  | scenario | control | config A |
+  |---|---|---|
+  | Juno alone, 256 tokens, six runs across the leg | 42.2-49.4 tok/s (mean 47.1) | 43.0-53.3 (mean 49.6) |
+  | a 64k prompt arrives one second into her 512-token answer: her decode / her first token | 52.5 tok/s / 0.19 s | 53.6 / 0.18 s |
+  | the same: the 64k client's first token | 53.0 s | 52.7 s |
+  | she arrives ten seconds into a 64k prompt: her first token / decode | 2.74 s / 51.0 tok/s | 2.73 s / 54.1 |
+  | four clients arrive one second into her 256-token answer: her decode / their first tokens | 49.9 tok/s / 4.7-5.5 s | 54.2 / 4.3-5.1 s |
+  | four clients arrive one second into her 1024-token answer: her decode / their first tokens / all done | 47.7 tok/s / 21.0-21.7 s / 36.7 s | 49.7 / 20.1-20.8 s / 35.7 s |
+  | three clients generating + a 64k prompt, Juno four seconds later (two runs): her first token / decode | 1.69, 1.71 s / 18.2, 18.3 tok/s | 1.67, 1.69 s / 18.5, 18.7 |
+  | the same: the three answers complete / the 64k client's first token | 19.7, 19.6 s / 58.8, 58.5 s | 19.5, 19.4 s / 58.4, 58.1 s |
+
+  The behaviour of the hold rule is unchanged, including its weak spot (Juno at about 18 tok/s when three clients of
+  the other class are already generating: they ride in her batch). That scenario is what #177 changes; config A does
+  not touch it.
+- **Verdict: accepted.** Bytes equal in two processes and in the class legs; no row slower than the control; the
+  gains are the ones patch 0071 was written for, and they are larger with the hold rule on than the decode rows
+  alone suggest because every prompt read next to held conversations is 6-24 % faster (73 % after a 200k
+  conversation). Patch 0076 shows no separate effect on this box in these rows (the five slots were 1M before and
+  after; the decode rows are up 0.3-2.4 %, which is 0071 and 0076 together).
+- **Window closed 00:03 UTC.** glm53-gh200 back at one replica on the unchanged image `547208dca250-g68d4166`,
+  quicksort gold `bc32ecab82` three times through the Service (42.4 / 47.0 / 49.8 tok/s), workbench-queue
+  unsuspended, the laptop deadman disarmed at 00:01:09.
