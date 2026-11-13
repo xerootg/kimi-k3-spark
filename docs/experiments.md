@@ -2862,7 +2862,7 @@ the window's records (the session that ran it hit its limit after restoring prod
   a pure gain on the Spark. With slots of 200k the pool list is short, so 0071 has little to remove here (two and
   three clients +0.8-1.2 %, the mixes +0.4-0.6 %), and the build itself costs one client 0.5-0.9 %. Compare the
   GH200 (window nc8), where the same step removed a 40 % slowdown of prompt reads next to held conversations. The
-  Spark step is drafted as argo-things #180 for Haley to decide; its real value is a later one: the same image on both
+  Spark step is drafted as argo-things #185 for Haley to decide; its real value is a later one: the same image on both
   boxes, and 1M slots (#178) without 20 MiB of zeroing per step.
 - **Window closed 01:22 UTC.** glm53-spark back at one replica on `547208dca250-g08d176f`, quicksort gold
   `ee079496a4` three times through the kimi-k3 Service (17.05-17.07 tok/s), no test server, key file or runner left;
