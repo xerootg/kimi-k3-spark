@@ -1823,3 +1823,54 @@ Measured in Spark window nc-s5 on the CI image `gfbb8831`: five 1M slots with th
 production; the Spark rollout is argo-things #178 (waits for the owner's decision). The GH200 serves five 1M slots
 on an image without this patch (#177 proposes `gb5ee55a`, which does not have it either); its acceptance on
 `gfbb8831` is owed. Ledger: docs/experiments.md, windows nc-s4 and nc-s5.
+
+## 0077-prompt-pieces-skip-embd-batches
+
+A fix to 0061, no variable. A prompt computed in pieces (`LLAMA_PREFILL_SLICE_LAYERS`) returns 3 from `llama_decode`
+and has to be finished with `llama_decode_resume`. The server's main loop does that (`pp_step`); no other caller does.
+GH200 window nc10 (2026-11-13, #177's config): the mtmd image helper (`mtmd_helper_decode_image_chunk`) decodes an
+image's 1296 embeddings as one batch of one sequence, which is above `LLAMA_PREFILL_SLICE_MIN_TOKENS` (512), so 0061
+computed its first piece and returned 3; the helper took the 3 for an error ("failed to decode mtmd chunk, res = 3"),
+the request got a 500, and the context kept the pending prompt. Every later prompt ubatch was refused with -1 ("a prompt
+is still being computed in pieces, call llama_decode_resume first"), so every request, image or text, failed until the
+server was restarted. Production (config A, no pieces) was not affected. Three hunks, all in `src/llama-context.cpp`:
+
+- **A ubatch with embeddings as input (`ubatch.embd != nullptr`) is never cut.** It still goes to the prompt scheduler
+  through `pp_route` (with pieces on, the main scheduler is reserved for the batched decode graph only, 0061; a
+  1296-token graph there would grow its compute buffer), but `cut_ok` is false, as 0069 does for a recurrent state that
+  is not in place and as 0061 does for a ubatch under 512 tokens: the graph runs whole in the first call and `decode`
+  returns 0. This covers the image helper, and also the MTP draft context's catch-up of a prompt (0070: the target's
+  hidden state is the embedding input; `common_speculative_process` would also have taken a 3 for an error).
+  `LLAMA_PREFILL_SLICE_LOG=1` logs "prompt ubatch of N embeddings runs whole: its caller does not resume".
+- **Only the target context computes prompts in pieces.** `LLAMA_PREFILL_SLICE_LAYERS` is an environment variable, so
+  the MTP draft context (`cparams.ctx_type == LLAMA_CONTEXT_TYPE_MTP`, created with the same `--parallel` and
+  `LLAMA_PREFILL_ISOLATE`) read it too and set up its own prompt scheduler. It is driven by `common/speculative`, which
+  never resumes; it now keeps `pp_slice_layers` 0 and logs one INFO line. Not covered: a separate draft model
+  (`--spec-type draft` with `-md`) gets an ordinary context that llama.cpp cannot tell from the target; its token
+  prompts would still be cut. No deployment uses one; if one ever does, the variable must not reach that process, or
+  the server has to pass an opt-in. Other server callers were checked: `/embeddings` and `/rerank` run with
+  `cparams.embeddings`, which `pp_route` already excludes; the verify batch of exact speculation has at most
+  `LLAMA_SPEC_EXACT_COLS` (4) tokens per sequence and goes through the main loop anyway; `mtmd_helper_eval_chunk_single`
+  (token batches without resume) is used by `llama-mtmd-cli`, not by the server.
+- **A pending prompt whose caller walked away is dropped, not defended for ever.** When `decode` gets a new prompt
+  ubatch (`pp_route` true) while `pp_pend.active`, the pending prompt's caller took the 3 for an error and will never
+  call `llama_decode_resume` (the main loop never sends a second prompt ubatch while `pp_slot` is set). Instead of
+  returning -1 the context logs one warning with the sequence id, the token count and the pieces computed, resets
+  `pp_pend` through `pp_pend_reset()` (every field, the batch allocator and memory context it holds, and 0069's frozen
+  recurrent cell), removes the pending ubatch's positions from the memory (`seq_rm(seq, pos_min, -1)`, as the failure
+  path of `decode_resume` does: the layers after the computed pieces were never written into those cells, so nothing
+  may attend to them) and goes on with the new batch. The check moved above `sched_reserve()`, whose assertion
+  `!pp_pend.active` it would otherwise have tripped. Decode steps between the pieces are not routed and keep running
+  as before. This is a wedge guard: with the first two hunks nothing reaches it. The server side of such an error
+  (`process_mtmd_chunk` failing) releases the slot without clearing its prompt; the slot's next request removes the
+  cells past its common prefix (`slot.mem.seq_rm(slot.id, p0, -1)`) before it decodes, so the memory is consistent
+  either way.
+
+Config A (no `LLAMA_PREFILL_SLICE_LAYERS`) is untouched: `pp_slice_layers` stays 0, `pp_pend.active` is never set,
+and the embeddings check sits inside the pieces-only branch of `process_ubatch`. No computed byte changes in config B
+either: a ubatch that runs whole computes the same graph in one call, and 0061's pieces are already cut only where the
+bytes do not depend on it.
+
+Status 2026-11-13: compiles (CPU-only `llama-server` on the laptop, `tools/patch-stack-check.sh` PASS with 51
+patches); not yet run on a GPU. Acceptance owed: window nc10's VB10 leg (config B, images) on the image that carries
+this patch, then its KB1, XK10, VL10 and ST10 legs.

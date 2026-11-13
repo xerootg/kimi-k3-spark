@@ -1,0 +1,81 @@
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index b524b30..61aadae 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -786,9 +786,16 @@ void llama_context::sched_reserve() {
+     {
+         const char * v = getenv("LLAMA_PREFILL_SLICE_LAYERS");
+         const int k = v ? atoi(v) : 0;
+-        pp_slice_layers = (k > 0 && pp_reserve_one_seq()) ? k : 0;
++        // patch 0077: only the target context computes prompts in pieces. The MTP draft context (patch 0070) is driven
++        // by common/speculative, which never calls llama_decode_resume: a 3 from its decode would be an error there.
++        const bool target = cparams.ctx_type == LLAMA_CONTEXT_TYPE_DEFAULT;
++        pp_slice_layers = (k > 0 && target && pp_reserve_one_seq()) ? k : 0;
+         if (k > 0 && pp_slice_layers == 0) {
+-            LLAMA_LOG_WARN("%s: LLAMA_PREFILL_SLICE_LAYERS needs LLAMA_PREFILL_ISOLATE=1 and --parallel > 1, ignored\n", __func__);
++            if (target) {
++                LLAMA_LOG_WARN("%s: LLAMA_PREFILL_SLICE_LAYERS needs LLAMA_PREFILL_ISOLATE=1 and --parallel > 1, ignored\n", __func__);
++            } else {
++                LLAMA_LOG_INFO("%s: LLAMA_PREFILL_SLICE_LAYERS applies to the target context only, ignored for this draft context\n", __func__);
++            }
+         }
+     }
+     GGML_ASSERT(!pp_pend.active && "sched_reserve with a prompt in pieces");
+@@ -1771,6 +1778,16 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
+         // short prompt ubatches cost about as much as a few decode steps: they run whole
+         static const uint32_t min_tokens = [] { const char * v = getenv("LLAMA_PREFILL_SLICE_MIN_TOKENS"); return (uint32_t) (v ? atoi(v) : 512); }();
+         pp_pend.cut_ok = ubatch.n_tokens >= min_tokens;
++        // patch 0077: a ubatch with embeddings as input runs whole. Its callers (the mtmd image helper for a decoded
++        // image, common/speculative for the MTP draft) call llama_decode once and take a 3 for an error, which left
++        // the prompt pending for good (GH200 window nc10). Only the server's main loop, which feeds tokens, resumes.
++        if (pp_pend.cut_ok && ubatch.embd != nullptr) {
++            pp_pend.cut_ok = false;
++            static const bool log_pieces = getenv("LLAMA_PREFILL_SLICE_LOG") != nullptr;
++            if (log_pieces) {
++                LLAMA_LOG_INFO("%s: prompt ubatch of %u embeddings runs whole: its caller does not resume\n", __func__, ubatch.n_tokens);
++            }
++        }
+         // patch 0069: and only a ubatch whose recurrent state stays in its own cell. One that copies its state from
+         // another cell (a sequence that shares a cell after a copy) reads that cell layer by layer, and the cell's
+         // owner may decode between two pieces: it runs whole.
+@@ -2543,6 +2560,26 @@ int llama_context::decode(const llama_batch_ext & batch_inp) {
+         llama_elastic_kv_pp_buffer_now(have);
+     }
+ 
++    // patch 0061: a prompt ubatch goes to the prompt scheduler and may be computed in pieces. Decode steps (not routed)
++    // run between the pieces; a new prompt ubatch while one is pending means the caller of the pending one walked away
++    // from it (it took the 3 for an error, see patch 0077) and will never call llama_decode_resume.
++    if (pp_pend.active && pp_route(batch_inp)) {
++        // patch 0077: drop the abandoned prompt instead of refusing every later prompt with -1 (the server was wedged
++        // until a restart, GH200 window nc10). Its cells are removed as for a failed ubatch (decode_resume): the layers
++        // after the computed pieces were never written, so nothing may attend to them.
++        const auto & ub = *pp_pend.ubatch;
++        const llama_seq_id seq = ub.seq_id[0][0];
++        llama_pos pos_min = std::numeric_limits<llama_pos>::max();
++        for (uint32_t i = 0; i < ub.n_tokens; ++i) {
++            pos_min = std::min(pos_min, ub.pos[i]);
++        }
++        LLAMA_LOG_WARN("%s: the prompt ubatch of seq_id = %d (%u tokens, %d pieces computed) was left in pieces by its caller, "
++                "dropping it: removing memory module entries for seq_id = %d, pos = [%d, +inf)\n",
++                __func__, seq, ub.n_tokens, pp_pend.part.n_calls, seq, pos_min);
++        pp_pend_reset();
++        memory->seq_rm(seq, pos_min, -1);
++    }
++
+     // patch 0062: a prompt graph grown past the floor goes back to its reserved size once no conversation is past it
+     if (!pp_pend.active && llama_elastic_kv_pp_trim_wanted()) {
+         LLAMA_LOG_INFO("%s: elastic KV floor: no conversation past the floor any more, the compute buffer goes back to its reserve\n", __func__);
+@@ -2551,13 +2588,6 @@ int llama_context::decode(const llama_batch_ext & batch_inp) {
+ 
+     sched_reserve();
+ 
+-    // patch 0061: a prompt ubatch goes to the prompt scheduler and may be computed in pieces
+-    if (pp_pend.active) {
+-        if (pp_route(batch_inp)) {
+-            LLAMA_LOG_ERROR("%s: a prompt is still being computed in pieces, call llama_decode_resume first\n", __func__);
+-            return -1;
+-        }
+-    }
+     struct pp_guard_t {
+         llama_context * c = nullptr;
+         ~pp_guard_t() { if (c) { c->pp_pend.part_mode = false; c->pp_swap(); } }
