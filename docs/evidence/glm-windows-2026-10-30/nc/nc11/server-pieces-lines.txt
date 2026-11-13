@@ -1,0 +1,11 @@
+legs/server-VL10.log:0.45.649.340 I process_ubatch: prompt ubatch of 1296 embeddings runs whole: its caller does not resume
+legs/server-VL10.log:0.48.148.877 I process_ubatch: prompt ubatch of 1551 embeddings runs whole: its caller does not resume
+legs/server-VL10.log:0.57.779.100 I process_ubatch: prompt ubatch of 4096 embeddings runs whole: its caller does not resume
+legs/server-VL10.log:1.00.055.413 I process_ubatch: prompt ubatch of 3835 embeddings runs whole: its caller does not resume
+legs/server-VL10.log:1.05.527.401 I process_ubatch: prompt ubatch of 1551 embeddings runs whole: its caller does not resume
+legs/server-VL10.log:1.26.488.513 I process_ubatch: prompt ubatch of 4096 embeddings runs whole: its caller does not resume
+legs/server-VL10.log:1.28.766.782 I process_ubatch: prompt ubatch of 3835 embeddings runs whole: its caller does not resume
+legs/server-VL10.log:1.46.857.690 I process_ubatch: prompt ubatch of 1296 embeddings runs whole: its caller does not resume
+legs/server-VL10.log:1.51.634.934 I process_ubatch: prompt ubatch of 1551 embeddings runs whole: its caller does not resume
+legs/server-VL10.log:2.06.489.230 I process_ubatch: prompt ubatch of 4096 embeddings runs whole: its caller does not resume
+legs/server-VL10.log:2.08.769.076 I process_ubatch: prompt ubatch of 3835 embeddings runs whole: its caller does not resume

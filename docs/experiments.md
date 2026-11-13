@@ -2816,6 +2816,60 @@ ten request specs, temperature 0. Evidence: [nc/nc10/](evidence/glm-windows-2026
   `bc32ecab82` three times through the Service, workbench-queue unsuspended, no test container, key file or test
   snapshot left, the laptop deadman disarmed.
 
+### 2026-11-13, GH200 window nc11 (09:07-10:08 UTC): window nc10 again on the image with patch 0077
+
+Haley's word (item 4 of her list of 2026-11-13): fix the image bug, build, rerun the full window. CI image
+`ghcr.io/xerootg/llamacpp-spark:547208dca250-g8eced6b` = `gfbb8831` plus patch 0077 (a ubatch with embeddings as
+input is never cut into pieces, only the target context sets up pieces, an abandoned pending prompt is dropped with
+one warning; kimi-k3-spark 8eced6b). Runner `nc/nc10/nc10.sh` with `FIX_TAG=547208dca250-g8eced6b`, legs in the
+order VB VA KV KB1 XK VL ST (images first), config B = `LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_PREFILL_SLICE_LAYERS=4
+LLAMA_PREFILL_SLICE_SHARE=0.05 LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5
+LLAMA_PREFILL_TURNS=1 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_PREFILL_SHORT_FIRST=1 LLAMA_PREFILL_SLICE_SAME_FREE=512` on the
+production flags, five 1M slots, `--mmproj`. glm53-gh200 at 0 and the workbench CronJob suspended for about an hour;
+public routes failed over to the Spark, Juno to spark/local (#159). Evidence:
+`docs/evidence/glm-windows-2026-10-30/nc/nc11/`. One trap found on the way: `legs/results.jsonl` on the GH200 is
+shared across windows, so the runner's in-line `visdigest` of VB10 said FAIL on nc10's rows (every error it listed
+was from 04:00 UTC); `results-nc11.jsonl` holds today's rows alone (the boundary is the last nc10 row) and every
+digest below is from it.
+
+- **Leg VB10 (config B, image requests): PASS.** 64 records. Each of the ten image specs gives the same md5 as
+  config A's reference of window nc10 (`55a49adc91`, `7b395cda9c`, `f899621f2f`, `efe65c9ae1`, `5e24cf9b57`,
+  `91e156b440`, `b2f7e636e8`, `de0964f8c8`, `930335f7e0`, `b9923e98eb`) in every run, alone and next to text
+  clients, Juno and 16k/64k prompts, three images at once; 19 of 19 text answers in the leg gold (Juno's p0 at 256,
+  512 and 1024 tokens, 16k and 64k). Alone the images take what they took on config A (loc 2.4-5.0 s, read
+  3.8-7.5 s, full 7.9-8.3 s); next to other clients 4.7-31.8 s. No request failed, no key in the server log.
+- **Leg VA10 (config A on the new image): PASS**, the same ten md5s, 19 of 19 text golds: 0077 changes nothing for
+  production.
+- **Leg VL10 (config B with `LLAMA_PREFILL_SLICE_LOG=1`): PASS**, same md5s, 6 of 6 text golds. The server log
+  shows the fix at work: eleven lines "prompt ubatch of 1296 (or 1551) embeddings runs whole: its caller does not
+  resume", one per image chunk. No leg's log has the 0077 warning for an abandoned prompt.
+- **Leg KV10 (detector gate, text): PASS.** 74 of 74 answers gold, 17 distinct long ubatches and none with more
+  than one state hash, 96 prompt ubatches computed in pieces, 5304 ubatches while a recurrent cell was frozen and
+  none whose range contained it, 0 guard refusals.
+- **Leg KB110 (acceptance, the full sequence): every md5 gold** (p0-p4, 16k, 64k, the 100k depth request
+  `9c80718286`, quicksort `bc32ecab82` at 45.8-54.1 tok/s). Aggregate tok/s, rounds 1 and 2: two clients 64.8 /
+  66.7, three 71.7 / 73.0, four 74.9 / 75.4, five 71.9 / 72.3, p0 + 16k 21.5, four short + 16k 42.9 / 43.0, four
+  short + 64k 18.8, two short + 16k + 64k 11.4, three short + 100k 10.7. Alone: p0 48.7-56.3 tok/s, prompts 16k
+  1641-1658, 64k 1489, 100k 1433-1435 tok/s. In line with nc10's partial KB110 (three clients 72.3 / 73.6).
+- **Leg XK10 (client classes, share and order): every md5 gold** (53 records), the picture of nc7. Juno alone 52.3
+  tok/s (256 tokens), 55.6 (512), 54.8 (1024). junolong: Juno 92 %, the 64k low prompt's first token after 52.7 s.
+  prefill: her first token after 2.8 s, 99 %. junofirst with 256 tokens: 101 %, the four low clients' first tokens
+  3.3-4.9 s after sending; with 1024 tokens: 88 %, first tokens after 2.9, 11.5, 19.9 and 20.8 s. mixed twice at
+  256: Juno 93-94 %, first token after 1.0 s; the short low clients complete after 28.0-28.4 s with one pause of
+  4.8-4.9 s; the 64k low prompt's first token after 60.3-60.5 s. mixed twice at 1024: Juno 85-88 %, the short low
+  clients complete after 45.0-46.6 s (pause 5.4-5.5 s), the 64k prompt's first token after 76.3-77.5 s.
+  shortbehind: the short prompt's first token after 2.4 s. samelong: the answer complete after 17.6 s, largest gap
+  0.27 s, the 64k prompt's first token after 51.8 s. twolong: first tokens after 62.1 / 24.3 / 1.8 s.
+- **Leg ST10 (staggered pairs): 22 of 22 pairs equal to solo** (p1 then p0 and p0 then p1 at gaps of 1 s, 0.3 s
+  and 0.01 s; p2 then p0 at 2 s; 16k then p0 at 0.5 and 2 s; p0 then 16k at 0.3 s). The last item of the leg (16k
+  then p1 at 0.2 s) was not started: the runner's one-hour deadline had passed.
+- **Verdict.** Haley's condition for #177 ("merge if bytes equal") holds: with 0077 the image requests of the
+  poster pipeline are byte-identical under config B to production, every text gold holds in every leg, and the
+  server no longer wedges. #177 moves to image `547208dca250-g8eced6b` with config B and merges.
+- **Window closed 10:08 UTC.** glm53-gh200 back at one replica on `547208dca250-gfbb8831`, quicksort gold
+  `bc32ecab82` three times through the Service, workbench-queue unsuspended, no test container, key file or test
+  snapshot left, the laptop deadman disarmed. The Spark was not touched.
+
 **2026-11-11, Spark window nc-s7 (00:03-01:22 UTC): today's production flags plus only `LLAMA_KPOOL_OWN_SEQS=1` on the
 binaries of image `547208dca250-gfbb8831` (config A': patches 0071 and 0076) keep every byte; two and three clients are
 up to 1 % faster, one client is 0.5-0.9 % slower on this build with or without the switch.** Written 2026-11-13 from

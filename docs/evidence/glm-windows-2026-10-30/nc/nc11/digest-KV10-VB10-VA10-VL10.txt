@@ -1,0 +1,41 @@
+requests with gold md5: 74 of 74
+state hashes: 17 distinct long ubatches (end position, length), 0 seen once only, 0 with MORE THAN ONE hash
+prompt ubatches done in pieces: 96, run whole (state not in place): 0
+ubatches while a cell was frozen: 5304; range contains the frozen cell: 0; guard refusals: 0
+  frozen cell 3:   2970 ubatches above it with 1 sequence(s)
+  frozen cell 3:    116 ubatches below it with 1 sequence(s)
+  frozen cell 3:    196 ubatches below it with 2 sequence(s)
+  frozen cell 3:   2022 ubatches below it with 3 sequence(s)
+V1-DIGEST KV10 PASS
+== VB10: 64 records
+  full-2652 prompt  8010 tokens, answer   36 tokens (stop), alone 1x {'55a49adc91': 1} wall 7.9 s; next to others 1x {'55a49adc91': 1} wall 12.8 s: same
+  full-eaa1 prompt  8010 tokens, answer   50 tokens (stop), alone 3x {'7b395cda9c': 3} wall 8.2/8.2/8.3 s; next to others 3x {'7b395cda9c': 3} wall 20.2/26.6/24.4 s: same
+  loc-2652  prompt  1375 tokens, answer   37 tokens (stop), alone 4x {'f899621f2f': 4} wall 2.6/2.5/2.7/2.5 s; next to others 1x {'f899621f2f': 1} wall 4.7 s: same
+  loc-7d73  prompt  1375 tokens, answer   96 tokens (stop), alone 3x {'efe65c9ae1': 3} wall 3.8/3.5/4.0 s; next to others 1x {'efe65c9ae1': 1} wall 27.9 s: same
+  loc-eaa1  prompt  1375 tokens, answer   33 tokens (stop), alone 3x {'5e24cf9b57': 3} wall 2.4/2.4/2.5 s; next to others 1x {'5e24cf9b57': 1} wall 18.7 s: same
+  loc-fb48  prompt  1375 tokens, answer  151 tokens (stop), alone 3x {'91e156b440': 3} wall 4.8/4.5/5.0 s; next to others 2x {'91e156b440': 2} wall 10.6/15.0 s: same
+  read-2652 prompt  1626 tokens, answer  102 tokens (stop), alone 3x {'b2f7e636e8': 3} wall 3.9/3.8/4.1 s; next to others 2x {'b2f7e636e8': 2} wall 27.5/25.6 s: same
+  read-7d73 prompt  1617 tokens, answer  270 tokens (stop), alone 4x {'de0964f8c8': 4} wall 7.4/7.0/7.5/7.0 s; next to others 2x {'de0964f8c8': 2} wall 17.2/31.8 s: same
+  read-eaa1 prompt  1002 tokens, answer  139 tokens (stop), alone 3x {'930335f7e0': 3} wall 4.2/4.1/4.3 s; next to others 1x {'930335f7e0': 1} wall 14.7 s: same
+  read-fb48 prompt  1661 tokens, answer  194 tokens (stop), alone 3x {'b9923e98eb': 3} wall 5.5/5.5/5.6 s; next to others 1x {'b9923e98eb': 1} wall 11.4 s: same
+  text requests with their gold md5: 19 of 19
+VIS-DIGEST PASS
+== VA10: 64 records
+  full-2652 prompt  8010 tokens, answer   36 tokens (stop), alone 1x {'55a49adc91': 1} wall 7.9 s; next to others 1x {'55a49adc91': 1} wall 11.6 s: same
+  full-eaa1 prompt  8010 tokens, answer   50 tokens (stop), alone 3x {'7b395cda9c': 3} wall 8.2/8.2/8.3 s; next to others 3x {'7b395cda9c': 3} wall 19.6/49.7/9.8 s: same
+  loc-2652  prompt  1375 tokens, answer   37 tokens (stop), alone 4x {'f899621f2f': 4} wall 2.6/2.5/2.7/2.5 s; next to others 1x {'f899621f2f': 1} wall 4.1 s: same
+  loc-7d73  prompt  1375 tokens, answer   96 tokens (stop), alone 3x {'efe65c9ae1': 3} wall 3.7/3.5/4.0 s; next to others 1x {'efe65c9ae1': 1} wall 28.1 s: same
+  loc-eaa1  prompt  1375 tokens, answer   33 tokens (stop), alone 3x {'5e24cf9b57': 3} wall 2.4/2.4/2.5 s; next to others 1x {'5e24cf9b57': 1} wall 18.6 s: same
+  loc-fb48  prompt  1375 tokens, answer  151 tokens (stop), alone 3x {'91e156b440': 3} wall 4.8/4.5/4.9 s; next to others 2x {'91e156b440': 2} wall 62.3/14.4 s: same
+  read-2652 prompt  1626 tokens, answer  102 tokens (stop), alone 3x {'b2f7e636e8': 3} wall 3.9/3.8/4.0 s; next to others 2x {'b2f7e636e8': 2} wall 27.2/31.9 s: same
+  read-7d73 prompt  1617 tokens, answer  270 tokens (stop), alone 4x {'de0964f8c8': 4} wall 7.4/7.0/7.4/7.0 s; next to others 2x {'de0964f8c8': 2} wall 17.2/63.9 s: same
+  read-eaa1 prompt  1002 tokens, answer  139 tokens (stop), alone 3x {'930335f7e0': 3} wall 4.2/4.1/4.2 s; next to others 1x {'930335f7e0': 1} wall 14.7 s: same
+  read-fb48 prompt  1661 tokens, answer  194 tokens (stop), alone 3x {'b9923e98eb': 3} wall 5.5/5.5/5.6 s; next to others 1x {'b9923e98eb': 1} wall 11.2 s: same
+  text requests with their gold md5: 19 of 19
+VIS-DIGEST PASS
+== VL10: 14 records
+  full-eaa1 prompt  8010 tokens, answer   50 tokens (stop), alone 1x {'7b395cda9c': 1} wall 8.3 s; next to others 2x {'7b395cda9c': 2} wall 20.3/23.9 s: same
+  loc-2652  prompt  1375 tokens, answer   37 tokens (stop), alone 1x {'f899621f2f': 1} wall 2.6 s; next to others 1x {'f899621f2f': 1} wall 3.7 s: same
+  read-7d73 prompt  1617 tokens, answer  270 tokens (stop), alone 1x {'de0964f8c8': 1} wall 7.5 s; next to others 2x {'de0964f8c8': 2} wall 19.0/27.7 s: same
+  text requests with their gold md5: 6 of 6
+VIS-DIGEST PASS

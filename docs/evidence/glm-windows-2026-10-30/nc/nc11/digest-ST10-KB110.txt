@@ -1,0 +1,62 @@
+== ST10: 32 records; kinds ['stag', 'stag-solo']
+keys: ['body', 'decode_tps', 'error', 'kind', 'md5', 'spec', 'tag']
+pairs equal to solo: 0 of 22 | solo specs [('L16384', None), ('p0', None), ('p1', None), ('p2', None)]
+  DIFF ('stag', (None, None), ['19ea697dcf', 'ed94761011'], None, 1.0)
+  DIFF ('stag', (None, None), ['19ea697dcf', 'ed94761011'], None, 1.0)
+  DIFF ('stag', (None, None), ['19ea697dcf', 'ed94761011'], None, 1.0)
+  DIFF ('stag', (None, None), ['19ea697dcf', 'ed94761011'], None, 0.01)
+  DIFF ('stag', (None, None), ['19ea697dcf', 'ed94761011'], None, 0.01)
+  DIFF ('stag', (None, None), ['19ea697dcf', 'ed94761011'], None, 0.01)
+  DIFF ('stag', (None, None), ['19ea697dcf', 'ed94761011'], None, 0.3)
+  DIFF ('stag', (None, None), ['19ea697dcf', 'ed94761011'], None, 0.3)
+  DIFF ('stag', (None, None), ['19ea697dcf', 'ed94761011'], None, 0.3)
+  DIFF ('stag', (None, None), ['ed94761011', '19ea697dcf'], None, 1.0)
+  DIFF ('stag', (None, None), ['ed94761011', '19ea697dcf'], None, 1.0)
+  DIFF ('stag', (None, None), ['ed94761011', '19ea697dcf'], None, 1.0)
+  sample pair row: {'kind': 'stag', 'tag': 'ST10', 'a': 'p1', 'b': 'p0', 'delay': '1.0', 'rep': '0', 'ok': 'True', 'md5': "['19ea697dcf', 'ed94761011']", 'ref': "['19ea697dcf', 'ed94761011']", 'decode_tps': '[35.2, 40.62]', 'body': '[]'}
+== KB110: 45 records; kinds ['depth', 'gold', 'multi', 'solo']
+  gold {'md5': 'bc32ecab82', 'decode_tps': '45.84', 'wall_s': '2.98'}
+  gold {'md5': 'bc32ecab82', 'decode_tps': '50.77', 'wall_s': '2.7'}
+  solo p0 tps=50.61 md5=8e312d7bdd prefill=74.46
+  solo p1 tps=49.41 md5=74fb633e8e prefill=81.5
+  solo p2 tps=48.87 md5=f8531a5f07 prefill=79.73
+  solo p3 tps=50.96 md5=4d6338450b prefill=79.28
+  solo p4 tps=48.56 md5=e7851c4b56 prefill=88.16
+  solo L16384 tps=44.57 md5=145c14aa8b prefill=1640.69
+  multi n=2 round=warm agg=58.53 specs=p0,p1 md5=8e312d7bdd,74fb633e8e
+  multi n=2 round=1 agg=64.79 specs=p0,p1 md5=8e312d7bdd,74fb633e8e
+  multi n=2 round=2 agg=66.7 specs=p0,p1 md5=8e312d7bdd,74fb633e8e
+  multi n=3 round=warm agg=68.31 specs=p0,p1,p2 md5=8e312d7bdd,74fb633e8e,f8531a5f07
+  multi n=3 round=1 agg=71.74 specs=p0,p1,p2 md5=8e312d7bdd,74fb633e8e,f8531a5f07
+  multi n=3 round=2 agg=72.96 specs=p0,p1,p2 md5=8e312d7bdd,74fb633e8e,f8531a5f07
+  multi n=4 round=warm agg=72.79 specs=p0,p1,p2,p3 md5=8e312d7bdd,74fb633e8e,f8531a5f07,4d6338450b
+  multi n=4 round=1 agg=74.89 specs=p0,p1,p2,p3 md5=8e312d7bdd,74fb633e8e,f8531a5f07,4d6338450b
+  multi n=4 round=2 agg=75.42 specs=p0,p1,p2,p3 md5=8e312d7bdd,74fb633e8e,f8531a5f07,4d6338450b
+  multi n=5 round=warm agg=70.31 specs=p0,p1,p2,p3,p4 md5=8e312d7bdd,74fb633e8e,f8531a5f07,4d6338450b,e7851c4b56
+  multi n=5 round=1 agg=71.88 specs=p0,p1,p2,p3,p4 md5=8e312d7bdd,74fb633e8e,f8531a5f07,4d6338450b,e7851c4b56
+  multi n=5 round=2 agg=72.32 specs=p0,p1,p2,p3,p4 md5=8e312d7bdd,74fb633e8e,f8531a5f07,4d6338450b,e7851c4b56
+  multi n=2 round=warm agg=20.96 specs=p0,L16384 md5=8e312d7bdd,145c14aa8b
+  multi n=2 round=1 agg=21.48 specs=p0,L16384 md5=8e312d7bdd,145c14aa8b
+  multi n=5 round=warm agg=42.08 specs=p1,p2,p3,p4,L16384 md5=74fb633e8e,f8531a5f07,4d6338450b,e7851c4b56,145c14aa8b
+  multi n=5 round=1 agg=42.9 specs=p1,p2,p3,p4,L16384 md5=74fb633e8e,f8531a5f07,4d6338450b,e7851c4b56,145c14aa8b
+  multi n=5 round=2 agg=43.04 specs=p1,p2,p3,p4,L16384 md5=74fb633e8e,f8531a5f07,4d6338450b,e7851c4b56,145c14aa8b
+  multi n=5 round=warm agg=18.74 specs=p0,p1,p2,p3,L65536 md5=8e312d7bdd,74fb633e8e,f8531a5f07,4d6338450b,8acec1b966
+  multi n=5 round=1 agg=18.83 specs=p0,p1,p2,p3,L65536 md5=8e312d7bdd,74fb633e8e,f8531a5f07,4d6338450b,8acec1b966
+  multi n=4 round=warm agg=11.33 specs=p1,p2,L16384,L65536 md5=74fb633e8e,f8531a5f07,145c14aa8b,8acec1b966
+  multi n=4 round=1 agg=11.42 specs=p1,p2,L16384,L65536 md5=74fb633e8e,f8531a5f07,145c14aa8b,8acec1b966
+  solo p0 tps=48.72 md5=8e312d7bdd prefill=61.56
+  solo L16384 tps=55.35 md5=145c14aa8b prefill=1658.18
+  solo L65536 tps=53.96 md5=8acec1b966 prefill=1488.86
+  solo p0 tps=50.95 md5=8e312d7bdd prefill=65.5
+  solo p0 tps=53.21 md5=8e312d7bdd prefill=62.18
+  solo p0 tps=55.06 md5=8e312d7bdd prefill=76.45
+  solo p0 tps=56.34 md5=8e312d7bdd prefill=79.67
+  solo L16384 tps=51.8 md5=145c14aa8b prefill=47.9
+  solo L16384 tps=55.43 md5=145c14aa8b prefill=49.42
+  solo L65536 tps=52.67 md5=8acec1b966 prefill=43.49
+  solo L65536 tps=56.35 md5=8acec1b966 prefill=44.73
+  depth {'target': '100000', 'prompt_n': '99676', 'prefill_tps': '1432.63', 'prefill_s': '69.58', 'decode_n': '64', 'decode_tps': '54.43', 'md5': '9c80718286'}
+  solo L100000 tps=55.5 md5=145c14aa8b prefill=1434.58
+  multi n=4 round=warm agg=10.51 specs=p0,p1,p2,L100000 md5=8e312d7bdd,74fb633e8e,f8531a5f07,145c14aa8b
+  multi n=4 round=1 agg=10.67 specs=p0,p1,p2,L100000 md5=8e312d7bdd,74fb633e8e,f8531a5f07,145c14aa8b
+  gold {'md5': 'bc32ecab82', 'decode_tps': '54.11', 'wall_s': '2.56'}
