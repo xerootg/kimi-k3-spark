@@ -412,6 +412,11 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   time; reference md5s are in the ledger. Next for #177: fix both halves (image chunks never in pieces; an
   abandoned pending prompt is cleared), build an image, rerun window nc10 in full. #178 (Spark floor and burst) is
   parked as a draft at Haley's word.
+- **2026-11-13: the Spark's pure-gains step (config A': production flags plus `LLAMA_KPOOL_OWN_SEQS=1` on
+  `gfbb8831`) measured in window nc-s7 and drafted as argo-things #180, not rolled out.** Bytes equal; two and three
+  clients 0.8-1.2 % faster; one client 0.5-0.9 % slower on the `gfbb8831` build with the switch and without it (not
+  0076, which allocates once; not bisected). Haley decides. A bisect needs Spark builds of the stack at 0067, 0071
+  and 0076.
 
 ## Cluster layout for this work
 

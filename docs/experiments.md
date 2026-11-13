@@ -2815,3 +2815,55 @@ ten request specs, temperature 0. Evidence: [nc/nc10/](evidence/glm-windows-2026
 - **Window closed 04:18 UTC.** glm53-gh200 back at one replica on `547208dca250-gfbb8831`, quicksort gold
   `bc32ecab82` three times through the Service, workbench-queue unsuspended, no test container, key file or test
   snapshot left, the laptop deadman disarmed.
+
+**2026-11-11, Spark window nc-s7 (00:03-01:22 UTC): today's production flags plus only `LLAMA_KPOOL_OWN_SEQS=1` on the
+binaries of image `547208dca250-gfbb8831` (config A': patches 0071 and 0076) keep every byte; two and three clients are
+up to 1 % faster, one client is 0.5-0.9 % slower on this build with or without the switch.** Written 2026-11-13 from
+the window's records (the session that ran it hit its limit after restoring production). Evidence:
+`docs/evidence/glm-windows-2026-10-30/nc/spark/nc-s7/` (`spark-nc10.sh`, `spark-nc11.sh`, `nc10a.log`, `nc11a.log`,
+`results-nc-s7.jsonl`, `digest-TA-QC-nc-s7.txt`, `digest-WQ0-WT0.txt`).
+- **Setup.** glm53-spark at 0, bare servers on the node under `window.lock`, production's manifest env and args
+  (`--ctx-size 1024000 --parallel 5`, column split from three clients, batch-invariant decode, `LLAMA_PREFILL_ISOLATE`,
+  elastic KV with refuse; the class legs add the class file, `LLAMA_SLOT_RESERVE=1` and the hold rule). A' = those plus
+  `LLAMA_KPOOL_OWN_SEQS=1` on the binaries of `gfbb8831` (`~/nc/ci-fbb8831`); the control is the binaries of today's
+  production image `g08d176f` (`~/nc/ci-08d176f`, copied from the image, `libllama-server-impl.so` c1f5eee9c5d8cefb) with
+  today's flags. No prompt pieces, no floor, no burst in any leg.
+- **Legs TA0, TA1 (A', two server processes) and QC0 (the control between them): every byte equal.** 24 records each:
+  p0-p4 alone gold (`ce2fc95752`, `bb64203d71`, `2d592efcb6`, `1aab74269d`, `0c3f28294b`), the 128-token quicksort
+  `ee079496a4`, L16384 `145c14aa8b`; two to five clients at two rounds, four short clients with a 16k prompt and one
+  short client with a 16k prompt: "multi rounds differing from solo/gold: 0" in all three legs.
+  | tok/s | QC0 (control, g08d176f) | TA0 (A') | TA1 (A') |
+  |---|---|---|---|
+  | p0 / p1 / p2 / p3 / p4 alone, 256 tokens | 15.62 / 16.05 / 15.54 / 14.68 / 15.43 | 15.54 / 15.97 / 15.43 / 14.60 / 15.38 | 15.49 / 15.92 / 15.41 / 14.57 / 15.36 |
+  | 16k prompt read / its decode | 347.2 / 13.71 | 334.6 / 13.86 | 348.1 / 13.84 |
+  | two / three / four / five clients, second round, aggregate | 21.16 / 24.06 / 25.94 / 24.66 | 21.32 / 24.32 / 25.94 / 24.67 | 21.39 / 24.35 / 25.94 / 24.71 |
+  | four short clients + a 16k prompt (round 1) | 12.39 | 12.44 | 12.46 |
+  | one short client + a 16k prompt (round 1) | 5.66 | 5.62 | 5.69 |
+  Two and three clients are 0.8-1.2 % up, four and five level, the mixes within 0.7 %. One client is 0.3-0.8 % down
+  in both A' processes.
+- **Legs QC1, TA2, TN1, QC2 (fresh server each, the five short prompts alone twice in a row): the one-client gap is
+  the build, not the switch.** Means of the five prompts, first pass / second pass: control 15.44 / 15.66 (QC1) and
+  15.43 / 15.60 (QC2); A' 15.30 / 15.55 (TA2); the `gfbb8831` binaries with today's flags and WITHOUT
+  `LLAMA_KPOOL_OWN_SEQS` 15.30 / 15.52 (TN1). The control's spread from process to process is 0.0-0.4 %; the new build
+  is 0.5-0.9 % below it with the variable and without. Every answer gold. Patch 0076 allocates the marks once instead of
+  once per step, so by design it is not the cause; nothing else in 0069-0075 runs without its switch. The gap is the
+  size of a code-layout difference between two CI builds and was not bisected (the dev trees are gone; a bisect needs
+  builds of the stack at 0067, 0071 and 0076 on the Spark).
+- **Legs WQ0 (control) and WT0 (A') with client classes, the hold rule and one reserved slot: equal, every answer
+  gold, no key in either server log.** Juno alone (six warm answers): 15.64, 16.85-16.90 against 15.47, 16.65-16.71
+  tok/s (1.2 % down, the one-client gap); the closing three 15.51 / 16.00 / 16.31 against 15.48 / 15.94 / 16.22.
+  A 16k prompt arriving four seconds into her answer: her decode 16.90 against 16.65, the prompt's first token 59.1
+  against 59.5 s. Three generating clients, a 16k prompt and then Juno: her first token 3.84 against 3.95 s, her
+  decode 6.39 against 6.40, the three clients 5.42-5.57 against 5.42-5.56, all three done at 47.75 against 47.76 s,
+  the 16k prompt's first token 88.6 against 88.4 s. Four clients arriving one second into her answer: her decode
+  15.81 against 16.02, their first tokens 16.1-17.8 against 15.9-17.6 s (after her answer, the hold rule), all done
+  at 56.7 against 56.4 s.
+- **Verdict.** Bytes: accepted (two processes, one to five clients, the 16k mixes, the class scenarios). Speed: not
+  a pure gain on the Spark. With slots of 200k the pool list is short, so 0071 has little to remove here (two and
+  three clients +0.8-1.2 %, the mixes +0.4-0.6 %), and the build itself costs one client 0.5-0.9 %. Compare the
+  GH200 (window nc8), where the same step removed a 40 % slowdown of prompt reads next to held conversations. The
+  Spark step is drafted as argo-things #180 for Haley to decide; its real value is a later one: the same image on both
+  boxes, and 1M slots (#178) without 20 MiB of zeroing per step.
+- **Window closed 01:22 UTC.** glm53-spark back at one replica on `547208dca250-g08d176f`, quicksort gold
+  `ee079496a4` three times through the kimi-k3 Service (17.05-17.07 tok/s), no test server, key file or runner left;
+  the RELEASE was posted in the coordination file at 07:40 UTC 2026-11-13 by the coordinator after the session's limit.
