@@ -1,0 +1,91 @@
+== VB10: 64 records
+  ERROR solo hef loc-2652 500 {"error":{"code":500,"message":"failed to process mtmd chunk","type":"server_error"}}
+  ERROR solo hef loc-7d73 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef loc-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef loc-fb48 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef read-2652 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef read-7d73 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef read-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef read-fb48 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef full-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef loc-2652 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef loc-7d73 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef loc-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef loc-fb48 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef read-2652 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef read-7d73 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef read-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef read-fb48 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo hef full-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR g3-loc cc p3 500 
+  ERROR g3-loc wb0 p1 500 
+  TEXT-DIFF g3-loc wb1 p2 n=256 got d41d8cd98f gold f8531a5f07
+  ERROR g3-loc hef loc-2652 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR g3-read cc p3 500 
+  ERROR g3-read wb0 p1 500 
+  TEXT-DIFF g3-read wb1 p2 n=256 got d41d8cd98f gold f8531a5f07
+  ERROR g3-read hef read-7d73 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR v-juno hef full-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  TEXT-DIFF v-juno juno p0 n=512 got d41d8cd98f gold 22da3a7294
+  ERROR v-juno2 hef read-fb48 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  TEXT-DIFF v-juno2 juno p0 n=256 got d41d8cd98f gold 8e312d7bdd
+  TEXT-DIFF juno-v juno p0 n=1024 got d41d8cd98f gold 168f9c9c04
+  ERROR juno-v hef loc-7d73 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR juno-v cc read-2652 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR juno-v hef loc-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  TEXT-DIFF long-v wb0 L65536 n=128 got d41d8cd98f gold 8acec1b966
+  ERROR long-v hef loc-fb48 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR long-v cc read-7d73 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR long-v hef full-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  TEXT-DIFF long-v wb1 p1 n=256 got d41d8cd98f gold 74fb633e8e
+  ERROR v-long hef full-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  TEXT-DIFF v-long wb0 L16384 n=128 got d41d8cd98f gold 145c14aa8b
+  TEXT-DIFF v-long wb1 p2 n=256 got d41d8cd98f gold f8531a5f07
+  TEXT-DIFF v-long juno p0 n=256 got d41d8cd98f gold 8e312d7bdd
+  TEXT-DIFF mixed wb1 p2 n=256 got d41d8cd98f gold f8531a5f07
+  ERROR mixed wb0 p1 500 
+  TEXT-DIFF mixed cc L16384 n=128 got d41d8cd98f gold 145c14aa8b
+  ERROR mixed hef read-2652 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  TEXT-DIFF mixed juno p0 n=512 got d41d8cd98f gold 22da3a7294
+  ERROR solo2 hef loc-2652 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo2 hef loc-7d73 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo2 hef loc-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo2 hef loc-fb48 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo2 hef read-2652 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo2 hef read-7d73 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo2 hef read-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo2 hef read-fb48 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo2 hef full-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR v3 cc read-eaa1 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR v3 hef full-2652 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR v3 wb0 loc-fb48 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo3 hef loc-2652 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo3 hef read-7d73 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  ERROR solo3 hef full-2652 500 {"error":{"code":500,"message":"Invalid input batch.","type":"server_error"}}
+  TEXT-DIFF solo3 juno p0 n=256 got d41d8cd98f gold 8e312d7bdd
+  text requests with their gold md5: 0 of 14
+  NOTHING-MEASURED
+== VA10: 64 records
+  full-2652 prompt  8010 tokens, answer   36 tokens (stop), alone 1x {'55a49adc91': 1} wall 7.9 s; next to others 1x {'55a49adc91': 1} wall 11.6 s: same
+  full-eaa1 prompt  8010 tokens, answer   50 tokens (stop), alone 3x {'7b395cda9c': 3} wall 8.3/8.2/8.3 s; next to others 3x {'7b395cda9c': 3} wall 19.4/49.6/9.8 s: same
+  loc-2652  prompt  1375 tokens, answer   37 tokens (stop), alone 4x {'f899621f2f': 4} wall 2.8/2.5/2.7/2.5 s; next to others 1x {'f899621f2f': 1} wall 4.1 s: same
+  loc-7d73  prompt  1375 tokens, answer   96 tokens (stop), alone 3x {'efe65c9ae1': 3} wall 4.2/3.7/4.0 s; next to others 1x {'efe65c9ae1': 1} wall 27.8 s: same
+  loc-eaa1  prompt  1375 tokens, answer   33 tokens (stop), alone 3x {'5e24cf9b57': 3} wall 2.6/2.4/2.5 s; next to others 1x {'5e24cf9b57': 1} wall 18.4 s: same
+  loc-fb48  prompt  1375 tokens, answer  151 tokens (stop), alone 3x {'91e156b440': 3} wall 5.3/4.6/4.9 s; next to others 2x {'91e156b440': 2} wall 62.1/14.4 s: same
+  read-2652 prompt  1626 tokens, answer  102 tokens (stop), alone 3x {'b2f7e636e8': 3} wall 4.3/3.8/4.0 s; next to others 2x {'b2f7e636e8': 2} wall 27.0/31.5 s: same
+  read-7d73 prompt  1617 tokens, answer  270 tokens (stop), alone 4x {'de0964f8c8': 4} wall 8.0/7.1/7.4/7.0 s; next to others 2x {'de0964f8c8': 2} wall 17.1/63.6 s: same
+  read-eaa1 prompt  1002 tokens, answer  139 tokens (stop), alone 3x {'930335f7e0': 3} wall 4.4/4.1/4.2 s; next to others 1x {'930335f7e0': 1} wall 14.7 s: same
+  read-fb48 prompt  1661 tokens, answer  194 tokens (stop), alone 3x {'b9923e98eb': 3} wall 5.8/5.5/5.6 s; next to others 1x {'b9923e98eb': 1} wall 11.1 s: same
+  text requests with their gold md5: 19 of 19
+== across legs VB10 VA10
+  full-2652 VB10=- VA10=55a49adc91 MISSING in VB10 DIFFERENT
+  full-eaa1 VB10=- VA10=7b395cda9c MISSING in VB10 DIFFERENT
+  loc-2652  VB10=- VA10=f899621f2f MISSING in VB10 DIFFERENT
+  loc-7d73  VB10=- VA10=efe65c9ae1 MISSING in VB10 DIFFERENT
+  loc-eaa1  VB10=- VA10=5e24cf9b57 MISSING in VB10 DIFFERENT
+  loc-fb48  VB10=- VA10=91e156b440 MISSING in VB10 DIFFERENT
+  read-2652 VB10=- VA10=b2f7e636e8 MISSING in VB10 DIFFERENT
+  read-7d73 VB10=- VA10=de0964f8c8 MISSING in VB10 DIFFERENT
+  read-eaa1 VB10=- VA10=930335f7e0 MISSING in VB10 DIFFERENT
+  read-fb48 VB10=- VA10=b9923e98eb MISSING in VB10 DIFFERENT
+VIS-DIGEST FAIL (75)

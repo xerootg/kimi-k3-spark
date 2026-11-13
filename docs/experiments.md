@@ -2746,3 +2746,72 @@ sha256:87da5287…, `g68d4166` sha256:b9ce18b4…. Evidence:
 - **Window closed 00:03 UTC.** glm53-gh200 back at one replica on the unchanged image `547208dca250-g68d4166`,
   quicksort gold `bc32ecab82` three times through the Service (42.4 / 47.0 / 49.8 tok/s), workbench-queue
   unsuspended, the laptop deadman disarmed at 00:01:09.
+
+**2026-11-13, GH200 window nc10 (03:56-04:18 UTC, stopped early): image requests are byte-stable on production
+(config A, image `547208dca250-gfbb8831`), and the prompt pieces of #177 (config B) break every image request and
+leave the server unable to answer anything until it restarts. #177 is not merged.** The question, asked before
+merging #177: the poster pipeline (hef-posters) sends images through `--mmproj /models/mmproj-BF16.gguf`, and no
+window had sent an image through a server that computes prompts in pieces. Config A = the production manifest's env
+(hold rule on, `LLAMA_KPOOL_OWN_SEQS=1`, no `LLAMA_PREFILL_SLICE_*`). Config B = #177's env on the same image:
+`LLAMA_PRIORITY_HOLD_PROMPTS=0 LLAMA_PREFILL_SLICE_LAYERS=4 LLAMA_PREFILL_SLICE_SHARE=0.05
+LLAMA_PREFILL_SLICE_DECODE_SHARE=1 LLAMA_PREFILL_SLICE_SHARE_SAME=0.5 LLAMA_PREFILL_TURNS=1 LLAMA_PREFILL_SHORT_FIRST=1
+LLAMA_PREFILL_SLICE_SAME_FREE=512 LLAMA_KPOOL_OWN_SEQS=1`. Docker legs on port 18104 under `window.lock`, both with
+the projector loaded, glm53-gh200 at 0, glm53-spark serving throughout, CronJob `re-lab/workbench-queue` suspended.
+Twelve test images (three crops of four posters; md5s in `vis-md5.txt`, the images themselves are not in the repo),
+ten request specs, temperature 0. Evidence: [nc/nc10/](evidence/glm-windows-2026-10-30/nc/nc10/)
+(`results-nc10.jsonl`, `digest-KV10.txt`, `digest-VB10-VA10.txt`, `server-VB10-first-failure.txt`, the runner
+`nc10.sh` with its log `nc10a.log`, the client `vis10.py`, `visgen.py`, `visdigest.py`).
+
+- **Leg KV10 (config B, text only, the detector gate): pass.** 37 of 37 answers with their gold md5, 96 prompt
+  ubatches finished in pieces, 5310 ubatches computed while a cell was frozen and none of them touched the frozen
+  cell, 0 guard refusals. Text behaviour of config B on `gfbb8831` is what windows nc5 and nc7 measured on the
+  older images.
+- **Leg VB10 (config B, images): fail.** The first image request ends in a 500 "failed to process mtmd chunk";
+  every later request, image or text, ends in a 500 "Invalid input batch." or an empty answer (0 of 14 text golds,
+  0 of 50 image requests). The server log of the first failure:
+
+  ```
+  decoding image batch 1/1, n_tokens_batch = 1296
+  failed to decode image
+  failed to decode mtmd chunk, idx = 76, res = 3
+  failed to process mtmd chunk, res = -1
+  decode: a prompt is still being computed in pieces, call llama_decode_resume first
+  srv decode: Invalid input batch. off = 0, n_batch = 4096, ret = -1
+  ```
+
+  Cause (patch 0061): `llama_decode` returns 3 when it has computed the first piece of a prompt ubatch and the
+  caller has to finish it with `llama_decode_resume`. The server's main loop does that. The image path does not: the
+  mtmd helper decodes the image's embeddings (one sequence, 1296 positions, which is at least
+  `LLAMA_PREFILL_SLICE_MIN_TOKENS` = 512, so `pp_route` takes it) with a plain `llama_decode` and treats every
+  non-zero return as an error. The request fails, and the context keeps the pending prompt (`pp_pend.active`), so
+  each later prompt ubatch is refused with -1. Nothing clears it short of a restart.
+- **Leg VA10 (config A, images): pass.** Each of the ten specs gives one md5 in every run, alone and next to text
+  and Juno traffic (64 records), and 19 of 19 text answers in the same leg have their gold md5. Reference md5s for
+  later windows (image `gfbb8831`, config A):
+
+  | spec | prompt tokens | answer tokens | md5 | alone, wall |
+  |---|---|---|---|---|
+  | full-2652 | 8010 | 36 | `55a49adc91` | 7.9 s |
+  | full-eaa1 | 8010 | 50 | `7b395cda9c` | 8.2-8.3 s |
+  | loc-2652 | 1375 | 37 | `f899621f2f` | 2.5-2.8 s |
+  | loc-7d73 | 1375 | 96 | `efe65c9ae1` | 3.7-4.2 s |
+  | loc-eaa1 | 1375 | 33 | `5e24cf9b57` | 2.4-2.6 s |
+  | loc-fb48 | 1375 | 151 | `91e156b440` | 4.6-5.3 s |
+  | read-2652 | 1626 | 102 | `b2f7e636e8` | 3.8-4.3 s |
+  | read-7d73 | 1617 | 270 | `de0964f8c8` | 7.0-8.0 s |
+  | read-eaa1 | 1002 | 139 | `930335f7e0` | 4.1-4.4 s |
+  | read-fb48 | 1661 | 194 | `b9923e98eb` | 5.5-5.8 s |
+
+  Next to other clients the same requests take 4-64 s (the hold rule and the shared batch), with the same bytes.
+- **Not run:** KB110 was stopped about two minutes in when VB10's result was clear (its rows are not kept); XK10,
+  VL10 and ST10 were not started. They measure config B and wait for the fix.
+- **Verdict.** Production is fine: the poster pipeline's requests are reproducible on the image and flags that
+  serve today. Config B must not ship as it is: one image request takes the whole server down for every client.
+  The fix belongs in the patch series, in two parts: (1) a decode that did not come from the server's main loop must
+  never be left in pieces (do not route embedding-input batches such as image chunks to the prompt scheduler, or
+  have the mtmd helper finish with `llama_decode_resume`); (2) a pending prompt that its caller abandons must be
+  cleared instead of refusing every later prompt, so that no caller's mistake can wedge the context again. Then a
+  new image and this window again (KV, VB, VA and the legs not run), before #177.
+- **Window closed 04:18 UTC.** glm53-gh200 back at one replica on `547208dca250-gfbb8831`, quicksort gold
+  `bc32ecab82` three times through the Service, workbench-queue unsuspended, no test container, key file or test
+  snapshot left, the laptop deadman disarmed.

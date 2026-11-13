@@ -1,0 +1,9 @@
+requests with gold md5: 37 of 37
+state hashes: 17 distinct long ubatches (end position, length), 0 seen once only, 0 with MORE THAN ONE hash
+prompt ubatches done in pieces: 96, run whole (state not in place): 0
+ubatches while a cell was frozen: 5310; range contains the frozen cell: 0; guard refusals: 0
+  frozen cell 3:   2970 ubatches above it with 1 sequence(s)
+  frozen cell 3:    114 ubatches below it with 1 sequence(s)
+  frozen cell 3:    196 ubatches below it with 2 sequence(s)
+  frozen cell 3:   2030 ubatches below it with 3 sequence(s)
+V1-DIGEST KV10 PASS

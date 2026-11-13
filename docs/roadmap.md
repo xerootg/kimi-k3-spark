@@ -404,6 +404,14 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   compute buffers explain (context checkpoints of 145.6 MiB each among them); (3) no burst deeper than 500k has
   been read, and the class scenarios were not rerun next to a burst; (4) the wait for the ubatch in flight grows
   with depth: cutting a deep ubatch into pieces for a waiting first token as well would bound it.
+- **2026-11-13: config A is production on the GH200 (argo-things #179, image `gfbb8831`); #177 is blocked by a
+  bug found in window nc10.** With prompts in pieces (config B) the first image request fails and the server then
+  refuses every request until it restarts: the image path (mtmd) calls `llama_decode` directly, gets the "first
+  piece done, call `llama_decode_resume`" return of patch 0061 and treats it as an error, and the pending prompt is
+  never cleared. Production (hold rule) answers the poster pipeline's image requests with the same bytes every
+  time; reference md5s are in the ledger. Next for #177: fix both halves (image chunks never in pieces; an
+  abandoned pending prompt is cleared), build an image, rerun window nc10 in full. #178 (Spark floor and burst) is
+  parked as a draft at Haley's word.
 
 ## Cluster layout for this work
 

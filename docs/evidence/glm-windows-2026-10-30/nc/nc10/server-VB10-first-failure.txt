@@ -1,0 +1,61 @@
+0.44.911.880 I slot process_sing: id  1 | task -1 | saving idle slot to prompt cache
+0.44.911.880 I slot process_sing: id  2 | task -1 | saving idle slot to prompt cache
+0.44.911.881 I slot process_sing: id  3 | task -1 | saving idle slot to prompt cache
+0.44.911.881 I slot process_sing: id  4 | task -1 | saving idle slot to prompt cache
+0.44.911.909 I slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 1375
+0.44.911.915 I slot   operator(): id  0 | task 0 | cached n_tokens = 0, memory_seq_rm [0, end)
+0.45.066.961 I slot   operator(): id  0 | task 0 | cached n_tokens = 9, memory_seq_rm [9, end)
+0.45.075.662 I slot create_check: id  0 | task 0 | created context checkpoint 1 of 32 (pos_min = 8, pos_max = 8, n_tokens = 9, size = 145.563 MiB)
+0.45.111.231 I ggml_cuda_flash_attn_ext_kv_stage: prompt attention over host KV reads a device copy (first: 67 queries, 0.2 MiB)
+0.45.498.845 I slot   operator(): id  0 | task 0 | cached n_tokens = 76, memory_seq_rm [76, end)
+0.45.499.925 I slot encode_mtmd_: id  0 | task 0 | encoding mtmd batch from idx = 76, n_chunks = 1
+0.45.503.198 I reserve_compute_meta:      CUDA0 compute buffer size =   295.21 MiB
+0.45.503.208 I reserve_compute_meta:        CPU compute buffer size =    11.71 MiB
+0.45.503.211 I reserve_compute_meta: graph splits = 1, nodes = 838
+0.45.503.238 I warmup: flash attention is enabled
+0.45.614.057 I decoding image batch 1/1, n_tokens_batch = 1296
+0.45.682.621 E failed to decode image
+0.45.683.009 E slot   operator(): id  0 | task 0 | failed to decode mtmd chunk, idx = 76, res = 3
+0.45.683.067 E slot   operator(): id  0 | task 0 | failed to process mtmd chunk, res = -1
+0.45.683.073 E srv    send_error: task id = 0, error: failed to process mtmd chunk
+0.45.683.085 I slot      release: id  0 | task 0 | stop processing: n_tokens = 76, truncated = 0
+0.45.683.110 W srv          stop: cancel task, id_task = 0
+0.45.683.306 I srv  update_slots: all slots are idle
+0.45.693.817 I srv  server_strea: conv_id= (empty=1)
+0.45.710.707 I slot get_availabl: id  0 | task -1 |  - checking sim = 0.055 (76/1375) > 0.100
+0.45.710.713 I slot get_availabl: id  1 | task -1 |  - skipping, slot is empty
+0.45.710.714 I slot get_availabl: id  2 | task -1 |  - skipping, slot is empty
+0.45.710.714 I slot get_availabl: id  3 | task -1 |  - skipping, slot is empty
+0.45.710.715 I slot get_availabl: id  4 | task -1 |  - skipping, slot is empty
+0.45.710.719 I slot get_availabl: id  1 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+0.45.710.720 I srv  get_availabl: updating prompt cache
+0.45.710.722 I srv          load:  - looking for better prompt, base f_keep = -1.000, f_sim = 0.000
+0.45.710.725 I srv        update:  - cache state: 0 prompts, 0.000 MiB (limits: 65536.000 MiB, 5242880 tokens, 68719476736 est)
+0.45.710.725 I srv  get_availabl: prompt cache update took 0.01 ms
+0.45.710.856 I cmn  common_reaso: activated, budget=0 tokens
+0.45.710.861 I cmn  common_reaso: budget=0, forcing immediately
+0.45.710.877 I slot launch_slot_: id  1 | task -1 | sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> greedy 
+0.45.710.885 I slot launch_slot_: id  1 | task -1 | sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.45.710.886 I slot launch_slot_: id  1 | task 5 | processing task, is_child = 0
+0.45.710.887 I slot process_sing: id  0 | task -1 | saving idle slot to prompt cache
+0.45.717.408 I srv   prompt_save:  - saving prompt with length 76, total state size = 171.387 MiB (draft: 0.000 MiB)
+0.45.747.451 I srv        update:  - cache state: 1 prompts, 316.950 MiB (limits: 65536.000 MiB, 5242880 tokens, 5242880 est)
+0.45.747.458 I srv        update:    - prompt 0xb57f05350840:      76 tokens, checkpoints:  1,   316.950 MiB
+0.45.747.460 I slot process_sing: id  2 | task -1 | saving idle slot to prompt cache
+0.45.747.461 I slot process_sing: id  3 | task -1 | saving idle slot to prompt cache
+0.45.747.461 I slot process_sing: id  4 | task -1 | saving idle slot to prompt cache
+0.45.747.479 I slot   operator(): id  1 | task 5 | new prompt, n_ctx_slot = 1048576, n_keep = 0, task.n_tokens = 1375
+0.45.747.482 I slot   operator(): id  1 | task 5 | cached n_tokens = 0, memory_seq_rm [0, end)
+0.45.748.577 E decode: a prompt is still being computed in pieces, call llama_decode_resume first
+0.45.748.606 E srv        decode: Invalid input batch. off = 0, n_batch = 4096, ret = -1
+0.45.748.612 E srv    send_error: task id = 5, error: Invalid input batch.
+0.45.748.618 I slot      release: id  1 | task 5 | stop processing: n_tokens = 9, truncated = 0
+0.45.748.622 I slot prompt_clear: id  1 | task -1 | clearing prompt with 9 tokens
+0.45.748.646 W srv          stop: cancel task, id_task = 5
+0.45.749.683 E srv  update_slots: decode() failed: Invalid input batch.
+0.45.749.699 I srv  update_slots: all slots are idle
+0.45.761.163 I srv  server_strea: conv_id= (empty=1)
