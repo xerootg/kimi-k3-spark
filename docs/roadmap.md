@@ -411,7 +411,10 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   never cleared. Production (hold rule) answers the poster pipeline's image requests with the same bytes every
   time; reference md5s are in the ledger. Next for #177: fix both halves (image chunks never in pieces; an
   abandoned pending prompt is cleared), build an image, rerun window nc10 in full. #178 (Spark floor and burst) is
-  parked as a draft at Haley's word.
+  parked as a draft at Haley's word. **Done the same day:** patch 0077 (kimi-k3-spark 8eced6b, image
+  `547208dca250-g8eced6b`) and window nc11 (09:07-10:08 UTC): every leg passes, image answers under the pieces are
+  byte-identical to production's. #177 was rebuilt on main with that image and config B and goes in once Copilot is
+  green (Haley's condition "merge if bytes equal" holds).
 - **2026-11-13: the Spark's pure-gains step (config A': production flags plus `LLAMA_KPOOL_OWN_SEQS=1` on
   `gfbb8831`) measured in window nc-s7 and drafted as argo-things #185, not rolled out.** Bytes equal; two and three
   clients 0.8-1.2 % faster; one client 0.5-0.9 % slower on the `gfbb8831` build with the switch and without it (not
