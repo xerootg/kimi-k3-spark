@@ -1,0 +1,283 @@
+=== point 0067 2026-11-14T11:15:22
+applying 0001-prefetch-mmapped-experts.patch
+applying 0002-zero-copy-host-experts.patch
+applying 0003-expert-store.patch
+applying 0004-byte-stride-slots.patch
+applying 0005-glm-predictive-prefetch.patch
+applying 0006-expert-store-v2.patch
+applying 0009-split-skip-zero.patch
+applying 0012-hook-lean.patch
+applying 0018-lfu-policy.patch
+applying 0020-prefill-bank.patch
+applying 0026-thp-bank.patch
+applying 0030-nsplit.patch
+applying 0031-exact-mmvq-cols.patch
+applying 0033-exact-cols.patch
+applying 0034-exact-attn.patch
+applying 0035-prefill-isolate.patch
+applying 0036-exact-rows.patch
+applying 0037-exact-guards.patch
+applying 0038-exact-graph-budget.patch
+applying 0042-ordered-expert-list.patch
+applying 0043-mmq-id-tiling.patch
+applying 0045-elastic-kv.patch
+applying 0047-hbm-spare-slots.patch
+applying 0049-remote-batched.patch
+applying 0050-small-kernel-fusions.patch
+applying 0051-kv-host-memory.patch
+applying 0052-elastic-kv-per-stream.patch
+applying 0053-ctx-past-train.patch
+applying 0054-batch-invariant-decode.patch
+applying 0055-client-priority.patch
+applying 0056-bi-split-attention.patch
+applying 0057-kv-stage.patch
+applying 0058-kv-stream-holes.patch
+applying 0059-pp-reserve-one-seq.patch
+applying 0060-elastic-kv-floor-burst.patch
+applying 0061-prompt-pieces.patch
+applying 0062-floor-compute-reserve.patch
+applying 0063-valve-rearm-unlocked.patch
+applying 0064-prompt-share-same-class.patch
+applying 0065-prompt-turns.patch
+applying 0066-burst-owed-compute.patch
+applying 0067-split-cols-batch-invariant.patch
+=== point 0067 done 2026-11-14T11:20:09: 17 files
+=== point 0069 2026-11-14T11:20:09
+applying 0069-prompt-pieces-recurrent-cell.patch
+=== point 0069 done 2026-11-14T11:20:30: 17 files
+=== point 0070 2026-11-14T11:20:30
+applying 0070-exact-mtp-speculation.patch
+=== point 0070 done 2026-11-14T11:24:28: 17 files
+=== point 0071 2026-11-14T11:24:28
+applying 0071-kpool-own-seqs.patch
+=== point 0071 done 2026-11-14T11:24:30: 17 files
+=== point 0072 2026-11-14T11:24:30
+applying 0072-prompt-short-first.patch
+=== point 0072 done 2026-11-14T11:24:39: 17 files
+=== point 0073 2026-11-14T11:24:39
+applying 0073-pieces-split-boundary.patch
+=== point 0073 done 2026-11-14T11:24:41: 17 files
+=== point 0074 2026-11-14T11:24:41
+applying 0074-prompt-short-rest-same-class.patch
+=== point 0074 done 2026-11-14T11:24:49: 17 files
+=== point 0075 2026-11-14T11:24:49
+applying 0075-refused-burst-keeps-conversation.patch
+=== point 0075 done 2026-11-14T11:24:58: 17 files
+=== point 0076 2026-11-14T11:24:58
+applying 0076-kpool-marks-kept.patch
+=== point 0076 done 2026-11-14T11:25:05: 17 files
+BISBUILD-DONE 2026-11-14T11:25:05
+
+=== cmake configure (p0067, the only configure; later points rebuild in the same build dir)
+-- CMAKE_SYSTEM_PROCESSOR: aarch64
+-- GGML_SYSTEM_ARCH: ARM
+-- ARM detected
+-- CUDA Toolkit found
+-- Using CMAKE_CUDA_ARCHITECTURES=121a CMAKE_CUDA_ARCHITECTURES_NATIVE=121a-real
+-- CUDA host compiler is GNU 13.3.0
+-- Using RPC backend
+
+=== p0067 ( 49 files changed, 13414 insertions(+), 847 deletions(-))
+f6de38dc18cb7abfa4afedf298a423ab28fb61f984204729ecb0f669e8bdecbf  llama-server
+22160f90254258f487743005258e44a86bc17894615777d20d21aa38a592d82a  libggml-base.so
+25518f11a094bc8236c6b1780eb7b0745a7d20a20288c40c05f1fd8c8ca48307  libggml-cpu.so
+5ca705b6c53f2f3920d0193f2cf7d4b3cabe42a4e79d36cc016ca8be60acfbdf  libggml-cuda.so
+f84142731fd00c7b417853fe55650a9f8e57472b0947b170b54b77fe3f2d8818  libggml-rpc.so
+6d43a109a21cd5baa4476bdc0a00475f629adaa906cf2946cb31e36e1ba107f0  libggml.so
+3381bb2d5b5ca0b2c25635a3def1e997445de4e0b5ae3244fbdc128fd2868459  libllama-batched-bench-impl.so
+bc4072f3c7578fcd6db54268799869e11d089d5ab66248817130b1a3cd2b5ed6  libllama-bench-impl.so
+b87d3d462ceb7a7acc34b1f013ec4a2a586d724211ce86935e2acc105f1bc8bc  libllama-cli-impl.so
+78073058c96f14d6e86c213df2b3c2f65f66f860c0f4d45b2787c91f5090daff  libllama-common.so
+e5a8a9b6f6da54e7cb6954c109ebcc4da969955ef7aa412e26c7203dfc7d20d1  libllama-completion-impl.so
+74d0af9629129d7ca6e3f2d026b1ef55e446346a7c98e6d165a73505d94c25fc  libllama-fit-params-impl.so
+07d0499c32082b57c2ab0cfaeac0b0c989cbc0824d469130726e76cbbedee07a  libllama-perplexity-impl.so
+f9755a073734e9ad4f894297d1982f55b1a9051a8d0cad0523d96a0b115c1047  libllama-quantize-impl.so
+62454b32d262d539eb10592f613d9c7cf35a015f48bd707f641dfcd586a30421  libllama-server-impl.so
+b09c6664cb76d9b0fb43649db6fa35224eb636acdd0ce542a015ff827d970726  libllama.so
+c6ea5442f7175678231869bd5f8f0c5bda98e53832dfa6356e6873e99c3e734a  libmtmd.so
+=== p0069 ( 55 files changed, 13754 insertions(+), 846 deletions(-))
+f6de38dc18cb7abfa4afedf298a423ab28fb61f984204729ecb0f669e8bdecbf  llama-server
+22160f90254258f487743005258e44a86bc17894615777d20d21aa38a592d82a  libggml-base.so
+25518f11a094bc8236c6b1780eb7b0745a7d20a20288c40c05f1fd8c8ca48307  libggml-cpu.so
+5ca705b6c53f2f3920d0193f2cf7d4b3cabe42a4e79d36cc016ca8be60acfbdf  libggml-cuda.so
+f84142731fd00c7b417853fe55650a9f8e57472b0947b170b54b77fe3f2d8818  libggml-rpc.so
+6d43a109a21cd5baa4476bdc0a00475f629adaa906cf2946cb31e36e1ba107f0  libggml.so
+3381bb2d5b5ca0b2c25635a3def1e997445de4e0b5ae3244fbdc128fd2868459  libllama-batched-bench-impl.so
+bc4072f3c7578fcd6db54268799869e11d089d5ab66248817130b1a3cd2b5ed6  libllama-bench-impl.so
+b87d3d462ceb7a7acc34b1f013ec4a2a586d724211ce86935e2acc105f1bc8bc  libllama-cli-impl.so
+78073058c96f14d6e86c213df2b3c2f65f66f860c0f4d45b2787c91f5090daff  libllama-common.so
+e5a8a9b6f6da54e7cb6954c109ebcc4da969955ef7aa412e26c7203dfc7d20d1  libllama-completion-impl.so
+74d0af9629129d7ca6e3f2d026b1ef55e446346a7c98e6d165a73505d94c25fc  libllama-fit-params-impl.so
+07d0499c32082b57c2ab0cfaeac0b0c989cbc0824d469130726e76cbbedee07a  libllama-perplexity-impl.so
+f9755a073734e9ad4f894297d1982f55b1a9051a8d0cad0523d96a0b115c1047  libllama-quantize-impl.so
+0bc30c72f0115f045306c7e3f6a63ae885ec653a4d3891fd8f1c8398132885e9  libllama-server-impl.so
+29522de91a54a25ab05e07a046a93eb7133f7c1cbd74273632466fd3a8fb26b2  libllama.so
+c6ea5442f7175678231869bd5f8f0c5bda98e53832dfa6356e6873e99c3e734a  libmtmd.so
+=== p0070 ( 59 files changed, 14183 insertions(+), 852 deletions(-))
+f6de38dc18cb7abfa4afedf298a423ab28fb61f984204729ecb0f669e8bdecbf  llama-server
+22160f90254258f487743005258e44a86bc17894615777d20d21aa38a592d82a  libggml-base.so
+25518f11a094bc8236c6b1780eb7b0745a7d20a20288c40c05f1fd8c8ca48307  libggml-cpu.so
+3cd159a107e3d7ca969f796ad7642e59bb55f76d51213a76d618f256460e9ba2  libggml-cuda.so
+f84142731fd00c7b417853fe55650a9f8e57472b0947b170b54b77fe3f2d8818  libggml-rpc.so
+6d43a109a21cd5baa4476bdc0a00475f629adaa906cf2946cb31e36e1ba107f0  libggml.so
+3381bb2d5b5ca0b2c25635a3def1e997445de4e0b5ae3244fbdc128fd2868459  libllama-batched-bench-impl.so
+bc4072f3c7578fcd6db54268799869e11d089d5ab66248817130b1a3cd2b5ed6  libllama-bench-impl.so
+b87d3d462ceb7a7acc34b1f013ec4a2a586d724211ce86935e2acc105f1bc8bc  libllama-cli-impl.so
+7b342814eff38f8f1dee1d77e4d6167ddb0dfedb0e4585f08053e273d2b7b418  libllama-common.so
+e5a8a9b6f6da54e7cb6954c109ebcc4da969955ef7aa412e26c7203dfc7d20d1  libllama-completion-impl.so
+74d0af9629129d7ca6e3f2d026b1ef55e446346a7c98e6d165a73505d94c25fc  libllama-fit-params-impl.so
+07d0499c32082b57c2ab0cfaeac0b0c989cbc0824d469130726e76cbbedee07a  libllama-perplexity-impl.so
+f9755a073734e9ad4f894297d1982f55b1a9051a8d0cad0523d96a0b115c1047  libllama-quantize-impl.so
+13c19b50402a33fde61a65401a97c18e265b92dbf97f5f0079d4653337d0e11d  libllama-server-impl.so
+a777337ebec399dd894c0caf30aeaa9765880120831b019fe4c25e8006696ca5  libllama.so
+c6ea5442f7175678231869bd5f8f0c5bda98e53832dfa6356e6873e99c3e734a  libmtmd.so
+=== p0071 ( 59 files changed, 14246 insertions(+), 856 deletions(-))
+f6de38dc18cb7abfa4afedf298a423ab28fb61f984204729ecb0f669e8bdecbf  llama-server
+22160f90254258f487743005258e44a86bc17894615777d20d21aa38a592d82a  libggml-base.so
+25518f11a094bc8236c6b1780eb7b0745a7d20a20288c40c05f1fd8c8ca48307  libggml-cpu.so
+3cd159a107e3d7ca969f796ad7642e59bb55f76d51213a76d618f256460e9ba2  libggml-cuda.so
+f84142731fd00c7b417853fe55650a9f8e57472b0947b170b54b77fe3f2d8818  libggml-rpc.so
+6d43a109a21cd5baa4476bdc0a00475f629adaa906cf2946cb31e36e1ba107f0  libggml.so
+3381bb2d5b5ca0b2c25635a3def1e997445de4e0b5ae3244fbdc128fd2868459  libllama-batched-bench-impl.so
+bc4072f3c7578fcd6db54268799869e11d089d5ab66248817130b1a3cd2b5ed6  libllama-bench-impl.so
+b87d3d462ceb7a7acc34b1f013ec4a2a586d724211ce86935e2acc105f1bc8bc  libllama-cli-impl.so
+7b342814eff38f8f1dee1d77e4d6167ddb0dfedb0e4585f08053e273d2b7b418  libllama-common.so
+e5a8a9b6f6da54e7cb6954c109ebcc4da969955ef7aa412e26c7203dfc7d20d1  libllama-completion-impl.so
+74d0af9629129d7ca6e3f2d026b1ef55e446346a7c98e6d165a73505d94c25fc  libllama-fit-params-impl.so
+07d0499c32082b57c2ab0cfaeac0b0c989cbc0824d469130726e76cbbedee07a  libllama-perplexity-impl.so
+f9755a073734e9ad4f894297d1982f55b1a9051a8d0cad0523d96a0b115c1047  libllama-quantize-impl.so
+13c19b50402a33fde61a65401a97c18e265b92dbf97f5f0079d4653337d0e11d  libllama-server-impl.so
+71998104a70c542c24c3471e4012e2272eff2013b13486557d2e4c2154aedb4e  libllama.so
+c6ea5442f7175678231869bd5f8f0c5bda98e53832dfa6356e6873e99c3e734a  libmtmd.so
+=== p0072 ( 59 files changed, 14276 insertions(+), 856 deletions(-))
+f6de38dc18cb7abfa4afedf298a423ab28fb61f984204729ecb0f669e8bdecbf  llama-server
+22160f90254258f487743005258e44a86bc17894615777d20d21aa38a592d82a  libggml-base.so
+25518f11a094bc8236c6b1780eb7b0745a7d20a20288c40c05f1fd8c8ca48307  libggml-cpu.so
+3cd159a107e3d7ca969f796ad7642e59bb55f76d51213a76d618f256460e9ba2  libggml-cuda.so
+f84142731fd00c7b417853fe55650a9f8e57472b0947b170b54b77fe3f2d8818  libggml-rpc.so
+6d43a109a21cd5baa4476bdc0a00475f629adaa906cf2946cb31e36e1ba107f0  libggml.so
+3381bb2d5b5ca0b2c25635a3def1e997445de4e0b5ae3244fbdc128fd2868459  libllama-batched-bench-impl.so
+bc4072f3c7578fcd6db54268799869e11d089d5ab66248817130b1a3cd2b5ed6  libllama-bench-impl.so
+b87d3d462ceb7a7acc34b1f013ec4a2a586d724211ce86935e2acc105f1bc8bc  libllama-cli-impl.so
+7b342814eff38f8f1dee1d77e4d6167ddb0dfedb0e4585f08053e273d2b7b418  libllama-common.so
+e5a8a9b6f6da54e7cb6954c109ebcc4da969955ef7aa412e26c7203dfc7d20d1  libllama-completion-impl.so
+74d0af9629129d7ca6e3f2d026b1ef55e446346a7c98e6d165a73505d94c25fc  libllama-fit-params-impl.so
+07d0499c32082b57c2ab0cfaeac0b0c989cbc0824d469130726e76cbbedee07a  libllama-perplexity-impl.so
+f9755a073734e9ad4f894297d1982f55b1a9051a8d0cad0523d96a0b115c1047  libllama-quantize-impl.so
+527cc27626ea698dd2265278ef70b5f093b5110c2a0ff4fde5047ed7dbc7b7ef  libllama-server-impl.so
+71998104a70c542c24c3471e4012e2272eff2013b13486557d2e4c2154aedb4e  libllama.so
+c6ea5442f7175678231869bd5f8f0c5bda98e53832dfa6356e6873e99c3e734a  libmtmd.so
+=== p0073 ( 59 files changed, 14283 insertions(+), 856 deletions(-))
+f6de38dc18cb7abfa4afedf298a423ab28fb61f984204729ecb0f669e8bdecbf  llama-server
+75afd7dcaf4cc5f500c00f876b0bc23d541bd275f625435719ca4324bf82b0d9  libggml-base.so
+25518f11a094bc8236c6b1780eb7b0745a7d20a20288c40c05f1fd8c8ca48307  libggml-cpu.so
+3cd159a107e3d7ca969f796ad7642e59bb55f76d51213a76d618f256460e9ba2  libggml-cuda.so
+f84142731fd00c7b417853fe55650a9f8e57472b0947b170b54b77fe3f2d8818  libggml-rpc.so
+6d43a109a21cd5baa4476bdc0a00475f629adaa906cf2946cb31e36e1ba107f0  libggml.so
+3381bb2d5b5ca0b2c25635a3def1e997445de4e0b5ae3244fbdc128fd2868459  libllama-batched-bench-impl.so
+bc4072f3c7578fcd6db54268799869e11d089d5ab66248817130b1a3cd2b5ed6  libllama-bench-impl.so
+b87d3d462ceb7a7acc34b1f013ec4a2a586d724211ce86935e2acc105f1bc8bc  libllama-cli-impl.so
+7b342814eff38f8f1dee1d77e4d6167ddb0dfedb0e4585f08053e273d2b7b418  libllama-common.so
+e5a8a9b6f6da54e7cb6954c109ebcc4da969955ef7aa412e26c7203dfc7d20d1  libllama-completion-impl.so
+74d0af9629129d7ca6e3f2d026b1ef55e446346a7c98e6d165a73505d94c25fc  libllama-fit-params-impl.so
+07d0499c32082b57c2ab0cfaeac0b0c989cbc0824d469130726e76cbbedee07a  libllama-perplexity-impl.so
+f9755a073734e9ad4f894297d1982f55b1a9051a8d0cad0523d96a0b115c1047  libllama-quantize-impl.so
+527cc27626ea698dd2265278ef70b5f093b5110c2a0ff4fde5047ed7dbc7b7ef  libllama-server-impl.so
+71998104a70c542c24c3471e4012e2272eff2013b13486557d2e4c2154aedb4e  libllama.so
+c6ea5442f7175678231869bd5f8f0c5bda98e53832dfa6356e6873e99c3e734a  libmtmd.so
+=== p0074 ( 59 files changed, 14299 insertions(+), 856 deletions(-))
+f6de38dc18cb7abfa4afedf298a423ab28fb61f984204729ecb0f669e8bdecbf  llama-server
+75afd7dcaf4cc5f500c00f876b0bc23d541bd275f625435719ca4324bf82b0d9  libggml-base.so
+25518f11a094bc8236c6b1780eb7b0745a7d20a20288c40c05f1fd8c8ca48307  libggml-cpu.so
+3cd159a107e3d7ca969f796ad7642e59bb55f76d51213a76d618f256460e9ba2  libggml-cuda.so
+f84142731fd00c7b417853fe55650a9f8e57472b0947b170b54b77fe3f2d8818  libggml-rpc.so
+6d43a109a21cd5baa4476bdc0a00475f629adaa906cf2946cb31e36e1ba107f0  libggml.so
+3381bb2d5b5ca0b2c25635a3def1e997445de4e0b5ae3244fbdc128fd2868459  libllama-batched-bench-impl.so
+bc4072f3c7578fcd6db54268799869e11d089d5ab66248817130b1a3cd2b5ed6  libllama-bench-impl.so
+b87d3d462ceb7a7acc34b1f013ec4a2a586d724211ce86935e2acc105f1bc8bc  libllama-cli-impl.so
+7b342814eff38f8f1dee1d77e4d6167ddb0dfedb0e4585f08053e273d2b7b418  libllama-common.so
+e5a8a9b6f6da54e7cb6954c109ebcc4da969955ef7aa412e26c7203dfc7d20d1  libllama-completion-impl.so
+74d0af9629129d7ca6e3f2d026b1ef55e446346a7c98e6d165a73505d94c25fc  libllama-fit-params-impl.so
+07d0499c32082b57c2ab0cfaeac0b0c989cbc0824d469130726e76cbbedee07a  libllama-perplexity-impl.so
+f9755a073734e9ad4f894297d1982f55b1a9051a8d0cad0523d96a0b115c1047  libllama-quantize-impl.so
+047e006e00bb9889bf21b442b855724a44d9d8bfe14feffe4c8ab6c3868aefc8  libllama-server-impl.so
+71998104a70c542c24c3471e4012e2272eff2013b13486557d2e4c2154aedb4e  libllama.so
+c6ea5442f7175678231869bd5f8f0c5bda98e53832dfa6356e6873e99c3e734a  libmtmd.so
+=== p0075 ( 59 files changed, 14313 insertions(+), 856 deletions(-))
+f6de38dc18cb7abfa4afedf298a423ab28fb61f984204729ecb0f669e8bdecbf  llama-server
+75afd7dcaf4cc5f500c00f876b0bc23d541bd275f625435719ca4324bf82b0d9  libggml-base.so
+25518f11a094bc8236c6b1780eb7b0745a7d20a20288c40c05f1fd8c8ca48307  libggml-cpu.so
+3cd159a107e3d7ca969f796ad7642e59bb55f76d51213a76d618f256460e9ba2  libggml-cuda.so
+f84142731fd00c7b417853fe55650a9f8e57472b0947b170b54b77fe3f2d8818  libggml-rpc.so
+6d43a109a21cd5baa4476bdc0a00475f629adaa906cf2946cb31e36e1ba107f0  libggml.so
+3381bb2d5b5ca0b2c25635a3def1e997445de4e0b5ae3244fbdc128fd2868459  libllama-batched-bench-impl.so
+bc4072f3c7578fcd6db54268799869e11d089d5ab66248817130b1a3cd2b5ed6  libllama-bench-impl.so
+b87d3d462ceb7a7acc34b1f013ec4a2a586d724211ce86935e2acc105f1bc8bc  libllama-cli-impl.so
+7b342814eff38f8f1dee1d77e4d6167ddb0dfedb0e4585f08053e273d2b7b418  libllama-common.so
+e5a8a9b6f6da54e7cb6954c109ebcc4da969955ef7aa412e26c7203dfc7d20d1  libllama-completion-impl.so
+74d0af9629129d7ca6e3f2d026b1ef55e446346a7c98e6d165a73505d94c25fc  libllama-fit-params-impl.so
+07d0499c32082b57c2ab0cfaeac0b0c989cbc0824d469130726e76cbbedee07a  libllama-perplexity-impl.so
+f9755a073734e9ad4f894297d1982f55b1a9051a8d0cad0523d96a0b115c1047  libllama-quantize-impl.so
+3d68ad9a7dd456a8e57e6c386ef184bec05a2cdc4bb68b40eb4b8dd45e4b9644  libllama-server-impl.so
+71998104a70c542c24c3471e4012e2272eff2013b13486557d2e4c2154aedb4e  libllama.so
+c6ea5442f7175678231869bd5f8f0c5bda98e53832dfa6356e6873e99c3e734a  libmtmd.so
+=== p0076 ( 60 files changed, 14341 insertions(+), 864 deletions(-))
+f6de38dc18cb7abfa4afedf298a423ab28fb61f984204729ecb0f669e8bdecbf  llama-server
+75afd7dcaf4cc5f500c00f876b0bc23d541bd275f625435719ca4324bf82b0d9  libggml-base.so
+25518f11a094bc8236c6b1780eb7b0745a7d20a20288c40c05f1fd8c8ca48307  libggml-cpu.so
+3cd159a107e3d7ca969f796ad7642e59bb55f76d51213a76d618f256460e9ba2  libggml-cuda.so
+f84142731fd00c7b417853fe55650a9f8e57472b0947b170b54b77fe3f2d8818  libggml-rpc.so
+6d43a109a21cd5baa4476bdc0a00475f629adaa906cf2946cb31e36e1ba107f0  libggml.so
+3381bb2d5b5ca0b2c25635a3def1e997445de4e0b5ae3244fbdc128fd2868459  libllama-batched-bench-impl.so
+bc4072f3c7578fcd6db54268799869e11d089d5ab66248817130b1a3cd2b5ed6  libllama-bench-impl.so
+b87d3d462ceb7a7acc34b1f013ec4a2a586d724211ce86935e2acc105f1bc8bc  libllama-cli-impl.so
+7b342814eff38f8f1dee1d77e4d6167ddb0dfedb0e4585f08053e273d2b7b418  libllama-common.so
+e5a8a9b6f6da54e7cb6954c109ebcc4da969955ef7aa412e26c7203dfc7d20d1  libllama-completion-impl.so
+74d0af9629129d7ca6e3f2d026b1ef55e446346a7c98e6d165a73505d94c25fc  libllama-fit-params-impl.so
+07d0499c32082b57c2ab0cfaeac0b0c989cbc0824d469130726e76cbbedee07a  libllama-perplexity-impl.so
+f9755a073734e9ad4f894297d1982f55b1a9051a8d0cad0523d96a0b115c1047  libllama-quantize-impl.so
+3d68ad9a7dd456a8e57e6c386ef184bec05a2cdc4bb68b40eb4b8dd45e4b9644  libllama-server-impl.so
+938cb680627e51b679326578952197ec5de53dc7876477e30d0feb0b53405cad  libllama.so
+c6ea5442f7175678231869bd5f8f0c5bda98e53832dfa6356e6873e99c3e734a  libmtmd.so
+=== p0069c ( 55 files changed, 13803 insertions(+), 845 deletions(-))
+291c7aeecaf30e65432b4c5f64e4fef1de3273a7bc7ee6129d77a32fef8a460d  llama-server
+b7c49974d8516c2ada9a28eb90232fa415db3d9a697da39bf75166aab4c22817  libggml-base.so
+c4529067d1889663e44592af7d195464d50619200cf7d13f18f9e812a0bc70e4  libggml-cpu.so
+ed28e40c1250d7e0d2db50167b19d31a3d996a3e2d762d4ca7f649e0303b5399  libggml-cuda.so
+5af0b928d5a01fbe381169b75f4c17bb8b61c7e2a046c40b5f560ae8734128e7  libggml-rpc.so
+c1a20486602d8f2abe1a87e42d5f897c44ba63932673b6c98e190e1248b88dbe  libggml.so
+facf5ee3f7f37cfcf8c9c51f9d783d7868c43cb91e2d58ecffccad47460be824  libllama-batched-bench-impl.so
+1888388495c12ee148851ba45aa3fd3dbea7d78a10214ab6b061bbe61be5459e  libllama-bench-impl.so
+d5ac964f835e3b82530273fcfc646dddb426c554c5b47e702ef9f9bb9a85b5df  libllama-cli-impl.so
+0e1c8935663c38152990236f82ee7771813f99200b035baeb79b02d487d40d0b  libllama-common.so
+51aa0ab6a95f8f372df42e2e2cb9a02926f1e571a800a71d3d1be926ea6c8cd7  libllama-completion-impl.so
+db7e910098e79d82ea61c9fd3290d7a5c277c8de0d9d9d5666fca485bfd1a1ff  libllama-fit-params-impl.so
+8a67d5557e52bf1ee250d99755c3bb8fea4c063ad8bdb93e94d33aabdf6740db  libllama-perplexity-impl.so
+e85b05a6991c268434506faf2751297539c0916f31f28058d23acd296ee65613  libllama-quantize-impl.so
+cd6995f5727cab046cca3473e7388ceef1cbee14c3016f400e2e39430e5f7ace  libllama-server-impl.so
+74d311861b308ef7e00b1634c2bde05d12424673ebda465278586f8f41967cd7  libllama.so
+49f18b5116791559d82f491d55f9739d135ae43cf398e1012f5b74aff316e505  libmtmd.so
+=== p0069d ( 55 files changed, 13803 insertions(+), 845 deletions(-))
+f6de38dc18cb7abfa4afedf298a423ab28fb61f984204729ecb0f669e8bdecbf  llama-server
+22160f90254258f487743005258e44a86bc17894615777d20d21aa38a592d82a  libggml-base.so
+25518f11a094bc8236c6b1780eb7b0745a7d20a20288c40c05f1fd8c8ca48307  libggml-cpu.so
+f7e6ac4befa41c59c9c1bb6ce5a0be45d53046f9f1e4400fa93aa4e0f3655361  libggml-cuda.so
+f84142731fd00c7b417853fe55650a9f8e57472b0947b170b54b77fe3f2d8818  libggml-rpc.so
+6d43a109a21cd5baa4476bdc0a00475f629adaa906cf2946cb31e36e1ba107f0  libggml.so
+3381bb2d5b5ca0b2c25635a3def1e997445de4e0b5ae3244fbdc128fd2868459  libllama-batched-bench-impl.so
+bc4072f3c7578fcd6db54268799869e11d089d5ab66248817130b1a3cd2b5ed6  libllama-bench-impl.so
+b87d3d462ceb7a7acc34b1f013ec4a2a586d724211ce86935e2acc105f1bc8bc  libllama-cli-impl.so
+78073058c96f14d6e86c213df2b3c2f65f66f860c0f4d45b2787c91f5090daff  libllama-common.so
+e5a8a9b6f6da54e7cb6954c109ebcc4da969955ef7aa412e26c7203dfc7d20d1  libllama-completion-impl.so
+74d0af9629129d7ca6e3f2d026b1ef55e446346a7c98e6d165a73505d94c25fc  libllama-fit-params-impl.so
+07d0499c32082b57c2ab0cfaeac0b0c989cbc0824d469130726e76cbbedee07a  libllama-perplexity-impl.so
+f9755a073734e9ad4f894297d1982f55b1a9051a8d0cad0523d96a0b115c1047  libllama-quantize-impl.so
+0bc30c72f0115f045306c7e3f6a63ae885ec653a4d3891fd8f1c8398132885e9  libllama-server-impl.so
+29522de91a54a25ab05e07a046a93eb7133f7c1cbd74273632466fd3a8fb26b2  libllama.so
+c6ea5442f7175678231869bd5f8f0c5bda98e53832dfa6356e6873e99c3e734a  libmtmd.so
+=== 0069c/0069d: libs that differ from p0069 / p0070
+p0069c vs p0069: llama-server libggml-base.so libggml-cpu.so libggml-cuda.so libggml-rpc.so libggml.so libllama-batched-bench-impl.so libllama-bench-impl.so libllama-cli-impl.so libllama-common.so libllama-completion-impl.so libllama-fit-params-impl.so libllama-perplexity-impl.so libllama-quantize-impl.so libllama-server-impl.so libllama.so libmtmd.so 
+p0069c vs p0070: llama-server libggml-base.so libggml-cpu.so libggml-cuda.so libggml-rpc.so libggml.so libllama-batched-bench-impl.so libllama-bench-impl.so libllama-cli-impl.so libllama-common.so libllama-completion-impl.so libllama-fit-params-impl.so libllama-perplexity-impl.so libllama-quantize-impl.so libllama-server-impl.so libllama.so libmtmd.so 
+p0069d vs p0069: libggml-cuda.so 
+p0069d vs p0070: libggml-cuda.so libllama-common.so libllama-server-impl.so libllama.so 
+lowmem-S67.1.txt lowmem-S67.2.txt lowmem-S67.3.txt lowmem-S67.4.txt lowmem-S67.m.txt lowmem-S69.1.txt lowmem-S69.2.txt lowmem-S69.3.txt lowmem-S69c.1.txt lowmem-S69c.2.txt lowmem-S69c.3.txt lowmem-S69c.4.txt lowmem-S69c.5.txt lowmem-S69c.6.txt lowmem-S69d.1.txt lowmem-S69d.2.txt lowmem-S70.1.txt lowmem-S70.2.txt lowmem-S70.3.txt lowmem-S71.1.txt lowmem-S71.2.txt lowmem-S71.3.txt lowmem-S72.1.txt lowmem-S72.2.txt lowmem-S72.3.txt lowmem-S73.1.txt lowmem-S73.2.txt lowmem-S73.3.txt lowmem-S74.1.txt lowmem-S74.2.txt lowmem-S74.3.txt lowmem-S75.1.txt lowmem-S75.2.txt lowmem-S75.3.txt lowmem-S76.1.txt lowmem-S76.2.txt lowmem-S76.3.txt lowmem-S76.4.txt lowmem-S76.m.txt lowmem-Sc08.1.txt lowmem-Scfb.1.txt mem-S67.1.txt mem-S67.2.txt mem-S67.3.txt mem-S67.4.txt mem-S67.m.txt mem-S69.1.txt mem-S69.2.txt mem-S69.3.txt mem-S69c.1.txt 

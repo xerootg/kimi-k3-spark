@@ -1,0 +1,98 @@
+nc-s8 runner 3122334 holds window.lock from 13:21:49, legs: 69c.4 69c.5 69c.6
+=== LEG S69c.4 parallel=5 ctx=1024000 bd=/home/xero/bis/p0069c extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_PRIORITY_HOLD_PROMPTS=1 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_CLIENT_CLASSES=/srv/glm-5.3-flash/keys-nc/classes.txt LLAMA_SLOT_RESERVE=1] 13:21:49
+READY S69c.4 after 26s
+0.00.347.105 I srv  server_clien: client classes: 5 keys loaded, top priority 10 (keys not logged)
+0.12.829.232 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 10.74 GiB of address space on one 2048 KiB zero chunk (170.4 ms)
+0.12.829.284 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 204800 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.12.835.002 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 204800 cells, 66.0 MiB mapped in all streams (5.6 ms)
+0.12.840.427 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (5.4 ms)
+0.12.845.809 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 204800 cells, 198.0 MiB mapped in all streams (5.4 ms)
+0.12.851.183 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 204800 cells, 264.0 MiB mapped in all streams (5.4 ms)
+0.12.856.540 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 204800 cells, 330.0 MiB mapped in all streams (5.3 ms)
+0.13.027.177 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 8.06 GiB of address space on one 2048 KiB zero chunk (126.8 ms)
+0.13.027.206 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 204800 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.13.031.055 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 204800 cells, 44.0 MiB mapped in all streams (3.8 ms)
+0.13.034.645 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 204800 cells, 88.0 MiB mapped in all streams (3.6 ms)
+0.13.038.280 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (3.6 ms)
+0.13.041.924 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 204800 cells, 176.0 MiB mapped in all streams (3.6 ms)
+--- ekbench3.py solo p0 p1 p2 p3 p4 --key-file /srv/glm-5.3-flash/keys-nc/key-cc.txt 13:22:14
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.43, "prefill_tps": 23.39, "decode_n": 256, "decode_tps": 15.59, "md5": "ce2fc95752", "t0": 1794662534.9749799, "t1": 1794662551.7768888, "kind": "solo", "tag": "S69c.4"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.63, "prefill_tps": 29.97, "decode_n": 256, "decode_tps": 16.02, "md5": "bb64203d71", "t0": 1794662551.7769513, "t1": 1794662568.3256185, "kind": "solo", "tag": "S69c.4"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.65, "prefill_tps": 27.88, "decode_n": 256, "decode_tps": 15.52, "md5": "2d592efcb6", "t0": 1794662568.3256795, "t1": 1794662585.4053657, "kind": "solo", "tag": "S69c.4"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.79, "prefill_tps": 26.73, "decode_n": 256, "decode_tps": 14.6, "md5": "1aab74269d", "t0": 1794662585.405423, "t1": 1794662603.6562762, "kind": "solo", "tag": "S69c.4"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.63, "prefill_tps": 33.15, "decode_n": 256, "decode_tps": 15.37, "md5": "0c3f28294b", "t0": 1794662603.6563332, "t1": 1794662620.8830557, "kind": "solo", "tag": "S69c.4"}
+--- ekbench3.py solo p0 p1 p2 p3 p4 --key-file /srv/glm-5.3-flash/keys-nc/key-cc.txt 13:23:40
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.9, "decode_n": 256, "decode_tps": 15.11, "md5": "ce2fc95752", "t0": 1794662620.9316652, "t1": 1794662638.243788, "kind": "solo", "tag": "S69c.4"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.53, "prefill_tps": 35.74, "decode_n": 256, "decode_tps": 15.88, "md5": "bb64203d71", "t0": 1794662638.2438536, "t1": 1794662654.8327029, "kind": "solo", "tag": "S69c.4"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.52, "prefill_tps": 34.89, "decode_n": 256, "decode_tps": 15.76, "md5": "2d592efcb6", "t0": 1794662654.832753, "t1": 1794662671.532737, "kind": "solo", "tag": "S69c.4"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.59, "prefill_tps": 35.54, "decode_n": 256, "decode_tps": 15.42, "md5": "1aab74269d", "t0": 1794662671.5328007, "t1": 1794662688.664476, "kind": "solo", "tag": "S69c.4"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.59, "prefill_tps": 35.82, "decode_n": 256, "decode_tps": 15.92, "md5": "0c3f28294b", "t0": 1794662688.6645267, "t1": 1794662705.2718492, "kind": "solo", "tag": "S69c.4"}
+elastic lines: 12; refused: 0; bursts: 0
+lowest MemAvailable 22466 MiB; now 120201 MiB; END S69c.4 13:25:08
+NC3-LEG-DONE S69c.4 13:25:08
+server-S69c.4.log no key in log
+=== LEG S69c.5 parallel=5 ctx=1024000 bd=/home/xero/bis/p0069c extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_PRIORITY_HOLD_PROMPTS=1 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_CLIENT_CLASSES=/srv/glm-5.3-flash/keys-nc/classes.txt LLAMA_SLOT_RESERVE=1] 13:25:08
+READY S69c.5 after 26s
+0.00.276.937 I srv  server_clien: client classes: 5 keys loaded, top priority 10 (keys not logged)
+0.12.812.433 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 10.74 GiB of address space on one 2048 KiB zero chunk (171.4 ms)
+0.12.812.483 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 204800 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.12.818.258 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 204800 cells, 66.0 MiB mapped in all streams (5.8 ms)
+0.12.823.795 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (5.5 ms)
+0.12.829.270 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 204800 cells, 198.0 MiB mapped in all streams (5.5 ms)
+0.12.834.770 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 204800 cells, 264.0 MiB mapped in all streams (5.5 ms)
+0.12.840.464 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 204800 cells, 330.0 MiB mapped in all streams (5.7 ms)
+0.13.013.360 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 8.06 GiB of address space on one 2048 KiB zero chunk (128.4 ms)
+0.13.013.389 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 204800 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.13.017.319 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 204800 cells, 44.0 MiB mapped in all streams (3.9 ms)
+0.13.020.986 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 204800 cells, 88.0 MiB mapped in all streams (3.7 ms)
+0.13.024.667 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (3.7 ms)
+0.13.028.344 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 204800 cells, 176.0 MiB mapped in all streams (3.7 ms)
+--- ekbench3.py solo p0 p1 p2 p3 p4 --key-file /srv/glm-5.3-flash/keys-nc/key-cc.txt 13:25:33
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.56, "decode_n": 256, "decode_tps": 15.56, "md5": "ce2fc95752", "t0": 1794662733.6323082, "t1": 1794662750.4647396, "kind": "solo", "tag": "S69c.5"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.62, "prefill_tps": 30.44, "decode_n": 256, "decode_tps": 16.03, "md5": "bb64203d71", "t0": 1794662750.4648235, "t1": 1794662767.0014408, "kind": "solo", "tag": "S69c.5"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.64, "prefill_tps": 28.2, "decode_n": 256, "decode_tps": 15.48, "md5": "2d592efcb6", "t0": 1794662767.0014892, "t1": 1794662784.1119246, "kind": "solo", "tag": "S69c.5"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.77, "prefill_tps": 27.25, "decode_n": 256, "decode_tps": 14.59, "md5": "1aab74269d", "t0": 1794662784.1119716, "t1": 1794662802.3594875, "kind": "solo", "tag": "S69c.5"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.63, "prefill_tps": 33.28, "decode_n": 256, "decode_tps": 15.32, "md5": "0c3f28294b", "t0": 1794662802.359538, "t1": 1794662819.6315615, "kind": "solo", "tag": "S69c.5"}
+--- ekbench3.py solo p0 p1 p2 p3 p4 --key-file /srv/glm-5.3-flash/keys-nc/key-cc.txt 13:26:59
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.4, "prefill_tps": 25.01, "decode_n": 256, "decode_tps": 15.08, "md5": "ce2fc95752", "t0": 1794662819.6635852, "t1": 1794662836.9903388, "kind": "solo", "tag": "S69c.5"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.52, "prefill_tps": 36.47, "decode_n": 256, "decode_tps": 15.86, "md5": "bb64203d71", "t0": 1794662836.990408, "t1": 1794662853.5881555, "kind": "solo", "tag": "S69c.5"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.5, "prefill_tps": 35.66, "decode_n": 256, "decode_tps": 15.72, "md5": "2d592efcb6", "t0": 1794662853.5882142, "t1": 1794662870.3134074, "kind": "solo", "tag": "S69c.5"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.58, "prefill_tps": 35.97, "decode_n": 256, "decode_tps": 15.39, "md5": "1aab74269d", "t0": 1794662870.3134594, "t1": 1794662887.4662619, "kind": "solo", "tag": "S69c.5"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.58, "prefill_tps": 36.39, "decode_n": 256, "decode_tps": 15.91, "md5": "0c3f28294b", "t0": 1794662887.4663112, "t1": 1794662904.0679133, "kind": "solo", "tag": "S69c.5"}
+elastic lines: 12; refused: 0; bursts: 0
+lowest MemAvailable 22674 MiB; now 120179 MiB; END S69c.5 13:28:26
+NC3-LEG-DONE S69c.5 13:28:26
+server-S69c.5.log no key in log
+=== LEG S69c.6 parallel=5 ctx=1024000 bd=/home/xero/bis/p0069c extra=[LLAMA_EXPERT_STORE_SPLIT_COLS=1 LLAMA_EXPERT_STORE_SPLIT_COLS_MIN=3 LLAMA_ELASTIC_KV_REFUSE=1 GGML_CUDA_BATCH_INVARIANT=1 GGML_CUDA_BI_ATTN_CHUNK=128 GGML_CUDA_BI_FUSE=1 LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_PRIORITY_HOLD_PROMPTS=1 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_CLIENT_CLASSES=/srv/glm-5.3-flash/keys-nc/classes.txt LLAMA_SLOT_RESERVE=1] 13:28:26
+READY S69c.6 after 26s
+0.00.276.113 I srv  server_clien: client classes: 5 keys loaded, top priority 10 (keys not logged)
+0.12.767.002 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 10.74 GiB of address space on one 2048 KiB zero chunk (176.7 ms)
+0.12.767.055 I llama_kv_cache: elastic KV per stream: 1 buffer(s), 5 streams of 204800 cells, 11.0 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.12.772.408 I elastic_fit_stream: elastic KV (init) stream 0: 0 -> 4352 of 204800 cells, 66.0 MiB mapped in all streams (5.3 ms)
+0.12.777.484 I elastic_fit_stream: elastic KV (init) stream 1: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (5.1 ms)
+0.12.782.532 I elastic_fit_stream: elastic KV (init) stream 2: 0 -> 4352 of 204800 cells, 198.0 MiB mapped in all streams (5.0 ms)
+0.12.787.736 I elastic_fit_stream: elastic KV (init) stream 3: 0 -> 4352 of 204800 cells, 264.0 MiB mapped in all streams (5.2 ms)
+0.12.792.794 I elastic_fit_stream: elastic KV (init) stream 4: 0 -> 4352 of 204800 cells, 330.0 MiB mapped in all streams (5.1 ms)
+0.12.965.047 I ggml_backend_cuda_elastic_buffer_alloc_impl: backed elastic buffer: 8.06 GiB of address space on one 2048 KiB zero chunk (131.0 ms)
+0.12.965.077 I llama_kv_cache: elastic KV per stream idx_: 1 buffer(s), 5 streams of 204800 cells, 8.2 KiB per cell, mapped on use (margin 4096 cells, shrink at 65536 spare cells), refuse when memory runs out
+0.12.968.661 I elastic_fit_stream: elastic KV idx_ (init) stream 0: 0 -> 4352 of 204800 cells, 44.0 MiB mapped in all streams (3.6 ms)
+0.12.972.006 I elastic_fit_stream: elastic KV idx_ (init) stream 1: 0 -> 4352 of 204800 cells, 88.0 MiB mapped in all streams (3.3 ms)
+0.12.975.345 I elastic_fit_stream: elastic KV idx_ (init) stream 2: 0 -> 4352 of 204800 cells, 132.0 MiB mapped in all streams (3.3 ms)
+0.12.978.658 I elastic_fit_stream: elastic KV idx_ (init) stream 3: 0 -> 4352 of 204800 cells, 176.0 MiB mapped in all streams (3.3 ms)
+--- ekbench3.py solo p0 p1 p2 p3 p4 --key-file /srv/glm-5.3-flash/keys-nc/key-cc.txt 13:28:51
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.42, "prefill_tps": 23.56, "decode_n": 256, "decode_tps": 15.63, "md5": "ce2fc95752", "t0": 1794662931.5274343, "t1": 1794662948.2835498, "kind": "solo", "tag": "S69c.6"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.63, "prefill_tps": 30.33, "decode_n": 256, "decode_tps": 16.01, "md5": "bb64203d71", "t0": 1794662948.2836154, "t1": 1794662964.8347852, "kind": "solo", "tag": "S69c.6"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.64, "prefill_tps": 28.3, "decode_n": 256, "decode_tps": 15.49, "md5": "2d592efcb6", "t0": 1794662964.834836, "t1": 1794662981.9320822, "kind": "solo", "tag": "S69c.6"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.77, "prefill_tps": 27.11, "decode_n": 256, "decode_tps": 14.62, "md5": "1aab74269d", "t0": 1794662981.9321315, "t1": 1794663000.1510286, "kind": "solo", "tag": "S69c.6"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.63, "prefill_tps": 33.35, "decode_n": 256, "decode_tps": 15.31, "md5": "0c3f28294b", "t0": 1794663000.1510763, "t1": 1794663017.4369266, "kind": "solo", "tag": "S69c.6"}
+--- ekbench3.py solo p0 p1 p2 p3 p4 --key-file /srv/glm-5.3-flash/keys-nc/key-cc.txt 13:30:17
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.4, "prefill_tps": 25.09, "decode_n": 256, "decode_tps": 15.06, "md5": "ce2fc95752", "t0": 1794663017.485009, "t1": 1794663034.834073, "kind": "solo", "tag": "S69c.6"}
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.52, "prefill_tps": 36.47, "decode_n": 256, "decode_tps": 15.86, "md5": "bb64203d71", "t0": 1794663034.8341427, "t1": 1794663051.4380732, "kind": "solo", "tag": "S69c.6"}
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.5, "prefill_tps": 35.7, "decode_n": 256, "decode_tps": 15.75, "md5": "2d592efcb6", "t0": 1794663051.4381242, "t1": 1794663068.133488, "kind": "solo", "tag": "S69c.6"}
+{"spec": "p3", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.58, "prefill_tps": 35.96, "decode_n": 256, "decode_tps": 15.38, "md5": "1aab74269d", "t0": 1794663068.1335351, "t1": 1794663085.295469, "kind": "solo", "tag": "S69c.6"}
+{"spec": "p4", "prompt_n": 21, "cache_n": 0, "prefill_s": 0.58, "prefill_tps": 36.31, "decode_n": 256, "decode_tps": 15.92, "md5": "0c3f28294b", "t0": 1794663085.2955184, "t1": 1794663101.8925023, "kind": "solo", "tag": "S69c.6"}
+elastic lines: 12; refused: 0; bursts: 0
+lowest MemAvailable 22653 MiB; now 120176 MiB; END S69c.6 13:31:44
+NC3-LEG-DONE S69c.6 13:31:44
+server-S69c.6.log no key in log
+SPARK-NC13-DONE 13:31:44

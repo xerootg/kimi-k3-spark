@@ -419,9 +419,14 @@ Window ek (details in `docs/experiments.md`, patch 0052/0053 in `patches/README.
   `gfbb8831`) measured in window nc-s7 and drafted as argo-things #185, not rolled out.** Bytes equal; two and three
   clients 0.8-1.2 % faster; one client 0.5-0.9 % slower on the `gfbb8831` build with the switch and without it (not
   0076, which allocates once; not bisected). **Rolled out 2026-11-14 at Haley's word:** #185 merged (06548a0),
-  glm53-spark 1/1 on `gfbb8831` with the switch since 11:03 UTC, gold `ee079496a4` twice. Next: bisect the
-  one-client slowdown on the Spark (builds of the stack at 0067, 0071 and 0076, production scaled to 0 during the
-  window, Juno on the GH200).
+  glm53-spark 1/1 on `gfbb8831` with the switch since 11:03 UTC, gold `ee079496a4` twice. **Bisected the same day
+  (Spark window nc-s8, 11:25-13:43 UTC, ledger entry "2026-11-14, Spark window nc-s8"): not a patch.** Native builds of
+  every stack point from one tree put 0067 and 0069 at 15.33 / 15.52 tok/s and 0070 through 0076 at 15.43-15.46 /
+  15.61-15.67 (+0.6-0.9 %, the opposite sign of the CI pair, which reproduced its -0.5 % in the same window); 0069 plus
+  only 0070's two CUDA hunks (only `libggml-cuda.so` differs) sits at the fast level. The 0.5-0.9 % is the one-client
+  decode step's sensitivity to the code layout of the CUDA backend's host side, re-rolled by every rebuild; prompt read
+  and bytes equal everywhere, two clients +0.3-0.4 % on 0076. Nothing to fix in the series; a one-client difference of
+  up to 1 % between builds is layout noise unless a same-tree minimal-recompile variant reproduces it.
 
 ## Cluster layout for this work
 

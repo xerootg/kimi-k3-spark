@@ -1,0 +1,94 @@
+diff --git a/ggml/src/ggml-cuda/common.cuh b/ggml/src/ggml-cuda/common.cuh
+index e348be7..d4b7a66 100644
+--- a/ggml/src/ggml-cuda/common.cuh
++++ b/ggml/src/ggml-cuda/common.cuh
+@@ -1514,6 +1514,9 @@ struct ggml_backend_cuda_context {
+ 
+     int curr_stream_no = 0;
+ 
++    // kimi-k3-spark patch 0070: this context has sent a lookup through the host-bank hook (ggml_cuda_host_bank_owner_check)
++    bool host_bank_user = false;
++
+     struct exact_arena { void * ptr; size_t size; exact_arena * previous; };
+     exact_arena * exact_scratch[GGML_CUDA_MAX_STREAMS] = {};
+     // GGML_CUDA_Q8_REUSE=1: MMVQ activations quantized to q8_1 are kept in a few retained slots during one
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index ede25b9..6222e93 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -949,7 +949,14 @@ static std::mutex ggml_cuda_lock;
+ static std::condition_variable ggml_cuda_lock_cv;
+ static std::atomic<int> ggml_cuda_lock_counter;
+ 
++// the context that sent the last lookups through the host-bank hook (ggml_cuda_host_bank_owner_check)
++static std::atomic<ggml_backend_cuda_context *> g_bank_owner{nullptr};
++
+ ggml_backend_cuda_context::~ggml_backend_cuda_context() {
++    {
++        ggml_backend_cuda_context * self = this;
++        g_bank_owner.compare_exchange_strong(self, nullptr);
++    }
+     std::unique_lock<std::mutex> lock(ggml_cuda_lock);
+     ggml_cuda_lock_cv.wait(lock, []{ return ggml_cuda_lock_counter.load(std::memory_order_relaxed) == 0; });
+ 
+@@ -2246,6 +2253,40 @@ void ggml_backend_cuda_set_host_bank_hook(ggml_backend_cuda_host_bank_hook_t fn,
+ #endif
+ }
+ 
++// kimi-k3-spark patch 0070: one context at a time behind the host-bank hook.
++//
++// The hook's state is shared by every context of the process: the mailboxes are indexed by stream number (every
++// context uses number 0, so two contexts share one mailbox and one done flag), and the expert store behind the hook
++// has one slot pool whose plan only protects the layer being looked up. Two contexts with lookups in flight at the
++// same time therefore corrupt each other: the second context's request overwrites the ids the poller is reading,
++// one done flag releases both waits, and a lookup then reads a slot map that was not filled for it (-1 as an expert
++// slot, or the expert store's "has slot -1 after the plan" abort). This happened with the MTP draft context, whose
++// catch-up decode (common_speculative_process) is launched after every target batch and not synchronized; the
++// server now synchronizes the draft context before the target's next decode.
++//
++// This is the tripwire for any other such caller: when a context starts sending lookups while the stream of the
++// context that sent the previous ones still has work pending, abort with a message that names the cause instead
++// of serving wrong bytes. One pointer compare per lookup while the owner does not change; one cudaStreamQuery
++// when it does. GGML_CUDA_HOST_BANK_OWNER_CHECK=0 turns it off (tests of the tripwire itself).
++static void ggml_cuda_host_bank_owner_check(ggml_backend_cuda_context & ctx) {
++    ggml_backend_cuda_context * prev = g_bank_owner.load(std::memory_order_relaxed);
++    if (prev == &ctx) {
++        return;
++    }
++    static const bool enabled = [] { const char * e = getenv("GGML_CUDA_HOST_BANK_OWNER_CHECK"); return !(e != nullptr && e[0] == '0'); }();
++    if (prev != nullptr && enabled) {
++        const cudaError_t err = cudaStreamQuery(prev->stream());
++        (void) cudaGetLastError();
++        if (err == cudaErrorNotReady) {
++            GGML_ABORT("host bank: context %s starts expert lookups while context %s still has work in flight; "
++                       "contexts that share the expert store must be synchronized before another one decodes "
++                       "(llama_synchronize)", ctx.name.c_str(), prev->name.c_str());
++        }
++    }
++    ctx.host_bank_user = true;
++    g_bank_owner.store(&ctx, std::memory_order_relaxed);
++}
++
+ #ifdef GGML_CUDA_HOST_BANK_ASYNC_SUPPORTED
+ static __global__ void k_bank_request(const int32_t * __restrict__ ids, const int64_t n, ggml_cuda_bank_mailbox * mb, const uint64_t slot_map, const uint32_t kind) {
+     for (int64_t i = threadIdx.x; i < n; i += blockDim.x) {
+@@ -6806,6 +6847,7 @@ static void ggml_cuda_graph_evaluate_and_capture(ggml_backend_cuda_context * cud
+                     ggml_cuda_host_prefetch_mul_mat_id(*cuda_ctx, node);
+                 }
+                 if (ggml_cuda_host_bank_hook_node(node)) {
++                    ggml_cuda_host_bank_owner_check(*cuda_ctx);
+ #ifdef GGML_CUDA_HOST_BANK_ASYNC_SUPPORTED
+                     if (ggml_cuda_host_bank_async_enabled()) {
+                         ggml_cuda_host_bank_request_async(*cuda_ctx, node);
+@@ -6940,6 +6982,11 @@ static enum ggml_status ggml_backend_cuda_graph_compute(ggml_backend_t backend,
+ 
+     ggml_cuda_set_device(cuda_ctx->device);
+ 
++    if (cuda_ctx->host_bank_user) {
++        // a replayed CUDA graph sends its lookups without passing through the per-node code: check here too
++        ggml_cuda_host_bank_owner_check(*cuda_ctx);
++    }
++
+     bool use_cuda_graph             = false;
+     bool cuda_graph_update_required = false;
+     const void * graph_key = nullptr;

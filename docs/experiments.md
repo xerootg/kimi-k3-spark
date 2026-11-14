@@ -2926,3 +2926,101 @@ the window's records (the session that ran it hit its limit after restoring prod
   `LLAMA_KPOOL_OWN_SEQS=1` since 11:03 UTC, one restart; quicksort gold `ee079496a4` twice through the kimi-k3
   Service (15.29 and 16.84 tok/s, the first round cold); glm53-gh200 untouched. Both boxes now run patches through
   0076 (the GH200 adds 0077). The one-client slowdown of the build goes to a bisection window on the Spark next.
+
+### 2026-11-14, Spark window nc-s8: bisecting the one-client cost of the gfbb8831 build
+
+**No patch between 0067 and 0076 costs one-client speed. Built on the Spark from one tree, the stack points 0067 and 0069
+decode a short prompt at 15.33 / 15.52 tok/s (pass one / warm pass two), 0070 and every later point at 15.43-15.46 /
+15.61-15.67: a step of +0.6-0.9 %, the opposite sign of what the CI images showed, and a build of 0069 plus only the two
+CUDA hunks of 0070 (only `libggml-cuda.so` differs) sits at the fast level. The 0.5-0.9 % of window nc-s7 is the
+sensitivity of the one-client decode step to the code layout of the CUDA backend's host side, not a patch.** Window
+11:25-13:43 UTC (2 h 18 min of production downtime); every answer gold; prompt read equal everywhere. Evidence:
+`docs/evidence/glm-windows-2026-10-30/nc/spark/nc-s8/` (`bisbuild.sh`, `bisbuild3.sh`, `0070-cuda-only.patch`,
+`build-points.txt` with the sha256 of every binary set, `spark-nc12.sh`, `spark-nc13.sh`, `spark-nc14.sh`, `nc3-leg.sh`,
+`ekbench3.py`, `deadman-s8.sh`, `nc12a.log`, `nc13a.log`, `nc13b.log`, `nc14a.log`, `results-nc-s8.jsonl`,
+`digest-nc-s8.md` from `s8report.py`).
+- **Why.** Window nc-s7 (2026-11-11) measured the binaries of image `gfbb8831` (patches through 0076) 0.5-0.9 % slower
+  for one client with short prompts than the binaries of `g08d176f` (through 0067), with `LLAMA_KPOOL_OWN_SEQS=1` and
+  without, so the cost was in the build, not the switch; the control's spread from process to process was 0.0-0.4 %. Haley
+  ordered the bisection on 2026-11-14 after #185 rolled the build out. Reading 0069-0076 first: 0071 adds a 64-byte
+  `seq_on` array and one loop over `LLAMA_MAX_SEQ` per ubatch, 0070 adds a `bool host_bank_user` member to
+  `ggml_backend_cuda_context` and one atomic pointer compare per expert lookup node (`ggml_cuda_host_bank_owner_check`)
+  in every build, 0069 one extra branch per token in `split_equal` and a `frozen` check per `find_slot`, 0076 removes a
+  3.9 MiB allocation and zeroing per decode step (a small gain by design), 0072/0074/0075 are server-side and behind
+  variables or the floor, 0073 is on the pieces path only. Nothing predicted a 0.5-0.9 % loss; 0070's per-lookup compare
+  was the one candidate in the hot path.
+- **Setup.** Builds: `~/bis/bisbuild.sh` on the Spark (the only sm_121 machine) before the window, under
+  `systemd-run --user --scope -p MemoryMax=16G nice -n 19` with production serving: upstream `547208dca250` fetched as the
+  Dockerfile does, then the patches applied in lexical order up to each point in ONE tree with ONE build directory, a
+  `cmake --build` after each point (so an object of a file no patch touched is byte-identical across the points) and the
+  binaries and libraries copied to `~/bis/p<point>/bin` (the layout of the image's `/opt/llama`). Same compiler (gcc
+  13.3, nvcc 13.0.88), same flags as `docker/llamacpp-spark.Dockerfile` except CUDA architecture 121 only, Unix Makefiles
+  (no ninja on the box) and `LLAMA_CURL=OFF` (no libcurl dev package); nine points in ten minutes. Which libraries change
+  at each step (`build-points.txt`): 0069 `libllama.so` + `libllama-server-impl.so`; 0070 `libggml-cuda.so` +
+  `libllama-common.so` + `libllama.so` + `libllama-server-impl.so`; 0071 `libllama.so`; 0072 server; 0073
+  `libggml-base.so`; 0074, 0075 server; 0076 `libllama.so`. Window: glm53-spark at 0 (glm53-gh200 1/1 on `g8eced6b`
+  throughout, Juno's primary), bare servers on the node from a per-leg copy of `snapshot/el-seed.k3sn`, the runner holding
+  `window.lock` for the whole window, today's production args and env (five slots of 200k, `--ctx-size 1024000`, column
+  split from three clients, batch-invariant decode, prefill isolate, elastic KV with refuse, `LLAMA_KPOOL_OWN_SEQS=1`,
+  which builds before 0071 ignore, the class file with one reserved slot and the hold rule), the client a priority-1
+  class member (`ekbench3.py --key-file`, keys generated per leg and deleted, "no key in log" for every leg). Each leg a
+  fresh server running the five short prompts of nc-s7 twice in a row; the nine points in three rounds, each round in a
+  different order (forward, reverse, rotated) so a drift of the box cannot line up with a point, then two clients (p0 p1,
+  two rounds) on 0067 and 0076, one process each of the CI binaries `~/nc/ci-08d176f` and `~/nc/ci-fbb8831` (nc-s7's
+  pair), a fourth process of 0067 and 0076. A laptop deadman (`deadman-s8.sh`, re-armed once from 13:57 to 14:05 UTC
+  inside the CLAIM) would have restored production by pid.
+- **Results, one client (mean of the five prompts, decode tok/s pass one / pass two; prompt read tok/s pass one / two;
+  n = server processes; full table in `digest-nc-s8.md`).**
+  | point | n | decode pass 1 (min-max) | pass 2 (min-max) | vs 0067 | prompt read |
+  |---|---|---|---|---|---|
+  | 0067 (control) | 4 | 15.33 (15.31-15.35) | 15.52 (15.51-15.56) | - | 28.6 / 34.0 |
+  | 0069 | 3 | 15.28 (15.19-15.34) | 15.53 (15.52-15.56) | -0.3 / +0.1 % | 28.4 / 33.7 |
+  | 0070 | 3 | 15.43 (15.42-15.44) | 15.61 (15.58-15.66) | +0.7 / +0.6 % | 28.6 / 33.9 |
+  | 0071 | 3 | 15.45 (15.43-15.47) | 15.66 (15.63-15.67) | +0.8 / +0.9 % | 28.7 / 34.0 |
+  | 0072 | 3 | 15.44 (15.42-15.47) | 15.66 (15.65-15.67) | +0.7 / +0.9 % | 28.7 / 34.0 |
+  | 0073 | 3 | 15.45 (15.43-15.46) | 15.66 (15.65-15.67) | +0.8 / +0.9 % | 28.6 / 34.0 |
+  | 0074 | 3 | 15.45 (15.43-15.49) | 15.66 (15.65-15.69) | +0.8 / +0.9 % | 28.6 / 34.0 |
+  | 0075 | 3 | 15.44 (15.43-15.46) | 15.66 (15.64-15.68) | +0.8 / +0.9 % | 28.6 / 34.0 |
+  | 0076 | 6 | 15.45 (15.43-15.49) | 15.67 (15.66-15.69) | +0.8 / +1.0 % | 28.6 / 33.8 |
+  | 69d = 0069 + 0070's CUDA hunks, same tree | 2 | 15.42 (15.42-15.42) | 15.59 (15.57-15.60) | +0.6 / +0.4 % | 28.6 / 33.9 |
+  | 69c = the same source in a copied tree | 3 | 15.41 (15.40-15.42) | 15.60 (15.59-15.62) | +0.5 / +0.5 % | 28.4 / 33.7 |
+  | CI g08d176f (nc-s7's control) | 1 | 15.38 | 15.58 | +0.3 / +0.4 % | 28.6 / 33.9 |
+  | CI gfbb8831 (nc-s7's A') | 1 | 15.31 | 15.54 | -0.1 / +0.1 % | 28.6 / 33.9 |
+  The control's spread is 0.3 % (pass one) and 0.3 % (pass two) over four processes; every point from 0070 on is above
+  the control's maximum in both passes in every one of its processes (the closest: S70.2, pass two 15.58 against the
+  control's 15.56). 0069 equals the control. 0071
+  to 0076 are level with 0070 within 0.1-0.3 %, each inside its own spread: nothing after 0070 moves the number, 0076's
+  saved allocation included (0.26 ms per step at 3.9 MiB is below what this resolves). The two CI binary sets measured in
+  the same window reproduce nc-s7's direction, `gfbb8831` 0.45 % / 0.25 % below `g08d176f`, and both sit between the two
+  native levels. The point 69d has the source of 0069 plus only `0070-cuda-only.patch` (the `common.cuh` member and the
+  owner check in `ggml-cuda.cu`), built in the original tree, so its `libllama.so`, `libllama-common.so` and
+  `libllama-server-impl.so` are byte-identical to 0069's and only `libggml-cuda.so` differs: it sits at the fast level.
+  69c, the same source compiled in a copy of the tree, differs from 0069 in every library (the tree's path is in every
+  object's assert strings) and sits there as well. Two clients: 0067 21.36 / 21.51 aggregate tok/s (rounds one / two),
+  0076 21.44 / 21.58 (+0.4 / +0.3 %), per-stream and bytes equal (`ce2fc95752`, `bb64203d71`), the size of nc-s7's gain.
+  Bytes: 38 solo processes, 10 answers each, every answer gold (`ce2fc95752`, `bb64203d71`, `2d592efcb6`, `1aab74269d`,
+  `0c3f28294b`), the CI binaries and both 69 variants included. Prompt read is 28.2-28.8 tok/s in pass one and 33.1-34.2
+  in pass two for every point with no pattern; the step is in decode only.
+- **Verdict.** The culprit is not a patch. The one-client decode step moves by 0.5-0.9 % with the code layout of the CUDA
+  backend's host side: the one change between the two native levels is a recompiled `libggml-cuda.so` whose source
+  differs by a `bool` member in `ggml_backend_cuda_context` and one pointer compare per lookup node (0070), and the
+  direction is a gain here and a loss between the two CI images, which carry the same source change but were compiled
+  on another machine for sm_90 and sm_121 with Ninja. A 0.7 % step at 15.5 tok/s is 0.45 ms per token, about 10 us per
+  layer, the size of a misaligned hot loop or a hot field moved across a cache line in the poller or the graph launch
+  path, not of the compare itself (nanoseconds). What to do with it: nothing in the patch series; treat a one-client
+  difference of up to 1 % between two builds as layout noise unless a same-tree variant that touches only the suspected
+  file reproduces it (the 69d method here: one tree, one build directory, the minimal recompile). If the +0.7 % is ever
+  wanted on purpose, the lever is explicit alignment of the hot host-side state of the CUDA backend (`alignas(64)` on the
+  mailbox and context fields the poller and the launch loop touch, and `-falign-functions`/`-falign-loops` for the
+  backend) with a same-tree A/B, not a patch revert; the layout lottery otherwise re-rolls with every rebuild. Two
+  traps for the record: (1) a copied build tree does not rebuild (its CMake cache and dependency files point at the old
+  path): the first 69c runner (`nc13a`, tags S69c.1 and S69c.2) ran the p0076 binaries by mistake, caught by the sha256
+  sums before the next runner; (2) CUDA objects are not bit-reproducible between runs of nvcc (the same CUDA source
+  gave a different `libggml-cuda.so` in 69d and 0070), so a "same library" check across builds has to be done on the
+  non-CUDA libraries.
+- **Window closed 13:43 UTC.** glm53-spark back at one replica on `547208dca250-gfbb8831` with `LLAMA_KPOOL_OWN_SEQS=1`,
+  quicksort gold `ee079496a4` three times through the kimi-k3 Service (16.8-17.3 tok/s), readyReplicas 1; no test server,
+  key file or runner script left on the Spark; `window.lock` free; the laptop deadman disarmed by its marker; the RELEASE
+  posted at 13:44 UTC. Left on the Spark on purpose: `~/bis` (the source tree at the 69d state, its build directory and
+  the binary sets `p0067`-`p0076`, `p0069c`, `p0069d`, 1.5 GB) and `/srv/glm-5.3-flash/legs-nc3/` (server logs and
+  results, 4.7 MB) for a follow-up; glm53-gh200 was not touched.
