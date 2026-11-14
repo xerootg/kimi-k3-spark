@@ -2921,3 +2921,8 @@ the window's records (the session that ran it hit its limit after restoring prod
 - **Window closed 01:22 UTC.** glm53-spark back at one replica on `547208dca250-g08d176f`, quicksort gold
   `ee079496a4` three times through the kimi-k3 Service (17.05-17.07 tok/s), no test server, key file or runner left;
   the RELEASE was posted in the coordination file at 07:40 UTC 2026-11-13 by the coordinator after the session's limit.
+- **Rolled out 2026-11-14.** Haley approved the step on 2026-11-14 ("Merge"); argo-things #185 (06548a0) merged at
+  10:59 UTC after Copilot's "no open issues". glm53-spark 1/1 on `547208dca250-gfbb8831` with
+  `LLAMA_KPOOL_OWN_SEQS=1` since 11:03 UTC, one restart; quicksort gold `ee079496a4` twice through the kimi-k3
+  Service (15.29 and 16.84 tok/s, the first round cold); glm53-gh200 untouched. Both boxes now run patches through
+  0076 (the GH200 adds 0077). The one-client slowdown of the build goes to a bisection window on the Spark next.
