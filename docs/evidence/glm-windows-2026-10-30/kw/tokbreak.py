@@ -20,17 +20,23 @@ def fam(n):
     if "quantize_q8_1" in n: return "quantize"
     if "memcpy" in n or "memset" in n: return "memcpy"
     return "small kernels"
-walls, busies, fams, waits, kern_n = [], [], collections.Counter(), [], []
+walls, busies, fams, waits, kern_n, covered = [], [], collections.Counter(), [], [], []
 for t in range(a.skip, len(outs) - 1):
     a0, b0 = outs[t], outs[t + 1]; tok = rows[a0 + 1:b0 + 1]
     walls.append((rows[b0][0] + rows[b0][1] - rows[a0 + 1][0]) / 1e3); busies.append(sum(d for s, d, n in tok) / 1e3); kern_n.append(len(tok))
+    # union of the kernel intervals: kernels on several streams overlap, so the plain sum over-counts; idle = wall - union
+    cov = 0; cs, ce = tok[0][0], tok[0][0] + tok[0][1]
+    for s, d, n in tok[1:]:
+        if s > ce: cov += ce - cs; cs, ce = s, s + d
+        else: ce = max(ce, s + d)
+    cov += ce - cs; covered.append(cov / 1e3)
     f = collections.Counter()
     for s, d, n in tok: f[fam(n)] += d / 1e3
     fams.update(f)
     for i in range(len(tok) - 1):
         if tok[i][2].startswith("k_bank_request"): waits.append((tok[i + 1][0] - (tok[i][0] + tok[i][1])) / 1e3)
 nt = len(walls)
-print(f"{a.csv}: {len(outs)} tokens traced, {nt} measured; per token: wall median {statistics.median(walls):.1f} us, busy {statistics.median(busies):.1f} us, kernels {statistics.median(kern_n):.0f}")
+print(f"{a.csv}: {len(outs)} tokens traced, {nt} measured; per token: wall median {statistics.median(walls):.1f} us, kernel sum {statistics.median(busies):.1f} us (overlapping streams double-count), GPU covered {statistics.median(covered):.1f} us, idle {statistics.median(walls)-statistics.median(covered):.1f} us, kernels {statistics.median(kern_n):.0f}")
 for k, v in fams.most_common(): print(f"  {k:18s} {v/nt:8.1f} us/token")
 if waits:
     w = sorted(waits); print(f"  mailbox waits after k_bank_request: {len(waits)/nt:.0f}/token, p50 {w[len(w)//2]:.1f} us, p90 {w[int(len(w)*.9)]:.1f} us, sum {sum(waits)/nt:.0f} us/token")
