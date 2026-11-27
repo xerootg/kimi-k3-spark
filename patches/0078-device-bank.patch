@@ -1,0 +1,454 @@
+diff --git a/ggml/include/ggml-cuda.h b/ggml/include/ggml-cuda.h
+index b013060..ed3269f 100644
+--- a/ggml/include/ggml-cuda.h
++++ b/ggml/include/ggml-cuda.h
+@@ -43,6 +43,10 @@ GGML_BACKEND_API void ggml_backend_cuda_unregister_host_buffer(void * buffer);
+ // wrap caller-owned host memory as a "host bank" buffer: registered with the driver and read in place by the
+ // kernels of an integrated device; NULL if the device cannot do that (also via ggml_backend_reg_get_proc_address)
+ GGML_BACKEND_API ggml_backend_buffer_t ggml_backend_cuda_host_bank_buffer_from_ptr(void * ptr, size_t size);
++// kimi-k3-spark patch 0078: the bank in device memory; the store fills it through pinned staging and these copies
++GGML_BACKEND_API ggml_backend_buffer_t ggml_backend_cuda_device_bank_buffer_alloc(size_t size);
++GGML_BACKEND_API bool ggml_backend_cuda_bank_upload(void * dst, const void * src, size_t n);
++GGML_BACKEND_API bool ggml_backend_cuda_bank_memset(void * dst, int value, size_t n);
+ 
+ // called right before a GET_ROWS whose src0 is a host-bank tensor, with that src0 (the MoE cache's slot map, a
+ // tensor that outlives the graph), the kind of lookup (from the node's name) and its (contiguous, I32) ids read back
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index 6222e93..f9e6559 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -2066,6 +2066,7 @@ static void *                             g_host_bank_hook_ud = nullptr;
+ struct ggml_cuda_bank_mailbox {
+     volatile uint32_t req;      // set to 1 by the GPU once ids/slot_map/kind/n_ids are written
+     volatile uint32_t done;     // set to 1 by the poller after the hook; reset to 0 by the GPU after its wait
++    volatile uint32_t served;   // patch 0078: real lookups served by the poller (host-written, host-read)
+     volatile uint64_t slot_map; // const ggml_tensor * src0 of the lookup (the cache's slot map, outlives the graph)
+     volatile uint32_t kind;     // GGML_CUDA_HOST_BANK_LOOKUP / _PREDICT / _SELF
+     volatile int64_t  n_ids;
+@@ -2178,6 +2179,7 @@ static void ggml_cuda_bank_poller_main() {
+             call_hook(mb, 0);
+             std::atomic_thread_fence(std::memory_order_seq_cst); // the fills and the slot map before the flag
+             mb->done = 1;
++            mb->served = mb->served + 1;
+             served = true;
+         }
+         if (served) {
+@@ -2321,11 +2323,28 @@ static void ggml_cuda_host_bank_request_async(ggml_backend_cuda_context & ctx, c
+         CUDA_CHECK(cudaGetLastError());
+         return;
+     }
++    // patch 0078 (GGML_CUDA_HOST_BANK_LAUNCHER_WAIT=1, needed with the device bank): outside stream capture the
++    // launching thread waits here until the poller has served this lookup. Otherwise it runs thousands of launches
++    // ahead into a full launch queue while the GPU waits on the mailbox, and the poller's record copies into the
++    // device bank are never executed (deadlock seen 2026-11-27). The GPU keeps the queued work meanwhile.
++    static const bool launcher_wait = [] { const char * e = getenv("GGML_CUDA_HOST_BANK_LAUNCHER_WAIT"); return e != nullptr && e[0] == '1'; }();
++    const uint32_t expect = g_bank_mb[s].served + 1;
+     k_bank_request<<<1, threads, 0, stream>>>((const int32_t *) ids->data, n, &g_bank_mb_d[s], slot_map, (uint32_t) kind);
+     CUDA_CHECK(cudaGetLastError());
+     const CUdeviceptr done = (CUdeviceptr) (uintptr_t) &g_bank_mb_d[s].done;
+     CU_CHECK(cuStreamWaitValue32((CUstream) stream, done, 1, CU_STREAM_WAIT_VALUE_EQ));
+     CU_CHECK(cuStreamWriteValue32((CUstream) stream, done, 0, CU_STREAM_WRITE_VALUE_DEFAULT));
++    if (launcher_wait) {
++        cudaStreamCaptureStatus cs = cudaStreamCaptureStatusNone;
++        CUDA_CHECK(cudaStreamIsCapturing(stream, &cs));
++        if (cs == cudaStreamCaptureStatusNone) {
++            while ((int32_t) (g_bank_mb[s].served - expect) < 0) {
++#if defined(__aarch64__)
++                asm volatile("yield" ::: "memory");
++#endif
++            }
++        }
++    }
+     if (!ggml_cuda_host_bank_hook_lean()) {
+         g_bank_async_requests++;
+     }
+@@ -2566,6 +2585,101 @@ static ggml_backend_buffer_t ggml_backend_cuda_prefill_bank_buffer_from_ptr(void
+     return ggml_backend_cuda_host_bank_buffer_impl(ptr, size, true);
+ }
+ 
++// kimi-k3-spark patch 0078: the expert bank in device memory. On the GB10 the host bank (anonymous memory registered
++// with cudaHostRegister, read through the host page tables) streams at ~165 GB/s where the same kernel reads a
++// cudaMalloc allocation at ~227 GB/s (tools: mmvq-bench2, 2026-11-27). The CPU cannot write device memory, so the
++// store lands its reads in pinned staging and copies every record in with ggml_backend_cuda_bank_upload before it
++// is published. The buffer carries the host-bank buffer type, so the lookup hooks, the split GEMV and the scheduler
++// treat it exactly as the registered bank; only the address the kernels read from changes.
++ggml_backend_buffer_t ggml_backend_cuda_device_bank_buffer_alloc(size_t size) {
++    ggml_cuda_set_device(0);
++    void * p = nullptr;
++    cudaError_t err = cudaMalloc(&p, size);
++    if (err != cudaSuccess) {
++        (void) cudaGetLastError();
++        GGML_LOG_ERROR("%s: cudaMalloc of %.2f MiB for the device bank failed: %s\n", __func__, size/1024.0/1024.0, cudaGetErrorString(err));
++        return nullptr;
++    }
++    CUDA_CHECK(cudaMemset(p, 0, size));
++    CUDA_CHECK(cudaDeviceSynchronize());
++    ggml_backend_cuda_buffer_context * ctx = new ggml_backend_cuda_buffer_context(0, p);
++    GGML_LOG_INFO("%s: device bank: %.2f MiB in device memory at %p\n", __func__, size/1024.0/1024.0, p);
++    return ggml_backend_buffer_init(ggml_backend_cuda_host_bank_buffer_type(), ggml_backend_cuda_buffer_interface, ctx, size);
++}
++
++// One non-blocking stream for the bank copies. The callers (the poller inside the lookup hook, the fill thread, the
++// speculative reader) never call a blocking CUDA API: a cudaStreamSynchronize from the poller did not return while
++// the main thread spun in cuLaunchKernelEx on a full launch queue and the GPU waited on the mailbox (2026-11-27).
++// Instead the copy stream writes a sequence number to mapped host memory after each copy (cuStreamWriteValue32) and
++// the caller spins on that word.
++struct ggml_cuda_bank_copy_state {
++    cudaStream_t         stream = nullptr;
++    volatile uint32_t *  seq_h  = nullptr;
++    CUdeviceptr          seq_d  = 0;
++    uint32_t             next   = 0;
++    std::mutex           mutex;
++    bool                 ok     = false;
++};
++static ggml_cuda_bank_copy_state & ggml_cuda_bank_copy() {
++    static ggml_cuda_bank_copy_state st;
++    static std::once_flag once;
++    std::call_once(once, [] {
++        ggml_cuda_set_device(0);
++        void * p = nullptr;
++        if (cudaStreamCreateWithFlags(&st.stream, cudaStreamNonBlocking) == cudaSuccess &&
++            cudaHostAlloc(&p, 4096, cudaHostAllocMapped | cudaHostAllocPortable) == cudaSuccess) {
++            void * d = nullptr;
++            memset(p, 0, 4096);
++            if (cudaHostGetDevicePointer(&d, p, 0) == cudaSuccess) {
++                st.seq_h = (volatile uint32_t *) p;
++                st.seq_d = (CUdeviceptr) (uintptr_t) d;
++                st.ok = true;
++            }
++        }
++        (void) cudaGetLastError();
++    });
++    return st;
++}
++// enqueue op(stream) and the sequence write behind it; returns the sequence to wait for (0 on failure)
++template <typename F> static uint32_t ggml_cuda_bank_copy_enqueue(F op) {
++    ggml_cuda_bank_copy_state & st = ggml_cuda_bank_copy();
++    if (!st.ok) {
++        return 0;
++    }
++    std::lock_guard<std::mutex> lock(st.mutex);
++    const uint32_t seq = ++st.next == 0 ? ++st.next : st.next;
++    if (op(st.stream) != cudaSuccess || cuStreamWriteValue32((CUstream) st.stream, st.seq_d, seq, CU_STREAM_WRITE_VALUE_DEFAULT) != CUDA_SUCCESS) {
++        (void) cudaGetLastError();
++        return 0;
++    }
++    return seq;
++}
++static bool ggml_cuda_bank_copy_wait(uint32_t seq) {
++    if (seq == 0) {
++        return false;
++    }
++    ggml_cuda_bank_copy_state & st = ggml_cuda_bank_copy();
++    const auto t0 = std::chrono::steady_clock::now();
++    while ((int32_t) (*st.seq_h - seq) < 0) {
++#if defined(__aarch64__)
++        asm volatile("yield" ::: "memory");
++#endif
++        if (std::chrono::steady_clock::now() - t0 > std::chrono::seconds(60)) {
++            GGML_LOG_ERROR("%s: a bank copy did not complete in 60 s (sequence %u, last %u)\n", __func__, seq, *st.seq_h);
++            return false;
++        }
++    }
++    return true;
++}
++
++bool ggml_backend_cuda_bank_upload(void * dst, const void * src, size_t n) {
++    return ggml_cuda_bank_copy_wait(ggml_cuda_bank_copy_enqueue([&](cudaStream_t s) { return cudaMemcpyAsync(dst, src, n, cudaMemcpyHostToDevice, s); }));
++}
++
++bool ggml_backend_cuda_bank_memset(void * dst, int value, size_t n) {
++    return ggml_cuda_bank_copy_wait(ggml_cuda_bank_copy_enqueue([&](cudaStream_t s) { return cudaMemsetAsync(dst, value, n, s); }));
++}
++
+ /// kernels
+ 
+ typedef void (*ggml_cuda_op_mul_mat_t)(
+@@ -8422,6 +8536,15 @@ static void * ggml_backend_cuda_reg_get_proc_address(ggml_backend_reg_t reg, con
+     if (strcmp(name, "ggml_backend_cuda_host_bank_buffer_from_ptr") == 0) {
+         return (void *)ggml_backend_cuda_host_bank_buffer_from_ptr;
+     }
++    if (strcmp(name, "ggml_backend_cuda_device_bank_buffer_alloc") == 0) {
++        return (void *)ggml_backend_cuda_device_bank_buffer_alloc;
++    }
++    if (strcmp(name, "ggml_backend_cuda_bank_upload") == 0) {
++        return (void *)ggml_backend_cuda_bank_upload;
++    }
++    if (strcmp(name, "ggml_backend_cuda_bank_memset") == 0) {
++        return (void *)ggml_backend_cuda_bank_memset;
++    }
+     if (strcmp(name, "ggml_backend_get_features") == 0) {
+         return (void *)ggml_backend_cuda_get_features;
+     }
+diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
+index 3a49ff0..fc45897 100644
+--- a/src/llama-moe-cache.cpp
++++ b/src/llama-moe-cache.cpp
+@@ -594,11 +594,63 @@ struct io_pool {
+ #endif
+     }
+ 
++    // kimi-k3-spark patch 0078: device bank. Jobs whose destination lies in a device region are read into the pinned
++    // staging and copied to the device with `upload` before the run completes; the callers' job lists do not change.
++    typedef bool (*upload_fn)(void *, const void *, size_t);
++    void add_device_region(const void * begin, size_t size) { dev_ranges.push_back({ (uintptr_t) begin, (uintptr_t) begin + size }); }
++    void set_device_staging(void * p, size_t size, upload_fn fn) { dev_staging = (char *) p; dev_staging_size = size; upload = fn; }
++    bool in_device(const void * p) const {
++        const uintptr_t a = (uintptr_t) p;
++        for (const auto & r : dev_ranges) { if (a >= r.first && a < r.second) { return true; } }
++        return false;
++    }
++
+     // read all the jobs from fd, blocks until they are done; false if a read failed
+     bool run(int fd, const std::vector<job> & in, bool bank = false) {
+         if (in.empty()) {
+             return true;
+         }
++        if (!dev_ranges.empty() && in.front().swap_with == nullptr && in_device(in.front().dst)) {
++            return run_staged(fd, in, bank);
++        }
++        return run_direct(fd, in, bank);
++    }
++
++    bool run_staged(int fd, const std::vector<job> & in, bool bank) {
++        GGML_ASSERT(dev_staging != nullptr && upload != nullptr);
++        std::lock_guard<std::mutex> lock(staged_mutex); // the staging is shared by every caller
++        size_t i = 0;
++        while (i < in.size()) {
++            staged.clear();
++            size_t off = 0, j = i;
++            for (; j < in.size(); ++j) {
++                GGML_ASSERT(in[j].swap_with == nullptr && in_device(in[j].dst));
++                const size_t need = (in[j].len + 4095) & ~(size_t) 4095; // O_DIRECT alignment of every job
++                GGML_ASSERT(need <= dev_staging_size);
++                if (off + need > dev_staging_size) {
++                    break;
++                }
++                staged.push_back({ dev_staging + off, in[j].len, in[j].off });
++                off += need;
++            }
++            if (!run_direct(fd, staged, bank)) {
++                return false;
++            }
++            for (size_t k = i; k < j; ++k) {
++                if (!upload(in[k].dst, staged[k - i].dst, in[k].len)) {
++                    LLAMA_LOG_ERROR("%s: expert store: device bank: copying a record of %zu bytes to the device failed\n", __func__, in[k].len);
++                    return false;
++                }
++            }
++            i = j;
++        }
++        return true;
++    }
++
++    bool run_direct(int fd, const std::vector<job> & in, bool bank = false) {
++        if (in.empty()) {
++            return true;
++        }
+ #if defined(LLAMA_HAVE_LIBURING)
+         if (use_uring && in.front().swap_with == nullptr) {
+             if (bank) {
+@@ -777,6 +829,13 @@ public:
+     }
+     bool use_uring = false;
+     int  spin_us   = 0; // LLAMA_EXPERT_STORE_SPIN_US: busy-wait this long before sleeping, workers and the caller
++    // patch 0078
++    std::vector<std::pair<uintptr_t, uintptr_t>> dev_ranges;
++    char *    dev_staging = nullptr;
++    size_t    dev_staging_size = 0;
++    upload_fn upload = nullptr;
++    std::mutex staged_mutex;
++    std::vector<job> staged;
+ 
+     static inline void cpu_relax() {
+ #if defined(__aarch64__)
+@@ -1402,7 +1461,8 @@ struct spec_reader {
+     };
+ 
+     // the ring is created by the reader thread itself (like the pool's thread-local rings), not by the caller
+-    spec_reader(int fd, size_t piece, unsigned depth, bool uring, store_landed_fn landed, void * landed_ctx) : landed(landed), landed_ctx(landed_ctx), fd(fd), piece(piece ? piece : (size_t) 1 << 20), depth(std::max(1u, depth)), uring(uring) {
++    // patch 0078: with a device bank, staging holds depth pieces (pinned) and upload copies a finished piece to its slot
++    spec_reader(int fd, size_t piece, unsigned depth, bool uring, store_landed_fn landed, void * landed_ctx, char * staging = nullptr, io_pool::upload_fn upload = nullptr) : landed(landed), landed_ctx(landed_ctx), fd(fd), piece(piece ? piece : (size_t) 1 << 20), depth(std::max(1u, depth)), uring(uring), staging(staging), upload(upload) {
+         thread = std::thread([this] { main(); });
+         std::unique_lock<std::mutex> lock(mutex);
+         cv.wait(lock, [&] { return started; });
+@@ -1457,6 +1517,10 @@ private:
+         size_t len;
+         off_t  off;
+         int    n_zero = 0;
++        char * buf  = nullptr; // where the read lands: dst, or the piece's staging with a device bank (patch 0078)
++        char * dst0 = nullptr; // the whole piece, for the upload
++        char * buf0 = nullptr;
++        size_t len0 = 0;
+     };
+     struct active_t {
+         rec      r;
+@@ -1488,7 +1552,7 @@ private:
+             size_t got = 0;
+             int    res = 0;
+             while (got < pc.len) {
+-                const ssize_t n = pread(fd, pc.dst + got, pc.len - got, pc.off + (off_t) got);
++                const ssize_t n = pread(fd, pc.buf + got, pc.len - got, pc.off + (off_t) got);
+                 if (n < 0) {
+                     if (errno == EINTR) {
+                         continue;
+@@ -1604,6 +1668,10 @@ private:
+                     free_pieces.pop_back();
+                     const size_t len = std::min(piece, a.r.len - a.next_off);
+                     pieces[p] = { cur, a.r.dst + a.next_off, len, a.r.off + (off_t) a.next_off, 0 };
++                    pieces[p].buf  = staging != nullptr ? staging + (size_t) p*piece : pieces[p].dst;
++                    pieces[p].dst0 = pieces[p].dst;
++                    pieces[p].buf0 = pieces[p].buf;
++                    pieces[p].len0 = len;
+                     a.next_off += len;
+                     a.n_out++;
+                 }
+@@ -1616,7 +1684,7 @@ private:
+                         sqe = io_uring_get_sqe(&ring);
+                         GGML_ASSERT(sqe != nullptr);
+                     }
+-                    io_uring_prep_read(sqe, fd, pieces[p].dst, (unsigned) pieces[p].len, pieces[p].off);
++                    io_uring_prep_read(sqe, fd, pieces[p].buf, (unsigned) pieces[p].len, pieces[p].off);
+                     io_uring_sqe_set_data64(sqe, (uint64_t) p);
+ #endif
+                 } else {
+@@ -1680,10 +1748,14 @@ private:
+                     GGML_ABORT("expert store: speculative read failed: %zu bytes at offset %lld: %s", pc.len, (long long) pc.off, strerror(-res));
+                 } else if ((size_t) res < pc.len) {
+                     pc.dst += res;
++                    pc.buf += res;
+                     pc.len -= (size_t) res;
+                     pc.off += res;
+                     retry.push_back(p);
+                 } else {
++                    if (staging != nullptr && !upload(pc.dst0, pc.buf0, pc.len0)) {
++                        GGML_ABORT("expert store: speculative read: copying a piece of %zu bytes to the device bank failed", pc.len0);
++                    }
+                     a.n_out--;
+                     free_pieces.push_back(p);
+                     if (a.n_out == 0 && a.next_off >= a.r.len) {
+@@ -1708,6 +1780,8 @@ private:
+     size_t   piece;
+     unsigned depth;
+     bool     uring;
++    char *   staging = nullptr;          // patch 0078
++    io_pool::upload_fn upload = nullptr;
+     bool     warned_zero = false;
+ #if defined(LLAMA_HAVE_LIBURING)
+     io_uring ring;
+@@ -2260,6 +2334,14 @@ struct llama_moe_cache::impl {
+     bool   staging_pinned = false;
+     ggml_backend_buffer_ptr staging_buf; // the registration of the staging with the GPU, when it has one
+     bool   bank_on_gpu = false;      // the cache regions are registered with the GPU and the expert matmuls run there
++    // patch 0078: LLAMA_EXPERT_STORE_DEVICE_BANK=1: the regions are device memory (cudaMalloc), filled through pinned
++    // staging and copies; no memory valve, no THP, no record check, no HBM tier
++    bool   device_bank = false;
++    ggml_backend_buffer_t (*dev_bank_alloc)(size_t) = nullptr;
++    bool (*dev_bank_upload)(void *, const void *, size_t) = nullptr;
++    bool (*dev_bank_memset)(void *, int, size_t) = nullptr;
++    ggml_backend_buffer_ptr dev_pool_staging;
++    ggml_backend_buffer_ptr dev_spec_staging;
+     ggml_backend_reg_t gpu_reg = nullptr;
+     ggml_backend_t gpu_backend = nullptr;
+     // the slot maps are registered with the GPU as well: the lookup runs there (no CPU split per layer) and the
+@@ -2700,6 +2782,10 @@ struct llama_moe_cache::impl {
+     }
+ 
+     void valve_start() {
++        if (device_bank) {
++            LLAMA_LOG_INFO("%s: expert store: memory valve off: the regions are device memory (patch 0078)\n", __func__);
++            return;
++        }
+         if (!valve_on || !use_store) {
+             return;
+         }
+@@ -3222,6 +3308,36 @@ struct llama_moe_cache::impl {
+             pool = std::make_unique<io_pool>(n_io, chunk);
+             if (record_check.fd >= 0) { pool->landed = check_record; pool->landed_ctx = this; }
+             pool_chunk = chunk;
++            {
++                const char * env_dev = getenv("LLAMA_EXPERT_STORE_DEVICE_BANK");
++                if (env_dev != nullptr && env_dev[0] == '1') {
++                    if (gpu_reg == nullptr) {
++                        throw std::runtime_error("expert store: LLAMA_EXPERT_STORE_DEVICE_BANK needs a GPU backend");
++                    }
++                    dev_bank_alloc  = (ggml_backend_buffer_t (*)(size_t)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_device_bank_buffer_alloc");
++                    dev_bank_upload = (bool (*)(void *, const void *, size_t)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_bank_upload");
++                    dev_bank_memset = (bool (*)(void *, int, size_t)) ggml_backend_reg_get_proc_address(gpu_reg, "ggml_backend_cuda_bank_memset");
++                    if (dev_bank_alloc == nullptr || dev_bank_upload == nullptr || dev_bank_memset == nullptr) {
++                        throw std::runtime_error("expert store: LLAMA_EXPERT_STORE_DEVICE_BANK needs the CUDA backend's device bank");
++                    }
++                    device_bank = true;
++                    ggml_backend_buffer_type_t pinned = ggml_backend_dev_host_buffer_type(ggml_backend_reg_dev_get(gpu_reg, 0));
++                    if (pinned == nullptr) {
++                        throw std::runtime_error("expert store: device bank: no pinned host buffer type");
++                    }
++                    const size_t pool_staging_size = (size_t) 512 << 20;
++                    dev_pool_staging.reset(ggml_backend_buft_alloc_buffer(pinned, pool_staging_size));
++                    if (!dev_pool_staging) {
++                        throw std::runtime_error("expert store: device bank: pinned staging allocation failed");
++                    }
++                    pool->set_device_staging(ggml_backend_buffer_get_base(dev_pool_staging.get()), pool_staging_size, dev_bank_upload);
++                    if (record_check.fd >= 0) {
++                        pool->landed = nullptr; // it reads the landed bytes, which are on the device now
++                        LLAMA_LOG_WARN("%s: expert store: device bank: the buffered record check is off\n", __func__);
++                    }
++                    LLAMA_LOG_INFO("%s: expert store: device bank on: regions in device memory, reads land in %zu MiB of pinned staging; memory valve off\n", __func__, pool_staging_size >> 20);
++                }
++            }
+             if (getenv("LLAMA_EXPERT_STORE_SPIN_US") != nullptr) {
+                 pool->spin_us = std::max(0, atoi(getenv("LLAMA_EXPERT_STORE_SPIN_US")));
+             }
+@@ -3651,7 +3767,21 @@ struct llama_moe_cache::impl {
+                 // one region of records; each expert tensor's bank is a view with the record as its expert stride
+                 const size_t landing_off = alloc_size(g, g.n_slots);
+                 g.region_size = landing_off + (prefill_bank ? landing_bytes : 0);
+-                if (!model.hparams.no_alloc) {
++                if (!model.hparams.no_alloc && device_bank) {
++                    // patch 0078: the whole region (slots, zero record, prefill landing) in device memory
++                    if (g.lru.n_hbm > 0) {
++                        throw std::runtime_error("expert store: device bank: no HBM tier");
++                    }
++                    ggml_backend_buffer_t region_buf = dev_bank_alloc(g.region_size);
++                    if (region_buf == nullptr) {
++                        throw std::runtime_error("expert store: failed to allocate " + std::to_string(g.region_size/1024/1024) + " MiB of device cache");
++                    }
++                    g.region_buf.reset(region_buf);
++                    g.region = ggml_backend_buffer_get_base(region_buf);
++                    ggml_backend_buffer_set_usage(g.region_buf.get(), GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
++                    bank_on_gpu = true;
++                    pool->add_device_region(g.region, g.region_size);
++                } else if (!model.hparams.no_alloc) {
+                     std::string err;
+                     g.region = store_region_alloc(g.region_size, err, (size_t) g.lru.n_hbm*g.slot_stride, landing.fd, landing_off, thp_bank);
+                     if (g.region == nullptr) {
+@@ -3934,7 +4064,9 @@ struct llama_moe_cache::impl {
+                     }
+                     const int32_t d = g.n_slots;
+                     ggml_backend_tensor_set(g.dummy_const, &d, 0, sizeof(d));
+-                    if (g.region != nullptr) {
++                    if (g.region != nullptr && device_bank) {
++                        GGML_ASSERT(dev_bank_memset((char *) g.region + (size_t) g.n_slots*g.slot_stride, 0, g.record_size));
++                    } else if (g.region != nullptr) {
+                         memset((char *) g.region + (size_t) g.n_slots*g.slot_stride, 0, g.record_size);
+                     }
+                 }
+@@ -4200,7 +4332,17 @@ struct llama_moe_cache::impl {
+ #if !defined(LLAMA_HAVE_LIBURING)
+                 spec_uring = false;
+ #endif
+-                spec = std::make_unique<spec_reader>(store.fd, pool_chunk, spec_depth, spec_uring, pool->landed, this);
++                char * spec_staging = nullptr;
++                if (device_bank) {
++                    const size_t sp = pool_chunk ? pool_chunk : (size_t) 1 << 20;
++                    ggml_backend_buffer_type_t pinned = ggml_backend_dev_host_buffer_type(ggml_backend_reg_dev_get(gpu_reg, 0));
++                    dev_spec_staging.reset(ggml_backend_buft_alloc_buffer(pinned, sp*spec_depth));
++                    if (!dev_spec_staging) {
++                        throw std::runtime_error("expert store: device bank: pinned staging for the speculative reader failed");
++                    }
++                    spec_staging = (char *) ggml_backend_buffer_get_base(dev_spec_staging.get());
++                }
++                spec = std::make_unique<spec_reader>(store.fd, pool_chunk, spec_depth, spec_uring, pool->landed, this, spec_staging, device_bank ? dev_bank_upload : nullptr);
+                 if (!spec->ok) {
+                     spec.reset();
+                 }

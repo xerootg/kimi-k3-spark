@@ -1,0 +1,6 @@
+0.22.412.933 I valve_start: expert store: memory valve on: host reserve 6144 MiB, floor 50% of the slots, sampled every 500 ms (no PSI trigger: /proc/pressure/memory not writable), released slots re-armed after 10 s of calm
+0.33.775.357 I fill_late: expert store: 36161 lookups, hit rate 96.5%, 10.4 GB read for decode, 0.0 GB for prefill
+0.33.775.370 I fill_late: expert store: memory valve: host MemAvailable 23.00 GB (lowest 23.00, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.37.790.799 I llama_moe_cache: ubatch <= 8: hits = 46153, misses = 1256, hit rate = 97.35%, uploaded = 9940.38 MiB
+0.37.790.809 I llama_moe_cache: expert store: memory valve: host MemAvailable 22.77 GB (lowest 22.77, reserve 6.44), 0 host slots released (0.00 GB); 0 releases, 0 re-arms, 0 PSI wake-ups
+0.38.041.886 I host bank hooks: early=5460/195.870ms real=5502/1029.435ms post=42/1.489ms idle_sleeps=174547 lean=1

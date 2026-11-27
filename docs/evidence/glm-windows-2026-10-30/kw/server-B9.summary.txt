@@ -1,0 +1,19 @@
+0.13.104.052 I impl: expert store: device bank on: regions in device memory, reads land in 512 MiB of pinned staging; memory valve off
+0.15.775.626 I ggml_backend_cuda_device_bank_buffer_alloc: device bank: 74760.00 MiB in device memory at 0xf7b080000000
+0.15.987.590 I ggml_backend_cuda_device_bank_buffer_alloc: device bank: 5916.00 MiB in device memory at 0xf7af00000000
+0.16.262.440 I ggml_backend_cuda_device_bank_buffer_alloc: device bank: 7676.00 MiB in device memory at 0xf7ad20000000
+0.21.864.148 I valve_start: expert store: memory valve off: the regions are device memory (patch 0078)
+0.31.015.433 I fill_late: expert store: 34603 lookups, hit rate 95.3%, 13.5 GB read for decode, 0.0 GB for prefill
+0.37.238.201 I fill_late: expert store: 67371 lookups, hit rate 95.7%, 24.1 GB read for decode, 0.0 GB for prefill
+0.43.390.409 I fill_late: expert store: 101697 lookups, hit rate 96.2%, 32.0 GB read for decode, 0.0 GB for prefill
+0.48.910.093 I fill_late: expert store: 134465 lookups, hit rate 96.8%, 35.8 GB read for decode, 0.0 GB for prefill
+0.54.542.499 I fill_late: expert store: 167233 lookups, hit rate 97.1%, 40.3 GB read for decode, 0.0 GB for prefill
+1.00.389.287 I fill_late: expert store: 201559 lookups, hit rate 97.3%, 45.1 GB read for decode, 0.0 GB for prefill
+1.06.005.612 I fill_late: expert store: 234327 lookups, hit rate 97.5%, 49.4 GB read for decode, 0.0 GB for prefill
+1.11.931.014 I fill_late: expert store: 268653 lookups, hit rate 97.6%, 54.6 GB read for decode, 0.0 GB for prefill
+1.17.414.192 I fill_late: expert store: 301421 lookups, hit rate 97.7%, 57.8 GB read for decode, 0.0 GB for prefill
+1.23.001.364 I fill_late: expert store: 334189 lookups, hit rate 97.8%, 62.3 GB read for decode, 0.0 GB for prefill
+2.19.541.212 I fill_late: expert store: 370035 lookups, hit rate 97.5%, 78.1 GB read for decode, 89.7 GB for prefill
+2.25.721.552 I llama_moe_cache: ubatch <= 8: hits = 385652, misses = 10140, hit rate = 97.44%, uploaded = 81184.25 MiB
+2.25.721.557 I llama_moe_cache: ubatch  > 8: hits = 2413, misses = 462, hit rate = 83.93%, uploaded = 3588.44 MiB
+2.25.721.642 I host bank hooks: early=48552/2087.313ms real=48971/17722.709ms post=42/0.027ms idle_sleeps=754553 lean=1

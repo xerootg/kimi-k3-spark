@@ -1,0 +1,20 @@
+diff --git a/ggml/src/ggml-cuda/mmvq.cu b/ggml/src/ggml-cuda/mmvq.cu
+index c6eb611..dbdd51b 100644
+--- a/ggml/src/ggml-cuda/mmvq.cu
++++ b/ggml/src/ggml-cuda/mmvq.cu
+@@ -1955,11 +1955,14 @@ void ggml_cuda_mul_mat_vec_q(
+     }
+ 
+     // A marked split view includes the cleared record at its last slot. Bias/scales and other GLUs need full math.
++    // kimi-k3-spark patch 0079: GLM-5.3-Flash uses swiglu_clamp; the late fused gate/up GEMV of the split never took
++    // the zero-record exit (28.7 us per layer on the GB10 computing the cleared record), while the unfused down
++    // projection did (3.8 us). swiglu_clamp(0, 0) = silu(0) * clamp(0) = 0: the exit writes the same bytes.
+     const int32_t zero_slot = ggml_get_op_params_i32(src0, 8) - 1;
+     const bool zero_type = src0->type == GGML_TYPE_IQ2_XS || src0->type == GGML_TYPE_IQ3_XXS || src0->type == GGML_TYPE_IQ4_XS;
+     if (ids && zero_type && zero_slot >= 0 && zero_slot == src0->ne[2] - 1 &&
+         (!fusion || (!fusion->x_bias && !fusion->gate_bias && !fusion->x_scale && !fusion->gate_scale &&
+-                     (!fusion->gate || (fusion->glu_op == GGML_GLU_OP_SWIGLU &&
++                     (!fusion->gate || ((fusion->glu_op == GGML_GLU_OP_SWIGLU || fusion->glu_op == GGML_GLU_OP_SWIGLU_CLAMP) &&
+                                        ggml_get_op_params_i32(fusion->gate, 8) == zero_slot + 1))))) {
+         fusion_local.zero_slot = zero_slot;
+     }

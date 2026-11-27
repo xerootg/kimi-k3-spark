@@ -1,0 +1,10 @@
+0.13.032.579 I impl: expert store: device bank on: regions in device memory, reads land in 512 MiB of pinned staging; memory valve off
+0.16.009.013 I ggml_backend_cuda_device_bank_buffer_alloc: device bank: 74760.00 MiB in device memory at 0xfa2100000000
+0.16.245.884 I ggml_backend_cuda_device_bank_buffer_alloc: device bank: 5916.00 MiB in device memory at 0xfa1f80000000
+0.16.551.410 I ggml_backend_cuda_device_bank_buffer_alloc: device bank: 7676.00 MiB in device memory at 0xfa1da0000000
+0.22.126.445 I valve_start: expert store: memory valve off: the regions are device memory (patch 0078)
+0.31.120.594 I fill_late: expert store: 34603 lookups, hit rate 95.4%, 13.4 GB read for decode, 0.0 GB for prefill
+0.37.671.372 I fill_late: expert store: 67371 lookups, hit rate 95.7%, 24.1 GB read for decode, 0.0 GB for prefill
+0.44.074.414 I fill_late: expert store: 101697 lookups, hit rate 96.2%, 32.0 GB read for decode, 0.0 GB for prefill
+0.49.911.208 I fill_late: expert store: 134465 lookups, hit rate 96.8%, 35.7 GB read for decode, 0.0 GB for prefill
+0.55.848.823 I fill_late: expert store: 167233 lookups, hit rate 97.1%, 40.2 GB read for decode, 0.0 GB for prefill
