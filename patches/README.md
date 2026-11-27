@@ -1922,10 +1922,12 @@ finished. Production has five slots, so it ran the gather: 19 us x 34 layers = 0
 
 Window kw4 (2026-11-27, stack through 0079): the fault does not reproduce. The ek scenario (p0 next to the 16k
 request, then p0 and p1 alone) ran in the ek configuration (`--parallel 2 --ctx-size 131072`, elastic KV off) and
-in the production one (five slots, 1M), with `GGML_CUDA_GDN_STATE_CHECK=1` reading every fused lookup's ids back
-and logging the table, the ids and the write pointer: 510 lookups on a two-row table (ids 0 and 1), all in range,
-every md5 gold. The one-row guard is now opt-in (`GGML_CUDA_FUSE_GDN_STATE_ONE_ROW=1`); the check knob stays for
-diagnosis (it synchronizes and copies, outside stream capture only, not for production).
+in the production one (five slots, 1M), with `GGML_CUDA_GDN_STATE_CHECK=1` reading the ids back and logging the
+table, the ids and the write pointer for every lookup dispatched eagerly (prompt graphs and the first decode graphs;
+not while a graph is captured, and replayed CUDA graphs never reach the host dispatch): 510 such lookups on a two-row
+table (ids 0 and 1), all in range; every md5 gold, including the decode steps that ran as replayed graphs. The
+one-row guard is now opt-in (`GGML_CUDA_FUSE_GDN_STATE_ONE_ROW=1`); the check knob stays for diagnosis (it
+synchronizes and copies, eager dispatches only, not for production).
 
 Measured single stream (production env, `kw-leg.sh`): fusion on 17.88 / 17.92 / 17.94 and 17.86 / 17.91 / 17.88
 tok/s against 17.58 / 17.66 / 17.66 off (+1.5 %); 16k decode 14.77 / 14.54 vs 14.61 (level); gold `ce2fc95752` /

@@ -1,13 +1,14 @@
 diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
-index f6f1366..b65af1e 100644
+index f6f1366..0a99f16 100644
 --- a/ggml/src/ggml-cuda/ggml-cuda.cu
 +++ b/ggml/src/ggml-cuda/ggml-cuda.cu
-@@ -5783,6 +5783,28 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+@@ -5783,6 +5783,29 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
                  fused_state_cpy.state_base       = (const float *) gr->src[0]->data;
                  fused_state_cpy.state_ids        = (const int32_t *) gr->src[1]->data;
                  fused_state_cpy.state_row_stride = (int64_t) (gr->src[0]->nb[1] / sizeof(float));
-+                // GGML_CUDA_GDN_STATE_CHECK=1 (debug, window ek fault): read the ids back and check them against the
-+                // table before the kernel runs; log every pointer the fused path uses
++                // GGML_CUDA_GDN_STATE_CHECK=1 (debug, window ek fault): on an eager dispatch (not while a graph is
++                // captured; a replayed graph never passes here) read the ids back, check them against the table and
++                // log the pointers the fused path uses
 +                static const bool check = ggml_cuda_env_flag("GGML_CUDA_GDN_STATE_CHECK");
 +                cudaStreamCaptureStatus cap = cudaStreamCaptureStatusNone;
 +                if (check) { CUDA_CHECK(cudaStreamIsCapturing(cuda_ctx->stream(), &cap)); }
@@ -31,7 +32,7 @@ index f6f1366..b65af1e 100644
              }
  #ifdef GGML_CUDA_DEBUG
              GGML_LOG_INFO("%s: fused gated_delta_net snapshot copies for %s (skipped %d nodes)\n",
-@@ -6578,10 +6600,15 @@ static void ggml_cuda_plan_gdn_state(ggml_backend_cuda_context * ctx, const ggml
+@@ -6578,10 +6601,16 @@ static void ggml_cuda_plan_gdn_state(ggml_backend_cuda_context * ctx, const ggml
          }
          const ggml_tensor * table = gr->src[0];
          const ggml_tensor * ids   = gr->src[1];
@@ -42,8 +43,9 @@ index f6f1366..b65af1e 100644
 -        if (ggml_nrows(table) != 1) {
 +        // finished (window ek, 2026-11-08). Patch 0080 (2026-11-27, window kw4): the fault does not reproduce on
 +        // the stack through 0079, neither in the ek configuration (--parallel 2, 128k, elastic KV off) nor in the
-+        // production one (five slots), with the ids and pointers of every fused lookup checked
-+        // (GGML_CUDA_GDN_STATE_CHECK=1 below); the one-row guard is now opt-in (GGML_CUDA_FUSE_GDN_STATE_ONE_ROW=1).
++        // production one (five slots), with the ids and pointers of the lookups dispatched eagerly checked
++        // (GGML_CUDA_GDN_STATE_CHECK=1 below: outside stream capture only; replayed graphs are not checked); the
++        // one-row guard is now opt-in (GGML_CUDA_FUSE_GDN_STATE_ONE_ROW=1).
 +        // Single stream +1.5 % (the 4 MiB state gather per KDA layer is gone), bytes identical.
 +        static const bool one_row_only = ggml_cuda_env_flag("GGML_CUDA_FUSE_GDN_STATE_ONE_ROW");
 +        if (one_row_only && ggml_nrows(table) != 1) {
