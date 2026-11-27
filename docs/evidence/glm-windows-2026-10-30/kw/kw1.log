@@ -1,0 +1,21 @@
+=== LEG A1 mode=bench extra=[] 18:48:05
+READY A1 after 28s
+CUDA0 lines: 7
+{"kind": "conc", "tag": "A1", "n": 1, "round": "warm", "agg_tps": 15.89, "wall_s": 16.11, "gen": 256, "per_stream_tps": [16.26], "md5": ["ce2fc95752"], "t0": 1795805312.6887605, "t1": 1795805328.8017762}
+{"kind": "conc", "tag": "A1", "n": 1, "round": 1, "agg_tps": 17.2, "wall_s": 14.88, "gen": 256, "per_stream_tps": [17.58], "md5": ["ce2fc95752"], "t0": 1795805328.8020942, "t1": 1795805343.684144}
+{"kind": "conc", "tag": "A1", "n": 1, "round": 2, "agg_tps": 17.25, "wall_s": 14.84, "gen": 256, "per_stream_tps": [17.63], "md5": ["ce2fc95752"], "t0": 1795805343.6844163, "t1": 1795805358.526307}
+{"kind": "conc", "tag": "A1", "n": 1, "round": 3, "agg_tps": 17.26, "wall_s": 14.83, "gen": 256, "per_stream_tps": [17.64], "md5": ["ce2fc95752"], "t0": 1795805358.5265744, "t1": 1795805373.3584397}
+{"kind": "depth", "tag": "A1-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 331.8, "prefill_s": 49.47, "decode_n": 128, "decode_tps": 14.67, "md5": "145c14aa8b", "t0": 1795805373.416115, "t1": 1795805431.594368}
+2.26.038.024 I llama_moe_cache: ubatch  > 8: hits = 2413, misses = 462, hit rate = 83.93%, uploaded = 3588.44 MiB
+2.26.039.726 I host bank hooks: early=48552/1696.720ms real=48971/15388.114ms post=42/1.845ms idle_sleeps=757343 lean=1
+lowest MemAvailable 22223 MiB; KW-LEG-DONE A1 18:50:33
+=== LEG B1 mode=bench extra=[LLAMA_EXPERT_STORE_DEVICE_BANK=1] 18:50:33
+lowest MemAvailable 14821 MiB; KW-LEG-DONE B1 19:02:07
+=== LEG A2 mode=nsys extra=[] 19:02:07
+READY A2 after 26s
+CUDA0 lines: 7
+traced 18.19 tok/s md5 0c114ee37c
+0.38.607.641 I llama_moe_cache: ubatch <= 8: hits = 46154, misses = 1255, hit rate = 97.35%, uploaded = 9931.50 MiB
+0.39.069.397 I host bank hooks: early=5460/194.482ms real=5502/1097.329ms post=42/1.686ms idle_sleeps=180317 lean=1
+lowest MemAvailable 21857 MiB; KW-LEG-DONE A2 19:02:52
+=== LEG B2 mode=nsys extra=[LLAMA_EXPERT_STORE_DEVICE_BANK=1] 19:02:52

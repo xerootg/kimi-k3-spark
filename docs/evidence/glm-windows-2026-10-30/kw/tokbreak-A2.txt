@@ -1,0 +1,13 @@
+/srv/glm-5.3-flash/nsys/kw-A2_cuda_gpu_trace.csv: 64 tokens traced, 55 measured; per token: wall median 53803.8 us, busy 55422.7 us, kernels 3564
+  spine Q5_K          14029.3 us/token
+  spine Q6_K          10534.8 us/token
+  experts IQ2_XS (moe)   9937.4 us/token
+  experts IQ3_XXS (moe)   6531.5 us/token
+  small kernels        5102.9 us/token
+  spine Q8_0           4712.9 us/token
+  quantize             1655.7 us/token
+  output Q4_K          1592.8 us/token
+  router F32            966.5 us/token
+  experts IQ4_XS (moe)    656.6 us/token
+  memcpy                125.9 us/token
+  mailbox waits after k_bank_request: 84/token, p50 5.1 us, p90 6.5 us, sum 582 us/token

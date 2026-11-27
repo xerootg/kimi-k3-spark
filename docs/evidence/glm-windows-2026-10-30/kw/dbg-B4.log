@@ -1,0 +1,7 @@
+=== LEG B4 mode=bench extra=[LLAMA_EXPERT_STORE_DEVICE_BANK=1] 19:18:36
+./kw-leg.sh: line 25: 777222 Aborted                 (core dumped) env $PROD_ENV LLAMA_EXPERT_STORE_SNAPSHOT=$PWD/snapshot/kw-$TAG.k3sn $EXTRA $BIN $ARGS > $OUT/server-$TAG.log 2>&1
+LEG-FAIL B4 died
+0.12.568.437 W load_tensors: madvise(MADV_PAGEOUT) failed for 4 of 4 mappings: Cannot allocate memory
+1.22.789.116 E run_staged: expert store: device bank: copying a record of 10878976 bytes to the device failed
+/home/xero/kf/src/src/llama-moe-cache.cpp:4959: expert store: read failed for layer 11: Success
+lowest MemAvailable 14709 MiB; KW-LEG-DONE B4 19:20:03

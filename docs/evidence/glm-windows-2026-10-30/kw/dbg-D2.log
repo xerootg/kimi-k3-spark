@@ -1,0 +1,5 @@
+=== LEG D2 mode=bench extra=[LLAMA_EXPERT_STORE_DEVICE_BANK=1 GGML_CUDA_HOST_BANK_ASYNC=0] 19:15:20
+READY D2 after 26s
+CUDA0 lines: 7
+{"kind": "conc", "tag": "D2", "n": 1, "round": "warm", "agg_tps": 14.5, "wall_s": 17.65, "gen": 256, "per_stream_tps": [14.81], "md5": ["ce2fc95752"], "t0": 1795806944.4909403, "t1": 1795806962.1415718}
+{"kind": "conc", "tag": "D2", "n": 1, "round": 1, "agg_tps": 16.19, "wall_s": 15.81, "gen": 256, "per_stream_tps": [16.51], "md5": ["ce2fc95752"], "t0": 1795806962.1418588, "t1": 1795806977.9536047}

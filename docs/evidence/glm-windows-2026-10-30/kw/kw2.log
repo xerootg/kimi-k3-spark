@@ -1,0 +1,41 @@
+=== LEG B6 mode=bench extra=[LLAMA_EXPERT_STORE_DEVICE_BANK=1 GGML_CUDA_HOST_BANK_LAUNCHER_WAIT=1] 19:26:46
+READY B6 after 26s
+CUDA0 lines: 7
+{"kind": "conc", "tag": "B6", "n": 1, "round": "warm", "agg_tps": 15.13, "wall_s": 16.92, "gen": 256, "per_stream_tps": [15.48], "md5": ["ce2fc95752"], "t0": 1795807631.0627377, "t1": 1795807647.9867191}
+{"kind": "conc", "tag": "B6", "n": 1, "round": 1, "agg_tps": 16.86, "wall_s": 15.18, "gen": 256, "per_stream_tps": [17.21], "md5": ["ce2fc95752"], "t0": 1795807647.9870071, "t1": 1795807663.16821}
+{"kind": "conc", "tag": "B6", "n": 1, "round": 2, "agg_tps": 16.92, "wall_s": 15.13, "gen": 256, "per_stream_tps": [17.27], "md5": ["ce2fc95752"], "t0": 1795807663.1684997, "t1": 1795807678.2979457}
+{"kind": "conc", "tag": "B6", "n": 1, "round": 3, "agg_tps": 16.93, "wall_s": 15.12, "gen": 256, "per_stream_tps": [17.28], "md5": ["ce2fc95752"], "t0": 1795807678.2982237, "t1": 1795807693.417494}
+{"kind": "depth", "tag": "B6-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 331.73, "prefill_s": 49.48, "decode_n": 128, "decode_tps": 13.66, "md5": "145c14aa8b", "t0": 1795807693.4524326, "t1": 1795807752.2805872}
+2.25.787.222 I llama_moe_cache: ubatch  > 8: hits = 2413, misses = 462, hit rate = 83.93%, uploaded = 3588.44 MiB
+2.25.787.301 I host bank hooks: early=48552/2043.556ms real=48971/17068.966ms post=42/0.029ms idle_sleeps=755779 lean=1
+lowest MemAvailable 13664 MiB; KW-LEG-DONE B6 19:29:15
+=== LEG A4 mode=bench extra=[] 19:29:15
+READY A4 after 26s
+CUDA0 lines: 7
+{"kind": "conc", "tag": "A4", "n": 1, "round": "warm", "agg_tps": 15.68, "wall_s": 16.32, "gen": 256, "per_stream_tps": [16.04], "md5": ["ce2fc95752"], "t0": 1795807780.401105, "t1": 1795807796.7242408}
+{"kind": "conc", "tag": "A4", "n": 1, "round": 1, "agg_tps": 17.01, "wall_s": 15.05, "gen": 256, "per_stream_tps": [17.38], "md5": ["ce2fc95752"], "t0": 1795807796.7245803, "t1": 1795807811.7738192}
+{"kind": "conc", "tag": "A4", "n": 1, "round": 2, "agg_tps": 17.08, "wall_s": 14.99, "gen": 256, "per_stream_tps": [17.46], "md5": ["ce2fc95752"], "t0": 1795807811.774127, "t1": 1795807826.7626762}
+{"kind": "conc", "tag": "A4", "n": 1, "round": 3, "agg_tps": 17.06, "wall_s": 15.01, "gen": 256, "per_stream_tps": [17.43], "md5": ["ce2fc95752"], "t0": 1795807826.7629864, "t1": 1795807841.7722437}
+{"kind": "depth", "tag": "A4-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 344.67, "prefill_s": 47.62, "decode_n": 128, "decode_tps": 14.54, "md5": "145c14aa8b", "t0": 1795807841.8043892, "t1": 1795807898.21478}
+2.23.085.335 I llama_moe_cache: ubatch  > 8: hits = 2413, misses = 462, hit rate = 83.93%, uploaded = 3588.44 MiB
+2.23.445.438 I host bank hooks: early=48552/1690.166ms real=48971/13873.274ms post=42/0.024ms idle_sleeps=737883 lean=1
+lowest MemAvailable 22160 MiB; KW-LEG-DONE A4 19:31:40
+=== LEG B7 mode=nsys extra=[LLAMA_EXPERT_STORE_DEVICE_BANK=1 GGML_CUDA_HOST_BANK_LAUNCHER_WAIT=1] 19:31:40
+READY B7 after 26s
+CUDA0 lines: 7
+traced 18.23 tok/s md5 0c114ee37c
+0.36.971.388 I llama_moe_cache: ubatch <= 8: hits = 46152, misses = 1257, hit rate = 97.35%, uploaded = 9949.25 MiB
+0.36.971.460 I host bank hooks: early=5460/246.102ms real=5502/981.269ms post=42/0.027ms idle_sleeps=182381 lean=1
+lowest MemAvailable 13456 MiB; KW-LEG-DONE B7 19:32:23
+=== LEG B8 mode=bench extra=[LLAMA_EXPERT_STORE_DEVICE_BANK=1 GGML_CUDA_HOST_BANK_LAUNCHER_WAIT=1] 19:32:23
+READY B8 after 26s
+CUDA0 lines: 7
+{"kind": "conc", "tag": "B8", "n": 1, "round": "warm", "agg_tps": 15.06, "wall_s": 17.0, "gen": 256, "per_stream_tps": [15.41], "md5": ["ce2fc95752"], "t0": 1795807967.18927, "t1": 1795807984.1889925}
+{"kind": "conc", "tag": "B8", "n": 1, "round": 1, "agg_tps": 16.74, "wall_s": 15.29, "gen": 256, "per_stream_tps": [17.09], "md5": ["ce2fc95752"], "t0": 1795807984.1893187, "t1": 1795807999.4833424}
+{"kind": "conc", "tag": "B8", "n": 1, "round": 2, "agg_tps": 16.85, "wall_s": 15.2, "gen": 256, "per_stream_tps": [17.2], "md5": ["ce2fc95752"], "t0": 1795807999.4836204, "t1": 1795808014.6802495}
+{"kind": "conc", "tag": "B8", "n": 1, "round": 3, "agg_tps": 16.87, "wall_s": 15.18, "gen": 256, "per_stream_tps": [17.22], "md5": ["ce2fc95752"], "t0": 1795808014.6805568, "t1": 1795808029.8562157}
+{"kind": "depth", "tag": "B8-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 327.05, "prefill_s": 50.19, "decode_n": 128, "decode_tps": 13.66, "md5": "145c14aa8b", "t0": 1795808029.8879898, "t1": 1795808089.4199758}
+2.26.590.890 I llama_moe_cache: ubatch  > 8: hits = 2413, misses = 462, hit rate = 83.93%, uploaded = 3588.44 MiB
+2.26.590.932 I host bank hooks: early=48552/2117.154ms real=48971/17700.519ms post=42/0.030ms idle_sleeps=750343 lean=1
+lowest MemAvailable 13648 MiB; KW-LEG-DONE B8 19:34:52
+KW2-DONE

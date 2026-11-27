@@ -1874,3 +1874,41 @@ bytes do not depend on it.
 Status 2026-11-13: compiles (CPU-only `llama-server` on the laptop, `tools/patch-stack-check.sh` PASS with 51
 patches); not yet run on a GPU. Acceptance owed: window nc10's VB10 leg (config B, images) on the image that carries
 this patch, then its KB1, XK10, VL10 and ST10 legs.
+
+## 0078-device-bank
+
+`LLAMA_EXPERT_STORE_DEVICE_BANK=1` (default off) puts each expert-store region (slots, zero record, prefill landing)
+in device memory (`cudaMalloc`, through `ggml_backend_cuda_device_bank_buffer_alloc`: a buffer of a new `CUDA_DevBank`
+type that is not host-addressable, recognized by `ggml_backend_buft_is_cuda_host_bank` so hooks, split GEMV and
+scheduler treat it as the host bank, with the CUDA buffer interface). The CPU cannot write that memory on the GB10, so
+`io_pool::run` lands its reads in 512 MiB of pinned staging and copies each record in with
+`ggml_backend_cuda_bank_upload` (one non-blocking stream; the caller spins on a sequence word the stream writes with
+`cuStreamWriteValue32`, never on a blocking CUDA API; a copy that does not complete in 60 s, or one queued without its
+marker, aborts the process, since a caller that gave up would reuse the staging and the slot under it); the
+speculative reader stages per piece; the zero record is set with `ggml_backend_cuda_bank_memset`. The copy helpers and
+the allocation need the driver API like the mailbox (`GGML_CUDA_HOST_BANK_ASYNC_SUPPORTED`); without it the allocation
+returns nullptr and the store refuses the mode. In this mode the memory valve, THP, the record check and the HBM tier
+are off, and the prefill landing is per group (3 x 3456 MiB) instead of the shared memfd alias.
+
+`GGML_CUDA_HOST_BANK_LAUNCHER_WAIT=1` (default off, needed with the device bank): outside stream capture the thread
+that posts a real lookup waits on a host-only per-stream atomic counter (`g_bank_served`, release/acquire) until the
+poller has answered it. Without it,
+the eager prefill launcher runs thousands of launches ahead into a full launch queue while the GPU waits on the
+mailbox, and the poller's record copies are never executed (deadlock seen in Spark window kw, 2026-11-27; the
+synchronous hook `GGML_CUDA_HOST_BANK_ASYNC=0` worked, gold md5).
+
+Why it exists: `tools/glm53`-style bench `mmvq-bench2` (evidence `kw/`) reads the same Q5_K/Q6_K matrix at ~165 GB/s
+from the registered host bank (mmap+THP+cudaHostRegister, cudaHostAlloc and cudaMallocManaged alike) and at ~227 GB/s
+from cudaMalloc memory on the GB10. Measured in the engine (Spark window kw): the expert GEMVs did speed up
+(17.1 -> 14.9 ms/token, ~207 GB/s) but every spine kernel got 5-10 % slower, latency-bound ones included, at the same
+2405 MHz and ~37 W: 17.2-17.5 against 17.45-17.75 tok/s, bytes identical. **Not adopted; kept off for a model whose
+experts do not fit or a driver that maps the bank with larger pages.**
+
+## 0079-split-late-zero-skip-swiglu-clamp
+
+One condition in `mmvq.cu`: the zero-record exit of the split GEMV (`fusion.zero_slot`, patch 0009) also applies when
+the fused gate/up GLU is `GGML_GLU_OP_SWIGLU_CLAMP`, which GLM-5.3-Flash uses. Until now only the unfused down
+projection of the late matmul took the exit (3.8 us per layer); the fused gate/up computed the cleared record in full
+(28.7 us per layer, ~1.1 ms per token). `swiglu_clamp(0, 0) = silu(0) * clamp(0) = 0`, the bytes the exit writes.
+Spark window kw (2026-11-27): 17.45-17.63 -> 17.74-17.75 tok/s single stream, 16k decode 14.54-14.67 -> 14.73, gold
+`ce2fc95752` / `145c14aa8b` in every pass; nsys experts IQ2_XS 9.94 -> 8.78 ms/token, wall 53.8 -> 53.4 ms.

@@ -1,0 +1,5 @@
+0.13.015.766 I impl: expert store: device bank on: regions in device memory, reads land in 512 MiB of pinned staging; memory valve off
+0.15.941.087 I ggml_backend_cuda_device_bank_buffer_alloc: device bank: 74760.00 MiB in device memory at 0xfe98c0000000
+0.16.173.954 I ggml_backend_cuda_device_bank_buffer_alloc: device bank: 5916.00 MiB in device memory at 0xfe9740000000
+0.16.474.890 I ggml_backend_cuda_device_bank_buffer_alloc: device bank: 7676.00 MiB in device memory at 0xfe9560000000
+0.22.076.397 I valve_start: expert store: memory valve off: the regions are device memory (patch 0078)
