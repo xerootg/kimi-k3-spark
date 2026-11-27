@@ -1878,16 +1878,21 @@ this patch, then its KB1, XK10, VL10 and ST10 legs.
 ## 0078-device-bank
 
 `LLAMA_EXPERT_STORE_DEVICE_BANK=1` (default off) puts each expert-store region (slots, zero record, prefill landing)
-in device memory (`cudaMalloc`, through `ggml_backend_cuda_device_bank_buffer_alloc`, a buffer of the host-bank type
-with the CUDA buffer interface, so hooks, split GEMV and scheduler treat it as before). The CPU cannot write that
-memory on the GB10, so `io_pool::run` lands its reads in 512 MiB of pinned staging and copies each record in with
+in device memory (`cudaMalloc`, through `ggml_backend_cuda_device_bank_buffer_alloc`: a buffer of a new `CUDA_DevBank`
+type that is not host-addressable, recognized by `ggml_backend_buft_is_cuda_host_bank` so hooks, split GEMV and
+scheduler treat it as the host bank, with the CUDA buffer interface). The CPU cannot write that memory on the GB10, so
+`io_pool::run` lands its reads in 512 MiB of pinned staging and copies each record in with
 `ggml_backend_cuda_bank_upload` (one non-blocking stream; the caller spins on a sequence word the stream writes with
-`cuStreamWriteValue32`, never on a blocking CUDA API); the speculative reader stages per piece; the zero record is set
-with `ggml_backend_cuda_bank_memset`. In this mode the memory valve, THP, the record check and the HBM tier are off,
-and the prefill landing is per group (3 x 3456 MiB) instead of the shared memfd alias.
+`cuStreamWriteValue32`, never on a blocking CUDA API; a copy that does not complete in 60 s, or one queued without its
+marker, aborts the process, since a caller that gave up would reuse the staging and the slot under it); the
+speculative reader stages per piece; the zero record is set with `ggml_backend_cuda_bank_memset`. The copy helpers and
+the allocation need the driver API like the mailbox (`GGML_CUDA_HOST_BANK_ASYNC_SUPPORTED`); without it the allocation
+returns nullptr and the store refuses the mode. In this mode the memory valve, THP, the record check and the HBM tier
+are off, and the prefill landing is per group (3 x 3456 MiB) instead of the shared memfd alias.
 
 `GGML_CUDA_HOST_BANK_LAUNCHER_WAIT=1` (default off, needed with the device bank): outside stream capture the thread
-that posts a real lookup waits on the mailbox's new `served` counter until the poller has answered it. Without it,
+that posts a real lookup waits on a host-only per-stream atomic counter (`g_bank_served`, release/acquire) until the
+poller has answered it. Without it,
 the eager prefill launcher runs thousands of launches ahead into a full launch queue while the GPU waits on the
 mailbox, and the poller's record copies are never executed (deadlock seen in Spark window kw, 2026-11-27; the
 synchronous hook `GGML_CUDA_HOST_BANK_ASYNC=0` worked, gold md5).
