@@ -1,0 +1,52 @@
+diff --git a/ggml/src/ggml-cuda/ggml-cuda.cu b/ggml/src/ggml-cuda/ggml-cuda.cu
+index f6f1366..b65af1e 100644
+--- a/ggml/src/ggml-cuda/ggml-cuda.cu
++++ b/ggml/src/ggml-cuda/ggml-cuda.cu
+@@ -5783,6 +5783,28 @@ static int ggml_cuda_try_fuse(ggml_backend_cuda_context * cuda_ctx, ggml_cgraph
+                 fused_state_cpy.state_base       = (const float *) gr->src[0]->data;
+                 fused_state_cpy.state_ids        = (const int32_t *) gr->src[1]->data;
+                 fused_state_cpy.state_row_stride = (int64_t) (gr->src[0]->nb[1] / sizeof(float));
++                // GGML_CUDA_GDN_STATE_CHECK=1 (debug, window ek fault): read the ids back and check them against the
++                // table before the kernel runs; log every pointer the fused path uses
++                static const bool check = ggml_cuda_env_flag("GGML_CUDA_GDN_STATE_CHECK");
++                cudaStreamCaptureStatus cap = cudaStreamCaptureStatusNone;
++                if (check) { CUDA_CHECK(cudaStreamIsCapturing(cuda_ctx->stream(), &cap)); }
++                if (check && cap == cudaStreamCaptureStatusNone) { // a memcpy is not allowed while a graph is captured
++                    const ggml_tensor * table = gr->src[0];
++                    const ggml_tensor * ids   = gr->src[1];
++                    const int64_t n_ids = ggml_nelements(ids);
++                    std::vector<int32_t> h(n_ids);
++                    CUDA_CHECK(cudaStreamSynchronize(cuda_ctx->stream()));
++                    CUDA_CHECK(cudaMemcpy(h.data(), ids->data, n_ids*sizeof(int32_t), cudaMemcpyDeviceToHost));
++                    const int64_t rows = ggml_nrows(table);
++                    bool bad = false;
++                    for (int64_t k = 0; k < n_ids; ++k) { bad |= h[k] < 0 || h[k] >= rows; }
++                    GGML_LOG_INFO("gdn-state-check %s: ids[%lld]=%d%s table %s rows=%lld nb1=%zu data=%p ids=%p write=%p slot_stride=%lld n_seqs=%lld%s\n",
++                        node->name, (long long) n_ids, h[0], n_ids > 1 ? ",..." : "", table->name, (long long) rows, table->nb[1], table->data, ids->data,
++                        (void *) fused_state_cpy.data, (long long) fused_state_cpy.slot_stride, (long long) node->src[2]->ne[3], bad ? "  <-- OUT OF RANGE" : "");
++                    if (bad) {
++                        GGML_ABORT("gdn-state-check: recurrent state id out of range");
++                    }
++                }
+             }
+ #ifdef GGML_CUDA_DEBUG
+             GGML_LOG_INFO("%s: fused gated_delta_net snapshot copies for %s (skipped %d nodes)\n",
+@@ -6578,10 +6600,15 @@ static void ggml_cuda_plan_gdn_state(ggml_backend_cuda_context * ctx, const ggml
+         }
+         const ggml_tensor * table = gr->src[0];
+         const ggml_tensor * ids   = gr->src[1];
+-        // kimi-k3-spark patch 0052: only a single-sequence recurrent cache (--parallel 1). With several sequence
++        // kimi-k3-spark patch 0052 kept the fusion to a single-sequence recurrent cache (--parallel 1): with several
+         // slots the fused read faulted (illegal address) on the first one-sequence decode after another slot
+-        // finished (window ek, 2026-11-08); not root-caused yet, so multi-slot servers keep the GET_ROWS
+-        if (ggml_nrows(table) != 1) {
++        // finished (window ek, 2026-11-08). Patch 0080 (2026-11-27, window kw4): the fault does not reproduce on
++        // the stack through 0079, neither in the ek configuration (--parallel 2, 128k, elastic KV off) nor in the
++        // production one (five slots), with the ids and pointers of every fused lookup checked
++        // (GGML_CUDA_GDN_STATE_CHECK=1 below); the one-row guard is now opt-in (GGML_CUDA_FUSE_GDN_STATE_ONE_ROW=1).
++        // Single stream +1.5 % (the 4 MiB state gather per KDA layer is gone), bytes identical.
++        static const bool one_row_only = ggml_cuda_env_flag("GGML_CUDA_FUSE_GDN_STATE_ONE_ROW");
++        if (one_row_only && ggml_nrows(table) != 1) {
+             continue;
+         }
+         if (gr->type != GGML_TYPE_F32 || table->type != GGML_TYPE_F32 || ids->type != GGML_TYPE_I32 ||

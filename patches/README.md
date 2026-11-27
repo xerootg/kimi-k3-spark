@@ -1912,3 +1912,21 @@ projection of the late matmul took the exit (3.8 us per layer); the fused gate/u
 (28.7 us per layer, ~1.1 ms per token). `swiglu_clamp(0, 0) = silu(0) * clamp(0) = 0`, the bytes the exit writes.
 Spark window kw (2026-11-27): 17.45-17.63 -> 17.74-17.75 tok/s single stream, 16k decode 14.54-14.67 -> 14.73, gold
 `ce2fc95752` / `145c14aa8b` in every pass; nsys experts IQ2_XS 9.94 -> 8.78 ms/token, wall 53.8 -> 53.4 ms.
+
+## 0080-gdn-state-fusion-multi-slot
+
+Patch 0052 restricted `GGML_CUDA_FUSE_GDN_STATE` (the KDA GATED_DELTA_NET reads its input state straight from the
+recurrent-cache row instead of a 4 MiB GET_ROWS gather per layer) to a one-row recurrent cache (`--parallel 1`),
+after an illegal-address fault in window ek (2026-11-08) on the first one-sequence decode after another slot
+finished. Production has five slots, so it ran the gather: 19 us x 34 layers = 0.65 ms per token.
+
+Window kw4 (2026-11-27, stack through 0079): the fault does not reproduce. The ek scenario (p0 next to the 16k
+request, then p0 and p1 alone) ran in the ek configuration (`--parallel 2 --ctx-size 131072`, elastic KV off) and
+in the production one (five slots, 1M), with `GGML_CUDA_GDN_STATE_CHECK=1` reading every fused lookup's ids back
+and logging the table, the ids and the write pointer: 510 lookups on a two-row table (ids 0 and 1), all in range,
+every md5 gold. The one-row guard is now opt-in (`GGML_CUDA_FUSE_GDN_STATE_ONE_ROW=1`); the check knob stays for
+diagnosis (it synchronizes and copies, outside stream capture only, not for production).
+
+Measured single stream (production env, `kw-leg.sh`): fusion on 17.88 / 17.92 / 17.94 and 17.86 / 17.91 / 17.88
+tok/s against 17.58 / 17.66 / 17.66 off (+1.5 %); 16k decode 14.77 / 14.54 vs 14.61 (level); gold `ce2fc95752` /
+`145c14aa8b` in every pass. Decode steps with several sequences keep the gather (the fusion needs n_seqs == 1).
