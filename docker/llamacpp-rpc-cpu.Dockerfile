@@ -8,6 +8,9 @@ ARG UBUNTU_VERSION=24.04
 
 FROM docker.io/ubuntu:${UBUNTU_VERSION} AS build
 ARG LLAMA_SHA
+# the prebuilt web UI matching LLAMA_SHA (see versions.env); without it cmake resolves "latest"
+ARG LLAMA_BUILD_TAG
+ENV HF_UI_VERSION=${LLAMA_BUILD_TAG}
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       git build-essential cmake ninja-build libcurl4-openssl-dev ca-certificates \
     && rm -rf /var/lib/apt/lists/*
