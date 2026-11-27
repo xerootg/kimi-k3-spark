@@ -22,6 +22,7 @@ jobs:
       llama_sha: ${{ steps.v.outputs.llama_sha }}
       pulsar_sha: ${{ steps.v.outputs.pulsar_sha }}
       llama_tag: ${{ steps.v.outputs.llama_tag }}
+      llama_build_tag: ${{ steps.v.outputs.llama_build_tag }}
       pulsar_tag: ${{ steps.v.outputs.pulsar_tag }}
       build: ${{ steps.v.outputs.build }}
     steps:
@@ -30,6 +31,7 @@ jobs:
         run: |
           set -a; . ./versions.env; set +a
           echo "llama_sha=$LLAMA_SHA" >> "$GITHUB_OUTPUT"
+          echo "llama_build_tag=$LLAMA_BUILD_TAG" >> "$GITHUB_OUTPUT"
           echo "pulsar_sha=$PULSAR_SHA" >> "$GITHUB_OUTPUT"
           echo "llama_tag=${LLAMA_SHA:0:12}" >> "$GITHUB_OUTPUT"
           echo "pulsar_tag=${PULSAR_SHA:0:12}" >> "$GITHUB_OUTPUT"
@@ -59,6 +61,7 @@ jobs:
           push: true
           build-args: |
             LLAMA_SHA=${{ needs.versions.outputs.llama_sha }}
+            LLAMA_BUILD_TAG=${{ needs.versions.outputs.llama_build_tag }}
           tags: |
             ghcr.io/xerootg/llamacpp-spark:${{ needs.versions.outputs.llama_tag }}
             ghcr.io/xerootg/llamacpp-spark:${{ needs.versions.outputs.llama_tag }}-${{ needs.versions.outputs.build }}
@@ -109,6 +112,7 @@ jobs:
           push: true
           build-args: |
             LLAMA_SHA=${{ needs.versions.outputs.llama_sha }}
+            LLAMA_BUILD_TAG=${{ needs.versions.outputs.llama_build_tag }}
           tags: |
             ghcr.io/xerootg/llamacpp-rpc-cpu:${{ needs.versions.outputs.llama_tag }}
             ghcr.io/xerootg/llamacpp-rpc-cpu:${{ needs.versions.outputs.llama_tag }}-${{ needs.versions.outputs.build }}
