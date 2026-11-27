@@ -258,7 +258,7 @@ index 6222e93..f6f1366 100644
          return (void *)ggml_backend_cuda_get_features;
      }
 diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
-index 3a49ff0..3f11432 100644
+index 3a49ff0..ffd6316 100644
 --- a/src/llama-moe-cache.cpp
 +++ b/src/llama-moe-cache.cpp
 @@ -594,11 +594,63 @@ struct io_pool {
@@ -531,3 +531,17 @@ index 3a49ff0..3f11432 100644
                  if (!spec->ok) {
                      spec.reset();
                  }
+@@ -4337,8 +4481,11 @@ struct llama_moe_cache::impl {
+             staging_buf.reset();
+             store_region_free(staging, staging_size);
+             for (group & g : groups) {
+-                g.region_buf.reset();
+-                store_region_free(g.region, g.region_size);
++                g.region_buf.reset(); // a device bank (patch 0078) is freed by its CUDA buffer; the host region below
++                if (!device_bank) {
++                    store_region_free(g.region, g.region_size);
++                }
++                g.region = nullptr;
+             }
+         }
+     }

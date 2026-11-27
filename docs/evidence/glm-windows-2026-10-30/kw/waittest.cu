@@ -23,7 +23,11 @@ int main(int argc, char ** argv) {
     cudaGetLastError();
     // stream B: a 64 MB H2D copy while A waits
     std::atomic<bool> done{false};
-    std::thread t([&] { cudaMemcpyAsync(dev, pinned, 64 << 20, cudaMemcpyHostToDevice, b); cudaError_t e = cudaStreamSynchronize(b); printf("copy on B: %s\n", cudaGetErrorString(e)); done = true; });
+    std::thread t([&] {
+        cudaError_t e = cudaMemcpyAsync(dev, pinned, 64 << 20, cudaMemcpyHostToDevice, b);
+        if (e == cudaSuccess) { e = cudaStreamSynchronize(b); }
+        if (e != cudaSuccess) { printf("copy on B FAILED: %s\n", cudaGetErrorString(e)); exit(3); }
+        printf("copy on B: ok\n"); done = true; });
     auto t0 = std::chrono::steady_clock::now();
     while (!done && std::chrono::steady_clock::now() - t0 < std::chrono::seconds(3)) std::this_thread::sleep_for(std::chrono::milliseconds(10));
     const bool completed = done; // before releasing A: the join below always ends with done == true

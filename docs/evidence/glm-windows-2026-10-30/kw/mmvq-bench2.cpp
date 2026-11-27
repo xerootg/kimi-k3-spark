@@ -45,7 +45,7 @@ int main(int argc, char ** argv) {
         bufw = ggml_backend_alloc_ctx_tensors(ctxw, be);
     } else if (mode == "pinned") {
         bufw = ggml_backend_alloc_ctx_tensors_from_buft(ctxw, ggml_backend_cuda_host_buffer_type());
-    } else {
+    } else if (mode == "bank" || mode == "banknothp") {
         const size_t align = 2u << 20;
         region_size = ((size_t) n * ((wbytes + 511) & ~(size_t) 511) + align - 1) & ~(align - 1);
         region = mmap(nullptr, region_size + align, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -81,7 +81,9 @@ int main(int argc, char ** argv) {
     std::mt19937 rng(1234); std::normal_distribution<float> nd(0.f, 1.f);
     std::vector<float> f(k * m); for (auto & v : f) v = nd(rng);
     std::vector<uint8_t> q(wbytes);
-    ggml_quantize_chunk(type, f.data(), q.data(), 0, m, k, nullptr);
+    // IQ2_XS and the other imatrix types need column weights: unit weights (the bench measures bandwidth, not quality)
+    std::vector<float> imatrix(k, 1.0f);
+    ggml_quantize_chunk(type, f.data(), q.data(), 0, m, k, ggml_quantize_requires_imatrix(type) ? imatrix.data() : nullptr);
     std::vector<float> xv(k); for (auto & v : xv) v = nd(rng);
     ggml_backend_tensor_set(x, xv.data(), 0, k * sizeof(float));
     const size_t rb = ggml_row_size(type, k);

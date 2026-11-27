@@ -22,7 +22,11 @@ int main(int argc, char ** argv) {
     std::atomic<bool> done{false}, launched{false};
     std::thread launcher([&] { for (int i = 0; i < nlaunch; i++) { k_touch<<<1, 32, 0, s[0]>>>(dev); if (i == 2000) launched = true; } launched = true; });
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    std::thread t([&] { cudaMemcpyAsync(dev, pinned, 64 << 20, cudaMemcpyHostToDevice, cs); cudaError_t e = cudaStreamSynchronize(cs); if (e) printf("copy err %s\n", cudaGetErrorString(e)); done = true; });
+    std::thread t([&] {
+        cudaError_t e = cudaMemcpyAsync(dev, pinned, 64 << 20, cudaMemcpyHostToDevice, cs);
+        if (e == cudaSuccess) { e = cudaStreamSynchronize(cs); }
+        if (e != cudaSuccess) { printf("copy FAILED: %s\n", cudaGetErrorString(e)); exit(3); }
+        done = true; });
     auto t0 = std::chrono::steady_clock::now();
     while (!done && std::chrono::steady_clock::now() - t0 < std::chrono::seconds(4)) std::this_thread::sleep_for(std::chrono::milliseconds(10));
     const bool completed = done; // before releasing the flag: the join below always ends with done == true
