@@ -18,7 +18,7 @@ for kv in LLAMA_LOG_COLORS=0 LLAMA_EXPERT_STORE=/store/glm53flash-q2.k3xs LLAMA_
   LLAMA_KV_STREAM_HOLES=1 LLAMA_PREFILL_ISOLATE=1 LLAMA_KPOOL_OWN_SEQS=1 LLAMA_SLOT_RESERVE=1 LLAMA_PRIORITY_HOLD_PROMPTS=1; do E="$E -e $kv"; done
 cp /srv/glm-5.3-flash/snapshot/el-seed.k3sn /srv/glm-5.3-flash/snapshot/canary79.k3sn
 sudo -n docker rm -f glm-canary >/dev/null 2>&1
-sudo -n docker run -d --name glm-canary --gpus all --cap-add IPC_LOCK --ulimit memlock=-1 -p 18100:8080 $E \
+sudo -n docker run -d --name glm-canary --gpus all --cap-add IPC_LOCK --ulimit memlock=-1 -p 127.0.0.1:18100:8080 $E \
   -v /srv/glm-5.3-flash/q2:/models:ro -v /srv/glm-5.3-flash/store:/store:ro -v /srv/glm-5.3-flash/snapshot:/snapshot \
   $IMG -m /models/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf --alias glm-5.3-flash --host 0.0.0.0 --port 8080 \
   --ctx-size 1024000 --parallel 5 --batch-size 2048 --ubatch-size 2048 --n-gpu-layers 999 --n-cpu-moe 999 --moe-cache-mib 78000 \
@@ -26,13 +26,20 @@ sudo -n docker run -d --name glm-canary --gpus all --cap-add IPC_LOCK --ulimit m
 ( low=999999; while sudo -n docker inspect -f "{{.State.Running}}" glm-canary 2>/dev/null | grep -q true; do
     a=$(awk "/MemAvailable/{print int(\$2/1024)}" /proc/meminfo); [ $a -lt $low ] && low=$a && echo $low > $OUT/lowmem.txt
     if [ $a -lt 3072 ]; then echo "WATCHDOG KILL at $a MiB" >> $OUT/lowmem.txt; sudo -n docker kill glm-canary; fi; sleep 1; done ) &
-for i in $(seq 1 240); do curl -sf -m 2 http://127.0.0.1:18100/health > /dev/null && break; sleep 2; done
-echo "health after ${i}x2s" > $OUT/result.txt
-sudo -n docker logs glm-canary 2>&1 | grep -a -c "CUDA0" | sed "s/^/CUDA0 lines: /" >> $OUT/result.txt
-python3 /srv/glm-5.3-flash/bench.py conc --url http://127.0.0.1:18100 --tag C79 --n 1 --rounds 3 --n-predict 256 >> $OUT/result.txt 2>&1
-python3 /srv/glm-5.3-flash/bench.py depth --url http://127.0.0.1:18100 --tag C79-d16k --lens 16384 --n-predict 128 >> $OUT/result.txt 2>&1
+ready=0
+for i in $(seq 1 240); do curl -sf -m 2 http://127.0.0.1:18100/health > /dev/null && { ready=1; break; }; sleep 2; done
+rc=0
+if [ $ready = 1 ]; then
+  echo "health after ${i}x2s" > $OUT/result.txt
+  sudo -n docker logs glm-canary 2>&1 | grep -a -c "CUDA0" | sed "s/^/CUDA0 lines: /" >> $OUT/result.txt
+  python3 /srv/glm-5.3-flash/bench.py conc --url http://127.0.0.1:18100 --tag C79 --n 1 --rounds 3 --n-predict 256 >> $OUT/result.txt 2>&1 || rc=1
+  python3 /srv/glm-5.3-flash/bench.py depth --url http://127.0.0.1:18100 --tag C79-d16k --lens 16384 --n-predict 128 >> $OUT/result.txt 2>&1 || rc=1
+else
+  echo "NOT HEALTHY after 480 s" > $OUT/result.txt; rc=1
+fi
 sudo -n docker logs glm-canary > $OUT/server.log 2>&1
 sudo -n docker rm -f glm-canary > /dev/null
 rm -f /srv/glm-5.3-flash/snapshot/canary79.k3sn /srv/glm-5.3-flash/snapshot/canary79.k3sn.tmp
-echo "lowest MemAvailable $(cat $OUT/lowmem.txt 2>/dev/null) MiB; CANARY-DONE" >> $OUT/result.txt
+echo "lowest MemAvailable $(cat $OUT/lowmem.txt 2>/dev/null) MiB; $([ $rc = 0 ] && echo CANARY-DONE || echo CANARY-FAILED)" >> $OUT/result.txt
 cat $OUT/result.txt
+exit $rc
