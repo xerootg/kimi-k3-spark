@@ -1,7 +1,4 @@
 #!/bin/bash
-# NOTE (patch 0080 as shipped): GGML_CUDA_FUSE_GDN_STATE_MULTI=1 existed only in the debug build this window ran; the
-# shipped patch fuses by default and offers GGML_CUDA_FUSE_GDN_STATE_ONE_ROW=1 to restore the old guard. To rerun on
-# the shipped stack, drop the ..._MULTI variable (and use ..._ONE_ROW=1 for the "off" legs).
 # GDN state-fusion fault reproduction (window ek, 2026-11-08): a two-slot server, p0 (256 tokens) next to the 16k
 # request, then p0 alone (the first one-sequence decode after the other slot finished). Debug build ~/kf/src with
 # GGML_CUDA_FUSE_GDN_STATE_MULTI=1 (guard lifted) and GGML_CUDA_GDN_STATE_CHECK=1 (ids and pointers logged).
