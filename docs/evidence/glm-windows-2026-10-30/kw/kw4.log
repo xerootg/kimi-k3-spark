@@ -1,0 +1,52 @@
+=== LEG G3 extra=[GGML_CUDA_FUSE_GDN_STATE_MULTI=1 GGML_CUDA_GDN_STATE_CHECK=1] 21:51:38
+READY G3 after 24s
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.4, "prefill_tps": 25.11, "decode_n": 256, "decode_tps": 16.16, "md5": "ce2fc95752", "t0": 1795816322.891952, "t1": 1795816339.0806196, "kind
+{"kind": "multi", "tag": "", "n": 2, "round": "warm", "agg_tps": 5.63, "wall_s": 68.17, "gen": 384, "per_stream_tps": [3.76, 10.4], "md5": ["ce2fc95752", "145c14aa8b"], "specs": ["p0", "L16384"], "pre
+{"kind": "multi", "tag": "", "n": 2, "round": 1, "agg_tps": 5.85, "wall_s": 65.66, "gen": 384, "per_stream_tps": [3.91, 11.19], "md5": ["ce2fc95752", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.36, "prefill_tps": 27.45, "decode_n": 256, "decode_tps": 17.35, "md5": "ce2fc95752", "t0": 1795816473.0142508, "t1": 1795816488.093854, "kin
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.62, "prefill_tps": 30.89, "decode_n": 256, "decode_tps": 15.4, "md5": "bb64203d71", "t0": 1795816488.0939283, "t1": 1795816505.2632272, "kin
+SERVER ALIVE after the mixed leg
+      1 3.25.352.640 I gdn-state-check node_8465: ids[1]=1 table cache_s_l44 (reshaped) rows=2 nb1=4194304 data=0xf03572720000 ids=0xf01be0016580 write=0xf03572b20000 slot_stride=0 n_seqs=1
+      1 3.25.349.237 I gdn-state-check node_8073: ids[1]=1 table cache_s_l42 (reshaped) rows=2 nb1=4194304 data=0xf03571e90000 ids=0xf01be0016580 write=0xf03572290000 slot_stride=0 n_seqs=1
+      1 3.25.348.040 I gdn-state-check node_7881: ids[1]=1 table cache_s_l41 (reshaped) rows=2 nb1=4194304 data=0xf03571600000 ids=0xf01be0016580 write=0xf03571a00000 slot_stride=0 n_seqs=1
+      1 3.25.346.855 I gdn-state-check node_7689: ids[1]=1 table cache_s_l40 (reshaped) rows=2 nb1=4194304 data=0xf03570d70000 ids=0xf01be0016580 write=0xf03571170000 slot_stride=0 n_seqs=1
+      1 3.25.343.812 I gdn-state-check node_7297: ids[1]=1 table cache_s_l38 (reshaped) rows=2 nb1=4194304 data=0xf035704e0000 ids=0xf01be0016580 write=0xf035708e0000 slot_stride=0 n_seqs=1
+      1 3.25.342.616 I gdn-state-check node_7105: ids[1]=1 table cache_s_l37 (reshaped) rows=2 nb1=4194304 data=0xf0356fc50000 ids=0xf01be0016580 write=0xf03570050000 slot_stride=0 n_seqs=1
+GDN-LEG-DONE G3 21:55:07
+=== LEG H1 mode=bench extra=[GGML_CUDA_FUSE_GDN_STATE_MULTI=1] 21:55:07
+READY H1 after 26s
+CUDA0 lines: 7
+{"kind": "conc", "tag": "H1", "n": 1, "round": "warm", "agg_tps": 16.04, "wall_s": 15.96, "gen": 256, "per_stream_tps": [16.39], "md5": ["ce2fc95752"], "t0": 1795816532.2507524, "t1": 1795816548.2152975}
+{"kind": "conc", "tag": "H1", "n": 1, "round": 1, "agg_tps": 17.51, "wall_s": 14.62, "gen": 256, "per_stream_tps": [17.88], "md5": ["ce2fc95752"], "t0": 1795816548.2156549, "t1": 1795816562.8379693}
+{"kind": "conc", "tag": "H1", "n": 1, "round": 2, "agg_tps": 17.56, "wall_s": 14.58, "gen": 256, "per_stream_tps": [17.92], "md5": ["ce2fc95752"], "t0": 1795816562.8382747, "t1": 1795816577.419735}
+{"kind": "conc", "tag": "H1", "n": 1, "round": 3, "agg_tps": 17.58, "wall_s": 14.57, "gen": 256, "per_stream_tps": [17.94], "md5": ["ce2fc95752"], "t0": 1795816577.420031, "t1": 1795816591.985062}
+{"kind": "depth", "tag": "H1-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 346.6, "prefill_s": 47.36, "decode_n": 128, "decode_tps": 14.77, "md5": "145c14aa8b", "t0": 1795816592.0171402, "t1": 1795816648.0263417}
+clocks: sm [('2405 MHz', 569), ('2398 MHz', 6)] power W p50/max 40.83 65.64 throttle [('0x0000000000000000', 575)]
+2.20.951.459 I llama_moe_cache: ubatch  > 8: hits = 2413, misses = 462, hit rate = 83.93%, uploaded = 3588.44 MiB
+2.21.247.269 I host bank hooks: early=48552/1692.925ms real=48971/13495.115ms post=42/0.028ms idle_sleeps=742892 lean=1
+lowest MemAvailable 22072 MiB; KW-LEG-DONE H1 21:57:31
+=== LEG H2 mode=bench extra=[] 21:57:31
+READY H2 after 26s
+CUDA0 lines: 7
+{"kind": "conc", "tag": "H2", "n": 1, "round": "warm", "agg_tps": 15.75, "wall_s": 16.26, "gen": 256, "per_stream_tps": [16.1], "md5": ["ce2fc95752"], "t0": 1795816676.077833, "t1": 1795816692.3333}
+{"kind": "conc", "tag": "H2", "n": 1, "round": 1, "agg_tps": 17.23, "wall_s": 14.86, "gen": 256, "per_stream_tps": [17.58], "md5": ["ce2fc95752"], "t0": 1795816692.3335931, "t1": 1795816707.1910233}
+{"kind": "conc", "tag": "H2", "n": 1, "round": 2, "agg_tps": 17.3, "wall_s": 14.8, "gen": 256, "per_stream_tps": [17.66], "md5": ["ce2fc95752"], "t0": 1795816707.1912978, "t1": 1795816721.9878416}
+{"kind": "conc", "tag": "H2", "n": 1, "round": 3, "agg_tps": 17.3, "wall_s": 14.79, "gen": 256, "per_stream_tps": [17.66], "md5": ["ce2fc95752"], "t0": 1795816721.9881077, "t1": 1795816736.7828038}
+{"kind": "depth", "tag": "H2-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 343.67, "prefill_s": 47.76, "decode_n": 128, "decode_tps": 14.61, "md5": "145c14aa8b", "t0": 1795816736.8141835, "t1": 1795816793.317433}
+clocks: sm [('2405 MHz', 567), ('2398 MHz', 14)] power W p50/max 40.7 65.09 throttle [('0x0000000000000000', 581)]
+2.22.452.379 I llama_moe_cache: ubatch  > 8: hits = 2413, misses = 462, hit rate = 83.93%, uploaded = 3588.44 MiB
+2.22.928.876 I host bank hooks: early=48552/1687.043ms real=48971/13920.369ms post=42/13.031ms idle_sleeps=744245 lean=1
+lowest MemAvailable 22073 MiB; KW-LEG-DONE H2 21:59:56
+=== LEG H3 mode=bench extra=[GGML_CUDA_FUSE_GDN_STATE_MULTI=1] 21:59:56
+READY H3 after 26s
+CUDA0 lines: 7
+{"kind": "conc", "tag": "H3", "n": 1, "round": "warm", "agg_tps": 16.05, "wall_s": 15.95, "gen": 256, "per_stream_tps": [16.4], "md5": ["ce2fc95752"], "t0": 1795816821.5721498, "t1": 1795816837.5218744}
+{"kind": "conc", "tag": "H3", "n": 1, "round": 1, "agg_tps": 17.49, "wall_s": 14.63, "gen": 256, "per_stream_tps": [17.86], "md5": ["ce2fc95752"], "t0": 1795816837.522177, "t1": 1795816852.15659}
+{"kind": "conc", "tag": "H3", "n": 1, "round": 2, "agg_tps": 17.54, "wall_s": 14.59, "gen": 256, "per_stream_tps": [17.91], "md5": ["ce2fc95752"], "t0": 1795816852.1568892, "t1": 1795816866.749861}
+{"kind": "conc", "tag": "H3", "n": 1, "round": 3, "agg_tps": 17.52, "wall_s": 14.62, "gen": 256, "per_stream_tps": [17.88], "md5": ["ce2fc95752"], "t0": 1795816866.7500567, "t1": 1795816881.3650758}
+{"kind": "depth", "tag": "H3-d16k", "target": 16384, "prompt_n": 16414, "prefill_tps": 340.15, "prefill_s": 48.26, "decode_n": 128, "decode_tps": 14.54, "md5": "145c14aa8b", "t0": 1795816881.4088588, "t1": 1795816938.4538038}
+clocks: sm [('2405 MHz', 567), ('2398 MHz', 14)] power W p50/max 40.79 64.61 throttle [('0x0000000000000000', 581)]
+2.22.285.542 I llama_moe_cache: ubatch  > 8: hits = 2413, misses = 462, hit rate = 83.93%, uploaded = 3588.44 MiB
+2.22.622.119 I host bank hooks: early=48552/1703.215ms real=48971/14044.021ms post=42/0.026ms idle_sleeps=747357 lean=1
+lowest MemAvailable 21971 MiB; KW-LEG-DONE H3 22:02:21
+KW4-DONE

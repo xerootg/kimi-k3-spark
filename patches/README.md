@@ -1912,3 +1912,39 @@ projection of the late matmul took the exit (3.8 us per layer); the fused gate/u
 (28.7 us per layer, ~1.1 ms per token). `swiglu_clamp(0, 0) = silu(0) * clamp(0) = 0`, the bytes the exit writes.
 Spark window kw (2026-11-27): 17.45-17.63 -> 17.74-17.75 tok/s single stream, 16k decode 14.54-14.67 -> 14.73, gold
 `ce2fc95752` / `145c14aa8b` in every pass; nsys experts IQ2_XS 9.94 -> 8.78 ms/token, wall 53.8 -> 53.4 ms.
+
+## 0080-gdn-state-fusion-multi-slot
+
+`GGML_CUDA_FUSE_GDN_STATE_MULTI=1` (default off) lifts the one-row guard that patch 0052 put on
+`GGML_CUDA_FUSE_GDN_STATE` (the KDA GATED_DELTA_NET reads its input state straight from the recurrent-cache row
+instead of a 4 MiB GET_ROWS gather per layer), so the fusion also runs on a multi-slot server's single-sequence
+decode steps. Production has five slots, so it ran the gather: 19 us x 34 layers = 0.65 ms per token. The default
+keeps the guard: the GH200 and anything else on this image behave as before; a deployment turns the variable on
+after running the check below in its own configuration.
+
+The guard answered an illegal-address fault in window ek (2026-11-08) on the first one-sequence decode after another
+slot finished. Window kw4 (2026-11-27, stack through 0079, Spark): the ek scenario (p0 next to the 16k request, then
+p0 and p1 alone) in the ek configuration (`--parallel 2 --ctx-size 131072`, elastic KV off) and in the production
+one (five slots, 1M) does not fault. `GGML_CUDA_GDN_STATE_CHECK=1` (diagnostic: synchronizes and copies, eager
+dispatches only, not for production) read the ids back and logged table, ids and write pointer for every lookup
+dispatched eagerly (prompt graphs and the first decode graphs; not while a graph is captured, and replayed CUDA
+graphs never reach the host dispatch): 510 such lookups on a two-row table (ids 0 and 1), all in range; every md5
+gold, including the decode steps replayed from graphs. The original cause was not identified.
+
+Window kw5 (2026-11-27, after the review of PR #8) covered what kw4 did not: `GGML_CUDA_GDN_STATE_CHECK=1` now also
+passes the table's row count to the fused kernel, which traps (`__trap()`) on a row outside it, so replayed CUDA
+graphs are checked too; and the scenarios (`gdn-leg2.sh`): five slots at once for two rounds (cells reassigned
+between rounds), three slots with `cache_prompt` on (slots keep and reuse their cells), a cached single request,
+staggered starts (`stag.py`, the second request 1.0 s and 0.01 s after the first, three times each), the ek mix, and
+single requests after all of it. With the knobs on (M1) and off (M0): the server survived both legs, no trap, no
+fault, 1088 eager lookups checked, and the md5 set of every request is identical between the legs (p0 `ce2fc95752`,
+p1 `bb64203d71`, p2 `2d592efcb6`, p3 `1aab74269d`, p4 `0c3f28294b`, 16k `145c14aa8b`, the 48-token staggered pair
+`3c0baad848` / `08815159c3`). Five clients 25.6-26.3 tok/s aggregate in both (those steps have several sequences and
+keep the gather); the final single requests after all of it (256 tokens: p0 / p1 / p2) 17.01 / 16.05 / 15.22 tok/s
+with the knob against 16.51 / 15.68 / 15.05 without (the 48-token reference runs of the staggered test, 17.19 / 17.40
+vs 16.75 / 16.84, are a different answer length).
+
+Measured single stream on the Spark (production env, `kw-leg.sh`): `..._MULTI=1` 17.88 / 17.92 / 17.94 and
+17.86 / 17.91 / 17.88 tok/s against 17.58 / 17.66 / 17.66 without (+1.5 %); 16k decode 14.77 / 14.54 vs 14.61
+(level); gold `ce2fc95752` / `145c14aa8b` in every pass. Decode steps with several sequences keep the gather (the
+fusion needs n_seqs == 1).

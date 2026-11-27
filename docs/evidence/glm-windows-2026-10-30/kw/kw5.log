@@ -1,0 +1,73 @@
+=== LEG M1 extra=[GGML_CUDA_FUSE_GDN_STATE_MULTI=1 GGML_CUDA_GDN_STATE_CHECK=1] 22:28:03
+READY M1 after 26s
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 solo p0 p1
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.39, "prefill_tps": 25.85, "decode_n": 256, "decode_tps": 16.14, "md5": "ce2fc95752", "t0": 1795818508.766766, "t1": 1795818524.9641607, "kin
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.62, "prefill_tps": 30.77, "decode_n": 256, "decode_tps": 16.67, "md5": "bb64203d71", "t0": 1795818524.964228, "t1": 1795818540.8775618, "kin
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 multi p0 p1 p2 p3 p4 --rounds 2
+{"kind": "multi", "tag": "", "n": 5, "round": "warm", "agg_tps": 25.64, "wall_s": 49.92, "gen": 1280, "per_stream_tps": [5.23, 5.28, 5.34, 5.19, 5.4], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6",
+{"kind": "multi", "tag": "", "n": 5, "round": 1, "agg_tps": 26.28, "wall_s": 48.71, "gen": 1280, "per_stream_tps": [5.28, 5.33, 5.45, 5.4, 5.52], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aa
+{"kind": "multi", "tag": "", "n": 5, "round": 2, "agg_tps": 26.29, "wall_s": 48.68, "gen": 1280, "per_stream_tps": [5.33, 5.39, 5.29, 5.46, 5.52], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1a
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 multi p0 p1 p2 --cache --rounds 2
+{"kind": "multi", "tag": "", "n": 3, "round": "warm", "agg_tps": 26.0, "wall_s": 29.53, "gen": 768, "per_stream_tps": [8.75, 8.7, 8.8], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0
+{"kind": "multi", "tag": "", "n": 3, "round": 1, "agg_tps": 26.42, "wall_s": 29.07, "gen": 768, "per_stream_tps": [8.82, 8.88, 8.93], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0",
+{"kind": "multi", "tag": "", "n": 3, "round": 2, "agg_tps": 26.6, "wall_s": 28.87, "gen": 768, "per_stream_tps": [8.89, 8.94, 8.99], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", 
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 solo p0 --cache
+{"spec": "p0", "prompt_n": 4, "cache_n": 6, "prefill_s": 0.19, "prefill_tps": 21.01, "decode_n": 256, "decode_tps": 16.55, "md5": "ce2fc95752", "t0": 1795818775.7720456, "t1": 1795818791.3881345, "kin
+--- python3 -I stag.py p0 p1 --delays 1.0 0.01 --reps 3 --url http://127.0.0.1:18080
+{"kind": "stag-solo", "tag": "", "spec": "p0", "md5": "3c0baad848", "decode_tps": 17.19, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "", "spec": "p1", "md5": "08815159c3", "decode_tps": 17.4, "error": null, "body": null}
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 1.0, "rep": 0, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [10.94, 12.4], "body": []}
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 1.0, "rep": 1, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [11.35, 12.84], "body": []
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 1.0, "rep": 2, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [11.56, 13.05], "body": []
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 0.01, "rep": 0, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [10.94, 12.23], "body": [
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 0.01, "rep": 1, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [11.06, 12.35], "body": [
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 0.01, "rep": 2, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [11.06, 12.33], "body": [
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 multi p0 L16384 --rounds 1
+{"kind": "multi", "tag": "", "n": 2, "round": "warm", "agg_tps": 5.5, "wall_s": 69.77, "gen": 384, "per_stream_tps": [3.68, 9.27], "md5": ["ce2fc95752", "145c14aa8b"], "specs": ["p0", "L16384"], "pref
+{"kind": "multi", "tag": "", "n": 2, "round": 1, "agg_tps": 5.76, "wall_s": 66.67, "gen": 384, "per_stream_tps": [3.85, 10.51], "md5": ["ce2fc95752", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 solo p0 p1 p2
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.37, "prefill_tps": 27.1, "decode_n": 256, "decode_tps": 17.01, "md5": "ce2fc95752", "t0": 1795818963.6869497, "t1": 1795818979.0613775, "kin
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.51, "prefill_tps": 37.23, "decode_n": 256, "decode_tps": 16.05, "md5": "bb64203d71", "t0": 1795818979.0614462, "t1": 1795818995.4559865, "ki
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.58, "prefill_tps": 30.97, "decode_n": 256, "decode_tps": 15.22, "md5": "2d592efcb6", "t0": 1795818995.4560359, "t1": 1795819012.7871163, "ki
+SERVER ALIVE at the end
+      1 8.47.965.523 I gdn-state-check node_8465: ids[1]=2 table cache_s_l44 (reshaped) rows=5 nb1=4194304 data=0xff3b6c3d0000 ids=0xff1fa0016580 write=0xff3b6cbd0000 slot_stride=0 n_seqs=1
+      1 8.47.963.173 I gdn-state-check node_8073: ids[1]=2 table cache_s_l42 (reshaped) rows=5 nb1=4194304 data=0xff3b6ae68000 ids=0xff1fa0016580 write=0xff3b6b668000 slot_stride=0 n_seqs=1
+      1 8.47.960.630 I gdn-state-check node_7881: ids[1]=2 table cache_s_l41 (reshaped) rows=5 nb1=4194304 data=0xff3b69900000 ids=0xff1fa0016580 write=0xff3b6a100000 slot_stride=0 n_seqs=1
+      1 8.47.959.476 I gdn-state-check node_7689: ids[1]=2 table cache_s_l40 (reshaped) rows=5 nb1=4194304 data=0xff3b68398000 ids=0xff1fa0016580 write=0xff3b68b98000 slot_stride=0 n_seqs=1
+      1 8.47.955.610 I gdn-state-check node_7297: ids[1]=2 table cache_s_l38 (reshaped) rows=5 nb1=4194304 data=0xff3b66e30000 ids=0xff1fa0016580 write=0xff3b67630000 slot_stride=0 n_seqs=1
+      1 8.47.954.388 I gdn-state-check node_7105: ids[1]=2 table cache_s_l37 (reshaped) rows=5 nb1=4194304 data=0xff3b658c8000 ids=0xff1fa0016580 write=0xff3b660c8000 slot_stride=0 n_seqs=1
+GDN-LEG-DONE M1 22:36:54
+=== LEG M0 extra=[] 22:36:54
+READY M0 after 26s
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 solo p0 p1
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.4, "prefill_tps": 25.11, "decode_n": 256, "decode_tps": 15.74, "md5": "ce2fc95752", "t0": 1795819039.8380206, "t1": 1795819056.4516022, "kin
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.62, "prefill_tps": 30.7, "decode_n": 256, "decode_tps": 16.21, "md5": "bb64203d71", "t0": 1795819056.4516785, "t1": 1795819072.8056443, "kin
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 multi p0 p1 p2 p3 p4 --rounds 2
+{"kind": "multi", "tag": "", "n": 5, "round": "warm", "agg_tps": 25.6, "wall_s": 50.0, "gen": 1280, "per_stream_tps": [5.2, 5.16, 5.34, 5.4, 5.27], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1
+{"kind": "multi", "tag": "", "n": 5, "round": 1, "agg_tps": 26.26, "wall_s": 48.75, "gen": 1280, "per_stream_tps": [5.33, 5.29, 5.44, 5.51, 5.39], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1a
+{"kind": "multi", "tag": "", "n": 5, "round": 2, "agg_tps": 26.31, "wall_s": 48.65, "gen": 1280, "per_stream_tps": [5.34, 5.4, 5.46, 5.52, 5.3], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6", "1aab
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 multi p0 p1 p2 --cache --rounds 2
+{"kind": "multi", "tag": "", "n": 3, "round": "warm", "agg_tps": 25.97, "wall_s": 29.58, "gen": 768, "per_stream_tps": [8.74, 8.69, 8.79], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": [
+{"kind": "multi", "tag": "", "n": 3, "round": 1, "agg_tps": 26.41, "wall_s": 29.08, "gen": 768, "per_stream_tps": [8.82, 8.87, 8.92], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0",
+{"kind": "multi", "tag": "", "n": 3, "round": 2, "agg_tps": 26.58, "wall_s": 28.9, "gen": 768, "per_stream_tps": [8.88, 8.93, 8.98], "md5": ["ce2fc95752", "bb64203d71", "2d592efcb6"], "specs": ["p0", 
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 solo p0 --cache
+{"spec": "p0", "prompt_n": 4, "cache_n": 6, "prefill_s": 0.17, "prefill_tps": 23.6, "decode_n": 256, "decode_tps": 16.16, "md5": "ce2fc95752", "t0": 1795819307.8817623, "t1": 1795819323.8440738, "kind
+--- python3 -I stag.py p0 p1 --delays 1.0 0.01 --reps 3 --url http://127.0.0.1:18080
+{"kind": "stag-solo", "tag": "", "spec": "p0", "md5": "3c0baad848", "decode_tps": 16.75, "error": null, "body": null}
+{"kind": "stag-solo", "tag": "", "spec": "p1", "md5": "08815159c3", "decode_tps": 16.84, "error": null, "body": null}
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 1.0, "rep": 0, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [10.99, 12.46], "body": []
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 1.0, "rep": 1, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [11.31, 12.78], "body": []
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 1.0, "rep": 2, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [11.51, 12.99], "body": []
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 0.01, "rep": 0, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [10.92, 12.2], "body": []
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 0.01, "rep": 1, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [11.02, 12.31], "body": [
+{"kind": "stag", "tag": "", "a": "p0", "b": "p1", "delay": 0.01, "rep": 2, "ok": true, "md5": ["3c0baad848", "08815159c3"], "ref": ["3c0baad848", "08815159c3"], "decode_tps": [11.08, 12.33], "body": [
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 multi p0 L16384 --rounds 1
+{"kind": "multi", "tag": "", "n": 2, "round": "warm", "agg_tps": 5.49, "wall_s": 69.93, "gen": 384, "per_stream_tps": [3.67, 9.21], "md5": ["ce2fc95752", "145c14aa8b"], "specs": ["p0", "L16384"], "pre
+{"kind": "multi", "tag": "", "n": 2, "round": 1, "agg_tps": 5.73, "wall_s": 67.01, "gen": 384, "per_stream_tps": [3.83, 10.5], "md5": ["ce2fc95752", "145c14aa8b"], "specs": ["p0", "L16384"], "prefill_
+--- python3 -I ekbench.py --url http://127.0.0.1:18080 solo p0 p1 p2
+{"spec": "p0", "prompt_n": 10, "cache_n": 0, "prefill_s": 0.36, "prefill_tps": 27.92, "decode_n": 256, "decode_tps": 16.51, "md5": "ce2fc95752", "t0": 1795819496.8184319, "t1": 1795819512.6409185, "ki
+{"spec": "p1", "prompt_n": 19, "cache_n": 0, "prefill_s": 0.51, "prefill_tps": 37.09, "decode_n": 256, "decode_tps": 15.68, "md5": "bb64203d71", "t0": 1795819512.640993, "t1": 1795819529.4177198, "kin
+{"spec": "p2", "prompt_n": 18, "cache_n": 0, "prefill_s": 0.57, "prefill_tps": 31.74, "decode_n": 256, "decode_tps": 15.05, "md5": "2d592efcb6", "t0": 1795819529.4177682, "t1": 1795819546.9243925, "ki
+SERVER ALIVE at the end
+GDN-LEG-DONE M0 22:45:49
+KW5-DONE
