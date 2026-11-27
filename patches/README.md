@@ -1940,7 +1940,9 @@ single requests after all of it. With the knobs on (M1) and off (M0): the server
 fault, 1088 eager lookups checked, and the md5 set of every request is identical between the legs (p0 `ce2fc95752`,
 p1 `bb64203d71`, p2 `2d592efcb6`, p3 `1aab74269d`, p4 `0c3f28294b`, 16k `145c14aa8b`, the 48-token staggered pair
 `3c0baad848` / `08815159c3`). Five clients 25.6-26.3 tok/s aggregate in both (those steps have several sequences and
-keep the gather), single requests after the churn 17.0-17.4 with the knob against 16.5-16.8 without.
+keep the gather); the final single requests after all of it (256 tokens: p0 / p1 / p2) 17.01 / 16.05 / 15.22 tok/s
+with the knob against 16.51 / 15.68 / 15.05 without (the 48-token reference runs of the staggered test, 17.19 / 17.40
+vs 16.75 / 16.84, are a different answer length).
 
 Measured single stream on the Spark (production env, `kw-leg.sh`): `..._MULTI=1` 17.88 / 17.92 / 17.94 and
 17.86 / 17.91 / 17.88 tok/s against 17.58 / 17.66 / 17.66 without (+1.5 %); 16k decode 14.77 / 14.54 vs 14.61
