@@ -258,7 +258,7 @@ index 6222e93..f6f1366 100644
          return (void *)ggml_backend_cuda_get_features;
      }
 diff --git a/src/llama-moe-cache.cpp b/src/llama-moe-cache.cpp
-index 3a49ff0..fc45897 100644
+index 3a49ff0..3f11432 100644
 --- a/src/llama-moe-cache.cpp
 +++ b/src/llama-moe-cache.cpp
 @@ -594,11 +594,63 @@ struct io_pool {
@@ -439,7 +439,7 @@ index 3a49ff0..fc45897 100644
          if (!valve_on || !use_store) {
              return;
          }
-@@ -3222,6 +3308,36 @@ struct llama_moe_cache::impl {
+@@ -3222,6 +3308,38 @@ struct llama_moe_cache::impl {
              pool = std::make_unique<io_pool>(n_io, chunk);
              if (record_check.fd >= 0) { pool->landed = check_record; pool->landed_ctx = this; }
              pool_chunk = chunk;
@@ -462,8 +462,10 @@ index 3a49ff0..fc45897 100644
 +                    }
 +                    const size_t pool_staging_size = (size_t) 512 << 20;
 +                    dev_pool_staging.reset(ggml_backend_buft_alloc_buffer(pinned, pool_staging_size));
-+                    if (!dev_pool_staging) {
-+                        throw std::runtime_error("expert store: device bank: pinned staging allocation failed");
++                    // the CUDA host allocator falls back to an ordinary CPU buffer when pinning fails: the staged
++                    // O_DIRECT reads and the asynchronous copies need the pinned one
++                    if (!dev_pool_staging || ggml_backend_buffer_get_type(dev_pool_staging.get()) != pinned) {
++                        throw std::runtime_error("expert store: device bank: pinned staging allocation failed (or fell back to pageable memory)");
 +                    }
 +                    pool->set_device_staging(ggml_backend_buffer_get_base(dev_pool_staging.get()), pool_staging_size, dev_bank_upload);
 +                    if (record_check.fd >= 0) {
@@ -476,7 +478,7 @@ index 3a49ff0..fc45897 100644
              if (getenv("LLAMA_EXPERT_STORE_SPIN_US") != nullptr) {
                  pool->spin_us = std::max(0, atoi(getenv("LLAMA_EXPERT_STORE_SPIN_US")));
              }
-@@ -3651,7 +3767,21 @@ struct llama_moe_cache::impl {
+@@ -3651,7 +3769,21 @@ struct llama_moe_cache::impl {
                  // one region of records; each expert tensor's bank is a view with the record as its expert stride
                  const size_t landing_off = alloc_size(g, g.n_slots);
                  g.region_size = landing_off + (prefill_bank ? landing_bytes : 0);
@@ -499,7 +501,7 @@ index 3a49ff0..fc45897 100644
                      std::string err;
                      g.region = store_region_alloc(g.region_size, err, (size_t) g.lru.n_hbm*g.slot_stride, landing.fd, landing_off, thp_bank);
                      if (g.region == nullptr) {
-@@ -3934,7 +4064,9 @@ struct llama_moe_cache::impl {
+@@ -3934,7 +4066,9 @@ struct llama_moe_cache::impl {
                      }
                      const int32_t d = g.n_slots;
                      ggml_backend_tensor_set(g.dummy_const, &d, 0, sizeof(d));
@@ -510,7 +512,7 @@ index 3a49ff0..fc45897 100644
                          memset((char *) g.region + (size_t) g.n_slots*g.slot_stride, 0, g.record_size);
                      }
                  }
-@@ -4200,7 +4332,17 @@ struct llama_moe_cache::impl {
+@@ -4200,7 +4334,17 @@ struct llama_moe_cache::impl {
  #if !defined(LLAMA_HAVE_LIBURING)
                  spec_uring = false;
  #endif
@@ -520,8 +522,8 @@ index 3a49ff0..fc45897 100644
 +                    const size_t sp = pool_chunk ? pool_chunk : (size_t) 1 << 20;
 +                    ggml_backend_buffer_type_t pinned = ggml_backend_dev_host_buffer_type(ggml_backend_reg_dev_get(gpu_reg, 0));
 +                    dev_spec_staging.reset(ggml_backend_buft_alloc_buffer(pinned, sp*spec_depth));
-+                    if (!dev_spec_staging) {
-+                        throw std::runtime_error("expert store: device bank: pinned staging for the speculative reader failed");
++                    if (!dev_spec_staging || ggml_backend_buffer_get_type(dev_spec_staging.get()) != pinned) {
++                        throw std::runtime_error("expert store: device bank: pinned staging for the speculative reader failed (or fell back to pageable memory)");
 +                    }
 +                    spec_staging = (char *) ggml_backend_buffer_get_base(dev_spec_staging.get());
 +                }

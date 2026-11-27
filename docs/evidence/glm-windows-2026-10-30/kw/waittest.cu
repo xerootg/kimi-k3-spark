@@ -26,9 +26,10 @@ int main(int argc, char ** argv) {
     std::thread t([&] { cudaMemcpyAsync(dev, pinned, 64 << 20, cudaMemcpyHostToDevice, b); cudaError_t e = cudaStreamSynchronize(b); printf("copy on B: %s\n", cudaGetErrorString(e)); done = true; });
     auto t0 = std::chrono::steady_clock::now();
     while (!done && std::chrono::steady_clock::now() - t0 < std::chrono::seconds(3)) std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    printf("mode %d (%s): copy on another stream %s while A waits\n", mode, mode ? "spin kernel" : "cuStreamWaitValue32", done ? "COMPLETED" : "DEADLOCKED");
+    const bool completed = done; // before releasing A: the join below always ends with done == true
+    printf("mode %d (%s): copy on another stream %s while A waits\n", mode, mode ? "spin kernel" : "cuStreamWaitValue32", completed ? "COMPLETED" : "DEADLOCKED");
     *flag_h = 1; // release A
     cudaStreamSynchronize(a); t.join();
     printf("A released: %s\n", cudaGetErrorString(cudaGetLastError()));
-    return done ? 0 : 2;
+    return completed ? 0 : 2;
 }

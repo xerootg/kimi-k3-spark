@@ -25,7 +25,8 @@ int main(int argc, char ** argv) {
     std::thread t([&] { cudaMemcpyAsync(dev, pinned, 64 << 20, cudaMemcpyHostToDevice, cs); cudaError_t e = cudaStreamSynchronize(cs); if (e) printf("copy err %s\n", cudaGetErrorString(e)); done = true; });
     auto t0 = std::chrono::steady_clock::now();
     while (!done && std::chrono::steady_clock::now() - t0 < std::chrono::seconds(4)) std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    printf("streams=%d prio=%d launches=%d: copy %s (launcher %s)\n", nstreams, prio, nlaunch, done ? "COMPLETED" : "DEADLOCKED", launched ? "done/far" : "blocked");
+    const bool completed = done; // before releasing the flag: the join below always ends with done == true
+    printf("streams=%d prio=%d launches=%d: copy %s (launcher %s)\n", nstreams, prio, nlaunch, completed ? "COMPLETED" : "DEADLOCKED", launched ? "done/far" : "blocked");
     *flag_h = 1; cudaDeviceSynchronize(); t.join(); launcher.join();
-    return done ? 0 : 2;
+    return completed ? 0 : 2;
 }
